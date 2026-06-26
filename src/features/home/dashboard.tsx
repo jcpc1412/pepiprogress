@@ -1,18 +1,28 @@
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Dimensions, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import {
+  Dimensions,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { OptionChip, PrimaryButton } from '@/components/form';
 import { GearIcon } from '@/components/icons';
 import { LineChart, type ChartPoint } from '@/components/line-chart';
-import { Card, Divider, EngravedLabel } from '@/components/surface';
+import { Card, Divider, EngravedLabel, StatusPill } from '@/components/surface';
 import { SyncStatus } from '@/components/sync-status';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { compoundBySlug } from '@/data/compound-catalog';
+import { useTheme } from '@/hooks/use-theme';
 import { useOverlay } from '@/lib/nav-overlay';
 import { localDateKey, useStore, type CheckinEntry, type PhotoEntry } from '@/lib/store';
 
@@ -31,6 +41,7 @@ const CHECKIN_METRICS: { key: keyof CheckinEntry; labelKey: string; unitKey?: st
 export function Dashboard() {
   const { t } = useTranslation();
   const router = useRouter();
+  const theme = useTheme();
   const { openSettings, openLogging } = useOverlay();
   const { entries, photos, doseEvents, profile, setProfile } = useStore();
 
@@ -67,6 +78,24 @@ export function Dashboard() {
   const loggedToday = !!entries[today];
   const dosesToday = doseEvents.filter((d) => localDateKey(new Date(d.takenAt)) === today).length;
 
+  const pageCount = photoPages.length + series.length || 1;
+  const [page, setPage] = useState(0);
+  const onCarouselScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const i = Math.round(e.nativeEvent.contentOffset.x / width);
+    if (i !== page) setPage(i);
+  };
+
+  // Header sub: elapsed days tracked + first couple of compounds (neutral, no streak pressure).
+  const dayCount = Object.keys(entries).length;
+  const compoundNames = profile.compoundSlugs
+    .map((s) => compoundBySlug(s)?.canonicalName)
+    .filter(Boolean)
+    .slice(0, 2)
+    .join(' + ');
+  const headerSub = [dayCount > 0 ? t('dashboard.dayCount', { count: dayCount }) : null, compoundNames || null]
+    .filter(Boolean)
+    .join(' · ');
+
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safe} edges={['top']}>
@@ -74,6 +103,11 @@ export function Dashboard() {
           <View>
             <EngravedLabel>{t('checkin.title')}</EngravedLabel>
             <ThemedText type="display">{t('checkin.today')}</ThemedText>
+            {headerSub ? (
+              <ThemedText type="monoSm" themeColor="textMuted">
+                {headerSub.toUpperCase()}
+              </ThemedText>
+            ) : null}
           </View>
           <Pressable
             accessibilityRole="button"
@@ -91,6 +125,8 @@ export function Dashboard() {
             horizontal
             pagingEnabled
             showsHorizontalScrollIndicator={false}
+            onScroll={onCarouselScroll}
+            scrollEventThrottle={16}
             style={{ width }}>
             {photoPages.map((p) => (
               <Pressable
@@ -137,6 +173,21 @@ export function Dashboard() {
             )}
           </ScrollView>
 
+          {/* Page dots */}
+          {pageCount > 1 && (
+            <View style={styles.dots}>
+              {Array.from({ length: pageCount }, (_, i) => (
+                <View
+                  key={i}
+                  style={[
+                    i === page ? styles.dotActive : styles.dot,
+                    { backgroundColor: i === page ? theme.accent : theme.surfaceSunken },
+                  ]}
+                />
+              ))}
+            </View>
+          )}
+
           {/* Metric selector */}
           <View style={styles.metricChips}>
             {CHECKIN_METRICS.map((m) => (
@@ -156,9 +207,15 @@ export function Dashboard() {
 
           {/* Distillation summary */}
           <Card style={styles.summary}>
-            <ThemedText type="small" themeColor="textSecondary">
-              {loggedToday ? t('dashboard.loggedToday') : t('dashboard.notLoggedToday')}
-            </ThemedText>
+            <View style={styles.summaryHead}>
+              <ThemedText type="small" themeColor="textSecondary">
+                {loggedToday ? t('dashboard.loggedToday') : t('dashboard.notLoggedToday')}
+              </ThemedText>
+              <StatusPill
+                label={loggedToday ? t('dashboard.onTrack') : t('dashboard.pending')}
+                tone={loggedToday ? 'good' : 'neutral'}
+              />
+            </View>
             <Divider />
             <ThemedText type="small" themeColor="textSecondary">
               {t('dashboard.dosesToday', { count: dosesToday })}
@@ -202,8 +259,12 @@ const styles = StyleSheet.create({
   compareRow: { flexDirection: 'row', gap: Spacing.two },
   compareCol: { flex: 1, gap: Spacing.one, alignItems: 'center' },
   photo: { width: '100%', aspectRatio: 3 / 4, borderRadius: 2 },
+  dots: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: Spacing.one },
+  dot: { width: 5, height: 5, borderRadius: 3 },
+  dotActive: { width: 16, height: 5, borderRadius: 3 },
   metricChips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
   summary: { gap: Spacing.two },
+  summaryHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.two },
   buttons: { flexDirection: 'row', gap: Spacing.two },
   buttonHalf: { flex: 1 },
 });

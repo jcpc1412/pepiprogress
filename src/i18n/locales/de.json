@@ -533,7 +533,10 @@
     "notLoggedToday": "Not logged yet today",
     "dosesToday": "{{count}} doses logged today",
     "quickLog": "Quick log",
-    "detailedLog": "Detailed log"
+    "detailedLog": "Detailed log",
+    "dayCount": "Day {{count}}",
+    "onTrack": "ON TRACK",
+    "pending": "PENDING"
   },
   "addCompound": {
     "title": "Add compound",

@@ -12,33 +12,43 @@
 import { type ReactNode, useEffect, useState } from 'react';
 import { Animated, StyleSheet, View, type ViewProps, type ViewStyle } from 'react-native';
 
+import { ChamferBox } from '@/components/chamfer';
 import { ThemedText } from '@/components/themed-text';
-import { Radii, Spacing, type ThemeColor } from '@/constants/theme';
+import { Chamfer, Radii, Spacing, type ThemeColor } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useResolvedScheme } from '@/lib/theme-provider';
 
-/** A raised, chamfered panel — the default card. */
+/** A raised, chamfered panel — the default card. Sits lighter than the
+ *  background with a soft elevation so it lifts (CyberLife instrument). */
 export function Card({ style, children, ...rest }: ViewProps) {
   const theme = useTheme();
+  const scheme = useResolvedScheme();
+  const elevation =
+    scheme === 'dark'
+      ? { color: '#000', opacity: 0.4, radius: 12, offsetY: 2 }
+      : { color: '#000', opacity: 0.07, radius: 8, offsetY: 2 };
   return (
-    <View
-      style={[
-        styles.panel,
-        { backgroundColor: theme.surfaceRaised, borderColor: theme.border },
-        style,
-      ]}
-      {...rest}>
-      {children}
-    </View>
+    <ChamferBox
+      chamfer={Chamfer.card}
+      fill={theme.surfaceRaised}
+      borderColor={theme.border}
+      elevation={elevation}>
+      <View style={[styles.panelPad, style]} {...rest}>
+        {children}
+      </View>
+    </ChamferBox>
   );
 }
 
-/** A sunken/inset panel — quick-log box, notes. */
+/** A sunken/inset panel — quick-log box, notes, inputs. */
 export function Sunken({ style, children, ...rest }: ViewProps) {
   const theme = useTheme();
   return (
-    <View style={[styles.panel, { backgroundColor: theme.surfaceSunken }, style]} {...rest}>
-      {children}
-    </View>
+    <ChamferBox chamfer={Chamfer.chip} fill={theme.surfaceSunken}>
+      <View style={[styles.panelPad, style]} {...rest}>
+        {children}
+      </View>
+    </ChamferBox>
   );
 }
 
@@ -109,11 +119,13 @@ export function StatusPill({ label, tone = 'neutral' }: { label: string; tone?: 
   const bg = tone === 'good' ? theme.signalGoodBg : tone === 'bad' ? theme.signalBadBg : theme.surfaceSunken;
   const fg: ThemeColor = tone === 'good' ? 'signalGood' : tone === 'bad' ? 'signalBad' : 'textMuted';
   return (
-    <View style={[styles.pill, { backgroundColor: bg }]}>
-      <ThemedText type="monoSm" themeColor={fg}>
-        {label}
-      </ThemedText>
-    </View>
+    <ChamferBox chamfer={Chamfer.pill} fill={bg}>
+      <View style={styles.pill}>
+        <ThemedText type="monoSm" themeColor={fg}>
+          {label}
+        </ThemedText>
+      </View>
+    </ChamferBox>
   );
 }
 
@@ -148,18 +160,13 @@ export function Skeleton({ lines = 3 }: { lines?: number }) {
 }
 
 const styles = StyleSheet.create({
-  panel: {
-    borderRadius: Radii.panel,
-    borderWidth: StyleSheet.hairlineWidth,
-    padding: Spacing.three,
-  },
+  panelPad: { padding: Spacing.three },
   skeletonWrap: { gap: Spacing.two },
   skeletonBar: { height: 12, borderRadius: Radii.chamfer },
   dividerWrap: { marginVertical: Spacing.three },
   metricRow: { flexDirection: 'row', alignItems: 'flex-end', gap: Spacing.one },
   metricUnit: { marginBottom: 4 },
   pill: {
-    borderRadius: Radii.chamfer,
     paddingHorizontal: Spacing.two,
     paddingVertical: Spacing.half,
   },

@@ -36,8 +36,8 @@ export const Colors = {
     surfaceRaised: '#FBFAF8', // lighter than bg → embossed card
     surfaceSunken: '#DBD9D4', // darker than bg → inset well
     numeral: '#3A3834', // primary metric ink
-    border: 'rgba(0,0,0,0.14)', // carved groove — shadow side (deepened)
-    borderHighlight: 'rgba(255,255,255,0.85)', // carved groove — lit side
+    border: 'rgba(0,0,0,0.12)', // carved groove — shadow side
+    borderHighlight: 'rgba(255,255,255,0.80)', // carved groove — lit side
     engrave: 'rgba(255,255,255,0.85)', // label text-shadow (lit edge below)
     accent: '#2A2825', // solid control / selected
     onAccent: '#FBFAF8',
@@ -129,12 +129,22 @@ export const Spacing = {
   six: 64,
 } as const;
 
-/** Corner treatment. `chamfer` stands in for the 45° cut until react-native-svg
- *  lands; keep edges tight — the instrument look is square, not rounded. */
+/** Corner treatment. Edges are chamfered (octagonal), not rounded — the
+ *  instrument look. `Chamfer` sizes feed the SVG <ChamferBox> (px corner cut);
+ *  `Radii` are tight fallbacks for plain views. */
 export const Radii = {
   chamfer: 2,
   panel: 3,
   pill: 2,
+} as const;
+
+/** Octagonal corner-cut sizes (px), matching the design board. */
+export const Chamfer = {
+  pill: 4,
+  chip: 6,
+  button: 6,
+  card: 8,
+  hero: 10,
 } as const;
 
 export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
