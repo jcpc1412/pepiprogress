@@ -124,7 +124,12 @@
     "voiceHint": "Dica: toque no microfone do teclado para falar em vez de digitar.",
     "undo": "Desfazer",
     "addedCount": "Adicionado {{count}}",
-    "macroSeed": "How much protein and calories did you have today?"
+    "macroSeed": "How much protein and calories did you have today?",
+    "suggestionsLabel": "Quick add",
+    "sugSleep": "slept well",
+    "sugEnergy": "energy 4",
+    "sugWeight": "weight",
+    "sugDose": "took my dose"
   },
   "photos": {
     "title": "Fotos de progresso",
@@ -201,7 +206,8 @@
     "dosesTitle": "Doses recentes",
     "dosesEmpty": "Nenhuma dose registrada ainda.",
     "addCompound": "Add compound",
-    "addFirstPrompt": "Add your first compound to start tracking doses and inventory."
+    "addFirstPrompt": "Add your first compound to start tracking doses and inventory.",
+    "flaggedCount": "{{count}} flagged"
   },
   "inventory": {
     "title": "Estoque",
@@ -557,5 +563,13 @@
     "female": "Female",
     "ftm": "Trans masc (FTM)",
     "mtf": "Trans fem (MTF)"
+  },
+  "goalCat": {
+    "weight_loss": "Metabolic",
+    "skin": "Tissue",
+    "body_comp": "Composition",
+    "sleep": "Recovery",
+    "recovery": "Repair",
+    "wellness": "Vitality"
   }
 }
