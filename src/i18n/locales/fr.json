@@ -170,7 +170,8 @@
     "nextDeepComparison": "Prochaine comparaison approfondie : {{date}}",
     "baselineSet": "Photo de référence enregistrée. Premier bilan prévu le {{date}}.",
     "analysisLabel": "ANALYSE",
-    "checkinLabel": "NOTE DE BILAN"
+    "checkinLabel": "NOTE DE BILAN",
+    "flipCamera": "Retourner la caméra"
   },
   "markers": {
     "hematocrit": "Hématocrite",

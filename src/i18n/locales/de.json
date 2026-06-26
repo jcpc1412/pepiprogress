@@ -170,7 +170,8 @@
     "nextDeepComparison": "Nächster Tiefenvergleich: {{date}}",
     "baselineSet": "Basisfoto gespeichert. Erstes Check-in geplant für {{date}}.",
     "analysisLabel": "ANALYSE",
-    "checkinLabel": "CHECK-IN-NOTIZ"
+    "checkinLabel": "CHECK-IN-NOTIZ",
+    "flipCamera": "Kamera wechseln"
   },
   "markers": {
     "hematocrit": "Hämatokrit",

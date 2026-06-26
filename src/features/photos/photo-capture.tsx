@@ -7,6 +7,7 @@ import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { LabeledInput, PrimaryButton, SingleSelectChips } from '@/components/form';
+import { FlipCameraIcon } from '@/components/icons';
 import { ThemedText } from '@/components/themed-text';
 import { Radii, Spacing } from '@/constants/theme';
 import { copyPhotoToDocuments } from '@/lib/photos';
@@ -41,6 +42,7 @@ export function PhotoCapture({
   const [shot, setShot] = useState<string | null>(null);
   const [shotTilt, setShotTilt] = useState<number | undefined>(undefined);
   const [busy, setBusy] = useState(false);
+  const [facing, setFacing] = useState<'front' | 'back'>('front');
 
   // Measurement inputs (body session only, all optional)
   const [waist, setWaist] = useState('');
@@ -204,7 +206,7 @@ export function PhotoCapture({
         ) : (
           // ── Live camera + ghost overlay ──
           <View style={styles.fill}>
-            <CameraView ref={camRef} style={styles.fill} facing="front" mirror />
+            <CameraView ref={camRef} style={styles.fill} facing={facing} mirror={facing === 'front'} />
             {ghostUri ? (
               <Image
                 source={{ uri: ghostUri }}
@@ -251,7 +253,13 @@ export function PhotoCapture({
                 onPress={capture}
                 style={({ pressed }) => [styles.shutter, pressed && styles.shutterPressed]}
               />
-              <View style={styles.shutterSpacer} />
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t('photos.flipCamera')}
+                onPress={() => setFacing((f) => (f === 'front' ? 'back' : 'front'))}
+                style={styles.flipBtn}>
+                <FlipCameraIcon size={28} color="onAccent" />
+              </Pressable>
             </SafeAreaView>
           </View>
         )}
@@ -303,7 +311,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(240,239,236,0.25)',
   },
   shutterPressed: { transform: [{ scale: 0.94 }], backgroundColor: 'rgba(240,239,236,0.5)' },
-  shutterSpacer: { width: 60, borderRadius: Radii.chamfer },
+  flipBtn: { width: 60, alignItems: 'center', justifyContent: 'center' },
   levelWrap: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' },
   levelRef: { position: 'absolute', width: 170, height: StyleSheet.hairlineWidth, backgroundColor: 'rgba(240,239,236,0.3)' },
   levelBar: { width: 120, height: 2, borderRadius: 1 },

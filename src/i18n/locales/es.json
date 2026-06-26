@@ -170,7 +170,8 @@
     "nextDeepComparison": "Próxima comparación profunda: {{date}}",
     "baselineSet": "Foto base guardada. Primer check-in programado para el {{date}}.",
     "analysisLabel": "ANÁLISIS",
-    "checkinLabel": "NOTA DE CHECK-IN"
+    "checkinLabel": "NOTA DE CHECK-IN",
+    "flipCamera": "Cambiar cámara"
   },
   "markers": {
     "hematocrit": "Hematocrito",

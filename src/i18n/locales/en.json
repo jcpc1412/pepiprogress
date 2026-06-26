@@ -170,7 +170,8 @@
     "nextDeepComparison": "Next deep comparison: {{date}}",
     "baselineSet": "Baseline captured. First check-in scheduled for {{date}}.",
     "analysisLabel": "ANALYSIS",
-    "checkinLabel": "CHECK-IN NOTE"
+    "checkinLabel": "CHECK-IN NOTE",
+    "flipCamera": "Flip camera"
   },
   "markers": {
     "hematocrit": "Hematocrit",

@@ -170,7 +170,8 @@
     "nextDeepComparison": "Следующее глубокое сравнение: {{date}}",
     "baselineSet": "Базовое фото сохранено. Первый отчёт запланирован на {{date}}.",
     "analysisLabel": "АНАЛИЗ",
-    "checkinLabel": "ЗАМЕТКА ОБ ОТЧЁТЕ"
+    "checkinLabel": "ЗАМЕТКА ОБ ОТЧЁТЕ",
+    "flipCamera": "Перевернуть камеру"
   },
   "markers": {
     "hematocrit": "Гематокрит",

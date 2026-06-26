@@ -139,3 +139,15 @@ export function ProgressBarIcon({ size = 20, color }: IconProps) {
     </Svg>
   );
 }
+
+export function FlipCameraIcon({ size = 24, color }: IconProps) {
+  const stroke = useStroke(color);
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M20 7L17 4L14 7" stroke={stroke} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M17 4v7a4 4 0 0 1-4 4H7" stroke={stroke} strokeWidth={1.5} strokeLinecap="round" />
+      <Path d="M4 17l3 3 3-3" stroke={stroke} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M7 20v-7a4 4 0 0 1 4-4h6" stroke={stroke} strokeWidth={1.5} strokeLinecap="round" />
+    </Svg>
+  );
+}

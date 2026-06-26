@@ -31,8 +31,9 @@ import { useFaceDetectorOutput } from 'react-native-vision-camera-face-detector'
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { PrimaryButton } from '@/components/form';
+import { FlipCameraIcon } from '@/components/icons';
 import { ThemedText } from '@/components/themed-text';
-import { Radii, Spacing } from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
 import { copyPhotoToDocuments } from '@/lib/photos';
 import { useStore, type PhotoEntry, type PhotoSession } from '@/lib/store';
 
@@ -80,7 +81,8 @@ export function VisionCameraCapture({
   const { addPhoto } = useStore();
 
   // ── Camera setup ──────────────────────────────────────────────────────────
-  const device = useCameraDevice('front');
+  const [facing, setFacing] = useState<'front' | 'back'>('front');
+  const device = useCameraDevice(facing);
   const { hasPermission, requestPermission } = useCameraPermission();
   const photoOutput = usePhotoOutput({ quality: 0.8 });
 
@@ -300,7 +302,13 @@ export function VisionCameraCapture({
                 onPress={() => capture()}
                 style={({ pressed }) => [styles.shutter, pressed && styles.shutterPressed]}
               />
-              <View style={styles.shutterSpacer} />
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t('photos.flipCamera')}
+                onPress={() => setFacing((f) => (f === 'front' ? 'back' : 'front'))}
+                style={styles.flipBtn}>
+                <FlipCameraIcon size={28} color="onAccent" />
+              </Pressable>
             </SafeAreaView>
           </View>
         ) : (
@@ -349,7 +357,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(240,239,236,0.25)',
   },
   shutterPressed: { transform: [{ scale: 0.94 }], backgroundColor: 'rgba(240,239,236,0.5)' },
-  shutterSpacer: { width: 60, borderRadius: Radii.chamfer },
+  flipBtn: { width: 60, alignItems: 'center', justifyContent: 'center' },
   levelWrap: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
     alignItems: 'center', justifyContent: 'center',
