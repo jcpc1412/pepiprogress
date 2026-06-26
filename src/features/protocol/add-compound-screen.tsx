@@ -89,84 +89,92 @@ export function AddCompoundScreen({ onClose }: { onClose: () => void }) {
       <SafeAreaView style={styles.safe} edges={['top']}>
         <OverlayHeader title={t('addCompound.title')} onClose={onClose} />
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+          {/* Step 1: search + select a compound */}
           <Field label={t('protocol.compound')}>
             <CompoundPicker value={slug} onChange={setSlug} />
           </Field>
 
-          <LabeledInput
-            label={t('protocol.dose')}
-            keyboardType="decimal-pad"
-            value={dose}
-            onChangeText={setDose}
-          />
+          {/* Step 2: configure section reveals after a compound is selected */}
+          {slug && (
+            <Card style={styles.configureCard}>
+              <EngravedLabel>{t('addCompound.configure')}</EngravedLabel>
 
-          <Field label={t('protocol.unit')}>
-            <SingleSelectChips
-              options={DOSE_UNITS.map((u) => ({ value: u, label: t(`doseUnits.${u}` as const) }))}
-              value={doseUnit}
-              onChange={setDoseUnit}
-            />
-          </Field>
-
-          <Field label={t('protocol.route')}>
-            <SingleSelectChips
-              options={ROUTES.map((r) => ({ value: r, label: t(`routes.${r}` as const) }))}
-              value={route}
-              onChange={setRoute}
-            />
-          </Field>
-
-          <Field label={t('protocol.frequency')}>
-            <SingleSelectChips
-              options={FREQUENCIES.map((f) => ({ value: f, label: t(`frequencies.${f}` as const) }))}
-              value={frequency}
-              onChange={setFrequency}
-            />
-          </Field>
-
-          <LabeledInput
-            label={t('protocol.startedAt')}
-            placeholder={t('protocol.startedAtPlaceholder')}
-            value={startedAt}
-            onChangeText={setStartedAt}
-          />
-
-          {canReconstitute && (
-            <Card style={styles.reconCard}>
-              <EngravedLabel>{t('addCompound.reconTitle')}</EngravedLabel>
               <LabeledInput
-                label={t('addCompound.vialMg')}
+                label={t('protocol.dose')}
                 keyboardType="decimal-pad"
-                placeholder={defaultVialMg ? String(defaultVialMg) : t('addCompound.vialMgPlaceholder')}
-                value={vialMgInput}
-                onChangeText={setVialMgInput}
+                value={dose}
+                onChangeText={setDose}
               />
-              {suggestion ? (
-                <>
-                  <ThemedText type="smallBold">
-                    {t('addCompound.reconSuggestion', {
-                      water: suggestion.waterMl,
-                      conc: suggestion.concentrationMgPerMl,
-                    })}
-                  </ThemedText>
-                  <ThemedText type="small" themeColor="textSecondary">
-                    {t('addCompound.reconDraw', {
-                      units: suggestion.perDoseUnits,
-                      volume: roundTo(suggestion.perDoseVolumeMl, 2),
-                    })}
-                  </ThemedText>
-                  <View style={styles.vialToggle}>
-                    <OptionChip
-                      label={t('addCompound.logVial')}
-                      selected={logVial}
-                      onPress={() => setLogVial((v) => !v)}
-                    />
-                  </View>
-                </>
-              ) : (
-                <ThemedText type="small" themeColor="textSecondary">
-                  {t('addCompound.reconHint')}
-                </ThemedText>
+
+              <Field label={t('protocol.unit')}>
+                <SingleSelectChips
+                  options={DOSE_UNITS.map((u) => ({ value: u, label: t(`doseUnits.${u}` as const) }))}
+                  value={doseUnit}
+                  onChange={setDoseUnit}
+                />
+              </Field>
+
+              <Field label={t('protocol.route')}>
+                <SingleSelectChips
+                  options={ROUTES.map((r) => ({ value: r, label: t(`routes.${r}` as const) }))}
+                  value={route}
+                  onChange={setRoute}
+                />
+              </Field>
+
+              <Field label={t('protocol.frequency')}>
+                <SingleSelectChips
+                  options={FREQUENCIES.map((f) => ({ value: f, label: t(`frequencies.${f}` as const) }))}
+                  value={frequency}
+                  onChange={setFrequency}
+                />
+              </Field>
+
+              <LabeledInput
+                label={t('protocol.startedAt')}
+                placeholder={t('protocol.startedAtPlaceholder')}
+                value={startedAt}
+                onChangeText={setStartedAt}
+              />
+
+              {canReconstitute && (
+                <Card style={styles.reconCard}>
+                  <EngravedLabel>{t('addCompound.reconTitle')}</EngravedLabel>
+                  <LabeledInput
+                    label={t('addCompound.vialMg')}
+                    keyboardType="decimal-pad"
+                    placeholder={defaultVialMg ? String(defaultVialMg) : t('addCompound.vialMgPlaceholder')}
+                    value={vialMgInput}
+                    onChangeText={setVialMgInput}
+                  />
+                  {suggestion ? (
+                    <>
+                      <ThemedText type="smallBold">
+                        {t('addCompound.reconSuggestion', {
+                          water: suggestion.waterMl,
+                          conc: suggestion.concentrationMgPerMl,
+                        })}
+                      </ThemedText>
+                      <ThemedText type="small" themeColor="textSecondary">
+                        {t('addCompound.reconDraw', {
+                          units: suggestion.perDoseUnits,
+                          volume: roundTo(suggestion.perDoseVolumeMl, 2),
+                        })}
+                      </ThemedText>
+                      <View style={styles.vialToggle}>
+                        <OptionChip
+                          label={t('addCompound.logVial')}
+                          selected={logVial}
+                          onPress={() => setLogVial((v) => !v)}
+                        />
+                      </View>
+                    </>
+                  ) : (
+                    <ThemedText type="small" themeColor="textSecondary">
+                      {t('addCompound.reconHint')}
+                    </ThemedText>
+                  )}
+                </Card>
               )}
             </Card>
           )}
@@ -202,6 +210,7 @@ const styles = StyleSheet.create({
   },
   scroll: { gap: Spacing.three, paddingTop: Spacing.three, paddingBottom: Spacing.six },
   field: { gap: Spacing.two },
+  configureCard: { gap: Spacing.three },
   reconCard: { gap: Spacing.two },
   vialToggle: { flexDirection: 'row', marginTop: Spacing.one },
 });

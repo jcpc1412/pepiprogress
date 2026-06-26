@@ -12,7 +12,8 @@
     "retry": "Retry",
     "errorNetwork": "Couldn't reach the service. Check your connection.",
     "errorServer": "Something went wrong. Please try again.",
-    "back": "Back"
+    "back": "Back",
+    "loading": "Loading"
   },
   "home": {
     "title": "Welcome to PepiProgress",
@@ -50,6 +51,8 @@
     "step": "Step {{current}} of {{total}}",
     "back": "Back",
     "finish": "Start tracking",
+    "intakeProcedure": "INTAKE PROCEDURE",
+    "beginSelected": "Begin · {{count}} selected",
     "units": {
       "title": "Choose your units"
     },
@@ -129,7 +132,10 @@
     "sugSleep": "slept well",
     "sugEnergy": "energy 4",
     "sugWeight": "weight",
-    "sugDose": "took my dose"
+    "sugDose": "took my dose",
+    "parseApply": "Parse + apply",
+    "confirm": "Confirm",
+    "reviewLabel": "Detected"
   },
   "photos": {
     "title": "Progress photos",
@@ -295,7 +301,11 @@
       "on3": "Side-by-side and wipe compare",
       "accept": "Allow photo storage",
       "decline": "No thanks, skip photos",
-      "notice": "Stored privately on your device and (when you create an account) in an encrypted private bucket, never shown to others, never used to train AI models."
+      "notice": "Stored privately on your device and (when you create an account) in an encrypted private bucket, never shown to others, never used to train AI models.",
+      "bullet1": "Photos stay on your device by default.",
+      "bullet2": "Optional encrypted cloud backup, opt-in.",
+      "bullet3": "Never used to train any AI model. Ever.",
+      "understand": "I understand"
     },
     "ai": {
       "label": "2 OF 2, AI ANALYSIS",
@@ -311,7 +321,10 @@
       "on3": "Hedged visual-change note",
       "accept": "Allow AI analysis",
       "decline": "No thanks, manual only",
-      "notice": "Photos are sent to a server-side AI service for analysis. Your photos are never used to train any model. Analysis is observational only, never a medical claim."
+      "notice": "Photos are sent to a server-side AI service for analysis. Your photos are never used to train any model. Analysis is observational only, never a medical claim.",
+      "toggleLabel": "Cloud AI analysis",
+      "toggleSub": "Photo drift + insights",
+      "continueButton": "Continue"
     }
   },
   "privacy": {
@@ -526,7 +539,8 @@
     "createCustom": "Create"
   },
   "settings": {
-    "title": "Settings"
+    "title": "Settings",
+    "footer": "PEPIPROGRESS"
   },
   "logging": {
     "title": "Log",
@@ -542,7 +556,9 @@
     "detailedLog": "Detailed log",
     "dayCount": "Day {{count}}",
     "onTrack": "ON TRACK",
-    "pending": "PENDING"
+    "pending": "PENDING",
+    "todayLabel": "TODAY",
+    "dayBadge": "DAY {{count}}"
   },
   "addCompound": {
     "title": "Add compound",
@@ -552,7 +568,8 @@
     "reconSuggestion": "Add {{water}} mL BAC water for {{conc}} mg/mL",
     "reconDraw": "Draw {{units}} units ({{volume}} mL) per dose",
     "logVial": "I have this vial on hand",
-    "reconHint": "Enter a dose and vial size for a reconstitution suggestion."
+    "reconHint": "Enter a dose and vial size for a reconstitution suggestion.",
+    "configure": "Configure"
   },
   "about": {
     "title": "About you",

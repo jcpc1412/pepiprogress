@@ -12,7 +12,8 @@
     "retry": "Réessayer",
     "errorNetwork": "Service inaccessible. Vérifiez votre connexion.",
     "errorServer": "Une erreur s'est produite. Veuillez réessayer.",
-    "back": "Back"
+    "back": "Back",
+    "loading": "Chargement"
   },
   "home": {
     "title": "Bienvenue sur PepiProgress",
@@ -67,7 +68,9 @@
       "title": "Suivre ton cycle ?",
       "subtitle": "Optionnel. Signale les semaines de rétention d'eau normale pour ne pas les confondre avec un manque de progrès. Modifiable à tout moment.",
       "optIn": "Suivre mon cycle"
-    }
+    },
+    "intakeProcedure": "PROCÉDURE D'ENTRÉE",
+    "beginSelected": "Commencer · {{count}} sél."
   },
   "fields": {
     "weight": "Poids",
@@ -129,7 +132,10 @@
     "sugSleep": "slept well",
     "sugEnergy": "energy 4",
     "sugWeight": "weight",
-    "sugDose": "took my dose"
+    "sugDose": "took my dose",
+    "parseApply": "Analyser + appliquer",
+    "confirm": "Confirmer",
+    "reviewLabel": "Détecté"
   },
   "photos": {
     "title": "Photos de progression",
@@ -295,7 +301,11 @@
       "on3": "Comparaison par balayage",
       "accept": "Autoriser le stockage",
       "decline": "Non merci, ignorer les photos",
-      "notice": "Stockées de manière privée sur votre appareil et, lors de la création d'un compte, dans un compartiment chiffré, jamais partagées ni utilisées pour entraîner des modèles d'IA."
+      "notice": "Stockées de manière privée sur votre appareil et, lors de la création d'un compte, dans un compartiment chiffré, jamais partagées ni utilisées pour entraîner des modèles d'IA.",
+      "bullet1": "Les photos restent sur votre appareil par défaut.",
+      "bullet2": "Sauvegarde chiffrée dans le cloud en option.",
+      "bullet3": "Jamais utilisé pour entraîner une IA. Jamais.",
+      "understand": "Je comprends"
     },
     "ai": {
       "label": "2 SUR 2, ANALYSE IA",
@@ -311,7 +321,10 @@
       "on3": "Note de changement visuel",
       "accept": "Autoriser l'analyse IA",
       "decline": "Non merci, manuel seulement",
-      "notice": "Les photos sont envoyées à un service IA. Elles ne sont jamais utilisées pour entraîner des modèles. L'analyse est observationnelle, jamais une affirmation médicale."
+      "notice": "Les photos sont envoyées à un service IA. Elles ne sont jamais utilisées pour entraîner des modèles. L'analyse est observationnelle, jamais une affirmation médicale.",
+      "toggleLabel": "Analyse IA cloud",
+      "toggleSub": "Dérive photo + analyses",
+      "continueButton": "Continuer"
     }
   },
   "privacy": {
@@ -526,7 +539,8 @@
     "createCustom": "Create"
   },
   "settings": {
-    "title": "Settings"
+    "title": "Settings",
+    "footer": "PEPIPROGRESS"
   },
   "logging": {
     "title": "Log",
@@ -542,7 +556,9 @@
     "detailedLog": "Detailed log",
     "dayCount": "Day {{count}}",
     "onTrack": "ON TRACK",
-    "pending": "PENDING"
+    "pending": "PENDING",
+    "todayLabel": "AUJOURD'HUI",
+    "dayBadge": "JOUR {{count}}"
   },
   "addCompound": {
     "title": "Add compound",
@@ -552,7 +568,8 @@
     "reconSuggestion": "Add {{water}} mL BAC water for {{conc}} mg/mL",
     "reconDraw": "Draw {{units}} units ({{volume}} mL) per dose",
     "logVial": "I have this vial on hand",
-    "reconHint": "Enter a dose and vial size for a reconstitution suggestion."
+    "reconHint": "Enter a dose and vial size for a reconstitution suggestion.",
+    "configure": "Configurer"
   },
   "about": {
     "title": "About you",

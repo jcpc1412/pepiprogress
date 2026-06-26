@@ -12,7 +12,8 @@
     "retry": "Erneut versuchen",
     "errorNetwork": "Dienst nicht erreichbar. Überprüfe deine Verbindung.",
     "errorServer": "Etwas ist schiefgelaufen. Bitte versuche es erneut.",
-    "back": "Back"
+    "back": "Back",
+    "loading": "Laden"
   },
   "home": {
     "title": "Willkommen bei PepiProgress",
@@ -67,7 +68,9 @@
       "title": "Zyklus verfolgen?",
       "subtitle": "Optional. Markiert normale Wassereinlagerungs-Wochen, damit du sie nicht mit fehlendem Fortschritt verwechselst. Jederzeit änderbar.",
       "optIn": "Meinen Zyklus verfolgen"
-    }
+    },
+    "intakeProcedure": "AUFNAHMEVERFAHREN",
+    "beginSelected": "Beginnen · {{count}} ausge."
   },
   "fields": {
     "weight": "Gewicht",
@@ -129,7 +132,10 @@
     "sugSleep": "slept well",
     "sugEnergy": "energy 4",
     "sugWeight": "weight",
-    "sugDose": "took my dose"
+    "sugDose": "took my dose",
+    "parseApply": "Analysieren + anwenden",
+    "confirm": "Bestätigen",
+    "reviewLabel": "Erkannt"
   },
   "photos": {
     "title": "Fortschrittsfotos",
@@ -295,7 +301,11 @@
       "on3": "Wisch-Vergleich",
       "accept": "Speicherung erlauben",
       "decline": "Nein danke, Fotos überspringen",
-      "notice": "Privat auf deinem Gerät gespeichert und bei Kontoerstellung in einem verschlüsselten Bucket, nie geteilt oder für KI-Training verwendet."
+      "notice": "Privat auf deinem Gerät gespeichert und bei Kontoerstellung in einem verschlüsselten Bucket, nie geteilt oder für KI-Training verwendet.",
+      "bullet1": "Fotos bleiben standardmäßig auf Ihrem Gerät.",
+      "bullet2": "Optionale verschlüsselte Cloud-Sicherung.",
+      "bullet3": "Wird nie zum Training einer KI verwendet. Nie.",
+      "understand": "Verstanden"
     },
     "ai": {
       "label": "2 VON 2, KI-ANALYSE",
@@ -311,7 +321,10 @@
       "on3": "Visuelle Änderungsnotiz",
       "accept": "KI-Analyse erlauben",
       "decline": "Nein danke, nur manuell",
-      "notice": "Fotos werden an einen KI-Dienst gesendet. Sie werden nie für Training verwendet. Analyse ist rein beobachtend, nie eine medizinische Aussage."
+      "notice": "Fotos werden an einen KI-Dienst gesendet. Sie werden nie für Training verwendet. Analyse ist rein beobachtend, nie eine medizinische Aussage.",
+      "toggleLabel": "KI-Analyse in der Cloud",
+      "toggleSub": "Foto-Drift + Erkenntnisse",
+      "continueButton": "Weiter"
     }
   },
   "privacy": {
@@ -526,7 +539,8 @@
     "createCustom": "Create"
   },
   "settings": {
-    "title": "Settings"
+    "title": "Settings",
+    "footer": "PEPIPROGRESS"
   },
   "logging": {
     "title": "Log",
@@ -542,7 +556,9 @@
     "detailedLog": "Detailed log",
     "dayCount": "Day {{count}}",
     "onTrack": "ON TRACK",
-    "pending": "PENDING"
+    "pending": "PENDING",
+    "todayLabel": "HEUTE",
+    "dayBadge": "TAG {{count}}"
   },
   "addCompound": {
     "title": "Add compound",
@@ -552,7 +568,8 @@
     "reconSuggestion": "Add {{water}} mL BAC water for {{conc}} mg/mL",
     "reconDraw": "Draw {{units}} units ({{volume}} mL) per dose",
     "logVial": "I have this vial on hand",
-    "reconHint": "Enter a dose and vial size for a reconstitution suggestion."
+    "reconHint": "Enter a dose and vial size for a reconstitution suggestion.",
+    "configure": "Konfigurieren"
   },
   "about": {
     "title": "About you",

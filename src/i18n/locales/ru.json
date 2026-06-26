@@ -12,7 +12,8 @@
     "retry": "Повторить",
     "errorNetwork": "Не удалось подключиться к сервису. Проверьте соединение.",
     "errorServer": "Что-то пошло не так. Попробуйте ещё раз.",
-    "back": "Back"
+    "back": "Back",
+    "loading": "Загрузка"
   },
   "home": {
     "title": "Добро пожаловать в PepiProgress",
@@ -67,7 +68,9 @@
       "title": "Отслеживать цикл?",
       "subtitle": "Необязательно. Отмечает недели обычной задержки воды, чтобы вы не приняли их за отсутствие прогресса. Можно изменить в любой момент.",
       "optIn": "Отслеживать мой цикл"
-    }
+    },
+    "intakeProcedure": "ПРОЦЕДУРА РЕГИСТРАЦИИ",
+    "beginSelected": "Начать · {{count}} выбр."
   },
   "fields": {
     "weight": "Вес",
@@ -129,7 +132,10 @@
     "sugSleep": "slept well",
     "sugEnergy": "energy 4",
     "sugWeight": "weight",
-    "sugDose": "took my dose"
+    "sugDose": "took my dose",
+    "parseApply": "Разобрать + применить",
+    "confirm": "Подтвердить",
+    "reviewLabel": "Обнаружено"
   },
   "photos": {
     "title": "Фото прогресса",
@@ -295,7 +301,11 @@
       "on3": "Сравнение перетаскиванием",
       "accept": "Разрешить хранение",
       "decline": "Нет спасибо, пропустить фото",
-      "notice": "Хранятся конфиденциально на вашем устройстве и, при создании аккаунта, в зашифрованном хранилище, никогда не передаются и не используются для обучения ИИ."
+      "notice": "Хранятся конфиденциально на вашем устройстве и, при создании аккаунта, в зашифрованном хранилище, никогда не передаются и не используются для обучения ИИ.",
+      "bullet1": "Фото остаются на вашем устройстве по умолчанию.",
+      "bullet2": "Необязательное зашифрованное облачное резервирование.",
+      "bullet3": "Никогда не используется для обучения ИИ. Никогда.",
+      "understand": "Понятно"
     },
     "ai": {
       "label": "2 ИЗ 2, АНАЛИЗ ИИ",
@@ -311,7 +321,10 @@
       "on3": "Визуальная заметка об изменении",
       "accept": "Разрешить анализ ИИ",
       "decline": "Нет спасибо, только вручную",
-      "notice": "Фото отправляются в сервис ИИ. Никогда не используются для обучения моделей. Анализ только наблюдательный, никогда не является медицинским заявлением."
+      "notice": "Фото отправляются в сервис ИИ. Никогда не используются для обучения моделей. Анализ только наблюдательный, никогда не является медицинским заявлением.",
+      "toggleLabel": "Облачный анализ ИИ",
+      "toggleSub": "Дрейф фото + аналитика",
+      "continueButton": "Продолжить"
     }
   },
   "privacy": {
@@ -526,7 +539,8 @@
     "createCustom": "Create"
   },
   "settings": {
-    "title": "Settings"
+    "title": "Settings",
+    "footer": "PEPIPROGRESS"
   },
   "logging": {
     "title": "Log",
@@ -542,7 +556,9 @@
     "detailedLog": "Detailed log",
     "dayCount": "Day {{count}}",
     "onTrack": "ON TRACK",
-    "pending": "PENDING"
+    "pending": "PENDING",
+    "todayLabel": "СЕГОДНЯ",
+    "dayBadge": "ДЕНЬ {{count}}"
   },
   "addCompound": {
     "title": "Add compound",
@@ -552,7 +568,8 @@
     "reconSuggestion": "Add {{water}} mL BAC water for {{conc}} mg/mL",
     "reconDraw": "Draw {{units}} units ({{volume}} mL) per dose",
     "logVial": "I have this vial on hand",
-    "reconHint": "Enter a dose and vial size for a reconstitution suggestion."
+    "reconHint": "Enter a dose and vial size for a reconstitution suggestion.",
+    "configure": "Настроить"
   },
   "about": {
     "title": "About you",

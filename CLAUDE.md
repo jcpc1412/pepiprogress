@@ -81,6 +81,19 @@ A daily peptide-tracking journal that turns subjective check-ins + consistent ph
 4. **What surfaces in the log = goals ∪ compound effect-tags ∪ monitoring-tags** — no personas (02/08).
 5. **Never gate data INPUT (logging/integrations/contribution); gate OUTPUT/scale** (12).
 
+## Localisation rule (non-negotiable — same weight as no-hardcoded-string lint)
+**Every user-visible string goes through `t()` — no exceptions.** This includes:
+- Button labels, placeholder text, accessibility labels (`accessibilityLabel`, `accessibilityHint`)
+- Error messages, toast copy, status pill labels passed as computed strings
+- Any string literal that a user could read on screen
+
+Patterns that violate this rule:
+- `accessibilityLabel="Loading"` — must be `accessibilityLabel={t('common.loading')}`
+- `label="Sign in"` — must be `label={t('auth.signIn')}`
+- Concatenating translated + hardcoded fragments: `t('foo') + ' items'` — add the suffix to the i18n key
+
+When adding a new i18n key, add it to **all 6 locale files** (`en`, `es`, `fr`, `de`, `pt`, `ru`) in the same commit. Use the propagation script pattern in `scripts/check-i18n-keys.mjs` to verify parity before committing. Machine-translate non-EN values (flag them with a comment or prefix if human review is needed later).
+
 ## Working style (important)
 - **Do not leave "Open questions" parking lots in plans/specs.** Drive every decision to a resolution — either ask, or state a sensible default as a decision. (Standing preference.)
 - Decisions are *locked* in the spec; don't silently relitigate them. If something needs changing, flag it and update the spec to match.
