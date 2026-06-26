@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
-import { LabeledInput, PrimaryButton, ScaleSelector, TextButton } from '@/components/form';
+import { LabeledInput, OptionChip, PrimaryButton, ScaleSelector, TextButton } from '@/components/form';
 import { Sunken } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
@@ -226,6 +226,26 @@ export function QuickLog({ seedPrompt }: { seedPrompt?: 'macros' } = {}) {
       <ThemedText type="small" themeColor="textSecondary">
         {t('quicklog.voiceHint')}
       </ThemedText>
+
+      {/* Quick-add suggestion chips — append to the input (handoff §6). */}
+      <View style={styles.suggestions}>
+        {(
+          [
+            ['quicklog.sugSleep', t('quicklog.sugSleep')],
+            ['quicklog.sugEnergy', t('quicklog.sugEnergy')],
+            ['quicklog.sugWeight', t('quicklog.sugWeight')],
+            ['quicklog.sugDose', t('quicklog.sugDose')],
+          ] as const
+        ).map(([key, label]) => (
+          <OptionChip
+            key={key}
+            label={label}
+            selected={false}
+            onPress={() => setText((cur) => (cur.trim() ? `${cur.trim()}, ${label}` : label))}
+          />
+        ))}
+      </View>
+
       <PrimaryButton
         label={busy ? t('quicklog.sending') : t('quicklog.send')}
         onPress={submit}
@@ -345,4 +365,5 @@ const styles = StyleSheet.create({
   },
   pending: { gap: Spacing.two },
   pendingActions: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  suggestions: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
 });

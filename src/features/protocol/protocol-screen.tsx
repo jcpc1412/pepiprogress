@@ -5,13 +5,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { LabeledInput, PrimaryButton, SingleSelectChips } from '@/components/form';
 import { GearIcon } from '@/components/icons';
+import { StatusPill } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { COMPOUND_CATALOG, compoundBySlug } from '@/data/compound-catalog';
+import { useTheme } from '@/hooks/use-theme';
 import { InventorySummary } from '@/features/protocol/inventory-summary';
 import { daysBetween } from '@/lib/dates';
-import { EXPIRY_SOON_DAYS } from '@/lib/inventory';
+import { EXPIRY_SOON_DAYS, inventoryAttention } from '@/lib/inventory';
 import { useOverlay } from '@/lib/nav-overlay';
 import { roundTo } from '@/lib/reconstitution';
 import {
@@ -27,6 +29,25 @@ const INV_KINDS = Constants.public.Enums.inventory_kind;
 
 function name(slug: string | undefined): string {
   return (slug && compoundBySlug(slug)?.canonicalName) || slug || '';
+}
+
+type Stock = { labelKey: 'inventory.lowStock' | 'inventory.expired' | 'inventory.expiringSoon' | 'inventory.ok'; tone: 'good' | 'bad' | 'neutral'; pct: number | null };
+
+/** Stock status + depletion fraction for a linked vial (handoff §4). */
+function vialStatus(vial: InventoryItem): Stock {
+  const today = localDateKey();
+  const low = vial.amountRemaining != null && vial.lowThreshold != null && vial.amountRemaining <= vial.lowThreshold;
+  const expDays = vial.expiry ? daysBetween(today, vial.expiry) : null;
+  const expired = expDays != null && expDays < 0;
+  const expiringSoon = expDays != null && expDays >= 0 && expDays <= EXPIRY_SOON_DAYS;
+  const pct =
+    vial.amountInitial && vial.amountRemaining != null
+      ? Math.max(0, Math.min(1, vial.amountRemaining / vial.amountInitial))
+      : null;
+  if (expired) return { labelKey: 'inventory.expired', tone: 'bad', pct };
+  if (low) return { labelKey: 'inventory.lowStock', tone: 'bad', pct };
+  if (expiringSoon) return { labelKey: 'inventory.expiringSoon', tone: 'neutral', pct };
+  return { labelKey: 'inventory.ok', tone: 'good', pct };
 }
 
 export function ProtocolScreen() {
@@ -51,11 +72,29 @@ export function ProtocolScreen() {
     return map;
   }, [doseEvents]);
 
+  // Linked vial per compound (for per-item stock status + depletion bar).
+  const vialByCompound = useMemo(() => {
+    const map: Record<string, InventoryItem> = {};
+    for (const i of inventory) {
+      if (i.kind === 'vial' && i.compoundSlug && !map[i.compoundSlug]) map[i.compoundSlug] = i;
+    }
+    return map;
+  }, [inventory]);
+
+  const flaggedCount = useMemo(() => inventoryAttention(inventory).length, [inventory]);
+
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safe} edges={['top']}>
         <View style={styles.header}>
-          <ThemedText type="display">{t('protocol.title')}</ThemedText>
+          <View>
+            <ThemedText type="display">{t('protocol.title')}</ThemedText>
+            {flaggedCount > 0 && (
+              <ThemedText type="monoSm" themeColor="signalBad">
+                {t('protocol.flaggedCount', { count: flaggedCount }).toUpperCase()}
+              </ThemedText>
+            )}
+          </View>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={t('settings.title')}
@@ -83,6 +122,7 @@ export function ProtocolScreen() {
                 <ProtocolRow
                   key={item.id}
                   item={item}
+                  vial={item.compoundSlug ? vialByCompound[item.compoundSlug] : undefined}
                   lastSite={lastSiteByItem[item.id]}
                   onLog={(site) =>
                     logDose({
@@ -155,22 +195,28 @@ export function ProtocolScreen() {
 
 function ProtocolRow({
   item,
+  vial,
   lastSite,
   onLog,
   onRemove,
 }: {
   item: ProtocolItem;
+  vial?: InventoryItem;
   lastSite?: string;
   onLog: (site?: string) => void;
   onRemove: () => void;
 }) {
   const { t } = useTranslation();
+  const theme = useTheme();
   const [site, setSite] = useState('');
   const parts = [
     item.dose ? `${item.dose}${item.doseUnit ?? ''}` : null,
     item.route ? t(`routes.${item.route}` as const) : null,
     item.frequency ? t(`frequencies.${item.frequency}` as const) : null,
   ].filter(Boolean);
+
+  // Stock status + depletion from the linked vial (handoff §4).
+  const stock = vial ? vialStatus(vial) : null;
 
   const log = () => {
     onLog(site.trim() || undefined);
@@ -181,7 +227,10 @@ function ProtocolRow({
     <View style={styles.itemCard}>
       <View style={styles.row}>
         <View style={styles.rowText}>
-          <ThemedText type="smallBold">{name(item.compoundSlug)}</ThemedText>
+          <View style={styles.nameRow}>
+            <ThemedText type="smallBold">{name(item.compoundSlug)}</ThemedText>
+            {stock && <StatusPill label={t(stock.labelKey)} tone={stock.tone} />}
+          </View>
           {parts.length > 0 && (
             <ThemedText type="small" themeColor="textSecondary">
               {parts.join(' · ')}
@@ -199,6 +248,17 @@ function ProtocolRow({
           </ThemedText>
         </Pressable>
       </View>
+
+      {stock?.pct != null && (
+        <View style={[styles.depTrack, { backgroundColor: theme.surfaceSunken }]}>
+          <View
+            style={[
+              styles.depFill,
+              { width: `${stock.pct * 100}%`, backgroundColor: stock.tone === 'bad' ? theme.signalBad : theme.numeral },
+            ]}
+          />
+        </View>
+      )}
       <View style={styles.logRow}>
         <View style={styles.siteInput}>
           <LabeledInput
@@ -371,6 +431,9 @@ const styles = StyleSheet.create({
   itemCard: { gap: Spacing.two },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.two },
   rowText: { flex: 1, gap: Spacing.half },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
+  depTrack: { height: 4, borderRadius: 2, overflow: 'hidden' },
+  depFill: { height: 4, borderRadius: 2 },
   logRow: { flexDirection: 'row', alignItems: 'flex-end', gap: Spacing.two },
   siteInput: { flex: 1 },
   logButton: { width: 120 },

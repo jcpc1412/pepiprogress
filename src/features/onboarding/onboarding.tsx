@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { OptionChip, PrimaryButton } from '@/components/form';
+import { ChamferBox } from '@/components/chamfer';
+import { PrimaryButton } from '@/components/form';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { MaxContentWidth, Radii, Spacing } from '@/constants/theme';
+import { Chamfer, MaxContentWidth, Radii, Spacing } from '@/constants/theme';
 import { BodySilhouette } from '@/features/onboarding/body-silhouette';
 import { useTheme } from '@/hooks/use-theme';
 import type { Goal } from '@/lib/field-surfacing';
@@ -109,11 +110,11 @@ export function Onboarding() {
 
         <BodySilhouette goals={profile.goals} />
 
-        <View style={styles.chips}>
+        <View style={styles.goalGrid}>
           {GOALS.map((g) => (
-            <OptionChip
+            <GoalChip
               key={g}
-              label={t(`goals.${g}` as const)}
+              goal={g}
               selected={profile.goals.includes(g)}
               onPress={() => setProfile({ goals: toggle<Goal>(profile.goals, g) })}
             />
@@ -139,6 +140,29 @@ export function Onboarding() {
         </View>
       </View>
     </Frame>
+  );
+}
+
+/** Goal chip with a small mono category label above the name (handoff step 4). */
+function GoalChip({ goal, selected, onPress }: { goal: Goal; selected: boolean; onPress: () => void }) {
+  const { t } = useTranslation();
+  const theme = useTheme();
+  return (
+    <Pressable accessibilityRole="button" accessibilityState={{ selected }} onPress={onPress} style={styles.goalChipWrap}>
+      <ChamferBox
+        chamfer={Chamfer.chip}
+        fill={selected ? theme.accent : theme.surfaceSunken}
+        borderColor={selected ? undefined : theme.border}>
+        <View style={styles.goalChip}>
+          <ThemedText type="label" themeColor={selected ? 'onAccent' : 'textMuted'}>
+            {t(`goalCat.${goal}` as 'goalCat.weight_loss')}
+          </ThemedText>
+          <ThemedText type="smallBold" themeColor={selected ? 'onAccent' : 'text'}>
+            {t(`goals.${goal}` as 'goals.weight_loss')}
+          </ThemedText>
+        </View>
+      </ChamferBox>
+    </Pressable>
   );
 }
 
@@ -181,6 +205,9 @@ const styles = StyleSheet.create({
   progressSeg: { flex: 1, height: 3, borderRadius: Radii.chamfer, borderWidth: StyleSheet.hairlineWidth },
   section: { gap: Spacing.three },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
+  goalGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
+  goalChipWrap: { width: '48%' },
+  goalChip: { paddingVertical: Spacing.two, paddingHorizontal: Spacing.three, gap: Spacing.half },
   footer: { flexDirection: 'row', gap: Spacing.two, paddingBottom: Spacing.two },
   backButton: { flex: 1 },
   nextButton: { flex: 2 },
