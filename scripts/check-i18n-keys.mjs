@@ -15,6 +15,15 @@ function flatten(obj, prefix = '') {
   });
 }
 
+// Collect every string value (O-06: em dashes are banned in user-facing copy).
+function flattenValues(obj, out = []) {
+  for (const v of Object.values(obj)) {
+    if (v && typeof v === 'object') flattenValues(v, out);
+    else if (typeof v === 'string') out.push(v);
+  }
+  return out;
+}
+
 const load = (file) => JSON.parse(readFileSync(join(localesDir, file), 'utf8'));
 const files = readdirSync(localesDir).filter((f) => f.endsWith('.json'));
 const baseKeys = new Set(flatten(load(`${BASE}.json`)));
@@ -22,6 +31,12 @@ const baseKeys = new Set(flatten(load(`${BASE}.json`)));
 let failed = false;
 for (const file of files) {
   const lang = file.replace('.json', '');
+  const emDashes = flattenValues(load(file)).filter((s) => s.includes('—'));
+  if (emDashes.length) {
+    failed = true;
+    console.error(`✗ ${lang}: ${emDashes.length} string(s) contain an em dash (—)`);
+    emDashes.forEach((s) => console.error(`    em dash: ${s}`));
+  }
   if (lang === BASE) continue;
   const keys = new Set(flatten(load(file)));
   const missing = [...baseKeys].filter((k) => !keys.has(k));

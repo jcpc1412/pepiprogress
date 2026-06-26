@@ -2,11 +2,17 @@ import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, TextInput, View } from 'react-native';
 
-import { PrimaryButton } from '@/components/form';
+import { OptionChip, PrimaryButton } from '@/components/form';
 import { EngravedLabel } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
 import { Radii, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { localDateKey, useStore, type Sex, type UnitsSystem } from '@/lib/store';
+import { Constants } from '@/types/database';
+
+const UNITS = Constants.public.Enums.units_system;
+const SEXES: Sex[] = ['male', 'female', 'ftm', 'mtf'];
+const CYCLE_SEXES: Sex[] = ['female', 'ftm'];
 
 function isAtLeast18(day: number, month: number, year: number): boolean {
   const today = new Date();
@@ -24,12 +30,13 @@ function isValidDate(day: number, month: number, year: number): boolean {
 }
 
 /**
- * Step 0 of onboarding: neutral DOB gate (spec 11).
- * Stores the DOB + isAgeVerified flag; blocks under-18s.
+ * "About you" — consolidated first step (O-02/O-03): 18+ DOB gate plus sex,
+ * units, and an optional cycle opt-in (shown only for those who menstruate).
  */
 export function AgeGate({ onVerified }: { onVerified: (dobISO: string) => void }) {
   const { t } = useTranslation();
   const theme = useTheme();
+  const { profile, setProfile } = useStore();
 
   const [day, setDay] = useState('');
   const [month, setMonth] = useState('');
@@ -44,11 +51,14 @@ export function AgeGate({ onVerified }: { onVerified: (dobISO: string) => void }
     { borderColor: theme.border, backgroundColor: theme.surfaceSunken, color: theme.numeral },
   ];
 
+  const cycleOn = !!profile.lastPeriodDate;
+  const showCycle = !!profile.sex && CYCLE_SEXES.includes(profile.sex);
+  const canSubmit = day.length >= 1 && month.length >= 1 && year.length === 4 && !!profile.sex;
+
   const submit = () => {
     const d = parseInt(day, 10);
     const m = parseInt(month, 10);
     const y = parseInt(year, 10);
-
     if (!isValidDate(d, m, y)) {
       setError(t('ageGate.errorInvalid'));
       return;
@@ -58,14 +68,13 @@ export function AgeGate({ onVerified }: { onVerified: (dobISO: string) => void }
       return;
     }
     setError(null);
-    const dob = new Date(y, m - 1, d).toISOString();
-    onVerified(dob);
+    onVerified(new Date(y, m - 1, d).toISOString());
   };
 
   return (
     <View style={styles.wrap}>
       <EngravedLabel>{t('ageGate.label')}</EngravedLabel>
-      <ThemedText type="display">{t('ageGate.title')}</ThemedText>
+      <ThemedText type="display">{t('about.title')}</ThemedText>
       <ThemedText type="body" themeColor="textSecondary">
         {t('ageGate.subtitle')}
       </ThemedText>
@@ -85,7 +94,6 @@ export function AgeGate({ onVerified }: { onVerified: (dobISO: string) => void }
             keyboardType="number-pad"
             maxLength={2}
             returnKeyType="next"
-            onSubmitEditing={() => monthRef.current?.focus()}
           />
         </View>
         <View style={styles.fieldMonth}>
@@ -103,7 +111,6 @@ export function AgeGate({ onVerified }: { onVerified: (dobISO: string) => void }
             keyboardType="number-pad"
             maxLength={2}
             returnKeyType="next"
-            onSubmitEditing={() => yearRef.current?.focus()}
           />
         </View>
         <View style={styles.fieldYear}>
@@ -118,10 +125,55 @@ export function AgeGate({ onVerified }: { onVerified: (dobISO: string) => void }
             keyboardType="number-pad"
             maxLength={4}
             returnKeyType="done"
-            onSubmitEditing={submit}
           />
         </View>
       </View>
+
+      {/* Sex (drives cycle relevance + AI change context) */}
+      <EngravedLabel>{t('about.sex')}</EngravedLabel>
+      <View style={styles.chips}>
+        {SEXES.map((s) => (
+          <OptionChip
+            key={s}
+            label={t(`sex.${s}` as const)}
+            selected={profile.sex === s}
+            onPress={() => setProfile({ sex: s })}
+          />
+        ))}
+      </View>
+
+      {/* Units */}
+      <EngravedLabel>{t('onboarding.units.title')}</EngravedLabel>
+      <View style={styles.chips}>
+        {UNITS.map((u) => (
+          <OptionChip
+            key={u}
+            label={t(`units.${u}` as const)}
+            selected={profile.units === u}
+            onPress={() => setProfile({ units: u as UnitsSystem })}
+          />
+        ))}
+      </View>
+
+      {/* Cycle opt-in (menstruating users only) */}
+      {showCycle && (
+        <>
+          <EngravedLabel>{t('onboarding.cycle.title')}</EngravedLabel>
+          <View style={styles.chips}>
+            <OptionChip
+              label={t('onboarding.cycle.optIn')}
+              selected={cycleOn}
+              onPress={() =>
+                setProfile(
+                  cycleOn
+                    ? { lastPeriodDate: undefined, cycleLength: undefined }
+                    : { lastPeriodDate: localDateKey(), cycleLength: 28 },
+                )
+              }
+            />
+          </View>
+        </>
+      )}
 
       {error ? (
         <ThemedText type="monoSm" themeColor="signalBad">
@@ -129,11 +181,7 @@ export function AgeGate({ onVerified }: { onVerified: (dobISO: string) => void }
         </ThemedText>
       ) : null}
 
-      <PrimaryButton
-        label={t('ageGate.confirm')}
-        onPress={submit}
-        disabled={day.length < 1 || month.length < 1 || year.length < 4}
-      />
+      <PrimaryButton label={t('ageGate.confirm')} onPress={submit} disabled={!canSubmit} />
 
       <ThemedText type="monoSm" themeColor="textMuted" style={styles.disclaimer}>
         {t('ageGate.whyWeAsk')}
@@ -148,6 +196,7 @@ const styles = StyleSheet.create({
   fieldDay: { flex: 1 },
   fieldMonth: { flex: 1 },
   fieldYear: { flex: 2 },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
   input: {
     height: 48,
     borderWidth: StyleSheet.hairlineWidth,

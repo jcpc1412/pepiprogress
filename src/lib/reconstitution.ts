@@ -53,3 +53,59 @@ export function roundTo(value: number, decimals: number): number {
   const f = 10 ** decimals;
   return Math.round(value * f) / f;
 }
+
+export type ReconSuggestion = {
+  /** BAC water to add, mL. */
+  waterMl: number;
+  concentrationMgPerMl: number;
+  /** Volume drawn per dose, mL. */
+  perDoseVolumeMl: number;
+  /** Same, in U-100 syringe units. */
+  perDoseUnits: number;
+};
+
+/**
+ * Auto-suggest a reconstitution that makes each dose a round, comfortable draw
+ * (P-03). Targets a clean units-per-dose in [10,50] and derives the water from
+ * it: water = unitsPerDose × dosesPerVial / 100. Worked example: 30 mg vial,
+ * 3 mg dose → 10 doses → 30 units → 3 mL → 10 mg/mL.
+ *
+ * `doseMg`/`vialMg` are in mg. Returns null only for non-positive inputs.
+ */
+export function suggestReconstitution(vialMg: number, doseMg: number): ReconSuggestion | null {
+  if (!(vialMg > 0) || !(doseMg > 0) || doseMg > vialMg) return null;
+
+  const dosesPerVial = vialMg / doseMg;
+  // Comfortable, round units-per-dose in preference order.
+  const candidates = [25, 30, 20, 40, 50, 15, 35, 45, 10];
+
+  const make = (units: number): ReconSuggestion => {
+    const waterMl = (units * dosesPerVial) / 100;
+    const concentrationMgPerMl = vialMg / waterMl;
+    return {
+      waterMl: roundTo(waterMl, 2),
+      concentrationMgPerMl: roundTo(concentrationMgPerMl, 2),
+      perDoseVolumeMl: roundTo(units / UNITS_PER_ML, 3),
+      perDoseUnits: units,
+    };
+  };
+
+  const inRange = candidates
+    .map((u) => ({ u, water: (u * dosesPerVial) / 100 }))
+    .filter(({ water }) => water >= 0.5 && water <= 5);
+
+  if (inRange.length === 0) {
+    // Extreme ratio — fall back to a fixed 1 mg/mL concentration; never show nothing.
+    const waterMl = vialMg / 1;
+    return {
+      waterMl: roundTo(waterMl, 2),
+      concentrationMgPerMl: 1,
+      perDoseVolumeMl: roundTo(doseMg / 1, 3),
+      perDoseUnits: roundTo((doseMg / 1) * UNITS_PER_ML, 1),
+    };
+  }
+
+  // Prefer a candidate whose water lands on a 0.5 mL grid; else the first in-range.
+  const onGrid = inRange.find(({ water }) => Math.abs(water * 2 - Math.round(water * 2)) < 1e-9);
+  return make((onGrid ?? inRange[0]).u);
+}

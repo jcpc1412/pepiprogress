@@ -23,24 +23,24 @@ import { Platform } from 'react-native';
 export const Colors = {
   // ── DAYLIGHT ──────────────────────────────────────────────────────────────
   light: {
-    // legacy (mapped)
+    // legacy (mapped) — kept in sync with the semantic tokens below (D-01)
     text: '#1A1918',
-    background: '#F0EFEC',
-    backgroundElement: '#E6E4E0', // raised surface
-    backgroundSelected: '#DDDCD8', // sunken surface
-    textSecondary: '#6E6B67',
+    background: '#EDEBE7',
+    backgroundElement: '#FBFAF8', // raised surface — now lighter than bg so cards lift
+    backgroundSelected: '#DBD9D4', // sunken surface — darker than bg so wells recede
+    textSecondary: '#5A5752', // ~5.7:1 (AA)
 
-    // semantic
-    textMuted: '#817D78', // ~3.4:1 on background — quiet but legible (was #9A9590 ≈ 2.5:1, sub-AA)
-    label: '#88847F', // engraved panel labels — faintest legible tier (~3.1:1; ornament, not data)
-    surfaceRaised: '#E6E4E0',
-    surfaceSunken: '#DDDCD8',
+    // semantic (D-01 contrast pass)
+    textMuted: '#66625D', // ~4.7:1 on background — AA body
+    label: '#6E6A65', // engraved panel labels — ~4:1 (large/label tier)
+    surfaceRaised: '#FBFAF8', // lighter than bg → embossed card
+    surfaceSunken: '#DBD9D4', // darker than bg → inset well
     numeral: '#3A3834', // primary metric ink
-    border: 'rgba(0,0,0,0.10)', // carved groove — shadow side
-    borderHighlight: 'rgba(255,255,255,0.70)', // carved groove — lit side
+    border: 'rgba(0,0,0,0.14)', // carved groove — shadow side (deepened)
+    borderHighlight: 'rgba(255,255,255,0.85)', // carved groove — lit side
     engrave: 'rgba(255,255,255,0.85)', // label text-shadow (lit edge below)
     accent: '#2A2825', // solid control / selected
-    onAccent: '#F0EFEC',
+    onAccent: '#FBFAF8',
     structure: 'rgba(26,25,24,0.05)', // faint diagonal lattice lines
 
     // signal — ONLY for data semantics (deltas, status)
@@ -51,20 +51,20 @@ export const Colors = {
   },
   // ── AT NIGHT ──────────────────────────────────────────────────────────────
   dark: {
-    // legacy (mapped)
-    text: '#D4D1CB',
-    background: '#131210',
-    backgroundElement: '#1D1C1A',
-    backgroundSelected: '#0F0E0D',
-    textSecondary: '#7A7671',
+    // legacy (mapped) — kept in sync with the semantic tokens below (D-01)
+    text: '#E4E1DB', // more pop
+    background: '#121110',
+    backgroundElement: '#232220', // raised surface — lifts above bg
+    backgroundSelected: '#0C0B0A', // sunken well — recedes
+    textSecondary: '#9C9892', // ~6.4:1
 
-    // semantic
-    textMuted: '#6A6661', // ~3.3:1 on background — quiet but legible (was #4E4B47 ≈ 2.2:1, sub-AA)
-    label: '#65615C', // engraved panel labels — faintest legible tier (~3.2:1; ornament, not data)
-    surfaceRaised: '#1D1C1A',
-    surfaceSunken: '#0F0E0D',
+    // semantic (D-01 contrast pass)
+    textMuted: '#837F79', // ~4.8:1 on background — AA body
+    label: '#787470', // engraved panel labels — ~4:1
+    surfaceRaised: '#232220',
+    surfaceSunken: '#0C0B0A',
     numeral: '#B0ACA6',
-    border: 'rgba(255,255,255,0.07)',
+    border: 'rgba(255,255,255,0.10)', // deepened groove
     borderHighlight: 'rgba(0,0,0,0.50)',
     engrave: 'rgba(0,0,0,0.60)',
     accent: '#E8E5DF',

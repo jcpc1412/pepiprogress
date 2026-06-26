@@ -11,7 +11,8 @@
     "done": "Готово",
     "retry": "Повторить",
     "errorNetwork": "Не удалось подключиться к сервису. Проверьте соединение.",
-    "errorServer": "Что-то пошло не так. Попробуйте ещё раз."
+    "errorServer": "Что-то пошло не так. Попробуйте ещё раз.",
+    "back": "Back"
   },
   "home": {
     "title": "Добро пожаловать в PepiProgress",
@@ -54,13 +55,13 @@
     },
     "goals": {
       "title": "Каковы ваши цели?",
-      "subtitle": "Выберите подходящие — они определяют, что вы отслеживаете.",
+      "subtitle": "Выберите подходящие, они определяют, что вы отслеживаете.",
       "required": "Выберите хотя бы одну, чтобы продолжить"
     },
     "compounds": {
       "title": "Что вы принимаете?",
       "subtitle": "Выберите препараты. Это настроит ваш ежедневный чек-ин.",
-      "note": "Доза, способ и частота — далее, скоро."
+      "note": "Доза, способ и частота, далее, скоро."
     },
     "cycle": {
       "title": "Отслеживать цикл?",
@@ -122,7 +123,8 @@
     "nothing": "Из этого нечего записать.",
     "voiceHint": "Совет: нажмите микрофон на клавиатуре, чтобы говорить вместо набора.",
     "undo": "Отменить",
-    "addedCount": "Добавлено: {{count}}"
+    "addedCount": "Добавлено: {{count}}",
+    "macroSeed": "How much protein and calories did you have today?"
   },
   "photos": {
     "title": "Фото прогресса",
@@ -136,7 +138,7 @@
     "retake": "Переснять",
     "save": "Сохранить",
     "enableCamera": "Включить камеру",
-    "permission": "Доступ к камере позволяет делать единообразные фото прогресса — хранятся приватно, только для вас.",
+    "permission": "Доступ к камере позволяет делать единообразные фото прогресса, хранятся приватно, только для вас.",
     "ghostHint": "Совместите себя с бледным ориентиром.",
     "empty": "Фото пока нет. Сделайте первое, чтобы начать хронологию.",
     "baseline": "База",
@@ -197,7 +199,9 @@
     "sitePlaceholder": "напр. левая дельта",
     "lastSite": "Последнее: {{site}}",
     "dosesTitle": "Недавние дозы",
-    "dosesEmpty": "Доз пока нет."
+    "dosesEmpty": "Доз пока нет.",
+    "addCompound": "Add compound",
+    "addFirstPrompt": "Add your first compound to start tracking doses and inventory."
   },
   "inventory": {
     "title": "Запасы",
@@ -217,7 +221,9 @@
     "lowStock": "Мало запаса",
     "expired": "Просрочено",
     "expiringSoon": "Скоро истекает",
-    "consumable": "Расходник"
+    "consumable": "Расходник",
+    "summaryTitle": "Inventory",
+    "ok": "OK"
   },
   "inventoryKinds": {
     "vial": "Флакон",
@@ -270,7 +276,7 @@
   },
   "consent": {
     "storage": {
-      "label": "1 ИЗ 2 — ХРАНЕНИЕ ФОТО",
+      "label": "1 ИЗ 2, ХРАНЕНИЕ ФОТО",
       "title": "Хранить фото прогресса",
       "body": "Фотографии должны храниться для работы наложения-призрака и временной шкалы. По умолчанию они приватны.",
       "offTitle": "Без хранения",
@@ -283,10 +289,10 @@
       "on3": "Сравнение перетаскиванием",
       "accept": "Разрешить хранение",
       "decline": "Нет спасибо, пропустить фото",
-      "notice": "Хранятся конфиденциально на вашем устройстве и, при создании аккаунта, в зашифрованном хранилище — никогда не передаются и не используются для обучения ИИ."
+      "notice": "Хранятся конфиденциально на вашем устройстве и, при создании аккаунта, в зашифрованном хранилище, никогда не передаются и не используются для обучения ИИ."
     },
     "ai": {
-      "label": "2 ИЗ 2 — АНАЛИЗ ИИ",
+      "label": "2 ИЗ 2, АНАЛИЗ ИИ",
       "title": "Анализ фото с помощью ИИ",
       "body": "Наш ИИ сравнивает последовательные фотографии по освещению, углу и кадрированию. Никогда не ставит диагноз.",
       "offTitle": "Без ИИ",
@@ -299,7 +305,7 @@
       "on3": "Визуальная заметка об изменении",
       "accept": "Разрешить анализ ИИ",
       "decline": "Нет спасибо, только вручную",
-      "notice": "Фото отправляются в сервис ИИ. Никогда не используются для обучения моделей. Анализ только наблюдательный — никогда не является медицинским заявлением."
+      "notice": "Фото отправляются в сервис ИИ. Никогда не используются для обучения моделей. Анализ только наблюдательный, никогда не является медицинским заявлением."
     }
   },
   "privacy": {
@@ -373,7 +379,10 @@
     "inventoryBody_one": "{{count}} позиция заканчивается или скоро истекает.",
     "inventoryBody_other": "{{count}} позиций заканчиваются или скоро истекают.",
     "photoTitle": "Время для фото прогресса",
-    "photoBody": "Готово новое сравнение прогресса для съёмки."
+    "photoBody": "Готово новое сравнение прогресса для съёмки.",
+    "macros": "End-of-day macros",
+    "macroTitle": "Log your macros",
+    "macroBody": "How much protein and calories did you have today?"
   },
   "cycle": {
     "section": "ОТСЛЕЖИВАНИЕ ЦИКЛА",
@@ -423,7 +432,7 @@
     "migratedBody": "Ваши данные сохранены в облаке.",
     "restoredTitle": "Данные восстановлены",
     "restoredBody": "Ваши данные загружены на это устройство.",
-    "partialSync": "{{count}} элемент(ов) не удалось синхронизировать — локальные данные в безопасности.",
+    "partialSync": "{{count}} элемент(ов) не удалось синхронизировать, локальные данные в безопасности.",
     "errorMissingFields": "Пожалуйста, введите email и пароль."
   },
   "account": {
@@ -450,7 +459,9 @@
     "vialScan": "Сканировать этикетку флакона",
     "vialScanning": "Чтение этикетки…",
     "vialUnreadable": "Этикетка нечёткая. Сделайте фото ближе и при хорошем освещении.",
-    "vialResult": "{{compound}} — {{concentration}} mg/mL"
+    "vialResult": "{{compound}}, {{concentration}} mg/mL",
+    "uploadPdf": "Upload PDF",
+    "pdfSaved": "Saved {{name}}. PDF parsing is coming soon."
   },
   "drive": {
     "section": "РЕЗЕРВНАЯ КОПИЯ GOOGLE DRIVE",
@@ -488,5 +499,60 @@
     "syncing": "Синхронизация…",
     "synced": "Синхронизировано",
     "error": "Ошибка синхронизации"
+  },
+  "appearance": {
+    "section": "Appearance",
+    "light": "Light",
+    "dark": "Dark",
+    "auto": "Auto"
+  },
+  "compounds": {
+    "search": "Search compounds",
+    "searchPlaceholder": "Type a name",
+    "noResults": "No matches. Add it as a custom compound below.",
+    "addCustom": "Cannot find it? Add custom",
+    "customTitle": "Custom compound",
+    "customName": "Name",
+    "injectable": "Injectable",
+    "reconstituted": "Reconstituted powder",
+    "vialSizes": "Common vial sizes (mg)",
+    "vialSizesPlaceholder": "e.g. 5, 10",
+    "createCustom": "Create"
+  },
+  "settings": {
+    "title": "Settings"
+  },
+  "logging": {
+    "title": "Log",
+    "quick": "Quick",
+    "detailed": "Detailed"
+  },
+  "dashboard": {
+    "empty": "Log a few days or add a photo to see your progress here.",
+    "loggedToday": "Logged today",
+    "notLoggedToday": "Not logged yet today",
+    "dosesToday": "{{count}} doses logged today",
+    "quickLog": "Quick log",
+    "detailedLog": "Detailed log"
+  },
+  "addCompound": {
+    "title": "Add compound",
+    "reconTitle": "Reconstitution",
+    "vialMg": "Vial size (mg)",
+    "vialMgPlaceholder": "Vial strength in mg",
+    "reconSuggestion": "Add {{water}} mL BAC water for {{conc}} mg/mL",
+    "reconDraw": "Draw {{units}} units ({{volume}} mL) per dose",
+    "logVial": "I have this vial on hand",
+    "reconHint": "Enter a dose and vial size for a reconstitution suggestion."
+  },
+  "about": {
+    "title": "About you",
+    "sex": "Sex"
+  },
+  "sex": {
+    "male": "Male",
+    "female": "Female",
+    "ftm": "Trans masc (FTM)",
+    "mtf": "Trans fem (MTF)"
   }
 }

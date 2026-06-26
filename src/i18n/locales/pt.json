@@ -11,7 +11,8 @@
     "done": "Concluído",
     "retry": "Tentar de novo",
     "errorNetwork": "Não foi possível conectar ao serviço. Verifique sua conexão.",
-    "errorServer": "Algo deu errado. Tente novamente."
+    "errorServer": "Algo deu errado. Tente novamente.",
+    "back": "Back"
   },
   "home": {
     "title": "Bem-vindo ao PepiProgress",
@@ -54,13 +55,13 @@
     },
     "goals": {
       "title": "Quais são seus objetivos?",
-      "subtitle": "Escolha os que se aplicam — eles definem o que você registra.",
+      "subtitle": "Escolha os que se aplicam, eles definem o que você registra.",
       "required": "Escolha pelo menos um para continuar"
     },
     "compounds": {
       "title": "O que você está tomando?",
       "subtitle": "Selecione seus compostos. Isso personaliza seu check-in diário.",
-      "note": "Dose, via e frequência vêm a seguir — em breve."
+      "note": "Dose, via e frequência vêm a seguir, em breve."
     },
     "cycle": {
       "title": "Acompanhar seu ciclo?",
@@ -122,7 +123,8 @@
     "nothing": "Nada para registrar nisso.",
     "voiceHint": "Dica: toque no microfone do teclado para falar em vez de digitar.",
     "undo": "Desfazer",
-    "addedCount": "Adicionado {{count}}"
+    "addedCount": "Adicionado {{count}}",
+    "macroSeed": "How much protein and calories did you have today?"
   },
   "photos": {
     "title": "Fotos de progresso",
@@ -197,7 +199,9 @@
     "sitePlaceholder": "ex. deltoide esq.",
     "lastSite": "Último: {{site}}",
     "dosesTitle": "Doses recentes",
-    "dosesEmpty": "Nenhuma dose registrada ainda."
+    "dosesEmpty": "Nenhuma dose registrada ainda.",
+    "addCompound": "Add compound",
+    "addFirstPrompt": "Add your first compound to start tracking doses and inventory."
   },
   "inventory": {
     "title": "Estoque",
@@ -217,7 +221,9 @@
     "lowStock": "Estoque baixo",
     "expired": "Vencido",
     "expiringSoon": "Vence em breve",
-    "consumable": "Consumível"
+    "consumable": "Consumível",
+    "summaryTitle": "Inventory",
+    "ok": "OK"
   },
   "inventoryKinds": {
     "vial": "Frasco",
@@ -270,7 +276,7 @@
   },
   "consent": {
     "storage": {
-      "label": "1 DE 2 — ARMAZENAMENTO",
+      "label": "1 DE 2, ARMAZENAMENTO",
       "title": "Armazenar fotos de progresso",
       "body": "As fotos de progresso precisam ser armazenadas para que a sobreposição fantasma e a linha do tempo funcionem. São privadas por padrão.",
       "offTitle": "Sem armazenamento",
@@ -283,10 +289,10 @@
       "on3": "Comparação deslizante",
       "accept": "Permitir armazenamento",
       "decline": "Não obrigado, pular fotos",
-      "notice": "Armazenadas de forma privada no seu dispositivo e, ao criar uma conta, em um bucket criptografado — nunca compartilhadas ou usadas para treinar modelos de IA."
+      "notice": "Armazenadas de forma privada no seu dispositivo e, ao criar uma conta, em um bucket criptografado, nunca compartilhadas ou usadas para treinar modelos de IA."
     },
     "ai": {
-      "label": "2 DE 2 — ANÁLISE IA",
+      "label": "2 DE 2, ANÁLISE IA",
       "title": "Análise de fotos com IA",
       "body": "Nossa IA compara fotos consecutivas para consistência de iluminação, ângulo e enquadramento. Nunca diagnostica nada.",
       "offTitle": "Sem IA",
@@ -299,7 +305,7 @@
       "on3": "Nota de mudança visual",
       "accept": "Permitir análise IA",
       "decline": "Não obrigado, apenas manual",
-      "notice": "As fotos são enviadas a um serviço de IA. Nunca são usadas para treinar modelos. A análise é observacional — nunca uma afirmação médica."
+      "notice": "As fotos são enviadas a um serviço de IA. Nunca são usadas para treinar modelos. A análise é observacional, nunca uma afirmação médica."
     }
   },
   "privacy": {
@@ -373,7 +379,10 @@
     "inventoryBody_one": "{{count}} item está baixo ou perto de vencer.",
     "inventoryBody_other": "{{count}} itens estão baixos ou perto de vencer.",
     "photoTitle": "Hora da foto de progresso",
-    "photoBody": "Uma nova comparação de progresso está pronta para capturar."
+    "photoBody": "Uma nova comparação de progresso está pronta para capturar.",
+    "macros": "End-of-day macros",
+    "macroTitle": "Log your macros",
+    "macroBody": "How much protein and calories did you have today?"
   },
   "cycle": {
     "section": "CICLO MENSTRUAL",
@@ -423,7 +432,7 @@
     "migratedBody": "Seus dados foram salvos na nuvem.",
     "restoredTitle": "Dados restaurados",
     "restoredBody": "Seus dados foram carregados neste dispositivo.",
-    "partialSync": "{{count}} item(ns) não puderam sincronizar — seus dados locais estão seguros.",
+    "partialSync": "{{count}} item(ns) não puderam sincronizar, seus dados locais estão seguros.",
     "errorMissingFields": "Por favor, insira seu email e senha."
   },
   "account": {
@@ -450,7 +459,9 @@
     "vialScan": "Escanear rótulo do frasco",
     "vialScanning": "Lendo rótulo…",
     "vialUnreadable": "O rótulo está pouco claro. Tente uma foto mais próxima e bem iluminada.",
-    "vialResult": "{{compound}} — {{concentration}} mg/mL"
+    "vialResult": "{{compound}}, {{concentration}} mg/mL",
+    "uploadPdf": "Upload PDF",
+    "pdfSaved": "Saved {{name}}. PDF parsing is coming soon."
   },
   "drive": {
     "section": "BACKUP DO GOOGLE DRIVE",
@@ -488,5 +499,60 @@
     "syncing": "Sincronizando…",
     "synced": "Sincronizado",
     "error": "Falha na sincronização"
+  },
+  "appearance": {
+    "section": "Appearance",
+    "light": "Light",
+    "dark": "Dark",
+    "auto": "Auto"
+  },
+  "compounds": {
+    "search": "Search compounds",
+    "searchPlaceholder": "Type a name",
+    "noResults": "No matches. Add it as a custom compound below.",
+    "addCustom": "Cannot find it? Add custom",
+    "customTitle": "Custom compound",
+    "customName": "Name",
+    "injectable": "Injectable",
+    "reconstituted": "Reconstituted powder",
+    "vialSizes": "Common vial sizes (mg)",
+    "vialSizesPlaceholder": "e.g. 5, 10",
+    "createCustom": "Create"
+  },
+  "settings": {
+    "title": "Settings"
+  },
+  "logging": {
+    "title": "Log",
+    "quick": "Quick",
+    "detailed": "Detailed"
+  },
+  "dashboard": {
+    "empty": "Log a few days or add a photo to see your progress here.",
+    "loggedToday": "Logged today",
+    "notLoggedToday": "Not logged yet today",
+    "dosesToday": "{{count}} doses logged today",
+    "quickLog": "Quick log",
+    "detailedLog": "Detailed log"
+  },
+  "addCompound": {
+    "title": "Add compound",
+    "reconTitle": "Reconstitution",
+    "vialMg": "Vial size (mg)",
+    "vialMgPlaceholder": "Vial strength in mg",
+    "reconSuggestion": "Add {{water}} mL BAC water for {{conc}} mg/mL",
+    "reconDraw": "Draw {{units}} units ({{volume}} mL) per dose",
+    "logVial": "I have this vial on hand",
+    "reconHint": "Enter a dose and vial size for a reconstitution suggestion."
+  },
+  "about": {
+    "title": "About you",
+    "sex": "Sex"
+  },
+  "sex": {
+    "male": "Male",
+    "female": "Female",
+    "ftm": "Trans masc (FTM)",
+    "mtf": "Trans fem (MTF)"
   }
 }

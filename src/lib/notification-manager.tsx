@@ -28,7 +28,8 @@ export function NotificationManager() {
     !!profile.notifyCheckinEnabled ||
     !!profile.notifyDosesEnabled ||
     !!profile.notifyInventoryEnabled ||
-    !!profile.notifyPhotosEnabled;
+    !!profile.notifyPhotosEnabled ||
+    !!profile.notifyMacrosEnabled;
 
   // Reschedule whenever the inputs that shape the schedule change.
   const scheduleKey = JSON.stringify({
@@ -36,6 +37,8 @@ export function NotificationManager() {
     ct: profile.notifyCheckinTime,
     d: profile.notifyDosesEnabled,
     dt: profile.notifyDoseTime,
+    m: profile.notifyMacrosEnabled,
+    mt: profile.notifyMacroTime,
     p: profile.notifyPhotosEnabled,
     hp: protocolItems.length > 0,
     fe: profile.nextFaceEncouragementAt,

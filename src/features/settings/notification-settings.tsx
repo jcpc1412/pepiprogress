@@ -83,6 +83,21 @@ export function NotificationSettings() {
 
           <Divider />
           <ToggleRow
+            label={t('notify.macros')}
+            value={!!profile.notifyMacrosEnabled}
+            onChange={(v) => setProfile({ notifyMacrosEnabled: v })}
+          />
+          {profile.notifyMacrosEnabled && (
+            <LabeledInput
+              label={t('notify.time')}
+              placeholder="20:30"
+              value={profile.notifyMacroTime ?? '20:30'}
+              onChangeText={(v) => setProfile({ notifyMacroTime: v })}
+            />
+          )}
+
+          <Divider />
+          <ToggleRow
             label={t('notify.inventory')}
             value={!!profile.notifyInventoryEnabled}
             onChange={(v) => setProfile({ notifyInventoryEnabled: v })}

@@ -1,3 +1,4 @@
+import * as DocumentPicker from 'expo-document-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 import { useCallback, useState } from 'react';
@@ -36,6 +37,15 @@ export function LabImport() {
   const [scanning, setScanning] = useState(false);
   const [results, setResults] = useState<LabValue[] | null>(null);
   const [labDate, setLabDate] = useState<string | undefined>();
+  const [pdfName, setPdfName] = useState<string | undefined>();
+
+  // PDF upload (H-06). Parsing PDFs is deferred (AI task); we accept + retain the
+  // file now and surface a "parsing coming" acknowledgement.
+  const pickPdf = useCallback(async () => {
+    const res = await DocumentPicker.getDocumentAsync({ type: 'application/pdf', copyToCacheDirectory: true });
+    if (res.canceled || !res.assets?.[0]) return;
+    setPdfName(res.assets[0].name);
+  }, []);
 
   const pickAndScan = useCallback(async () => {
     const perm = await ImagePicker.requestCameraPermissionsAsync();
@@ -94,6 +104,13 @@ export function LabImport() {
         onPress={pickAndScan}
         disabled={scanning}
       />
+
+      <PrimaryButton label={t('lab.uploadPdf')} variant="secondary" onPress={pickPdf} />
+      {pdfName && (
+        <ThemedText type="monoSm" themeColor="textMuted">
+          {t('lab.pdfSaved', { name: pdfName })}
+        </ThemedText>
+      )}
 
       {results && results.length === 0 && (
         <ThemedText type="monoSm" themeColor="textMuted">{t('lab.empty')}</ThemedText>
