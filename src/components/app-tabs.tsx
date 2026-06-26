@@ -12,10 +12,11 @@ export default function AppTabs() {
   return (
     <NativeTabs
       backgroundColor={colors.background}
-      indicatorColor={colors.backgroundElement}
-      labelStyle={{ selected: { color: colors.text } }}>
+      indicatorColor={colors.surfaceSunken}
+      tintColor={colors.accent}
+      labelStyle={{ fontSize: 9, color: colors.textSecondary, selected: { color: colors.accent } }}>
       <NativeTabs.Trigger name="index">
-        <NativeTabs.Trigger.Label>{t('tabs.today')}</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>{t('tabs.today').toUpperCase()}</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
           src={require('@/assets/images/tabIcons/home.png')}
           renderingMode="template"
@@ -23,13 +24,13 @@ export default function AppTabs() {
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="photos">
-        <NativeTabs.Trigger.Label>{t('tabs.photos')}</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>{t('tabs.photos').toUpperCase()}</NativeTabs.Trigger.Label>
         {/* Vector icon: SF Symbol on iOS, Material glyph on Android — no PNG asset needed. */}
         <NativeTabs.Trigger.Icon sf="camera" md="photo_camera" />
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="explore">
-        <NativeTabs.Trigger.Label>{t('tabs.protocol')}</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>{t('tabs.protocol').toUpperCase()}</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
           src={require('@/assets/images/tabIcons/explore.png')}
           renderingMode="template"

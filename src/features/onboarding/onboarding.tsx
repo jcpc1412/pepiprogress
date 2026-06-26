@@ -142,12 +142,19 @@ export function Onboarding() {
   );
 }
 
-/** Shared fullscreen frame with the step progress bar. */
+/** Shared fullscreen frame with the step progress bar + NN/04 counter. */
 function Frame({ step, children }: { step: number; children: React.ReactNode }) {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-        <StepProgress current={step + 1} total={TOTAL_STEPS} />
+        <View style={styles.progressHead}>
+          <View style={styles.progressFill}>
+            <StepProgress current={step + 1} total={TOTAL_STEPS} />
+          </View>
+          <ThemedText type="monoSm" themeColor="textMuted">
+            {`${String(step + 1).padStart(2, '0')}/${String(TOTAL_STEPS).padStart(2, '0')}`}
+          </ThemedText>
+        </View>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           {children}
         </ScrollView>
@@ -168,6 +175,8 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   scroll: { gap: Spacing.four, paddingBottom: Spacing.four },
+  progressHead: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
+  progressFill: { flex: 1 },
   progressRow: { flexDirection: 'row', gap: Spacing.one },
   progressSeg: { flex: 1, height: 3, borderRadius: Radii.chamfer, borderWidth: StyleSheet.hairlineWidth },
   section: { gap: Spacing.three },

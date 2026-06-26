@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
 
+import { ChamferBox } from '@/components/chamfer';
 import { ThemedText } from '@/components/themed-text';
-import { Fonts, Radii, Spacing, type ThemeColor } from '@/constants/theme';
+import { Chamfer, Fonts, Radii, Spacing, type ThemeColor } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 /** Subtle press feedback — the instrument "settling" when touched (Emil: ~0.97). */
@@ -27,18 +28,17 @@ export function OptionChip({
       accessibilityState={{ selected, disabled: !!disabled }}
       disabled={disabled}
       onPress={onPress}
-      style={({ pressed: p }) => [
-        styles.chip,
-        {
-          backgroundColor: selected ? theme.accent : theme.surfaceSunken,
-          borderColor: theme.border,
-        },
-        disabled && styles.disabled,
-        pressed(p),
-      ]}>
-      <ThemedText type="mono" themeColor={selected ? 'onAccent' : 'text'}>
-        {label}
-      </ThemedText>
+      style={({ pressed: p }) => [disabled && styles.disabled, pressed(p)]}>
+      <ChamferBox
+        chamfer={Chamfer.chip}
+        fill={selected ? theme.accent : theme.surfaceSunken}
+        borderColor={selected ? undefined : theme.border}>
+        <View style={styles.chip}>
+          <ThemedText type="mono" themeColor={selected ? 'onAccent' : 'text'}>
+            {label}
+          </ThemedText>
+        </View>
+      </ChamferBox>
     </Pressable>
   );
 }
@@ -190,21 +190,21 @@ export function PrimaryButton({
       accessibilityState={{ disabled: !!isDisabled, busy: !!loading }}
       disabled={isDisabled}
       onPress={onPress}
-      style={({ pressed: p }) => [
-        styles.button,
-        isSecondary
-          ? { backgroundColor: theme.surfaceSunken, borderWidth: StyleSheet.hairlineWidth, borderColor: theme.border }
-          : { backgroundColor: theme.accent },
-        isDisabled && styles.disabled,
-        pressed(p),
-      ]}>
-      {loading ? (
-        <ActivityIndicator color={isSecondary ? theme.text : theme.onAccent} />
-      ) : (
-        <ThemedText type="label" themeColor={isSecondary ? 'text' : 'onAccent'} style={styles.buttonLabel}>
-          {label}
-        </ThemedText>
-      )}
+      style={({ pressed: p }) => [isDisabled && styles.disabled, pressed(p)]}>
+      <ChamferBox
+        chamfer={Chamfer.button}
+        fill={isSecondary ? theme.surfaceSunken : theme.accent}
+        borderColor={isSecondary ? theme.border : undefined}>
+        <View style={styles.button}>
+          {loading ? (
+            <ActivityIndicator color={isSecondary ? theme.text : theme.onAccent} />
+          ) : (
+            <ThemedText type="label" themeColor={isSecondary ? 'text' : 'onAccent'} style={styles.buttonLabel}>
+              {label}
+            </ThemedText>
+          )}
+        </View>
+      </ChamferBox>
     </Pressable>
   );
 }
@@ -247,8 +247,8 @@ const styles = StyleSheet.create({
   chip: {
     paddingVertical: Spacing.two,
     paddingHorizontal: Spacing.three,
-    borderRadius: Radii.pill,
-    borderWidth: StyleSheet.hairlineWidth,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   scaleRow: { flexDirection: 'row', gap: Spacing.two },
   scaleSeg: {
@@ -270,7 +270,6 @@ const styles = StyleSheet.create({
     minHeight: 44,
   },
   button: {
-    borderRadius: Radii.chamfer,
     minHeight: 50,
     paddingVertical: Spacing.three,
     alignItems: 'center',
