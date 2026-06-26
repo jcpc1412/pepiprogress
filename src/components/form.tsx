@@ -1,0 +1,282 @@
+import { useState } from 'react';
+import { ActivityIndicator, Pressable, StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
+
+import { ThemedText } from '@/components/themed-text';
+import { Fonts, Radii, Spacing, type ThemeColor } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
+
+/** Subtle press feedback — the instrument "settling" when touched (Emil: ~0.97). */
+const pressed = (isPressed: boolean) => ({ transform: [{ scale: isPressed ? 0.97 : 1 }] });
+
+/** A toggleable option — monochrome: selected = filled accent, idle = sunken. */
+export function OptionChip({
+  label,
+  selected,
+  onPress,
+  disabled,
+}: {
+  label: string;
+  selected: boolean;
+  onPress: () => void;
+  disabled?: boolean;
+}) {
+  const theme = useTheme();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ selected, disabled: !!disabled }}
+      disabled={disabled}
+      onPress={onPress}
+      style={({ pressed: p }) => [
+        styles.chip,
+        {
+          backgroundColor: selected ? theme.accent : theme.surfaceSunken,
+          borderColor: theme.border,
+        },
+        disabled && styles.disabled,
+        pressed(p),
+      ]}>
+      <ThemedText type="mono" themeColor={selected ? 'onAccent' : 'text'}>
+        {label}
+      </ThemedText>
+    </Pressable>
+  );
+}
+
+/** Single-select chip group (route, frequency, unit, compound, …). */
+export function SingleSelectChips<T extends string>({
+  options,
+  value,
+  onChange,
+}: {
+  options: { value: T; label: string }[];
+  value: T | undefined;
+  onChange: (v: T) => void;
+}) {
+  return (
+    <View style={styles.chipWrap}>
+      {options.map((o) => (
+        <OptionChip
+          key={o.value}
+          label={o.label}
+          selected={value === o.value}
+          onPress={() => onChange(o.value)}
+        />
+      ))}
+    </View>
+  );
+}
+
+/** A 1–5 rating selector — chamfered segments that fill up to the value.
+ *  Each segment is a ≥44px tap target (this is the most-touched input). */
+export function ScaleSelector({
+  value,
+  onChange,
+  min = 1,
+  max = 5,
+  disabled,
+}: {
+  value: number | undefined;
+  onChange: (v: number) => void;
+  min?: number;
+  max?: number;
+  disabled?: boolean;
+}) {
+  const theme = useTheme();
+  const steps = [];
+  for (let i = min; i <= max; i += 1) steps.push(i);
+  return (
+    <View style={[styles.scaleRow, disabled && styles.disabled]}>
+      {steps.map((step) => {
+        const filled = value != null && step <= value;
+        return (
+          <Pressable
+            key={step}
+            accessibilityRole="button"
+            accessibilityState={{ selected: value === step, disabled: !!disabled }}
+            disabled={disabled}
+            hitSlop={6}
+            onPress={() => onChange(step)}
+            style={({ pressed: p }) => [
+              styles.scaleSeg,
+              {
+                backgroundColor: filled ? theme.accent : theme.surfaceSunken,
+                borderColor: theme.border,
+              },
+              pressed(p),
+            ]}>
+            <ThemedText type="monoSm" themeColor={filled ? 'onAccent' : 'textMuted'}>
+              {String(step)}
+            </ThemedText>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
+/** Text input with label, focus ring, and error state. */
+export function LabeledInput({
+  label,
+  error,
+  style,
+  onFocus,
+  onBlur,
+  ...rest
+}: TextInputProps & { label?: string; error?: string }) {
+  const theme = useTheme();
+  const [focused, setFocused] = useState(false);
+  const borderColor = error ? theme.signalBad : focused ? theme.accent : theme.border;
+  return (
+    <View style={styles.field}>
+      {label ? <ThemedText type="label">{label}</ThemedText> : null}
+      <TextInput
+        placeholderTextColor={theme.textMuted}
+        onFocus={(e) => {
+          setFocused(true);
+          onFocus?.(e);
+        }}
+        onBlur={(e) => {
+          setFocused(false);
+          onBlur?.(e);
+        }}
+        style={[
+          styles.input,
+          {
+            color: theme.text,
+            backgroundColor: theme.surfaceSunken,
+            borderColor,
+            // thicken to 1px on focus/error so the state reads against the hairline default
+            borderWidth: focused || error ? 1 : StyleSheet.hairlineWidth,
+          },
+          style,
+        ]}
+        {...rest}
+      />
+      {error ? (
+        <ThemedText type="monoSm" themeColor="signalBad">
+          {error}
+        </ThemedText>
+      ) : null}
+    </View>
+  );
+}
+
+/**
+ * Action-affordance vocabulary (design system):
+ *  - primary   = filled accent      (the one main action on a surface)
+ *  - secondary = sunken + bordered  (supporting actions: Back, Cancel, alt paths)
+ *  - tertiary  = underlined text link (TextButton, for inline/low-emphasis actions)
+ */
+export function PrimaryButton({
+  label,
+  onPress,
+  disabled,
+  loading,
+  variant = 'primary',
+}: {
+  label: string;
+  onPress: () => void;
+  disabled?: boolean;
+  loading?: boolean;
+  variant?: 'primary' | 'secondary';
+}) {
+  const theme = useTheme();
+  const isSecondary = variant === 'secondary';
+  const isDisabled = disabled || loading;
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ disabled: !!isDisabled, busy: !!loading }}
+      disabled={isDisabled}
+      onPress={onPress}
+      style={({ pressed: p }) => [
+        styles.button,
+        isSecondary
+          ? { backgroundColor: theme.surfaceSunken, borderWidth: StyleSheet.hairlineWidth, borderColor: theme.border }
+          : { backgroundColor: theme.accent },
+        isDisabled && styles.disabled,
+        pressed(p),
+      ]}>
+      {loading ? (
+        <ActivityIndicator color={isSecondary ? theme.text : theme.onAccent} />
+      ) : (
+        <ThemedText type="label" themeColor={isSecondary ? 'text' : 'onAccent'} style={styles.buttonLabel}>
+          {label}
+        </ThemedText>
+      )}
+    </Pressable>
+  );
+}
+
+/** Convenience alias for the secondary variant. */
+export function SecondaryButton(props: Omit<Parameters<typeof PrimaryButton>[0], 'variant'>) {
+  return <PrimaryButton {...props} variant="secondary" />;
+}
+
+/** Tertiary action: an underlined text link with press feedback + accessibility.
+ *  tone: secondary (default), accent (emphasis), or bad (destructive). */
+export function TextButton({
+  label,
+  onPress,
+  disabled,
+  tone = 'secondary',
+}: {
+  label: string;
+  onPress: () => void;
+  disabled?: boolean;
+  tone?: 'secondary' | 'accent' | 'bad';
+}) {
+  const color: ThemeColor = tone === 'accent' ? 'accent' : tone === 'bad' ? 'signalBad' : 'textSecondary';
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ disabled: !!disabled }}
+      disabled={disabled}
+      onPress={onPress}
+      style={({ pressed: p }) => ({ opacity: disabled ? 0.4 : p ? 0.6 : 1 })}>
+      <ThemedText type="smallBold" themeColor={color} style={styles.textButton}>
+        {label}
+      </ThemedText>
+    </Pressable>
+  );
+}
+
+const styles = StyleSheet.create({
+  chipWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
+  chip: {
+    paddingVertical: Spacing.two,
+    paddingHorizontal: Spacing.three,
+    borderRadius: Radii.pill,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  scaleRow: { flexDirection: 'row', gap: Spacing.two },
+  scaleSeg: {
+    flex: 1,
+    minHeight: 44,
+    borderRadius: Radii.chamfer,
+    borderWidth: StyleSheet.hairlineWidth,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  field: { gap: Spacing.one },
+  input: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: Radii.chamfer,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
+    fontFamily: Fonts.sans,
+    fontSize: 15,
+    minHeight: 44,
+  },
+  button: {
+    borderRadius: Radii.chamfer,
+    minHeight: 50,
+    paddingVertical: Spacing.three,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  disabled: { opacity: 0.4 },
+  buttonLabel: { letterSpacing: 1.6 },
+  textButton: { textDecorationLine: 'underline' },
+});

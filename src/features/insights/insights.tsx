@@ -1,0 +1,173 @@
+import { useCallback, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { StyleSheet, View } from 'react-native';
+
+import { LabeledInput, TextButton } from '@/components/form';
+import { Card, Divider, EngravedLabel, Skeleton } from '@/components/surface';
+import { ThemedText } from '@/components/themed-text';
+import { Spacing } from '@/constants/theme';
+import { compoundBySlug } from '@/data/compound-catalog';
+import { aiErrorKind, runInsights, type InsightHistory, type InsightMode } from '@/lib/ai';
+import { useStore } from '@/lib/store';
+
+/** Minimum logged check-ins before insights are worth offering. */
+const MIN_CHECKINS = 4;
+
+/**
+ * Deeper AI insights (spec 05/13): data-grounded trend analysis, own-data Q&A, and
+ * "what changed when I added X" correlations — all over the user's own history.
+ * Assembles a compact history on-device and sends it to the insights edge action.
+ */
+export function Insights() {
+  const { t, i18n } = useTranslation();
+  const { entries, doseEvents, symptomEvents, metricReadings, protocolItems } = useStore();
+
+  const [busy, setBusy] = useState(false);
+  const [answer, setAnswer] = useState('');
+  const [question, setQuestion] = useState('');
+  const [status, setStatus] = useState<'idle' | 'notConfigured' | 'network' | 'server' | 'insufficient'>(
+    'idle',
+  );
+  // Remember the last request so the error state can offer a retry.
+  const [lastAsk, setLastAsk] = useState<{ mode: InsightMode; question?: string } | null>(null);
+
+  const checkinList = useMemo(
+    () => Object.values(entries).sort((a, b) => b.date.localeCompare(a.date)),
+    [entries],
+  );
+
+  const history = useMemo<InsightHistory>(() => {
+    const name = (slug?: string) =>
+      (slug ? compoundBySlug(slug)?.canonicalName : undefined) ?? slug ?? 'unknown';
+    return {
+      checkins: checkinList.map((e) => ({
+        date: e.date,
+        weight: e.weight,
+        wellness: e.wellness,
+        energy: e.energy,
+        sleepQuality: e.sleep_quality,
+        soreness: e.soreness,
+      })),
+      doses: doseEvents.map((d) => ({
+        date: d.takenAt.slice(0, 10),
+        compound: name(d.compoundSlug),
+        dose: d.dose,
+        unit: d.doseUnit,
+      })),
+      symptoms: symptomEvents.map((s) => ({
+        date: s.onsetAt.slice(0, 10),
+        type: s.type,
+        severity: s.severity,
+      })),
+      metrics: metricReadings.map((m) => ({
+        date: m.ts.slice(0, 10),
+        metric: m.metric,
+        value: m.value,
+        unit: m.unit,
+      })),
+      protocolStarts: protocolItems
+        .filter((p) => p.startedAt)
+        .map((p) => ({ compound: name(p.compoundSlug), startedAt: p.startedAt as string })),
+    };
+  }, [checkinList, doseEvents, symptomEvents, metricReadings, protocolItems]);
+
+  const ask = useCallback(
+    async (mode: InsightMode, q?: string) => {
+      if (busy) return;
+      setBusy(true);
+      setStatus('idle');
+      setAnswer('');
+      setLastAsk({ mode, question: q });
+      try {
+        const res = await runInsights({ mode, question: q, history, locale: i18n.language });
+        if (res.insufficientData && !res.answer) setStatus('insufficient');
+        else setAnswer(res.answer);
+      } catch (err) {
+        setStatus(aiErrorKind(err));
+      } finally {
+        setBusy(false);
+      }
+    },
+    [busy, history, i18n.language],
+  );
+
+  // Not enough data yet — keep the surface quiet rather than show empty analysis.
+  if (checkinList.length < MIN_CHECKINS) return null;
+
+  const isError = status === 'network' || status === 'server';
+
+  return (
+    <Card style={styles.card}>
+      <EngravedLabel>{t('insights.title')}</EngravedLabel>
+      <ThemedText type="small" themeColor="textSecondary">
+        {t('insights.description')}
+      </ThemedText>
+
+      <View style={styles.actions}>
+        <TextButton label={t('insights.trends')} onPress={() => ask('trend')} disabled={busy} />
+        <TextButton label={t('insights.correlations')} onPress={() => ask('correlation')} disabled={busy} />
+      </View>
+
+      <Divider />
+
+      <LabeledInput
+        label={t('insights.askLabel')}
+        placeholder={t('insights.askPlaceholder')}
+        value={question}
+        onChangeText={setQuestion}
+        multiline
+        onSubmitEditing={() => question.trim() && ask('qa', question.trim())}
+      />
+      <TextButton
+        label={t('insights.ask')}
+        tone="accent"
+        onPress={() => question.trim() && ask('qa', question.trim())}
+        disabled={busy || !question.trim()}
+      />
+
+      {busy && <Skeleton lines={4} />}
+
+      {status === 'notConfigured' && (
+        <ThemedText type="small" themeColor="textSecondary">
+          {t('insights.notConfigured')}
+        </ThemedText>
+      )}
+      {isError && (
+        <View style={styles.errorRow}>
+          <ThemedText type="small" themeColor="textSecondary" style={styles.errorText}>
+            {t(status === 'network' ? 'common.errorNetwork' : 'common.errorServer')}
+          </ThemedText>
+          <TextButton
+            label={t('common.retry')}
+            onPress={() => lastAsk && ask(lastAsk.mode, lastAsk.question)}
+          />
+        </View>
+      )}
+      {status === 'insufficient' && (
+        <ThemedText type="small" themeColor="textSecondary">
+          {t('insights.insufficient')}
+        </ThemedText>
+      )}
+
+      {answer ? (
+        <>
+          <Divider />
+          <ThemedText type="mono" themeColor="textSecondary" style={styles.answer}>
+            {answer}
+          </ThemedText>
+          <ThemedText type="monoSm" themeColor="textMuted">
+            {t('insights.disclaimer')}
+          </ThemedText>
+        </>
+      ) : null}
+    </Card>
+  );
+}
+
+const styles = StyleSheet.create({
+  card: { gap: Spacing.two },
+  actions: { flexDirection: 'row', gap: Spacing.four },
+  errorRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.two },
+  errorText: { flex: 1 },
+  answer: { lineHeight: 20 },
+});
