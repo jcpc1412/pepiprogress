@@ -176,12 +176,17 @@ export const healthConnectProvider: IntegrationProvider = {
   nativeReady: true,
   authenticate: async () => {
     if (Platform.OS !== 'android') return { ok: false };
-    const { getSdkStatus, initialize, requestPermission } = hc();
-    const status = await getSdkStatus();
-    if (status !== SDK_AVAILABLE) return { ok: false };
-    await initialize();
-    await requestPermission(READ_PERMISSIONS as never);
-    return { ok: true };
+    try {
+      const mod = hc();
+      if (typeof mod?.getSdkStatus !== 'function') return { ok: false };
+      const status = await mod.getSdkStatus();
+      if (status !== SDK_AVAILABLE) return { ok: false };
+      await mod.initialize();
+      await mod.requestPermission(READ_PERMISSIONS as never);
+      return { ok: true };
+    } catch {
+      return { ok: false };
+    }
   },
   pull: ({ since } = {}) => readHealthConnect(since),
 };

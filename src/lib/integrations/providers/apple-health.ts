@@ -26,11 +26,18 @@ const QUANTITY_MAP = [
 const hk = () => require('@kingstinct/react-native-healthkit') as typeof import('@kingstinct/react-native-healthkit');
 
 async function authenticate(): Promise<boolean> {
+  const mod = hk();
+  // Guard: if the native module isn't in this build, fail soft instead of throwing.
+  if (typeof mod?.requestAuthorization !== 'function') return false;
   const toRead = [
     ...QUANTITY_MAP.map((m) => m.id),
     'HKCategoryTypeIdentifierSleepAnalysis',
   ] as Parameters<ReturnType<typeof hk>['requestAuthorization']>[0]['toRead'] & string[];
-  return hk().requestAuthorization({ toRead });
+  try {
+    return await mod.requestAuthorization({ toRead });
+  } catch {
+    return false;
+  }
 }
 
 async function readHealthKit(since?: string): Promise<ProviderReading[]> {
