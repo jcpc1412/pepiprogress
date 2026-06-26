@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Dimensions,
@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { ChamferBox } from '@/components/chamfer';
 import { OptionChip, PrimaryButton } from '@/components/form';
 import { GearIcon } from '@/components/icons';
 import { LineChart, type ChartPoint } from '@/components/line-chart';
@@ -20,7 +21,7 @@ import { Card, Divider, EngravedLabel, StatusPill } from '@/components/surface';
 import { SyncStatus } from '@/components/sync-status';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { Chamfer, MaxContentWidth, Spacing } from '@/constants/theme';
 import { compoundBySlug } from '@/data/compound-catalog';
 import { useTheme } from '@/hooks/use-theme';
 import { useOverlay } from '@/lib/nav-overlay';
@@ -39,7 +40,7 @@ const CHECKIN_METRICS: { key: keyof CheckinEntry; labelKey: string; unitKey?: st
 /** Today as a glanceable dashboard (H-01): swipeable photo/chart card + two log
  *  buttons + a small distillation summary. No form. */
 export function Dashboard() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const router = useRouter();
   const theme = useTheme();
   const { openSettings, openLogging } = useOverlay();
@@ -61,16 +62,14 @@ export function Dashboard() {
     });
   }, [entries, selected]);
 
-  const latest = (session: 'face' | 'body') =>
+  const latestPhotos = (session: 'face' | 'body') =>
     photos.filter((p) => p.session === session).sort((a, b) => (a.takenAt < b.takenAt ? 1 : -1));
 
   const photoPages: { session: 'face' | 'body'; baseline: PhotoEntry; latest: PhotoEntry }[] = [];
   for (const s of ['body', 'face'] as const) {
-    const list = latest(s);
+    const list = latestPhotos(s);
     if (list.length >= 1) {
-      const newest = list[0];
-      const baseline = list[list.length - 1];
-      photoPages.push({ session: s, baseline, latest: newest });
+      photoPages.push({ session: s, baseline: list[list.length - 1], latest: list[0] });
     }
   }
 
@@ -80,19 +79,35 @@ export function Dashboard() {
 
   const pageCount = photoPages.length + series.length || 1;
   const [page, setPage] = useState(0);
+  const scrollRef = useRef<ScrollView>(null);
+
   const onCarouselScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const i = Math.round(e.nativeEvent.contentOffset.x / width);
     if (i !== page) setPage(i);
   };
 
-  // Header sub: elapsed days tracked + first couple of compounds (neutral, no streak pressure).
+  const goToPage = (p: number) => {
+    const clamped = Math.max(0, Math.min(pageCount - 1, p));
+    scrollRef.current?.scrollTo({ x: clamped * width, animated: true });
+    setPage(clamped);
+  };
+
+  // Header: locale-formatted date (e.g. "25 JUN 2026") + day badge + compounds.
   const dayCount = Object.keys(entries).length;
+  const dateStr = new Date()
+    .toLocaleDateString(i18n.language, { day: 'numeric', month: 'short', year: 'numeric' })
+    .toUpperCase();
   const compoundNames = profile.compoundSlugs
     .map((s) => compoundBySlug(s)?.canonicalName)
     .filter(Boolean)
     .slice(0, 2)
     .join(' + ');
-  const headerSub = [dayCount > 0 ? t('dashboard.dayCount', { count: dayCount }) : null, compoundNames || null]
+  const headerSub = [
+    dayCount > 0
+      ? t('dashboard.dayBadge', { count: String(dayCount).padStart(3, '0') })
+      : null,
+    compoundNames || null,
+  ]
     .filter(Boolean)
     .join(' · ');
 
@@ -101,11 +116,11 @@ export function Dashboard() {
       <SafeAreaView style={styles.safe} edges={['top']}>
         <View style={styles.header}>
           <View>
-            <EngravedLabel>{t('checkin.title')}</EngravedLabel>
-            <ThemedText type="display">{t('checkin.today')}</ThemedText>
+            <EngravedLabel>{t('dashboard.todayLabel')}</EngravedLabel>
+            <ThemedText type="display">{dateStr}</ThemedText>
             {headerSub ? (
               <ThemedText type="monoSm" themeColor="textMuted">
-                {headerSub.toUpperCase()}
+                {headerSub}
               </ThemedText>
             ) : null}
           </View>
@@ -120,75 +135,116 @@ export function Dashboard() {
         <SyncStatus />
 
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-          {/* Swipeable progress card: photo compares then charts (H-01). */}
-          <ScrollView
-            horizontal
-            pagingEnabled
-            showsHorizontalScrollIndicator={false}
-            onScroll={onCarouselScroll}
-            scrollEventThrottle={16}
-            style={{ width }}>
-            {photoPages.map((p) => (
+          {/* Swipeable card with overhanging prev/next chamfer-square nav buttons (handoff §2). */}
+          <View style={styles.carouselWrapper}>
+            <ScrollView
+              ref={scrollRef}
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              onScroll={onCarouselScroll}
+              scrollEventThrottle={16}
+              style={{ width }}>
+              {photoPages.map((p) => (
+                <Pressable
+                  key={p.session}
+                  style={[styles.page, { width }]}
+                  onPress={() => router.push('/photos')}>
+                  <Card style={styles.cardFill}>
+                    <EngravedLabel>
+                      {t(p.session === 'face' ? 'photos.sessionFace' : 'photos.sessionBody')}
+                    </EngravedLabel>
+                    <View style={styles.compareRow}>
+                      <View style={styles.compareCol}>
+                        <Image source={{ uri: p.baseline.uri }} style={styles.photo} contentFit="cover" />
+                        <ThemedText type="monoSm" themeColor="textMuted">
+                          {t('photos.baseline')}
+                        </ThemedText>
+                      </View>
+                      <View style={styles.compareCol}>
+                        <Image source={{ uri: p.latest.uri }} style={styles.photo} contentFit="cover" />
+                        <ThemedText type="monoSm" themeColor="textMuted">
+                          {t('photos.latest')}
+                        </ThemedText>
+                      </View>
+                    </View>
+                  </Card>
+                </Pressable>
+              ))}
+
+              {series.map((s) => (
+                <View key={s.key as string} style={[styles.page, { width }]}>
+                  <Card style={styles.cardFill}>
+                    <EngravedLabel>{t(s.labelKey as 'fields.weight')}</EngravedLabel>
+                    <LineChart
+                      data={s.points}
+                      unit={s.unitKey ? t(s.unitKey as 'units.g') : undefined}
+                    />
+                  </Card>
+                </View>
+              ))}
+
+              {photoPages.length === 0 && series.every((s) => s.points.length < 2) && (
+                <View style={[styles.page, { width }]}>
+                  <Card style={styles.cardFill}>
+                    <ThemedText type="small" themeColor="textSecondary">
+                      {t('dashboard.empty')}
+                    </ThemedText>
+                  </Card>
+                </View>
+              )}
+            </ScrollView>
+
+            {/* Overhanging prev/next buttons at −13px from card edges */}
+            {page > 0 && (
               <Pressable
-                key={p.session}
-                style={[styles.page, { width }]}
-                onPress={() => router.push('/photos')}>
-                <Card style={styles.cardFill}>
-                  <EngravedLabel>{t(p.session === 'face' ? 'photos.sessionFace' : 'photos.sessionBody')}</EngravedLabel>
-                  <View style={styles.compareRow}>
-                    <View style={styles.compareCol}>
-                      <Image source={{ uri: p.baseline.uri }} style={styles.photo} contentFit="cover" />
-                      <ThemedText type="monoSm" themeColor="textMuted">
-                        {t('photos.baseline')}
-                      </ThemedText>
-                    </View>
-                    <View style={styles.compareCol}>
-                      <Image source={{ uri: p.latest.uri }} style={styles.photo} contentFit="cover" />
-                      <ThemedText type="monoSm" themeColor="textMuted">
-                        {t('photos.latest')}
-                      </ThemedText>
-                    </View>
+                accessibilityRole="button"
+                style={[styles.navBtn, styles.navBtnLeft]}
+                onPress={() => goToPage(page - 1)}>
+                <ChamferBox
+                  chamfer={Chamfer.chip}
+                  fill={theme.surfaceRaised}
+                  borderColor={theme.border}>
+                  <View style={styles.navBtnInner}>
+                    <ThemedText type="mono" themeColor="textSecondary">{'‹'}</ThemedText>
                   </View>
-                </Card>
+                </ChamferBox>
               </Pressable>
-            ))}
-
-            {series.map((s) => (
-              <View key={s.key as string} style={[styles.page, { width }]}>
-                <Card style={styles.cardFill}>
-                  <EngravedLabel>{t(s.labelKey as 'fields.weight')}</EngravedLabel>
-                  <LineChart data={s.points} unit={s.unitKey ? t(s.unitKey as 'units.g') : undefined} />
-                </Card>
-              </View>
-            ))}
-
-            {photoPages.length === 0 && series.every((s) => s.points.length < 2) && (
-              <View style={[styles.page, { width }]}>
-                <Card style={styles.cardFill}>
-                  <ThemedText type="small" themeColor="textSecondary">
-                    {t('dashboard.empty')}
-                  </ThemedText>
-                </Card>
-              </View>
             )}
-          </ScrollView>
+            {page < pageCount - 1 && (
+              <Pressable
+                accessibilityRole="button"
+                style={[styles.navBtn, styles.navBtnRight]}
+                onPress={() => goToPage(page + 1)}>
+                <ChamferBox
+                  chamfer={Chamfer.chip}
+                  fill={theme.surfaceRaised}
+                  borderColor={theme.border}>
+                  <View style={styles.navBtnInner}>
+                    <ThemedText type="mono" themeColor="textSecondary">{'›'}</ThemedText>
+                  </View>
+                </ChamferBox>
+              </Pressable>
+            )}
+          </View>
 
-          {/* Page dots */}
+          {/* Page dots — active = 16px pill in accent; inactive = 5px circle */}
           {pageCount > 1 && (
             <View style={styles.dots}>
               {Array.from({ length: pageCount }, (_, i) => (
-                <View
-                  key={i}
-                  style={[
-                    i === page ? styles.dotActive : styles.dot,
-                    { backgroundColor: i === page ? theme.accent : theme.surfaceSunken },
-                  ]}
-                />
+                <Pressable key={i} onPress={() => goToPage(i)} hitSlop={6}>
+                  <View
+                    style={[
+                      i === page ? styles.dotActive : styles.dot,
+                      { backgroundColor: i === page ? theme.accent : theme.surfaceSunken },
+                    ]}
+                  />
+                </Pressable>
               ))}
             </View>
           )}
 
-          {/* Metric selector */}
+          {/* Metric selector chips */}
           <View style={styles.metricChips}>
             {CHECKIN_METRICS.map((m) => (
               <OptionChip
@@ -241,6 +297,8 @@ export function Dashboard() {
   );
 }
 
+const NAV_BTN_SIZE = 28;
+
 const styles = StyleSheet.create({
   container: { flex: 1 },
   safe: {
@@ -254,17 +312,38 @@ const styles = StyleSheet.create({
   },
   header: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' },
   scroll: { gap: Spacing.four, paddingTop: Spacing.three, paddingBottom: Spacing.six },
-  page: { paddingRight: 0 },
+  carouselWrapper: { position: 'relative' },
+  page: {},
   cardFill: { gap: Spacing.two, minHeight: 200 },
   compareRow: { flexDirection: 'row', gap: Spacing.two },
   compareCol: { flex: 1, gap: Spacing.one, alignItems: 'center' },
   photo: { width: '100%', aspectRatio: 3 / 4, borderRadius: 2 },
+  navBtn: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    zIndex: 10,
+  },
+  navBtnLeft: { left: -13 },
+  navBtnRight: { right: -13 },
+  navBtnInner: {
+    width: NAV_BTN_SIZE,
+    height: NAV_BTN_SIZE,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   dots: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: Spacing.one },
   dot: { width: 5, height: 5, borderRadius: 3 },
   dotActive: { width: 16, height: 5, borderRadius: 3 },
   metricChips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
   summary: { gap: Spacing.two },
-  summaryHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.two },
+  summaryHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.two,
+  },
   buttons: { flexDirection: 'row', gap: Spacing.two },
   buttonHalf: { flex: 1 },
 });

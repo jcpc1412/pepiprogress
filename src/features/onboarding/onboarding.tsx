@@ -133,7 +133,11 @@ export function Onboarding() {
         </View>
         <View style={styles.nextButton}>
           <PrimaryButton
-            label={t('onboarding.finish')}
+            label={
+              profile.goals.length > 0
+                ? t('onboarding.beginSelected', { count: profile.goals.length })
+                : t('onboarding.finish')
+            }
             disabled={profile.goals.length === 0}
             onPress={completeOnboarding}
           />

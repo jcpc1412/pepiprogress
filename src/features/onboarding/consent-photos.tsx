@@ -1,53 +1,16 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, Switch, View } from 'react-native';
 
 import { PrimaryButton } from '@/components/form';
-import { Card, Divider, EngravedLabel, StatusPill } from '@/components/surface';
+import { CameraIcon, SignalDotIcon, TargetIcon } from '@/components/icons';
+import { Card, Divider, EngravedLabel } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
-/**
- * Split-panel consent screen (spec 11 pattern):
- * shows "off" (dimmed) vs "on" (active) side by side so consent is informed,
- * not just a wall of text. Accept = informed opt-in; Decline = stays off.
- */
-function ConsentPanel({
-  side,
-  title,
-  bullets,
-}: {
-  side: 'off' | 'on';
-  title: string;
-  bullets: string[];
-}) {
-  const theme = useTheme();
-  const on = side === 'on';
-  return (
-    <Card
-      style={[
-        styles.panel,
-        { opacity: on ? 1 : 0.5, borderColor: on ? theme.accent : theme.border },
-      ]}>
-      <View style={styles.panelHeader}>
-        <StatusPill label={side.toUpperCase()} tone={on ? 'good' : 'neutral'} />
-        <ThemedText type="label" themeColor={on ? 'text' : 'textMuted'}>
-          {title}
-        </ThemedText>
-      </View>
-      <Divider />
-      {bullets.map((b) => (
-        <View key={b} style={styles.bullet}>
-          <ThemedText type="monoSm" themeColor={on ? 'textSecondary' : 'textMuted'}>
-            {`${on ? '✓' : '—'}  ${b}`}
-          </ThemedText>
-        </View>
-      ))}
-    </Card>
-  );
-}
-
-/** Consent step: store photos privately (spec 11a). */
+/** Step 2 consent: photo storage (handoff §1 step 2).
+ *  Camera glyph + 3 signalGood bullet rows + "I UNDERSTAND" button. */
 export function ConsentPhotoStorage({
   onAccept,
   onDecline,
@@ -56,33 +19,61 @@ export function ConsentPhotoStorage({
   onDecline: () => void;
 }) {
   const { t } = useTranslation();
+  const theme = useTheme();
+
+  const bullets = [
+    t('consent.storage.bullet1'),
+    t('consent.storage.bullet2'),
+    t('consent.storage.bullet3'),
+  ];
+
   return (
-    <ConsentScreen
-      label={t('consent.storage.label')}
-      title={t('consent.storage.title')}
-      body={t('consent.storage.body')}
-      offTitle={t('consent.storage.offTitle')}
-      offBullets={[
-        t('consent.storage.off1'),
-        t('consent.storage.off2'),
-        t('consent.storage.off3'),
-      ]}
-      onTitle={t('consent.storage.onTitle')}
-      onBullets={[
-        t('consent.storage.on1'),
-        t('consent.storage.on2'),
-        t('consent.storage.on3'),
-      ]}
-      acceptLabel={t('consent.storage.accept')}
-      declineLabel={t('consent.storage.decline')}
-      notice={t('consent.storage.notice')}
-      onAccept={onAccept}
-      onDecline={onDecline}
-    />
+    <View style={styles.wrap}>
+      <View style={styles.glyphRow}>
+        <CameraIcon size={60} color="textSecondary" />
+      </View>
+
+      <EngravedLabel>{t('consent.storage.label')}</EngravedLabel>
+      <ThemedText type="display">{t('consent.storage.title')}</ThemedText>
+      <ThemedText type="body" themeColor="textSecondary">
+        {t('consent.storage.body')}
+      </ThemedText>
+
+      <Card style={styles.bulletCard}>
+        {bullets.map((b, i) => (
+          <View key={i}>
+            {i > 0 && <Divider />}
+            <View style={styles.bulletRow}>
+              <SignalDotIcon size={8} color="signalGood" />
+              <ThemedText type="small" style={styles.bulletText}>
+                {b}
+              </ThemedText>
+            </View>
+          </View>
+        ))}
+      </Card>
+
+      <ThemedText type="monoSm" style={{ color: theme.textMuted, lineHeight: 18 }}>
+        {t('consent.storage.notice')}
+      </ThemedText>
+
+      <PrimaryButton label={t('consent.storage.understand')} onPress={onAccept} />
+
+      <View style={styles.skipRow}>
+        <ThemedText
+          type="monoSm"
+          themeColor="textSecondary"
+          style={styles.skipLink}
+          onPress={onDecline}>
+          {t('consent.storage.decline')}
+        </ThemedText>
+      </View>
+    </View>
   );
 }
 
-/** Consent step: AI analysis of photos (spec 11b). */
+/** Step 3 consent: AI analysis (handoff §1 step 3).
+ *  Target glyph + explanatory card + toggle row + "CONTINUE" button. */
 export function ConsentPhotoAI({
   onAccept,
   onDecline,
@@ -91,90 +82,59 @@ export function ConsentPhotoAI({
   onDecline: () => void;
 }) {
   const { t } = useTranslation();
-  return (
-    <ConsentScreen
-      label={t('consent.ai.label')}
-      title={t('consent.ai.title')}
-      body={t('consent.ai.body')}
-      offTitle={t('consent.ai.offTitle')}
-      offBullets={[
-        t('consent.ai.off1'),
-        t('consent.ai.off2'),
-        t('consent.ai.off3'),
-      ]}
-      onTitle={t('consent.ai.onTitle')}
-      onBullets={[
-        t('consent.ai.on1'),
-        t('consent.ai.on2'),
-        t('consent.ai.on3'),
-      ]}
-      acceptLabel={t('consent.ai.accept')}
-      declineLabel={t('consent.ai.decline')}
-      notice={t('consent.ai.notice')}
-      onAccept={onAccept}
-      onDecline={onDecline}
-    />
-  );
-}
-
-// ─── Shared layout ──────────────────────────────────────────────────────────
-
-function ConsentScreen({
-  label,
-  title,
-  body,
-  offTitle,
-  offBullets,
-  onTitle,
-  onBullets,
-  acceptLabel,
-  declineLabel,
-  notice,
-  onAccept,
-  onDecline,
-}: {
-  label: string;
-  title: string;
-  body: string;
-  offTitle: string;
-  offBullets: string[];
-  onTitle: string;
-  onBullets: string[];
-  acceptLabel: string;
-  declineLabel: string;
-  notice: string;
-  onAccept: () => void;
-  onDecline: () => void;
-}) {
   const theme = useTheme();
+  const [enabled, setEnabled] = useState(true);
+
+  const handleContinue = () => {
+    if (enabled) onAccept();
+    else onDecline();
+  };
+
   return (
     <View style={styles.wrap}>
-      <EngravedLabel>{label}</EngravedLabel>
-      <ThemedText type="display">{title}</ThemedText>
-      <ThemedText type="body" themeColor="textSecondary">
-        {body}
-      </ThemedText>
-
-      <View style={styles.panels}>
-        <ConsentPanel side="off" title={offTitle} bullets={offBullets} />
-        <ConsentPanel side="on" title={onTitle} bullets={onBullets} />
+      <View style={styles.glyphRow}>
+        <TargetIcon size={60} color="textSecondary" />
       </View>
 
-      <ThemedText
-        type="monoSm"
-        style={[styles.notice, { color: theme.textMuted }]}>
-        {notice}
+      <EngravedLabel>{t('consent.ai.label')}</EngravedLabel>
+      <ThemedText type="display">{t('consent.ai.title')}</ThemedText>
+      <ThemedText type="body" themeColor="textSecondary">
+        {t('consent.ai.body')}
       </ThemedText>
 
-      <PrimaryButton label={acceptLabel} onPress={onAccept} />
+      <Card style={styles.explanatoryCard}>
+        <ThemedText type="small" themeColor="textSecondary">
+          {t('consent.ai.notice')}
+        </ThemedText>
+      </Card>
 
-      <View style={styles.declineWrap}>
+      <Card style={styles.toggleCard}>
+        <View style={styles.toggleRow}>
+          <View style={styles.toggleLabels}>
+            <ThemedText type="smallBold">{t('consent.ai.toggleLabel')}</ThemedText>
+            <ThemedText type="monoSm" themeColor="textMuted">
+              {t('consent.ai.toggleSub')}
+            </ThemedText>
+          </View>
+          <Switch
+            value={enabled}
+            onValueChange={setEnabled}
+            trackColor={{ false: theme.surfaceSunken, true: theme.signalGood }}
+            thumbColor={theme.onAccent}
+            ios_backgroundColor={theme.surfaceSunken}
+          />
+        </View>
+      </Card>
+
+      <PrimaryButton label={t('consent.ai.continueButton')} onPress={handleContinue} />
+
+      <View style={styles.skipRow}>
         <ThemedText
           type="monoSm"
           themeColor="textSecondary"
-          style={styles.declineLink}
+          style={styles.skipLink}
           onPress={onDecline}>
-          {declineLabel}
+          {t('consent.ai.decline')}
         </ThemedText>
       </View>
     </View>
@@ -183,11 +143,24 @@ function ConsentScreen({
 
 const styles = StyleSheet.create({
   wrap: { gap: Spacing.three },
-  panels: { flexDirection: 'row', gap: Spacing.two },
-  panel: { flex: 1, gap: Spacing.two, padding: Spacing.three },
-  panelHeader: { gap: Spacing.one },
-  bullet: { paddingLeft: Spacing.one },
-  notice: { lineHeight: 18 },
-  declineWrap: { alignItems: 'center' },
-  declineLink: { textDecorationLine: 'underline' },
+  glyphRow: { alignItems: 'center', paddingVertical: Spacing.two },
+  bulletCard: { gap: 0 },
+  bulletRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+    paddingVertical: Spacing.two,
+  },
+  bulletText: { flex: 1 },
+  explanatoryCard: {},
+  toggleCard: {},
+  toggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.three,
+  },
+  toggleLabels: { flex: 1, gap: Spacing.half },
+  skipRow: { alignItems: 'center' },
+  skipLink: { textDecorationLine: 'underline' },
 });

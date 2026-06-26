@@ -1,16 +1,19 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Animated, Pressable, StyleSheet, View } from 'react-native';
 
 import { LabeledInput, OptionChip, PrimaryButton, ScaleSelector, TextButton } from '@/components/form';
+import { SignalDotIcon } from '@/components/icons';
 import { Sunken } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { compoundBySlug } from '@/data/compound-catalog';
 import { aiErrorKind, parseQuickLog, type ParsedItem } from '@/lib/ai';
+import { useTheme } from '@/hooks/use-theme';
 import { localDateKey, useStore, type CheckinEntry } from '@/lib/store';
 
 const AUTO_APPLY_CONFIDENCE = 0.7;
+const PARSE_ANIM_MS = 1700;
 
 /** A symptom parsed without a severity — completed conversationally (H-04). */
 type PendingSymptom = {
@@ -27,6 +30,8 @@ type UndoEntry =
   | { kind: 'dose'; id: string }
   | { kind: 'checkin'; field: keyof CheckinEntry; prior: number | string | undefined };
 
+type Phase = 'input' | 'parsing' | 'reviewing';
+
 function isResolvable(item: ParsedItem): boolean {
   switch (item.kind) {
     case 'weight':
@@ -42,25 +47,38 @@ function isResolvable(item: ParsedItem): boolean {
   }
 }
 
-/** Conversational quick-log: one box → structured entities (spec 13). Confident
- * parses auto-apply with an undo affordance; low-confidence/unresolved wait for a tap. */
-export function QuickLog({ seedPrompt }: { seedPrompt?: 'macros' } = {}) {
+/** Conversational quick-log: input → parse (progress bar) → review → confirm (handoff §6). */
+export function QuickLog({
+  seedPrompt,
+  onDismiss,
+}: { seedPrompt?: 'macros'; onDismiss?: () => void } = {}) {
   const { t, i18n } = useTranslation();
+  const theme = useTheme();
   const { entries, upsertCheckin, addSymptomEvent, logDose, deleteSymptomEvent, deleteDose } =
     useStore();
 
   const [text, setText] = useState('');
-  const [busy, setBusy] = useState(false);
+  const [phase, setPhase] = useState<Phase>('input');
   const [reply, setReply] = useState(seedPrompt === 'macros' ? t('quicklog.macroSeed') : '');
   const [items, setItems] = useState<ParsedItem[]>([]);
-  const [applied, setApplied] = useState<Set<number>>(new Set());
-  const [undoBatch, setUndoBatch] = useState<UndoEntry[]>([]);
   const [pendingSymptoms, setPendingSymptoms] = useState<PendingSymptom[]>([]);
+  const [undoBatch, setUndoBatch] = useState<UndoEntry[]>([]);
   const [status, setStatus] = useState<'idle' | 'notConfigured' | 'network' | 'server' | 'empty'>(
     'idle',
   );
 
-  // Apply one item; returns how to reverse it (or null if not applicable).
+  const [progressAnim] = useState(() => new Animated.Value(0));
+  useEffect(() => {
+    if (phase === 'parsing') {
+      progressAnim.setValue(0);
+      Animated.timing(progressAnim, {
+        toValue: 1,
+        duration: PARSE_ANIM_MS,
+        useNativeDriver: false,
+      }).start();
+    }
+  }, [phase, progressAnim]);
+
   const applyItem = (item: ParsedItem): UndoEntry | null => {
     const today = localDateKey();
     const todayEntry = entries[today];
@@ -108,7 +126,7 @@ export function QuickLog({ seedPrompt }: { seedPrompt?: 'macros' } = {}) {
   const undoAll = () => {
     undoBatch.forEach(reverse);
     setUndoBatch([]);
-    setApplied(new Set());
+    setPhase('input');
   };
 
   const setPendingField = (idx: number, patch: Partial<PendingSymptom>) =>
@@ -131,22 +149,18 @@ export function QuickLog({ seedPrompt }: { seedPrompt?: 'macros' } = {}) {
 
   const submit = async () => {
     const input = text.trim();
-    if (!input || busy) return;
-    setBusy(true);
+    if (!input || phase === 'parsing') return;
+    setPhase('parsing');
     setStatus('idle');
     setReply('');
     setItems([]);
-    setApplied(new Set());
+    setPendingSymptoms([]);
     setUndoBatch([]);
     try {
       const result = await parseQuickLog(input, i18n.language);
       const parsed = result.items ?? [];
-      const appliedIdx = new Set<number>();
-      const undos: UndoEntry[] = [];
       const pending: PendingSymptom[] = [];
-      parsed.forEach((item, idx) => {
-        // Symptoms without a severity are completed conversationally (H-04) —
-        // ask intensity (+ duration) rather than committing a bare record.
+      parsed.forEach((item) => {
         if (item.kind === 'symptom' && item.symptomType && item.severity == null) {
           pending.push({
             type: item.symptomType,
@@ -154,35 +168,37 @@ export function QuickLog({ seedPrompt }: { seedPrompt?: 'macros' } = {}) {
             note: item.note,
             onsetISO: item.onsetISO,
           });
-          return;
-        }
-        if (item.confidence >= AUTO_APPLY_CONFIDENCE && isResolvable(item)) {
-          const undo = applyItem(item);
-          if (undo) {
-            undos.push(undo);
-            appliedIdx.add(idx);
-          }
         }
       });
       setReply(result.reply ?? '');
       setItems(parsed);
-      setApplied(appliedIdx);
-      setUndoBatch(undos);
       setPendingSymptoms(pending);
       setStatus(parsed.length === 0 ? 'empty' : 'idle');
-      setText('');
+      setPhase(parsed.length === 0 ? 'input' : 'reviewing');
     } catch (err) {
       setStatus(aiErrorKind(err));
-    } finally {
-      setBusy(false);
+      setPhase('input');
     }
   };
 
-  const addManually = (item: ParsedItem, idx: number) => {
-    const undo = applyItem(item);
-    if (!undo) return;
-    setUndoBatch((prev) => [...prev, undo]);
-    setApplied((prev) => new Set(prev).add(idx));
+  const confirm = () => {
+    const undos: UndoEntry[] = [];
+    items.forEach((item) => {
+      if (item.kind === 'unknown') return;
+      if (item.kind === 'symptom' && item.severity == null) return;
+      if ((item.confidence ?? 1) >= AUTO_APPLY_CONFIDENCE && isResolvable(item)) {
+        const undo = applyItem(item);
+        if (undo) undos.push(undo);
+      }
+    });
+    setUndoBatch(undos);
+    setText('');
+    onDismiss?.();
+  };
+
+  const backToInput = () => {
+    setPhase('input');
+    setItems([]);
   };
 
   const describe = (item: ParsedItem): string => {
@@ -190,7 +206,6 @@ export function QuickLog({ seedPrompt }: { seedPrompt?: 'macros' } = {}) {
       case 'weight':
         return `${t('fields.weight')}: ${item.weight}`;
       case 'checkin':
-        // item.field is an untyped string from parsed JSON; the AI is constrained to fields.*.
         return item.field ? `${t(`fields.${item.field}` as 'fields.weight')}: ${item.value}` : '';
       case 'symptom':
         return [
@@ -212,66 +227,121 @@ export function QuickLog({ seedPrompt }: { seedPrompt?: 'macros' } = {}) {
     }
   };
 
+  // ── Input phase ────────────────────────────────────────────────────────────
+  if (phase === 'input') {
+    return (
+      <View style={styles.container}>
+        <ThemedText type="smallBold">{t('quicklog.title')}</ThemedText>
+        <LabeledInput
+          label={t('quicklog.label')}
+          placeholder={t('quicklog.placeholder')}
+          value={text}
+          onChangeText={setText}
+          multiline
+          onSubmitEditing={submit}
+        />
+        <ThemedText type="small" themeColor="textSecondary">
+          {t('quicklog.voiceHint')}
+        </ThemedText>
+
+        {/* Quick-add suggestion chips — append to the input */}
+        <View style={styles.suggestions}>
+          {(
+            [
+              ['quicklog.sugSleep', t('quicklog.sugSleep')],
+              ['quicklog.sugEnergy', t('quicklog.sugEnergy')],
+              ['quicklog.sugWeight', t('quicklog.sugWeight')],
+              ['quicklog.sugDose', t('quicklog.sugDose')],
+            ] as const
+          ).map(([key, label]) => (
+            <OptionChip
+              key={key}
+              label={label}
+              selected={false}
+              onPress={() => setText((cur) => (cur.trim() ? `${cur.trim()}, ${label}` : label))}
+            />
+          ))}
+        </View>
+
+        <PrimaryButton
+          label={t('quicklog.parseApply')}
+          onPress={submit}
+          disabled={!text.trim()}
+        />
+
+        {status === 'notConfigured' && (
+          <ThemedText type="small" themeColor="textSecondary">
+            {t('quicklog.notConfigured')}
+          </ThemedText>
+        )}
+        {(status === 'network' || status === 'server') && (
+          <View style={styles.errorRow}>
+            <ThemedText type="small" themeColor="textSecondary" style={styles.errorText}>
+              {t(status === 'network' ? 'common.errorNetwork' : 'common.errorServer')}
+            </ThemedText>
+            <TextButton label={t('common.retry')} onPress={submit} />
+          </View>
+        )}
+        {status === 'empty' && (
+          <ThemedText type="small" themeColor="textSecondary">
+            {t('quicklog.nothing')}
+          </ThemedText>
+        )}
+
+        {undoBatch.length > 0 && (
+          <View style={styles.toast}>
+            <ThemedText type="small" themeColor="textSecondary">
+              {t('quicklog.addedCount', { count: undoBatch.length })}
+            </ThemedText>
+            <Pressable accessibilityRole="button" onPress={undoAll}>
+              <ThemedText type="smallBold">{t('quicklog.undo')}</ThemedText>
+            </Pressable>
+          </View>
+        )}
+      </View>
+    );
+  }
+
+  // ── Parsing phase: spinner + animated progress bar (~1.7s) ────────────────
+  if (phase === 'parsing') {
+    return (
+      <View style={styles.container}>
+        <ThemedText type="smallBold">{t('quicklog.sending')}</ThemedText>
+        <View style={styles.progressTrack}>
+          <Animated.View
+            style={[
+              styles.progressFill,
+              {
+                backgroundColor: theme.accent,
+                width: progressAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: ['0%', '100%'],
+                }),
+              },
+            ]}
+          />
+        </View>
+        <ActivityIndicator />
+      </View>
+    );
+  }
+
+  // ── Review phase: detected entries + CONFIRM ──────────────────────────────
+  const reviewableItems = items.filter(
+    (item) =>
+      item.kind !== 'unknown' &&
+      !(item.kind === 'symptom' && item.severity == null) &&
+      isResolvable(item),
+  );
+
   return (
     <View style={styles.container}>
-      <ThemedText type="smallBold">{t('quicklog.title')}</ThemedText>
-      <LabeledInput
-        label={t('quicklog.label')}
-        placeholder={t('quicklog.placeholder')}
-        value={text}
-        onChangeText={setText}
-        multiline
-        onSubmitEditing={submit}
-      />
-      <ThemedText type="small" themeColor="textSecondary">
-        {t('quicklog.voiceHint')}
-      </ThemedText>
-
-      {/* Quick-add suggestion chips — append to the input (handoff §6). */}
-      <View style={styles.suggestions}>
-        {(
-          [
-            ['quicklog.sugSleep', t('quicklog.sugSleep')],
-            ['quicklog.sugEnergy', t('quicklog.sugEnergy')],
-            ['quicklog.sugWeight', t('quicklog.sugWeight')],
-            ['quicklog.sugDose', t('quicklog.sugDose')],
-          ] as const
-        ).map(([key, label]) => (
-          <OptionChip
-            key={key}
-            label={label}
-            selected={false}
-            onPress={() => setText((cur) => (cur.trim() ? `${cur.trim()}, ${label}` : label))}
-          />
-        ))}
+      <View style={styles.reviewHeader}>
+        <TextButton label={t('common.back')} onPress={backToInput} />
+        <ThemedText type="label" themeColor="textMuted">
+          {t('quicklog.reviewLabel')}
+        </ThemedText>
       </View>
-
-      <PrimaryButton
-        label={busy ? t('quicklog.sending') : t('quicklog.send')}
-        onPress={submit}
-        disabled={busy || !text.trim()}
-      />
-
-      {busy && <ActivityIndicator />}
-
-      {status === 'notConfigured' && (
-        <ThemedText type="small" themeColor="textSecondary">
-          {t('quicklog.notConfigured')}
-        </ThemedText>
-      )}
-      {(status === 'network' || status === 'server') && (
-        <View style={styles.errorRow}>
-          <ThemedText type="small" themeColor="textSecondary" style={styles.errorText}>
-            {t(status === 'network' ? 'common.errorNetwork' : 'common.errorServer')}
-          </ThemedText>
-          <TextButton label={t('common.retry')} onPress={submit} />
-        </View>
-      )}
-      {status === 'empty' && (
-        <ThemedText type="small" themeColor="textSecondary">
-          {t('quicklog.nothing')}
-        </ThemedText>
-      )}
 
       {reply ? (
         <ThemedText type="small" themeColor="textSecondary">
@@ -279,7 +349,22 @@ export function QuickLog({ seedPrompt }: { seedPrompt?: 'macros' } = {}) {
         </ThemedText>
       ) : null}
 
-      {/* Conversational symptom completion — ask intensity, then duration (H-04). */}
+      {reviewableItems.map((item, idx) => (
+        <View key={idx} style={styles.reviewRow}>
+          <SignalDotIcon size={8} color="signalGood" />
+          <ThemedText type="small" style={styles.reviewText}>
+            {describe(item)}
+          </ThemedText>
+        </View>
+      ))}
+
+      {reviewableItems.length === 0 && (
+        <ThemedText type="small" themeColor="textSecondary">
+          {t('quicklog.nothing')}
+        </ThemedText>
+      )}
+
+      {/* Conversational symptom completion — ask intensity + duration (H-04). */}
       {pendingSymptoms.map((p, idx) => (
         <Sunken key={`pending-${idx}`} style={styles.pending}>
           <ThemedText type="smallBold">{p.type}</ThemedText>
@@ -303,58 +388,24 @@ export function QuickLog({ seedPrompt }: { seedPrompt?: 'macros' } = {}) {
         </Sunken>
       ))}
 
-      {items.map((item, idx) => {
-        if (item.kind === 'unknown') return null;
-        if (item.kind === 'symptom' && item.severity == null) return null;
-        const isApplied = applied.has(idx);
-        const resolvable = isResolvable(item);
-        return (
-          <View key={idx} style={styles.row}>
-            <ThemedText type="small" style={styles.rowText}>
-              {describe(item)}
-            </ThemedText>
-            {isApplied ? (
-              <ThemedText type="smallBold" themeColor="textSecondary">
-                {t('quicklog.applied')}
-              </ThemedText>
-            ) : resolvable ? (
-              <Pressable accessibilityRole="button" onPress={() => addManually(item, idx)}>
-                <ThemedText type="smallBold">{t('quicklog.apply')}</ThemedText>
-              </Pressable>
-            ) : (
-              <ThemedText type="small" themeColor="textSecondary">
-                {t('quicklog.unresolved')}
-              </ThemedText>
-            )}
-          </View>
-        );
-      })}
-
-      {/* Undo toast — reverse everything applied from this message (spec 13). */}
-      {undoBatch.length > 0 && (
-        <View style={styles.toast}>
-          <ThemedText type="small" themeColor="textSecondary">
-            {t('quicklog.addedCount', { count: undoBatch.length })}
-          </ThemedText>
-          <Pressable accessibilityRole="button" onPress={undoAll}>
-            <ThemedText type="smallBold">{t('quicklog.undo')}</ThemedText>
-          </Pressable>
-        </View>
-      )}
+      <PrimaryButton
+        label={t('quicklog.confirm')}
+        onPress={confirm}
+        disabled={reviewableItems.length === 0 && pendingSymptoms.length === 0}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { gap: Spacing.two },
-  row: {
+  suggestions: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
+  errorRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: Spacing.two,
   },
-  rowText: { flex: 1 },
-  errorRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.two },
   errorText: { flex: 1 },
   toast: {
     flexDirection: 'row',
@@ -363,7 +414,38 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
     paddingTop: Spacing.one,
   },
+  progressTrack: {
+    height: 3,
+    backgroundColor: 'rgba(0,0,0,0.08)',
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+  },
+  reviewHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  reviewRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+    paddingVertical: Spacing.one,
+  },
+  reviewText: { flex: 1 },
   pending: { gap: Spacing.two },
-  pendingActions: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  suggestions: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
+  pendingActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.two,
+  },
+  rowText: { flex: 1 },
 });

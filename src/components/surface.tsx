@@ -10,6 +10,7 @@
  */
 
 import { type ReactNode, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Animated, StyleSheet, View, type ViewProps, type ViewStyle } from 'react-native';
 
 import { ChamferBox } from '@/components/chamfer';
@@ -132,6 +133,7 @@ export function StatusPill({ label, tone = 'neutral' }: { label: string; tone?: 
 /** Content-shaped loading placeholder — gently pulsing sunken bars. Use instead
  *  of a centered spinner when the result is text/content (Emil: show the shape). */
 export function Skeleton({ lines = 3 }: { lines?: number }) {
+  const { t } = useTranslation();
   const theme = useTheme();
   const [opacity] = useState(() => new Animated.Value(0.4));
   useEffect(() => {
@@ -145,7 +147,7 @@ export function Skeleton({ lines = 3 }: { lines?: number }) {
     return () => loop.stop();
   }, [opacity]);
   return (
-    <View style={styles.skeletonWrap} accessibilityRole="progressbar" accessible accessibilityLabel="Loading">
+    <View style={styles.skeletonWrap} accessibilityRole="progressbar" accessible accessibilityLabel={t('common.loading')}>
       {Array.from({ length: lines }, (_, i) => (
         <Animated.View
           key={i}

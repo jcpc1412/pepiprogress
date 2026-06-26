@@ -1,8 +1,10 @@
+import Constants from 'expo-constants';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { OverlayHeader } from '@/components/overlay-header';
+import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { AccountSection } from '@/features/auth/account-section';
@@ -11,6 +13,8 @@ import { CycleSettings } from '@/features/settings/cycle-settings';
 import { IntegrationSettings } from '@/features/settings/integration-settings';
 import { NotificationSettings } from '@/features/settings/notification-settings';
 import { PrivacySettings } from '@/features/settings/privacy-settings';
+
+const appVersion = Constants.expoConfig?.version ?? '1.0.0';
 
 /** App-wide settings, shown as a full-screen overlay from a gear icon (P-01). */
 export function SettingsScreen({ onClose }: { onClose: () => void }) {
@@ -27,6 +31,11 @@ export function SettingsScreen({ onClose }: { onClose: () => void }) {
           <IntegrationSettings />
           <CycleSettings />
           <PrivacySettings />
+          <View style={styles.footer}>
+            <ThemedText type="monoSm" themeColor="textMuted">
+              {`${t('settings.footer')} · v${appVersion}`}
+            </ThemedText>
+          </View>
         </ScrollView>
       </SafeAreaView>
     </ThemedView>
@@ -45,4 +54,5 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   scroll: { gap: Spacing.four, paddingTop: Spacing.three, paddingBottom: Spacing.six },
+  footer: { alignItems: 'center', paddingVertical: Spacing.three },
 });

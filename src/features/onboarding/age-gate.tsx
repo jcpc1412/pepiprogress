@@ -73,7 +73,7 @@ export function AgeGate({ onVerified }: { onVerified: (dobISO: string) => void }
 
   return (
     <View style={styles.wrap}>
-      <EngravedLabel>{t('ageGate.label')}</EngravedLabel>
+      <EngravedLabel>{t('onboarding.intakeProcedure')}</EngravedLabel>
       <ThemedText type="display">{t('about.title')}</ThemedText>
       <ThemedText type="body" themeColor="textSecondary">
         {t('ageGate.subtitle')}
