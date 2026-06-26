@@ -11,6 +11,7 @@
       "icon": "./assets/images/icon.png",
       "bundleIdentifier": "com.pepiprogress.app",
       "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
         "NSCameraUsageDescription": "PepiProgress uses the camera so you can take consistent progress photos.",
         "NSMicrophoneUsageDescription": "Microphone access is required by the camera system.",
         "NSPhotoLibraryUsageDescription": "PepiProgress can import existing progress photos to backdate your timeline.",
