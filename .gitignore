@@ -35,6 +35,11 @@ yarn-error.*
 .env*.local
 !.env.example
 
+# local tooling / secrets
+.mcp.json
+.claude/
+.vscode/
+
 # typescript
 *.tsbuildinfo
 

@@ -362,6 +362,7 @@ export async function pullFromCloud(userId: string): Promise<PersistedState | nu
     photos,
     metricReadings: [],
     integrations: {},
+    customCompounds: [],
   };
 }
 
@@ -464,5 +465,7 @@ export function mergeStates(local: PersistedState, cloud: PersistedState): Persi
     photos,
     metricReadings,
     integrations,
+    // Custom compounds ride the snapshot; preserve whichever side has them.
+    customCompounds: cloud.customCompounds?.length ? cloud.customCompounds : local.customCompounds,
   };
 }

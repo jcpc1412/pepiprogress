@@ -1,14 +1,6 @@
 /**
- * Learn more about light and dark modes:
- * https://docs.expo.dev/guides/color-schemes/
+ * Active theme palette. The resolution (preference + device scheme, D-01) lives
+ * in lib/theme-provider; this re-export keeps the long-standing import path.
  */
 
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-
-export function useTheme() {
-  const scheme = useColorScheme();
-  const theme = scheme === 'unspecified' ? 'light' : scheme;
-
-  return Colors[theme];
-}
+export { useTheme, useResolvedScheme } from '@/lib/theme-provider';

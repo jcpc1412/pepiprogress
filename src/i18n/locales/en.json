@@ -11,11 +11,12 @@
     "done": "Done",
     "retry": "Retry",
     "errorNetwork": "Couldn't reach the service. Check your connection.",
-    "errorServer": "Something went wrong. Please try again."
+    "errorServer": "Something went wrong. Please try again.",
+    "back": "Back"
   },
   "home": {
     "title": "Welcome to PepiProgress",
-    "body": "Track how peptides actually affect you — and see real progress over time.",
+    "body": "Track how peptides actually affect you, and see real progress over time.",
     "cta": "Get started"
   },
   "explore": {
@@ -54,13 +55,13 @@
     },
     "goals": {
       "title": "What are your goals?",
-      "subtitle": "Pick any that apply — they shape what you log.",
+      "subtitle": "Pick any that apply, they shape what you log.",
       "required": "Pick at least one to continue"
     },
     "compounds": {
       "title": "What are you taking?",
       "subtitle": "Select your compounds. This tailors your daily check-in.",
-      "note": "Dose, route and frequency come next — coming soon."
+      "note": "Dose, route and frequency come next, coming soon."
     },
     "cycle": {
       "title": "Track your cycle?",
@@ -118,11 +119,12 @@
     "apply": "Add",
     "unresolved": "Not recognized",
     "notConfigured": "Quick-log AI isn't set up yet.",
-    "error": "Couldn't read that — try rephrasing.",
+    "error": "Couldn't read that, try rephrasing.",
     "nothing": "Nothing to log from that.",
     "voiceHint": "Tip: tap the mic on your keyboard to speak instead of type.",
     "undo": "Undo",
-    "addedCount": "Added {{count}}"
+    "addedCount": "Added {{count}}",
+    "macroSeed": "How much protein and calories did you have today?"
   },
   "photos": {
     "title": "Progress photos",
@@ -136,7 +138,7 @@
     "retake": "Retake",
     "save": "Save",
     "enableCamera": "Enable camera",
-    "permission": "Camera access lets you take consistent progress photos — stored privately, just for you.",
+    "permission": "Camera access lets you take consistent progress photos, stored privately, just for you.",
     "ghostHint": "Line yourself up with the faint guide.",
     "empty": "No photos yet. Capture your first to start your timeline.",
     "baseline": "Baseline",
@@ -197,7 +199,9 @@
     "sitePlaceholder": "e.g. left delt",
     "lastSite": "Last: {{site}}",
     "dosesTitle": "Recent doses",
-    "dosesEmpty": "No doses logged yet."
+    "dosesEmpty": "No doses logged yet.",
+    "addCompound": "Add compound",
+    "addFirstPrompt": "Add your first compound to start tracking doses and inventory."
   },
   "inventory": {
     "title": "Inventory",
@@ -217,7 +221,9 @@
     "lowStock": "Low stock",
     "expired": "Expired",
     "expiringSoon": "Expiring soon",
-    "consumable": "Consumable"
+    "consumable": "Consumable",
+    "summaryTitle": "Inventory",
+    "ok": "OK"
   },
   "inventoryKinds": {
     "vial": "Vial",
@@ -270,9 +276,9 @@
   },
   "consent": {
     "storage": {
-      "label": "1 OF 2 — PHOTO STORAGE",
+      "label": "1 OF 2, PHOTO STORAGE",
       "title": "Store your progress photos",
-      "body": "Progress photos need to be stored so the ghost overlay and timeline can work. They are private by default — never shared unless you choose to.",
+      "body": "Progress photos need to be stored so the ghost overlay and timeline can work. They are private by default, never shared unless you choose to.",
       "offTitle": "Without storage",
       "off1": "No ghost overlay",
       "off2": "No timeline or compare",
@@ -283,12 +289,12 @@
       "on3": "Side-by-side and wipe compare",
       "accept": "Allow photo storage",
       "decline": "No thanks, skip photos",
-      "notice": "Stored privately on your device and (when you create an account) in an encrypted private bucket — never shown to others, never used to train AI models."
+      "notice": "Stored privately on your device and (when you create an account) in an encrypted private bucket, never shown to others, never used to train AI models."
     },
     "ai": {
-      "label": "2 OF 2 — AI ANALYSIS",
+      "label": "2 OF 2, AI ANALYSIS",
       "title": "AI photo analysis",
-      "body": "Our AI compares consecutive photos for lighting, angle, and framing consistency — and gives a hedged, observational change note. It never diagnoses anything.",
+      "body": "Our AI compares consecutive photos for lighting, angle, and framing consistency, and gives a hedged, observational change note. It never diagnoses anything.",
       "offTitle": "Without AI",
       "off1": "No drift score",
       "off2": "No comparability badge",
@@ -299,7 +305,7 @@
       "on3": "Hedged visual-change note",
       "accept": "Allow AI analysis",
       "decline": "No thanks, manual only",
-      "notice": "Photos are sent to a server-side AI service for analysis. Your photos are never used to train any model. Analysis is observational only — never a medical claim."
+      "notice": "Photos are sent to a server-side AI service for analysis. Your photos are never used to train any model. Analysis is observational only, never a medical claim."
     }
   },
   "privacy": {
@@ -315,7 +321,7 @@
     "revoke": "Revoke",
     "lastUpdated": "Last updated {{date}}",
     "dataSection": "YOUR DATA",
-    "exportBody": "Download a copy of all your data as JSON — check-ins, doses, symptoms, protocols, and photo metadata.",
+    "exportBody": "Download a copy of all your data as JSON, check-ins, doses, symptoms, protocols, and photo metadata.",
     "exportTitle": "Export PepiProgress data",
     "export": "Export my data",
     "exporting": "Exporting…",
@@ -373,7 +379,10 @@
     "inventoryBody_one": "{{count}} item is low or expiring soon.",
     "inventoryBody_other": "{{count}} items are low or expiring soon.",
     "photoTitle": "Progress photo time",
-    "photoBody": "A new progress comparison is ready to capture."
+    "photoBody": "A new progress comparison is ready to capture.",
+    "macros": "End-of-day macros",
+    "macroTitle": "Log your macros",
+    "macroBody": "How much protein and calories did you have today?"
   },
   "cycle": {
     "section": "CYCLE TRACKING",
@@ -423,7 +432,7 @@
     "migratedBody": "Your data has been saved to the cloud.",
     "restoredTitle": "Data restored",
     "restoredBody": "Your data has been loaded onto this device.",
-    "partialSync": "{{count}} item(s) could not sync — your local data is safe.",
+    "partialSync": "{{count}} item(s) could not sync, your local data is safe.",
     "errorMissingFields": "Please enter your email and password."
   },
   "account": {
@@ -450,11 +459,13 @@
     "vialScan": "Scan vial label",
     "vialScanning": "Reading label…",
     "vialUnreadable": "Label is unclear. Try a closer, well-lit photo.",
-    "vialResult": "{{compound}} — {{concentration}} mg/mL"
+    "vialResult": "{{compound}}, {{concentration}} mg/mL",
+    "uploadPdf": "Upload PDF",
+    "pdfSaved": "Saved {{name}}. PDF parsing is coming soon."
   },
   "drive": {
     "section": "GOOGLE DRIVE BACKUP",
-    "description": "Back up your data to your personal Google Drive. Private app storage — not visible in your Drive folder.",
+    "description": "Back up your data to your personal Google Drive. Private app storage, not visible in your Drive folder.",
     "connectGoogle": "Connect Google",
     "backup": "Back up now",
     "backing": "Backing up…",
@@ -482,11 +493,66 @@
     "notConfigured": "AI insights aren't set up yet.",
     "error": "Couldn't analyze right now. Try again.",
     "insufficient": "Not enough logged data yet to find a pattern. Keep logging.",
-    "disclaimer": "Observational analysis of your own data — not medical advice."
+    "disclaimer": "Observational analysis of your own data, not medical advice."
   },
   "sync": {
     "syncing": "Syncing…",
     "synced": "Synced",
     "error": "Sync failed"
+  },
+  "appearance": {
+    "section": "Appearance",
+    "light": "Light",
+    "dark": "Dark",
+    "auto": "Auto"
+  },
+  "compounds": {
+    "search": "Search compounds",
+    "searchPlaceholder": "Type a name",
+    "noResults": "No matches. Add it as a custom compound below.",
+    "addCustom": "Cannot find it? Add custom",
+    "customTitle": "Custom compound",
+    "customName": "Name",
+    "injectable": "Injectable",
+    "reconstituted": "Reconstituted powder",
+    "vialSizes": "Common vial sizes (mg)",
+    "vialSizesPlaceholder": "e.g. 5, 10",
+    "createCustom": "Create"
+  },
+  "settings": {
+    "title": "Settings"
+  },
+  "logging": {
+    "title": "Log",
+    "quick": "Quick",
+    "detailed": "Detailed"
+  },
+  "dashboard": {
+    "empty": "Log a few days or add a photo to see your progress here.",
+    "loggedToday": "Logged today",
+    "notLoggedToday": "Not logged yet today",
+    "dosesToday": "{{count}} doses logged today",
+    "quickLog": "Quick log",
+    "detailedLog": "Detailed log"
+  },
+  "addCompound": {
+    "title": "Add compound",
+    "reconTitle": "Reconstitution",
+    "vialMg": "Vial size (mg)",
+    "vialMgPlaceholder": "Vial strength in mg",
+    "reconSuggestion": "Add {{water}} mL BAC water for {{conc}} mg/mL",
+    "reconDraw": "Draw {{units}} units ({{volume}} mL) per dose",
+    "logVial": "I have this vial on hand",
+    "reconHint": "Enter a dose and vial size for a reconstitution suggestion."
+  },
+  "about": {
+    "title": "About you",
+    "sex": "Sex"
+  },
+  "sex": {
+    "male": "Male",
+    "female": "Female",
+    "ftm": "Trans masc (FTM)",
+    "mtf": "Trans fem (MTF)"
   }
 }

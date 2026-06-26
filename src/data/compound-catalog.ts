@@ -23,9 +23,21 @@ export type CatalogCompound = {
   effectTags: string[];
   monitoringTags: string[];
   commonUses: string[];
+  /** Administered by injection (drives route defaults + the recon gate, P-03). */
+  injectable: boolean;
+  /** Ships as lyophilized powder needing BAC water. Pre-mixed injectables
+   *  (e.g. testosterone-in-oil) are injectable but NOT reconstituted. The P-03
+   *  BAC suggestion fires only when injectable && reconstituted. */
+  reconstituted: boolean;
+  /** Common vial strengths (mg) — defaults the reconstitution math; user-editable.
+   *  Product packaging, not a dose recommendation. */
+  commonVialSizesMg?: number[];
+  /** True for user-created compounds (O-04); absent for bundled catalog rows. */
+  custom?: boolean;
 };
 
 export const COMPOUND_CATALOG: readonly CatalogCompound[] = [
+  // ── Existing 12 (backfilled with injectable/reconstituted) ────────────────
   {
     slug: 'bpc-157',
     canonicalName: 'BPC-157',
@@ -35,6 +47,9 @@ export const COMPOUND_CATALOG: readonly CatalogCompound[] = [
     effectTags: ['healing', 'recovery', 'gut'],
     monitoringTags: [],
     commonUses: ['injury recovery', 'gut health'],
+    injectable: true,
+    reconstituted: true,
+    commonVialSizesMg: [5, 10],
   },
   {
     slug: 'tb-500',
@@ -45,6 +60,9 @@ export const COMPOUND_CATALOG: readonly CatalogCompound[] = [
     effectTags: ['healing', 'recovery'],
     monitoringTags: [],
     commonUses: ['soft-tissue recovery'],
+    injectable: true,
+    reconstituted: true,
+    commonVialSizesMg: [5, 10],
   },
   {
     slug: 'ghk-cu',
@@ -55,6 +73,9 @@ export const COMPOUND_CATALOG: readonly CatalogCompound[] = [
     effectTags: ['skin', 'healing'],
     monitoringTags: [],
     commonUses: ['skin', 'hair'],
+    injectable: true,
+    reconstituted: true,
+    commonVialSizesMg: [50, 100],
   },
   {
     slug: 'ipamorelin',
@@ -65,6 +86,9 @@ export const COMPOUND_CATALOG: readonly CatalogCompound[] = [
     effectTags: ['recovery', 'sleep', 'muscle'],
     monitoringTags: [],
     commonUses: ['gh secretagogue'],
+    injectable: true,
+    reconstituted: true,
+    commonVialSizesMg: [5, 10],
   },
   {
     slug: 'cjc-1295',
@@ -75,6 +99,9 @@ export const COMPOUND_CATALOG: readonly CatalogCompound[] = [
     effectTags: ['recovery', 'muscle'],
     monitoringTags: [],
     commonUses: ['gh secretagogue'],
+    injectable: true,
+    reconstituted: true,
+    commonVialSizesMg: [2, 5],
   },
   {
     slug: 'semaglutide',
@@ -85,6 +112,9 @@ export const COMPOUND_CATALOG: readonly CatalogCompound[] = [
     effectTags: ['fat_loss'],
     monitoringTags: ['appetite', 'nausea'],
     commonUses: ['weight loss'],
+    injectable: true,
+    reconstituted: true,
+    commonVialSizesMg: [5, 10],
   },
   {
     slug: 'tirzepatide',
@@ -95,6 +125,9 @@ export const COMPOUND_CATALOG: readonly CatalogCompound[] = [
     effectTags: ['fat_loss'],
     monitoringTags: ['appetite', 'nausea', 'glucose'],
     commonUses: ['weight loss'],
+    injectable: true,
+    reconstituted: true,
+    commonVialSizesMg: [10, 15, 30],
   },
   {
     slug: 'testosterone',
@@ -105,6 +138,8 @@ export const COMPOUND_CATALOG: readonly CatalogCompound[] = [
     effectTags: ['muscle', 'libido', 'mood', 'recovery'],
     monitoringTags: ['hematocrit', 'estradiol', 'lipids'],
     commonUses: ['TRT', 'hormone optimization'],
+    injectable: true,
+    reconstituted: false,
   },
   {
     slug: 'anastrozole',
@@ -115,6 +150,8 @@ export const COMPOUND_CATALOG: readonly CatalogCompound[] = [
     effectTags: ['hormonal'],
     monitoringTags: ['estradiol'],
     commonUses: ['aromatase inhibitor'],
+    injectable: false,
+    reconstituted: false,
   },
   {
     slug: 'enclomiphene',
@@ -125,6 +162,8 @@ export const COMPOUND_CATALOG: readonly CatalogCompound[] = [
     effectTags: ['hormonal', 'libido'],
     monitoringTags: ['testosterone_total', 'estradiol'],
     commonUses: ['HPTA support'],
+    injectable: false,
+    reconstituted: false,
   },
   {
     slug: 'mk-677',
@@ -135,6 +174,8 @@ export const COMPOUND_CATALOG: readonly CatalogCompound[] = [
     effectTags: ['muscle', 'sleep', 'appetite'],
     monitoringTags: ['glucose'],
     commonUses: ['gh secretagogue'],
+    injectable: false,
+    reconstituted: false,
   },
   {
     slug: 'creatine',
@@ -145,11 +186,430 @@ export const COMPOUND_CATALOG: readonly CatalogCompound[] = [
     effectTags: ['muscle', 'cognition'],
     monitoringTags: [],
     commonUses: ['strength', 'performance'],
+    injectable: false,
+    reconstituted: false,
+  },
+
+  // ── Fat-burning ───────────────────────────────────────────────────────────
+  {
+    slug: 'aod-9604',
+    canonicalName: 'AOD-9604',
+    aliases: ['aod', 'aod9604'],
+    type: 'peptide',
+    controlled: false,
+    effectTags: ['fat_loss'],
+    monitoringTags: [],
+    commonUses: ['fat loss'],
+    injectable: true,
+    reconstituted: true,
+    commonVialSizesMg: [5],
+  },
+  {
+    slug: '5-amino-1mq',
+    canonicalName: '5-Amino-1MQ',
+    aliases: ['5amino1mq', '5-amino'],
+    type: 'other',
+    controlled: false,
+    effectTags: ['fat_loss'],
+    monitoringTags: [],
+    commonUses: ['metabolic', 'fat loss'],
+    injectable: false,
+    reconstituted: false,
+  },
+  {
+    slug: 'tesofensine',
+    canonicalName: 'Tesofensine',
+    aliases: ['teso'],
+    type: 'other',
+    controlled: false,
+    effectTags: ['fat_loss', 'appetite'],
+    monitoringTags: ['appetite'],
+    commonUses: ['appetite suppression', 'fat loss'],
+    injectable: false,
+    reconstituted: false,
+  },
+  {
+    slug: 'cagrilintide',
+    canonicalName: 'Cagrilintide',
+    aliases: ['cagri'],
+    type: 'peptide',
+    controlled: false,
+    effectTags: ['fat_loss', 'appetite'],
+    monitoringTags: ['appetite', 'nausea'],
+    commonUses: ['weight loss'],
+    injectable: true,
+    reconstituted: true,
+    commonVialSizesMg: [5, 10],
+  },
+  {
+    slug: 'melanotan-2',
+    canonicalName: 'Melanotan II',
+    aliases: ['mt2', 'mt-ii', 'melanotan'],
+    type: 'peptide',
+    controlled: false,
+    effectTags: ['fat_loss', 'libido', 'skin'],
+    monitoringTags: ['nausea'],
+    commonUses: ['tanning', 'libido'],
+    injectable: true,
+    reconstituted: true,
+    commonVialSizesMg: [10],
+  },
+  {
+    slug: 'lipo-c',
+    canonicalName: 'LIPO-C',
+    aliases: ['lipo', 'lipotropic'],
+    type: 'other',
+    controlled: false,
+    effectTags: ['fat_loss'],
+    monitoringTags: [],
+    commonUses: ['fat loss'],
+    injectable: true,
+    reconstituted: false,
+  },
+
+  // ── GLP-1 ─────────────────────────────────────────────────────────────────
+  {
+    slug: 'retatrutide',
+    canonicalName: 'Retatrutide',
+    aliases: ['reta'],
+    type: 'glp1',
+    controlled: false,
+    effectTags: ['fat_loss', 'appetite'],
+    monitoringTags: ['appetite', 'nausea', 'glucose'],
+    commonUses: ['weight loss'],
+    injectable: true,
+    reconstituted: true,
+    commonVialSizesMg: [10, 20],
+  },
+  {
+    slug: 'survodutide',
+    canonicalName: 'Survodutide',
+    aliases: ['survo'],
+    type: 'glp1',
+    controlled: false,
+    effectTags: ['fat_loss', 'appetite'],
+    monitoringTags: ['appetite', 'nausea', 'glucose'],
+    commonUses: ['weight loss'],
+    injectable: true,
+    reconstituted: true,
+    commonVialSizesMg: [10],
+  },
+  {
+    slug: 'mazdutide',
+    canonicalName: 'Mazdutide',
+    aliases: ['mazd'],
+    type: 'glp1',
+    controlled: false,
+    effectTags: ['fat_loss', 'appetite'],
+    monitoringTags: ['appetite', 'nausea', 'glucose'],
+    commonUses: ['weight loss'],
+    injectable: true,
+    reconstituted: true,
+    commonVialSizesMg: [10],
+  },
+  {
+    slug: 'cotadutide',
+    canonicalName: 'Cotadutide',
+    aliases: ['cota'],
+    type: 'glp1',
+    controlled: false,
+    effectTags: ['fat_loss', 'appetite'],
+    monitoringTags: ['appetite', 'nausea', 'glucose'],
+    commonUses: ['weight loss'],
+    injectable: true,
+    reconstituted: true,
+    commonVialSizesMg: [10],
+  },
+
+  // ── Growth hormone ────────────────────────────────────────────────────────
+  {
+    slug: 'tesamorelin',
+    canonicalName: 'Tesamorelin',
+    aliases: ['tesa', 'egrifta'],
+    type: 'peptide',
+    controlled: false,
+    effectTags: ['recovery', 'muscle'],
+    monitoringTags: [],
+    commonUses: ['gh secretagogue', 'visceral fat'],
+    injectable: true,
+    reconstituted: true,
+    commonVialSizesMg: [5, 10],
+  },
+  {
+    slug: 'ghrp-2',
+    canonicalName: 'GHRP-2',
+    aliases: ['ghrp2'],
+    type: 'peptide',
+    controlled: false,
+    effectTags: ['recovery', 'muscle', 'appetite'],
+    monitoringTags: [],
+    commonUses: ['gh secretagogue'],
+    injectable: true,
+    reconstituted: true,
+    commonVialSizesMg: [5, 10],
+  },
+  {
+    slug: 'ghrp-6',
+    canonicalName: 'GHRP-6',
+    aliases: ['ghrp6'],
+    type: 'peptide',
+    controlled: false,
+    effectTags: ['recovery', 'muscle', 'appetite'],
+    monitoringTags: ['appetite'],
+    commonUses: ['gh secretagogue'],
+    injectable: true,
+    reconstituted: true,
+    commonVialSizesMg: [5, 10],
+  },
+  {
+    slug: 'hexarelin',
+    canonicalName: 'Hexarelin',
+    aliases: ['hex'],
+    type: 'peptide',
+    controlled: false,
+    effectTags: ['recovery', 'muscle'],
+    monitoringTags: [],
+    commonUses: ['gh secretagogue'],
+    injectable: true,
+    reconstituted: true,
+    commonVialSizesMg: [5, 10],
+  },
+  {
+    slug: 'sermorelin',
+    canonicalName: 'Sermorelin',
+    aliases: ['sermo'],
+    type: 'peptide',
+    controlled: false,
+    effectTags: ['recovery', 'sleep'],
+    monitoringTags: [],
+    commonUses: ['gh secretagogue'],
+    injectable: true,
+    reconstituted: true,
+    commonVialSizesMg: [5, 10],
+  },
+
+  // ── Mitochondrial / healing ───────────────────────────────────────────────
+  {
+    slug: 'mots-c',
+    canonicalName: 'MOTS-c',
+    aliases: ['motsc'],
+    type: 'peptide',
+    controlled: false,
+    effectTags: ['recovery', 'cognition'],
+    monitoringTags: [],
+    commonUses: ['metabolic', 'endurance'],
+    injectable: true,
+    reconstituted: true,
+    commonVialSizesMg: [10],
+  },
+  {
+    slug: 'ss-31',
+    canonicalName: 'SS-31',
+    aliases: ['ss31', 'elamipretide'],
+    type: 'peptide',
+    controlled: false,
+    effectTags: ['recovery', 'healing'],
+    monitoringTags: [],
+    commonUses: ['mitochondrial support'],
+    injectable: true,
+    reconstituted: true,
+    commonVialSizesMg: [10, 50],
+  },
+  {
+    slug: 'humanin',
+    canonicalName: 'Humanin',
+    aliases: [],
+    type: 'peptide',
+    controlled: false,
+    effectTags: ['recovery', 'healing'],
+    monitoringTags: [],
+    commonUses: ['mitochondrial support'],
+    injectable: true,
+    reconstituted: true,
+    commonVialSizesMg: [5, 10],
+  },
+  {
+    slug: 'thymosin-alpha-1',
+    canonicalName: 'Thymosin Alpha-1',
+    aliases: ['ta1', 'thymosin a1'],
+    type: 'peptide',
+    controlled: false,
+    effectTags: ['healing', 'recovery'],
+    monitoringTags: [],
+    commonUses: ['immune support'],
+    injectable: true,
+    reconstituted: true,
+    commonVialSizesMg: [5, 10],
+  },
+  {
+    slug: 'ara-290',
+    canonicalName: 'ARA-290',
+    aliases: ['ara290', 'cibinetide'],
+    type: 'peptide',
+    controlled: false,
+    effectTags: ['healing', 'recovery'],
+    monitoringTags: [],
+    commonUses: ['neuropathic support'],
+    injectable: true,
+    reconstituted: true,
+    commonVialSizesMg: [10, 16],
+  },
+  {
+    slug: 'kpv',
+    canonicalName: 'KPV',
+    aliases: [],
+    type: 'peptide',
+    controlled: false,
+    effectTags: ['healing', 'gut'],
+    monitoringTags: [],
+    commonUses: ['anti-inflammatory', 'gut health'],
+    injectable: true,
+    reconstituted: true,
+    commonVialSizesMg: [10],
+  },
+  {
+    slug: 'slu-pp-332',
+    canonicalName: 'SLU-PP-332',
+    aliases: ['slupp332'],
+    type: 'other',
+    controlled: false,
+    effectTags: ['fat_loss', 'recovery'],
+    monitoringTags: [],
+    commonUses: ['metabolic', 'endurance'],
+    injectable: false,
+    reconstituted: false,
+  },
+
+  // ── Brain / libido ────────────────────────────────────────────────────────
+  {
+    slug: 'oxytocin',
+    canonicalName: 'Oxytocin',
+    aliases: [],
+    type: 'peptide',
+    controlled: false,
+    effectTags: ['mood', 'libido'],
+    monitoringTags: [],
+    commonUses: ['mood', 'bonding'],
+    injectable: true,
+    reconstituted: true,
+    commonVialSizesMg: [2, 5],
+  },
+  {
+    slug: 'pt-141',
+    canonicalName: 'PT-141',
+    aliases: ['bremelanotide', 'pt141'],
+    type: 'peptide',
+    controlled: false,
+    effectTags: ['libido'],
+    monitoringTags: ['nausea'],
+    commonUses: ['libido'],
+    injectable: true,
+    reconstituted: true,
+    commonVialSizesMg: [10],
+  },
+  {
+    slug: 'kisspeptin-10',
+    canonicalName: 'Kisspeptin-10',
+    aliases: ['kisspeptin', 'kp10'],
+    type: 'peptide',
+    controlled: false,
+    effectTags: ['libido'],
+    monitoringTags: ['testosterone_total'],
+    commonUses: ['hormonal', 'libido'],
+    injectable: true,
+    reconstituted: true,
+    commonVialSizesMg: [5, 10],
+  },
+  {
+    slug: 'setmelanotide',
+    canonicalName: 'Setmelanotide',
+    aliases: ['imcivree'],
+    type: 'peptide',
+    controlled: false,
+    effectTags: ['fat_loss', 'appetite'],
+    monitoringTags: ['appetite'],
+    commonUses: ['appetite', 'weight loss'],
+    injectable: true,
+    reconstituted: true,
+    commonVialSizesMg: [10],
+  },
+
+  // ── Support ───────────────────────────────────────────────────────────────
+  {
+    slug: 'semax',
+    canonicalName: 'Semax',
+    aliases: [],
+    type: 'peptide',
+    controlled: false,
+    effectTags: ['cognition', 'mood'],
+    monitoringTags: [],
+    commonUses: ['nootropic'],
+    injectable: false,
+    reconstituted: true,
+    commonVialSizesMg: [10, 30],
+  },
+  {
+    slug: 'selank',
+    canonicalName: 'Selank',
+    aliases: [],
+    type: 'peptide',
+    controlled: false,
+    effectTags: ['cognition', 'mood'],
+    monitoringTags: [],
+    commonUses: ['nootropic', 'anxiolytic'],
+    injectable: false,
+    reconstituted: true,
+    commonVialSizesMg: [10, 30],
+  },
+  {
+    slug: 'nad-plus',
+    canonicalName: 'NAD+',
+    aliases: ['nad', 'nad+'],
+    type: 'other',
+    controlled: false,
+    effectTags: ['recovery', 'cognition'],
+    monitoringTags: [],
+    commonUses: ['longevity', 'energy'],
+    injectable: true,
+    reconstituted: false,
+  },
+
+  // ── Hormones ──────────────────────────────────────────────────────────────
+  {
+    slug: 'estrogen',
+    canonicalName: 'Estrogen',
+    aliases: ['estradiol', 'e2'],
+    type: 'hormone',
+    controlled: false,
+    effectTags: ['mood', 'skin'],
+    monitoringTags: ['estradiol'],
+    commonUses: ['hormone optimization', 'transition'],
+    injectable: false,
+    reconstituted: false,
   },
 ];
 
 const BY_SLUG = new Map(COMPOUND_CATALOG.map((c) => [c.slug, c]));
 
+/**
+ * User-created compounds (O-04) live in the store, but pure consumers like
+ * field-surfacing import the lookup directly. The store mirrors its
+ * `customCompounds` into this registry so `compoundBySlug`/`allCompounds`
+ * resolve across both without coupling those callers to the store.
+ */
+let customRegistry: CatalogCompound[] = [];
+let customBySlug = new Map<string, CatalogCompound>();
+
+export function registerCustomCompounds(list: CatalogCompound[]): void {
+  customRegistry = list;
+  customBySlug = new Map(list.map((c) => [c.slug, c]));
+}
+
 export function compoundBySlug(slug: string): CatalogCompound | undefined {
-  return BY_SLUG.get(slug);
+  return BY_SLUG.get(slug) ?? customBySlug.get(slug);
+}
+
+/** Bundled catalog ∪ user-created compounds. */
+export function allCompounds(): CatalogCompound[] {
+  return customRegistry.length ? [...COMPOUND_CATALOG, ...customRegistry] : [...COMPOUND_CATALOG];
 }

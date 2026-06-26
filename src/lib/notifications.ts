@@ -9,6 +9,7 @@ const isWeb = Platform.OS === 'web';
 
 const DEFAULT_CHECKIN_TIME = '20:00';
 const DEFAULT_DOSE_TIME = '09:00';
+const DEFAULT_MACRO_TIME = '20:30';
 
 /** "HH:mm" → { hour, minute }, tolerant of bad input (falls back to 9:00). */
 function parseHM(time: string | undefined, fallback: string): { hour: number; minute: number } {
@@ -89,6 +90,16 @@ export async function rescheduleReminders(profile: LocalProfile, hasProtocol: bo
   if (profile.notifyDosesEnabled && hasProtocol) {
     await scheduleDaily('pepi.doses', profile.notifyDoseTime ?? DEFAULT_DOSE_TIME, DEFAULT_DOSE_TIME,
       'notify.doseTitle', 'notify.doseBody');
+  }
+  if (profile.notifyMacrosEnabled) {
+    // End-of-day macro reminder (H-05). Carries a deep-link marker so the tap
+    // opens the quick-log seeded for macros.
+    const { hour, minute } = parseHM(profile.notifyMacroTime, DEFAULT_MACRO_TIME);
+    await Notifications.scheduleNotificationAsync({
+      identifier: 'pepi.macros',
+      content: { title: t('notify.macroTitle'), body: t('notify.macroBody'), data: { kind: 'macros' } },
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour, minute },
+    });
   }
   if (profile.notifyPhotosEnabled) {
     const milestones: [string, string | undefined][] = [

@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from 'react';
 
+import { registerCustomCompounds, type CatalogCompound } from '@/data/compound-catalog';
 import type { CheckinField, Goal } from '@/lib/field-surfacing';
 import type { Enums } from '@/types/database';
 
@@ -94,6 +95,8 @@ export type InventoryItem = {
   label?: string; // for consumables / custom naming
   concentration?: number; // mg/mL
   amountRemaining?: number;
+  /** Amount at creation/last refill — powers the depletion bar (P-02). */
+  amountInitial?: number;
   unit?: string;
   lowThreshold?: number;
   expiry?: string; // YYYY-MM-DD
@@ -142,11 +145,25 @@ export type IntegrationState = {
   terraUserId?: string; // Terra-issued user id, captured from the Connect widget redirect
 };
 
+export type ThemePreference = 'light' | 'dark' | 'auto';
+export type Sex = 'male' | 'female' | 'ftm' | 'mtf';
+
 export type LocalProfile = {
   units: UnitsSystem;
   goals: Goal[];
   compoundSlugs: string[];
   onboardingComplete: boolean;
+  /** Appearance override; 'auto' follows the device (D-01). */
+  themePreference?: ThemePreference;
+  /** Birth/transition sex — drives cycle relevance + AI change context (O-02). */
+  sex?: Sex;
+  /** Metric keys the user pinned to the Today dashboard charts (H-01). */
+  dashboardMetrics?: string[];
+  /** Dismissed the "add your first compound" soft prompt (O-04). */
+  dismissedAddCompoundPrompt?: boolean;
+  /** End-of-day macro reminder (H-05). */
+  notifyMacrosEnabled?: boolean;
+  notifyMacroTime?: string; // default "20:00"
   /** Manual "customize what I log" overrides on top of the surfaced defaults (spec 02). */
   addedFields: CheckinField[];
   removedFields: CheckinField[];
@@ -189,6 +206,8 @@ export type PersistedState = {
   photos: PhotoEntry[];
   metricReadings: MetricReading[];
   integrations: Record<string, IntegrationState>;
+  /** User-created compounds not in the bundled catalog (O-04). */
+  customCompounds: CatalogCompound[];
 };
 
 /** Convert a dose to mg for inventory decrement. IU can't be converted → null. */
@@ -219,6 +238,7 @@ const EMPTY_STATE: PersistedState = {
   photos: [],
   metricReadings: [],
   integrations: {},
+  customCompounds: [],
 };
 
 /** Local date as YYYY-MM-DD (not UTC — the check-in is anchored to the user's day). */
@@ -246,8 +266,11 @@ type StoreContextValue = {
   photos: PhotoEntry[];
   metricReadings: MetricReading[];
   integrations: Record<string, IntegrationState>;
+  customCompounds: CatalogCompound[];
   setProfile: (patch: Partial<LocalProfile>) => void;
   completeOnboarding: () => void;
+  /** Add a user-created compound (O-04). */
+  addCustomCompound: (compound: CatalogCompound) => void;
   /** Create or update the check-in for a date (merge patch). */
   upsertCheckin: (date: string, patch: Partial<Omit<CheckinEntry, 'date' | 'updatedAt'>>) => void;
   /** Returns the new event's id (so callers can offer undo). */
@@ -322,6 +345,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       // Best-effort; a failed write retries on the next mutation.
     });
   }, [state]);
+
+  // Mirror custom compounds into the catalog registry so compoundBySlug /
+  // field-surfacing resolve them (O-04).
+  useEffect(() => {
+    registerCustomCompounds(state.customCompounds);
+  }, [state.customCompounds]);
 
   const setProfile = useCallback((patch: Partial<LocalProfile>) => {
     setState((s) => ({ ...s, profile: { ...s.profile, ...patch } }));
@@ -482,6 +511,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
+  const addCustomCompound = useCallback<StoreContextValue['addCustomCompound']>((compound) => {
+    setState((s) =>
+      s.customCompounds.some((c) => c.slug === compound.slug)
+        ? s
+        : { ...s, customCompounds: [...s.customCompounds, compound] },
+    );
+  }, []);
+
   const value = useMemo<StoreContextValue>(
     () => ({
       ready,
@@ -494,8 +531,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       photos: state.photos,
       metricReadings: state.metricReadings,
       integrations: state.integrations,
+      customCompounds: state.customCompounds,
       setProfile,
       completeOnboarding,
+      addCustomCompound,
       upsertCheckin,
       addSymptomEvent,
       deleteSymptomEvent,
@@ -521,6 +560,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       state,
       setProfile,
       completeOnboarding,
+      addCustomCompound,
       upsertCheckin,
       addSymptomEvent,
       deleteSymptomEvent,

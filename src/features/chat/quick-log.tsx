@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
-import { LabeledInput, PrimaryButton, TextButton } from '@/components/form';
+import { LabeledInput, PrimaryButton, ScaleSelector, TextButton } from '@/components/form';
+import { Sunken } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { compoundBySlug } from '@/data/compound-catalog';
@@ -10,6 +11,15 @@ import { aiErrorKind, parseQuickLog, type ParsedItem } from '@/lib/ai';
 import { localDateKey, useStore, type CheckinEntry } from '@/lib/store';
 
 const AUTO_APPLY_CONFIDENCE = 0.7;
+
+/** A symptom parsed without a severity — completed conversationally (H-04). */
+type PendingSymptom = {
+  type: string;
+  severity?: number;
+  duration: string;
+  note?: string;
+  onsetISO?: string;
+};
 
 /** Enough to reverse a single applied item (the undo toast, spec 13). */
 type UndoEntry =
@@ -34,17 +44,18 @@ function isResolvable(item: ParsedItem): boolean {
 
 /** Conversational quick-log: one box → structured entities (spec 13). Confident
  * parses auto-apply with an undo affordance; low-confidence/unresolved wait for a tap. */
-export function QuickLog() {
+export function QuickLog({ seedPrompt }: { seedPrompt?: 'macros' } = {}) {
   const { t, i18n } = useTranslation();
   const { entries, upsertCheckin, addSymptomEvent, logDose, deleteSymptomEvent, deleteDose } =
     useStore();
 
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
-  const [reply, setReply] = useState('');
+  const [reply, setReply] = useState(seedPrompt === 'macros' ? t('quicklog.macroSeed') : '');
   const [items, setItems] = useState<ParsedItem[]>([]);
   const [applied, setApplied] = useState<Set<number>>(new Set());
   const [undoBatch, setUndoBatch] = useState<UndoEntry[]>([]);
+  const [pendingSymptoms, setPendingSymptoms] = useState<PendingSymptom[]>([]);
   const [status, setStatus] = useState<'idle' | 'notConfigured' | 'network' | 'server' | 'empty'>(
     'idle',
   );
@@ -100,6 +111,24 @@ export function QuickLog() {
     setApplied(new Set());
   };
 
+  const setPendingField = (idx: number, patch: Partial<PendingSymptom>) =>
+    setPendingSymptoms((prev) => prev.map((p, i) => (i === idx ? { ...p, ...patch } : p)));
+
+  const commitPending = (idx: number) => {
+    const p = pendingSymptoms[idx];
+    if (!p) return;
+    const minutes = parseInt(p.duration, 10);
+    const id = addSymptomEvent({
+      type: p.type,
+      onsetAt: p.onsetISO ?? new Date().toISOString(),
+      severity: p.severity,
+      durationMinutes: Number.isFinite(minutes) ? minutes : undefined,
+      note: p.note,
+    });
+    setUndoBatch((prev) => [...prev, { kind: 'symptom', id }]);
+    setPendingSymptoms((prev) => prev.filter((_, i) => i !== idx));
+  };
+
   const submit = async () => {
     const input = text.trim();
     if (!input || busy) return;
@@ -114,7 +143,19 @@ export function QuickLog() {
       const parsed = result.items ?? [];
       const appliedIdx = new Set<number>();
       const undos: UndoEntry[] = [];
+      const pending: PendingSymptom[] = [];
       parsed.forEach((item, idx) => {
+        // Symptoms without a severity are completed conversationally (H-04) —
+        // ask intensity (+ duration) rather than committing a bare record.
+        if (item.kind === 'symptom' && item.symptomType && item.severity == null) {
+          pending.push({
+            type: item.symptomType,
+            duration: item.durationMinutes ? String(item.durationMinutes) : '',
+            note: item.note,
+            onsetISO: item.onsetISO,
+          });
+          return;
+        }
         if (item.confidence >= AUTO_APPLY_CONFIDENCE && isResolvable(item)) {
           const undo = applyItem(item);
           if (undo) {
@@ -127,6 +168,7 @@ export function QuickLog() {
       setItems(parsed);
       setApplied(appliedIdx);
       setUndoBatch(undos);
+      setPendingSymptoms(pending);
       setStatus(parsed.length === 0 ? 'empty' : 'idle');
       setText('');
     } catch (err) {
@@ -217,8 +259,33 @@ export function QuickLog() {
         </ThemedText>
       ) : null}
 
+      {/* Conversational symptom completion — ask intensity, then duration (H-04). */}
+      {pendingSymptoms.map((p, idx) => (
+        <Sunken key={`pending-${idx}`} style={styles.pending}>
+          <ThemedText type="smallBold">{p.type}</ThemedText>
+          <ThemedText type="small" themeColor="textSecondary">
+            {t('symptoms.severity')}
+          </ThemedText>
+          <ScaleSelector value={p.severity} onChange={(v) => setPendingField(idx, { severity: v })} />
+          <LabeledInput
+            label={t('symptoms.duration')}
+            placeholder={t('symptoms.durationPlaceholder')}
+            keyboardType="number-pad"
+            value={p.duration}
+            onChangeText={(v) => setPendingField(idx, { duration: v })}
+          />
+          <View style={styles.pendingActions}>
+            <TextButton label={t('common.cancel')} onPress={() => commitPending(idx)} />
+            <Pressable accessibilityRole="button" onPress={() => commitPending(idx)}>
+              <ThemedText type="smallBold">{t('symptoms.log')}</ThemedText>
+            </Pressable>
+          </View>
+        </Sunken>
+      ))}
+
       {items.map((item, idx) => {
         if (item.kind === 'unknown') return null;
+        if (item.kind === 'symptom' && item.severity == null) return null;
         const isApplied = applied.has(idx);
         const resolvable = isResolvable(item);
         return (
@@ -276,4 +343,6 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
     paddingTop: Spacing.one,
   },
+  pending: { gap: Spacing.two },
+  pendingActions: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
 });

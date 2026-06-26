@@ -8,7 +8,6 @@ import { PrimaryButton } from '@/components/form';
 import { Card, Divider, EngravedLabel } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
-import { AccountSection } from '@/features/auth/account-section';
 import { DriveSettings } from '@/features/settings/drive-settings';
 import { exportCoachReport } from '@/lib/report';
 import { useStore } from '@/lib/store';
@@ -147,8 +146,7 @@ export function PrivacySettings() {
     <View style={styles.wrap}>
       <EngravedLabel>{t('privacy.title')}</EngravedLabel>
 
-      {/* Account / cloud sync */}
-      <AccountSection />
+      {/* Account / cloud sync is promoted to its own Settings row (P-01). */}
 
       {/* Consent status */}
       <Card style={styles.section}>
