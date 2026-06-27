@@ -215,7 +215,16 @@
     "dosesEmpty": "Aucune dose enregistrée pour l'instant.",
     "addCompound": "Ajouter un composé",
     "addFirstPrompt": "Ajoutez votre premier composé pour suivre les doses et l'inventaire.",
-    "flaggedCount": "{{count}} signalés"
+    "flaggedCount": "{{count}} signalés",
+    "compoundCount_one": "{{count}} composé",
+    "compoundCount_other": "{{count}} composés",
+    "vialCount_one": "{{count}} flacon",
+    "vialCount_other": "{{count}} flacons",
+    "nominal": "Nominal",
+    "lastPrefix": "Dernière : {{when}}",
+    "lastToday": "Aujourd'hui",
+    "lastDaysAgo": "il y a {{count}}j",
+    "never": "Jamais"
   },
   "inventory": {
     "title": "Inventaire",
@@ -562,7 +571,10 @@
     "onTrack": "EN BONNE VOIE",
     "pending": "EN ATTENTE",
     "todayLabel": "AUJOURD'HUI",
-    "dayBadge": "JOUR {{count}}"
+    "dayBadge": "JOUR {{count}}",
+    "dosesTitle": "Doses du jour",
+    "dosePending": "En attente",
+    "doseDone": "Fait"
   },
   "addCompound": {
     "title": "Ajouter un composé",
@@ -592,5 +604,13 @@
     "sleep": "Récupération",
     "recovery": "Réparation",
     "wellness": "Vitalité"
+  },
+  "compoundDetail": {
+    "history": "Historique des doses",
+    "vials": "Flacons",
+    "addVial": "Ajouter un flacon",
+    "removeFromProtocol": "Retirer du protocole",
+    "noDoses": "Aucune dose enregistrée.",
+    "noVials": "Aucun flacon suivi."
   }
 }

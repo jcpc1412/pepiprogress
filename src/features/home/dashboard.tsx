@@ -23,6 +23,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Chamfer, MaxContentWidth, Spacing } from '@/constants/theme';
 import { compoundBySlug } from '@/data/compound-catalog';
+import { TodayDoses } from '@/features/home/today-doses';
 import { useTheme } from '@/hooks/use-theme';
 import { useOverlay } from '@/lib/nav-overlay';
 import { localDateKey, useStore, type CheckinEntry, type PhotoEntry } from '@/lib/store';
@@ -291,6 +292,9 @@ export function Dashboard() {
               />
             </View>
           </View>
+
+          {/* Today's doses — pending/done checklist (redesign R2) */}
+          <TodayDoses />
         </ScrollView>
       </SafeAreaView>
     </ThemedView>

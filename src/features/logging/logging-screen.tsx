@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { SingleSelectChips } from '@/components/form';
+import { SegmentedControl } from '@/components/form';
 import { OverlayHeader } from '@/components/overlay-header';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
@@ -16,10 +16,14 @@ export function LoggingScreen({
   onClose,
   initialMode,
   seedPrompt,
+  quickOnly,
 }: {
   onClose: () => void;
   initialMode: LoggingMode;
   seedPrompt?: 'macros';
+  /** When true (e.g. opened from Protocol's Log Dose), hide the Quick/Detailed
+   * toggle and stay in quick mode. */
+  quickOnly?: boolean;
 }) {
   const { t } = useTranslation();
   const [mode, setMode] = useState<LoggingMode>(initialMode);
@@ -28,14 +32,16 @@ export function LoggingScreen({
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safe} edges={['top']}>
         <OverlayHeader title={t('logging.title')} onClose={onClose} />
-        <SingleSelectChips
-          options={[
-            { value: 'quick', label: t('logging.quick') },
-            { value: 'detailed', label: t('logging.detailed') },
-          ]}
-          value={mode}
-          onChange={(v) => setMode(v as LoggingMode)}
-        />
+        {!quickOnly && (
+          <SegmentedControl
+            options={[
+              { value: 'quick', label: t('logging.quick') },
+              { value: 'detailed', label: t('logging.detailed') },
+            ]}
+            value={mode}
+            onChange={(v) => setMode(v as LoggingMode)}
+          />
+        )}
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           {mode === 'quick' ? (
             <QuickLog seedPrompt={seedPrompt} onDismiss={onClose} />

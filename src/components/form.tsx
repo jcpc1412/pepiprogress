@@ -67,6 +67,39 @@ export function SingleSelectChips<T extends string>({
   );
 }
 
+/** Connected segmented control — one shared sunken track, active segment filled
+ *  accent. Single source for QUICK/DETAILED and LIGHT/DARK/AUTO (redesign R2). */
+export function SegmentedControl<T extends string>({
+  options,
+  value,
+  onChange,
+}: {
+  options: { value: T; label: string }[];
+  value: T | undefined;
+  onChange: (v: T) => void;
+}) {
+  const theme = useTheme();
+  return (
+    <View style={[styles.segTrack, { backgroundColor: theme.surfaceSunken, borderColor: theme.border }]}>
+      {options.map((o) => {
+        const active = value === o.value;
+        return (
+          <Pressable
+            key={o.value}
+            accessibilityRole="button"
+            accessibilityState={{ selected: active }}
+            onPress={() => onChange(o.value)}
+            style={[styles.segItem, { backgroundColor: active ? theme.accent : 'transparent' }]}>
+            <ThemedText type="label" themeColor={active ? 'onAccent' : 'textSecondary'}>
+              {o.label}
+            </ThemedText>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
 /** A 1–5 rating selector — chamfered segments that fill up to the value.
  *  Each segment is a ≥44px tap target (this is the most-touched input). */
 export function ScaleSelector({
@@ -247,6 +280,20 @@ const styles = StyleSheet.create({
   chip: {
     paddingVertical: Spacing.two,
     paddingHorizontal: Spacing.three,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  segTrack: {
+    flexDirection: 'row',
+    borderRadius: Radii.chamfer,
+    borderWidth: StyleSheet.hairlineWidth,
+    padding: Spacing.half,
+    gap: Spacing.half,
+  },
+  segItem: {
+    flex: 1,
+    minHeight: 40,
+    borderRadius: Radii.chamfer,
     alignItems: 'center',
     justifyContent: 'center',
   },

@@ -1,18 +1,13 @@
-import { daysBetween } from '@/lib/dates';
-import { localDateKey, type InventoryItem } from '@/lib/store';
+import { type InventoryItem, localDateKey } from '@/lib/store';
 
-/** Items at/below the low-stock threshold or within this many days of expiry surface as "attention". */
-export const EXPIRY_SOON_DAYS = 14;
-
-/** True when an item is low on stock or expired/expiring soon (shared by the
- * Protocol attention banner and the inventory reminder). Pure. */
-export function itemNeedsAttention(item: InventoryItem, today = localDateKey()): boolean {
-  const low =
+/** True when an item is at/below its low-stock threshold. Expiry tracking was
+ * dropped (redesign R2) — only stock depletion surfaces as "attention". Pure. */
+export function itemNeedsAttention(item: InventoryItem, _today = localDateKey()): boolean {
+  return (
     item.amountRemaining != null &&
     item.lowThreshold != null &&
-    item.amountRemaining <= item.lowThreshold;
-  const exp = item.expiry ? daysBetween(today, item.expiry) : null;
-  return low || (exp != null && exp <= EXPIRY_SOON_DAYS);
+    item.amountRemaining <= item.lowThreshold
+  );
 }
 
 /** The subset of inventory needing attention. */

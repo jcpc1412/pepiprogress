@@ -215,7 +215,16 @@
     "dosesEmpty": "Aún no hay dosis registradas.",
     "addCompound": "Añadir compuesto",
     "addFirstPrompt": "Añade tu primer compuesto para empezar a registrar dosis e inventario.",
-    "flaggedCount": "{{count}} marcados"
+    "flaggedCount": "{{count}} marcados",
+    "compoundCount_one": "{{count}} compuesto",
+    "compoundCount_other": "{{count}} compuestos",
+    "vialCount_one": "{{count}} vial",
+    "vialCount_other": "{{count}} viales",
+    "nominal": "Nominal",
+    "lastPrefix": "Última: {{when}}",
+    "lastToday": "Hoy",
+    "lastDaysAgo": "hace {{count}}d",
+    "never": "Nunca"
   },
   "inventory": {
     "title": "Inventario",
@@ -562,7 +571,10 @@
     "onTrack": "EN CURSO",
     "pending": "PENDIENTE",
     "todayLabel": "HOY",
-    "dayBadge": "DÍA {{count}}"
+    "dayBadge": "DÍA {{count}}",
+    "dosesTitle": "Dosis de hoy",
+    "dosePending": "Pendiente",
+    "doseDone": "Hecho"
   },
   "addCompound": {
     "title": "Añadir compuesto",
@@ -592,5 +604,13 @@
     "sleep": "Recuperación",
     "recovery": "Reparación",
     "wellness": "Vitalidad"
+  },
+  "compoundDetail": {
+    "history": "Historial de dosis",
+    "vials": "Viales",
+    "addVial": "Añadir vial",
+    "removeFromProtocol": "Quitar del protocolo",
+    "noDoses": "Aún no hay dosis registradas.",
+    "noVials": "No hay viales registrados."
   }
 }

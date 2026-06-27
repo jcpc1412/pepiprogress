@@ -3,95 +3,73 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { LabeledInput, PrimaryButton, SingleSelectChips } from '@/components/form';
-import { GearIcon } from '@/components/icons';
-import { StatusPill } from '@/components/surface';
+import { LabeledInput, PrimaryButton, TextButton } from '@/components/form';
+import { ChevronRightIcon, GearIcon } from '@/components/icons';
+import { Divider, EngravedLabel, StatusPill } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
-import { COMPOUND_CATALOG, compoundBySlug } from '@/data/compound-catalog';
+import { compoundBySlug } from '@/data/compound-catalog';
 import { useTheme } from '@/hooks/use-theme';
-import { InventorySummary } from '@/features/protocol/inventory-summary';
 import { daysBetween } from '@/lib/dates';
-import { EXPIRY_SOON_DAYS, inventoryAttention } from '@/lib/inventory';
+import { itemNeedsAttention } from '@/lib/inventory';
 import { useOverlay } from '@/lib/nav-overlay';
 import { roundTo } from '@/lib/reconstitution';
-import {
-  localDateKey,
-  useStore,
-  type InventoryItem,
-  type InventoryKind,
-  type ProtocolItem,
-} from '@/lib/store';
-import { Constants } from '@/types/database';
-
-const INV_KINDS = Constants.public.Enums.inventory_kind;
+import { localDateKey, useStore, type InventoryItem, type ProtocolItem } from '@/lib/store';
 
 function name(slug: string | undefined): string {
   return (slug && compoundBySlug(slug)?.canonicalName) || slug || '';
 }
 
-type Stock = { labelKey: 'inventory.lowStock' | 'inventory.expired' | 'inventory.expiringSoon' | 'inventory.ok'; tone: 'good' | 'bad' | 'neutral'; pct: number | null };
-
-/** Stock status + depletion fraction for a linked vial (handoff §4). */
-function vialStatus(vial: InventoryItem): Stock {
-  const today = localDateKey();
-  const low = vial.amountRemaining != null && vial.lowThreshold != null && vial.amountRemaining <= vial.lowThreshold;
-  const expDays = vial.expiry ? daysBetween(today, vial.expiry) : null;
-  const expired = expDays != null && expDays < 0;
-  const expiringSoon = expDays != null && expDays >= 0 && expDays <= EXPIRY_SOON_DAYS;
-  const pct =
-    vial.amountInitial && vial.amountRemaining != null
-      ? Math.max(0, Math.min(1, vial.amountRemaining / vial.amountInitial))
-      : null;
-  if (expired) return { labelKey: 'inventory.expired', tone: 'bad', pct };
-  if (low) return { labelKey: 'inventory.lowStock', tone: 'bad', pct };
-  if (expiringSoon) return { labelKey: 'inventory.expiringSoon', tone: 'neutral', pct };
-  return { labelKey: 'inventory.ok', tone: 'good', pct };
-}
-
+/**
+ * Protocol (redesign R2) — clean instrument list. Each row: name, stock status
+ * pill, mono detail line (dose · route · freq · last), a depletion bar, and the
+ * vial-count readout. Tap a row → compound detail. Dose logging + adding live in
+ * the two bottom buttons. Inventory editing moved to compound detail; recent
+ * doses moved to Today.
+ */
 export function ProtocolScreen() {
-  const { t, i18n } = useTranslation();
-  const { openSettings, openAddCompound } = useOverlay();
-  const {
-    protocolItems,
-    doseEvents,
-    inventory,
-    removeProtocolItem,
-    logDose,
-    deleteDose,
-    addInventoryItem,
-    removeInventoryItem,
-  } = useStore();
+  const { t } = useTranslation();
+  const { openSettings, openAddCompound, openCompoundDetail, openLogging } = useOverlay();
+  const { protocolItems, doseEvents, inventory } = useStore();
 
-  const lastSiteByItem = useMemo(() => {
-    const map: Record<string, string> = {};
-    for (const d of doseEvents) {
-      if (d.protocolItemId && d.site && !map[d.protocolItemId]) map[d.protocolItemId] = d.site;
-    }
-    return map;
-  }, [doseEvents]);
-
-  // Linked vial per compound (for per-item stock status + depletion bar).
-  const vialByCompound = useMemo(() => {
-    const map: Record<string, InventoryItem> = {};
+  // Linked vials per compound (aggregate depletion + count + low-stock status).
+  const vialsByCompound = useMemo(() => {
+    const map: Record<string, InventoryItem[]> = {};
     for (const i of inventory) {
-      if (i.kind === 'vial' && i.compoundSlug && !map[i.compoundSlug]) map[i.compoundSlug] = i;
+      if (i.kind === 'vial' && i.compoundSlug) (map[i.compoundSlug] ??= []).push(i);
     }
     return map;
   }, [inventory]);
 
-  const flaggedCount = useMemo(() => inventoryAttention(inventory).length, [inventory]);
+  // Most recent dose date-key per compound, for the "LAST:" detail.
+  const lastDoseByCompound = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const d of doseEvents) {
+      if (!d.compoundSlug) continue;
+      const key = localDateKey(new Date(d.takenAt));
+      if (!map[d.compoundSlug] || map[d.compoundSlug] < key) map[d.compoundSlug] = key;
+    }
+    return map;
+  }, [doseEvents]);
+
+  const flaggedCount = useMemo(
+    () => Object.values(vialsByCompound).filter((vs) => vs.some((v) => itemNeedsAttention(v))).length,
+    [vialsByCompound],
+  );
 
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safe} edges={['top']}>
         <View style={styles.header}>
           <View>
-            <ThemedText type="display">{t('protocol.title')}</ThemedText>
+            <EngravedLabel>{t('protocol.title')}</EngravedLabel>
+            <ThemedText type="display">
+              {t('protocol.compoundCount', { count: protocolItems.length })}
+            </ThemedText>
             {flaggedCount > 0 && (
-              <ThemedText type="monoSm" themeColor="signalBad">
-                {t('protocol.flaggedCount', { count: flaggedCount }).toUpperCase()}
+              <ThemedText type="monoSm" themeColor="signalBad" style={styles.flagged}>
+                {t('protocol.flaggedCount', { count: flaggedCount })}
               </ThemedText>
             )}
           </View>
@@ -105,308 +83,185 @@ export function ProtocolScreen() {
         </View>
 
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-          {/* Inventory summary (P-02) — hidden when empty. */}
-          <InventorySummary />
-
-          {/* Add compound (P-03) */}
-          <PrimaryButton label={t('protocol.addCompound')} onPress={openAddCompound} />
-
-          {/* Protocol items / soft onboarding prompt (O-04) */}
           {protocolItems.length === 0 ? (
             <ThemedText type="small" themeColor="textSecondary">
               {t('protocol.addFirstPrompt')}
             </ThemedText>
           ) : (
-            <View style={styles.list}>
-              {protocolItems.map((item) => (
-                <ProtocolRow
-                  key={item.id}
-                  item={item}
-                  vial={item.compoundSlug ? vialByCompound[item.compoundSlug] : undefined}
-                  lastSite={lastSiteByItem[item.id]}
-                  onLog={(site) =>
-                    logDose({
-                      protocolItemId: item.id,
-                      compoundSlug: item.compoundSlug,
-                      takenAt: new Date().toISOString(),
-                      dose: item.dose,
-                      doseUnit: item.doseUnit,
-                      site,
-                    })
-                  }
-                  onRemove={() => removeProtocolItem(item.id)}
-                />
+            <View>
+              {protocolItems.map((item, i) => (
+                <View key={item.id}>
+                  {i > 0 && <Divider style={styles.rowDivider} />}
+                  <CompoundRow
+                    item={item}
+                    vials={vialsByCompound[item.compoundSlug] ?? []}
+                    lastDoseKey={lastDoseByCompound[item.compoundSlug]}
+                    onPress={() => openCompoundDetail(item.id)}
+                  />
+                </View>
               ))}
             </View>
           )}
 
-          {/* Inventory management */}
-          <View style={styles.section}>
-            <ThemedText type="display">{t('inventory.title')}</ThemedText>
-            {inventory.length > 0 && (
-              <View style={styles.list}>
-                {inventory.map((item) => (
-                  <InventoryRow key={item.id} item={item} onRemove={() => removeInventoryItem(item.id)} />
-                ))}
-              </View>
-            )}
-            <AddInventoryForm onAdd={addInventoryItem} />
+          <Divider />
+          <View style={styles.buttons}>
+            <View style={styles.buttonHalf}>
+              <PrimaryButton label={t('protocol.logDose')} onPress={() => openLogging('quick', undefined, true)} />
+            </View>
+            <View style={styles.buttonHalf}>
+              <PrimaryButton
+                label={t('protocol.addCompound')}
+                variant="secondary"
+                onPress={openAddCompound}
+              />
+            </View>
           </View>
 
-          {/* Recent doses */}
-          <View style={styles.section}>
-            <ThemedText type="display">{t('protocol.dosesTitle')}</ThemedText>
-            {doseEvents.length === 0 ? (
-              <ThemedText type="small" themeColor="textSecondary">
-                {t('protocol.dosesEmpty')}
-              </ThemedText>
-            ) : (
-              <View style={styles.list}>
-                {doseEvents.slice(0, 8).map((d) => (
-                  <View key={d.id} style={styles.row}>
-                    <View style={styles.rowText}>
-                      <ThemedText type="smallBold">{name(d.compoundSlug)}</ThemedText>
-                      <ThemedText type="small" themeColor="textSecondary">
-                        {new Date(d.takenAt).toLocaleString(i18n.language, {
-                          month: 'short',
-                          day: 'numeric',
-                          hour: 'numeric',
-                          minute: '2-digit',
-                        })}
-                        {d.dose ? ` · ${d.dose}${d.doseUnit ?? ''}` : ''}
-                        {d.site ? ` · ${d.site}` : ''}
-                      </ThemedText>
-                    </View>
-                    <Pressable accessibilityRole="button" onPress={() => deleteDose(d.id)}>
-                      <ThemedText type="small" themeColor="textSecondary">
-                        {t('common.remove')}
-                      </ThemedText>
-                    </Pressable>
-                  </View>
-                ))}
-              </View>
-            )}
-          </View>
+          <ConsumablesSection />
         </ScrollView>
       </SafeAreaView>
     </ThemedView>
   );
 }
 
-function ProtocolRow({
+function CompoundRow({
   item,
-  vial,
-  lastSite,
-  onLog,
-  onRemove,
+  vials,
+  lastDoseKey,
+  onPress,
 }: {
   item: ProtocolItem;
-  vial?: InventoryItem;
-  lastSite?: string;
-  onLog: (site?: string) => void;
-  onRemove: () => void;
+  vials: InventoryItem[];
+  lastDoseKey?: string;
+  onPress: () => void;
 }) {
   const { t } = useTranslation();
   const theme = useTheme();
-  const [site, setSite] = useState('');
-  const parts = [
-    item.dose ? `${item.dose}${item.doseUnit ?? ''}` : null,
-    item.route ? t(`routes.${item.route}` as const) : null,
+
+  const low = vials.some((v) => itemNeedsAttention(v));
+  const totalInit = vials.reduce((s, v) => s + (v.amountInitial ?? 0), 0);
+  const totalRem = vials.reduce((s, v) => s + (v.amountRemaining ?? 0), 0);
+  const pct = totalInit > 0 ? Math.max(0, Math.min(1, totalRem / totalInit)) : null;
+
+  const lastWhen = !lastDoseKey
+    ? t('protocol.never')
+    : (() => {
+        const days = daysBetween(lastDoseKey, localDateKey());
+        return days <= 0 ? t('protocol.lastToday') : t('protocol.lastDaysAgo', { count: days });
+      })();
+
+  const detail = [
+    item.dose != null ? `${item.dose}${item.doseUnit ?? ''}` : null,
     item.frequency ? t(`frequencies.${item.frequency}` as const) : null,
-  ].filter(Boolean);
-
-  // Stock status + depletion from the linked vial (handoff §4).
-  const stock = vial ? vialStatus(vial) : null;
-
-  const log = () => {
-    onLog(site.trim() || undefined);
-    setSite('');
-  };
+    t('protocol.lastPrefix', { when: lastWhen }),
+  ]
+    .filter(Boolean)
+    .join(' · ');
 
   return (
-    <View style={styles.itemCard}>
-      <View style={styles.row}>
-        <View style={styles.rowText}>
-          <View style={styles.nameRow}>
-            <ThemedText type="smallBold">{name(item.compoundSlug)}</ThemedText>
-            {stock && <StatusPill label={t(stock.labelKey)} tone={stock.tone} />}
-          </View>
-          {parts.length > 0 && (
-            <ThemedText type="small" themeColor="textSecondary">
-              {parts.join(' · ')}
-            </ThemedText>
-          )}
-          {lastSite ? (
-            <ThemedText type="small" themeColor="textSecondary">
-              {t('protocol.lastSite', { site: lastSite })}
-            </ThemedText>
-          ) : null}
-        </View>
-        <Pressable accessibilityRole="button" onPress={onRemove}>
-          <ThemedText type="small" themeColor="textSecondary">
-            {t('common.remove')}
+    <Pressable
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}>
+      <View style={styles.rowMain}>
+        <View style={styles.rowHead}>
+          <ThemedText type="smallBold" style={styles.compoundName}>
+            {name(item.compoundSlug).toUpperCase()}
           </ThemedText>
-        </Pressable>
+          {vials.length > 0 && (
+            <StatusPill label={low ? t('inventory.lowStock') : t('protocol.nominal')} tone={low ? 'bad' : 'good'} />
+          )}
+        </View>
+        <ThemedText type="monoSm" themeColor="textSecondary" style={styles.detail}>
+          {detail.toUpperCase()}
+        </ThemedText>
+        {pct != null && (
+          <View style={styles.depRow}>
+            <View style={[styles.depTrack, { backgroundColor: theme.surfaceSunken }]}>
+              <View
+                style={[
+                  styles.depFill,
+                  { width: `${pct * 100}%`, backgroundColor: low ? theme.signalBad : theme.numeral },
+                ]}
+              />
+            </View>
+            <ThemedText type="monoSm" themeColor={low ? 'signalBad' : 'textMuted'}>
+              {t('protocol.vialCount', { count: vials.length })}
+            </ThemedText>
+          </View>
+        )}
       </View>
-
-      {stock?.pct != null && (
-        <View style={[styles.depTrack, { backgroundColor: theme.surfaceSunken }]}>
-          <View
-            style={[
-              styles.depFill,
-              { width: `${stock.pct * 100}%`, backgroundColor: stock.tone === 'bad' ? theme.signalBad : theme.numeral },
-            ]}
-          />
-        </View>
-      )}
-      <View style={styles.logRow}>
-        <View style={styles.siteInput}>
-          <LabeledInput
-            label={t('protocol.site')}
-            placeholder={t('protocol.sitePlaceholder')}
-            value={site}
-            onChangeText={setSite}
-          />
-        </View>
-        <View style={styles.logButton}>
-          <PrimaryButton label={t('protocol.logDose')} onPress={log} />
-        </View>
-      </View>
-    </View>
+      <ChevronRightIcon color="textMuted" />
+    </Pressable>
   );
 }
 
-function InventoryRow({ item, onRemove }: { item: InventoryItem; onRemove: () => void }) {
+/** Collapsible consumables (needles, swabs) — kept off the clean hero. */
+function ConsumablesSection() {
   const { t } = useTranslation();
-  const today = localDateKey();
-  const low =
-    item.amountRemaining != null &&
-    item.lowThreshold != null &&
-    item.amountRemaining <= item.lowThreshold;
-  const expiryDays = item.expiry ? daysBetween(today, item.expiry) : null;
-  const expired = expiryDays != null && expiryDays < 0;
-  const expiringSoon = expiryDays != null && expiryDays >= 0 && expiryDays <= EXPIRY_SOON_DAYS;
-
-  const label = item.kind === 'vial' ? name(item.compoundSlug) : item.label || t('inventory.consumable');
-
-  return (
-    <View style={styles.row}>
-      <View style={styles.rowText}>
-        <ThemedText type="smallBold">{label}</ThemedText>
-        <ThemedText type="small" themeColor="textSecondary">
-          {item.amountRemaining != null ? `${roundTo(item.amountRemaining, 2)} ${item.unit ?? ''}`.trim() : '—'}
-          {low ? ` · ${t('inventory.lowStock')}` : ''}
-          {expired ? ` · ${t('inventory.expired')}` : expiringSoon ? ` · ${t('inventory.expiringSoon')}` : ''}
-        </ThemedText>
-      </View>
-      <Pressable accessibilityRole="button" onPress={onRemove}>
-        <ThemedText type="small" themeColor="textSecondary">
-          {t('common.remove')}
-        </ThemedText>
-      </Pressable>
-    </View>
-  );
-}
-
-function AddInventoryForm({ onAdd }: { onAdd: (item: Omit<InventoryItem, 'id'>) => void }) {
-  const { t } = useTranslation();
-  const [kind, setKind] = useState<InventoryKind>('vial');
-  const [slug, setSlug] = useState<string>();
+  const theme = useTheme();
+  const { inventory, addInventoryItem, removeInventoryItem } = useStore();
+  const [open, setOpen] = useState(false);
   const [label, setLabel] = useState('');
   const [amount, setAmount] = useState('');
   const [unit, setUnit] = useState('');
-  const [lowThreshold, setLowThreshold] = useState('');
-  const [expiry, setExpiry] = useState('');
-  const [vendor, setVendor] = useState('');
+  const [low, setLow] = useState('');
 
-  const numOrUndef = (s: string) => {
+  const consumables = inventory.filter((i) => i.kind === 'consumable');
+
+  const num = (s: string) => {
     const v = parseFloat(s.replace(',', '.'));
     return Number.isFinite(v) ? v : undefined;
   };
 
-  const canAdd = kind === 'vial' ? !!slug : !!label.trim();
-
-  const submit = () => {
-    if (!canAdd) return;
-    const amt = numOrUndef(amount);
-    onAdd({
-      kind,
-      compoundSlug: kind === 'vial' ? slug : undefined,
-      label: kind === 'consumable' ? label.trim() : undefined,
-      amountRemaining: amt,
-      amountInitial: amt,
-      unit: unit.trim() || (kind === 'vial' ? 'mg' : undefined),
-      lowThreshold: numOrUndef(lowThreshold),
-      expiry: expiry.trim() || undefined,
-      vendor: vendor.trim() || undefined,
-    });
-    setSlug(undefined);
-    setLabel('');
-    setAmount('');
-    setUnit('');
-    setLowThreshold('');
-    setExpiry('');
-    setVendor('');
-  };
+  if (!open && consumables.length === 0) {
+    return (
+      <View style={styles.suppliesToggle}>
+        <TextButton label={t('inventory.summaryTitle')} onPress={() => setOpen(true)} />
+      </View>
+    );
+  }
 
   return (
-    <View style={styles.subForm}>
-      <ThemedText type="smallBold">{t('inventory.addTitle')}</ThemedText>
-
-      <Field label={t('inventory.kind')}>
-        <SingleSelectChips
-          options={INV_KINDS.map((k) => ({ value: k, label: t(`inventoryKinds.${k}` as const) }))}
-          value={kind}
-          onChange={setKind}
-        />
-      </Field>
-
-      {kind === 'vial' ? (
-        <Field label={t('protocol.compound')}>
-          <SingleSelectChips
-            options={COMPOUND_CATALOG.map((c) => ({ value: c.slug, label: c.canonicalName }))}
-            value={slug}
-            onChange={setSlug}
-          />
-        </Field>
-      ) : (
+    <View style={styles.section}>
+      <EngravedLabel>{t('inventory.summaryTitle')}</EngravedLabel>
+      {consumables.map((c) => (
+        <View key={c.id} style={styles.row}>
+          <ThemedText type="mono" themeColor="textSecondary">
+            {c.label || t('inventory.consumable')}
+            {c.amountRemaining != null ? ` · ${roundTo(c.amountRemaining, 2)} ${c.unit ?? ''}`.trimEnd() : ''}
+          </ThemedText>
+          <Pressable accessibilityRole="button" onPress={() => removeInventoryItem(c.id)}>
+            <ThemedText type="small" themeColor="textSecondary">
+              {t('common.remove')}
+            </ThemedText>
+          </Pressable>
+        </View>
+      ))}
+      <View style={[styles.addForm, { borderColor: theme.border }]}>
         <LabeledInput label={t('inventory.label')} value={label} onChangeText={setLabel} />
-      )}
-
-      <LabeledInput label={t('inventory.amount')} keyboardType="decimal-pad" value={amount} onChangeText={setAmount} />
-      <LabeledInput label={t('inventory.unit')} value={unit} onChangeText={setUnit} />
-      <LabeledInput
-        label={t('inventory.lowThreshold')}
-        keyboardType="decimal-pad"
-        value={lowThreshold}
-        onChangeText={setLowThreshold}
-      />
-      <LabeledInput
-        label={t('inventory.expiry')}
-        placeholder={t('inventory.expiryPlaceholder')}
-        autoCapitalize="none"
-        value={expiry}
-        onChangeText={setExpiry}
-      />
-      <LabeledInput
-        label={t('inventory.vendor')}
-        placeholder={t('inventory.vendorPlaceholder')}
-        value={vendor}
-        onChangeText={setVendor}
-      />
-
-      <PrimaryButton label={t('inventory.add')} onPress={submit} disabled={!canAdd} />
-    </View>
-  );
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <View style={styles.field}>
-      <ThemedText type="smallBold" themeColor="textSecondary">
-        {label}
-      </ThemedText>
-      {children}
+        <LabeledInput label={t('inventory.amount')} keyboardType="decimal-pad" value={amount} onChangeText={setAmount} />
+        <LabeledInput label={t('inventory.unit')} value={unit} onChangeText={setUnit} />
+        <LabeledInput label={t('inventory.lowThreshold')} keyboardType="decimal-pad" value={low} onChangeText={setLow} />
+        <PrimaryButton
+          label={t('inventory.add')}
+          disabled={!label.trim()}
+          onPress={() => {
+            addInventoryItem({
+              kind: 'consumable',
+              label: label.trim(),
+              amountRemaining: num(amount),
+              amountInitial: num(amount),
+              unit: unit.trim() || undefined,
+              lowThreshold: num(low),
+            });
+            setLabel('');
+            setAmount('');
+            setUnit('');
+            setLow('');
+          }}
+        />
+      </View>
     </View>
   );
 }
@@ -422,19 +277,22 @@ const styles = StyleSheet.create({
     maxWidth: MaxContentWidth,
     alignSelf: 'center',
   },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  header: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' },
+  flagged: { textTransform: 'uppercase' },
   scroll: { gap: Spacing.four, paddingTop: Spacing.three, paddingBottom: Spacing.six },
-  section: { gap: Spacing.three },
-  subForm: { gap: Spacing.three, marginTop: Spacing.two },
-  list: { gap: Spacing.three },
-  field: { gap: Spacing.two },
-  itemCard: { gap: Spacing.two },
-  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.two },
-  rowText: { flex: 1, gap: Spacing.half },
-  nameRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
-  depTrack: { height: 4, borderRadius: 2, overflow: 'hidden' },
+  rowDivider: { marginVertical: 0 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two, paddingVertical: Spacing.three },
+  rowPressed: { opacity: 0.6 },
+  rowMain: { flex: 1, gap: Spacing.one },
+  rowHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.two },
+  compoundName: { letterSpacing: 0.5 },
+  detail: {},
+  depRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two, marginTop: Spacing.one },
+  depTrack: { flex: 1, height: 4, borderRadius: 2, overflow: 'hidden' },
   depFill: { height: 4, borderRadius: 2 },
-  logRow: { flexDirection: 'row', alignItems: 'flex-end', gap: Spacing.two },
-  siteInput: { flex: 1 },
-  logButton: { width: 120 },
+  buttons: { flexDirection: 'row', gap: Spacing.two },
+  buttonHalf: { flex: 1 },
+  section: { gap: Spacing.three },
+  suppliesToggle: { alignItems: 'center' },
+  addForm: { gap: Spacing.three, borderWidth: StyleSheet.hairlineWidth, borderRadius: 2, padding: Spacing.three },
 });

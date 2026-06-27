@@ -215,7 +215,16 @@
     "dosesEmpty": "Доз пока нет.",
     "addCompound": "Добавить препарат",
     "addFirstPrompt": "Добавьте первый препарат, чтобы отслеживать дозы и запасы.",
-    "flaggedCount": "{{count}} отмечено"
+    "flaggedCount": "{{count}} отмечено",
+    "compoundCount_one": "{{count}} препарат",
+    "compoundCount_other": "{{count}} препаратов",
+    "vialCount_one": "{{count}} флакон",
+    "vialCount_other": "{{count}} флаконов",
+    "nominal": "Норма",
+    "lastPrefix": "Последняя: {{when}}",
+    "lastToday": "Сегодня",
+    "lastDaysAgo": "{{count}}д назад",
+    "never": "Никогда"
   },
   "inventory": {
     "title": "Запасы",
@@ -562,7 +571,10 @@
     "onTrack": "В НОРМЕ",
     "pending": "ОЖИДАЕТ",
     "todayLabel": "СЕГОДНЯ",
-    "dayBadge": "ДЕНЬ {{count}}"
+    "dayBadge": "ДЕНЬ {{count}}",
+    "dosesTitle": "Дозы на сегодня",
+    "dosePending": "Ожидает",
+    "doseDone": "Готово"
   },
   "addCompound": {
     "title": "Добавить препарат",
@@ -592,5 +604,13 @@
     "sleep": "Восстановление",
     "recovery": "Регенерация",
     "wellness": "Жизненная сила"
+  },
+  "compoundDetail": {
+    "history": "История доз",
+    "vials": "Флаконы",
+    "addVial": "Добавить флакон",
+    "removeFromProtocol": "Удалить из протокола",
+    "noDoses": "Дозы ещё не записаны.",
+    "noVials": "Флаконы не отслеживаются."
   }
 }

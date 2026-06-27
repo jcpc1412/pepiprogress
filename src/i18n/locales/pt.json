@@ -215,7 +215,16 @@
     "dosesEmpty": "Nenhuma dose registrada ainda.",
     "addCompound": "Adicionar composto",
     "addFirstPrompt": "Adicione seu primeiro composto para começar a registrar doses e estoque.",
-    "flaggedCount": "{{count}} sinalizados"
+    "flaggedCount": "{{count}} sinalizados",
+    "compoundCount_one": "{{count}} composto",
+    "compoundCount_other": "{{count}} compostos",
+    "vialCount_one": "{{count}} frasco",
+    "vialCount_other": "{{count}} frascos",
+    "nominal": "Nominal",
+    "lastPrefix": "Última: {{when}}",
+    "lastToday": "Hoje",
+    "lastDaysAgo": "há {{count}}d",
+    "never": "Nunca"
   },
   "inventory": {
     "title": "Estoque",
@@ -562,7 +571,10 @@
     "onTrack": "EM DIA",
     "pending": "PENDENTE",
     "todayLabel": "HOJE",
-    "dayBadge": "DIA {{count}}"
+    "dayBadge": "DIA {{count}}",
+    "dosesTitle": "Doses de hoje",
+    "dosePending": "Pendente",
+    "doseDone": "Feito"
   },
   "addCompound": {
     "title": "Adicionar composto",
@@ -592,5 +604,13 @@
     "sleep": "Recuperação",
     "recovery": "Reparação",
     "wellness": "Vitalidade"
+  },
+  "compoundDetail": {
+    "history": "Histórico de doses",
+    "vials": "Frascos",
+    "addVial": "Adicionar frasco",
+    "removeFromProtocol": "Remover do protocolo",
+    "noDoses": "Nenhuma dose registrada ainda.",
+    "noVials": "Nenhum frasco registrado."
   }
 }

@@ -215,7 +215,16 @@
     "dosesEmpty": "No doses logged yet.",
     "addCompound": "Add compound",
     "addFirstPrompt": "Add your first compound to start tracking doses and inventory.",
-    "flaggedCount": "{{count}} flagged"
+    "flaggedCount": "{{count}} flagged",
+    "compoundCount_one": "{{count}} compound",
+    "compoundCount_other": "{{count}} compounds",
+    "vialCount_one": "{{count}} vial",
+    "vialCount_other": "{{count}} vials",
+    "nominal": "Nominal",
+    "lastPrefix": "Last: {{when}}",
+    "lastToday": "Today",
+    "lastDaysAgo": "{{count}}d ago",
+    "never": "Never"
   },
   "inventory": {
     "title": "Inventory",
@@ -562,7 +571,10 @@
     "onTrack": "ON TRACK",
     "pending": "PENDING",
     "todayLabel": "TODAY",
-    "dayBadge": "DAY {{count}}"
+    "dayBadge": "DAY {{count}}",
+    "dosesTitle": "Today's doses",
+    "dosePending": "Pending",
+    "doseDone": "Done"
   },
   "addCompound": {
     "title": "Add compound",
@@ -592,5 +604,13 @@
     "sleep": "Recovery",
     "recovery": "Repair",
     "wellness": "Vitality"
+  },
+  "compoundDetail": {
+    "history": "Dose history",
+    "vials": "Vials",
+    "addVial": "Add vial",
+    "removeFromProtocol": "Remove from protocol",
+    "noDoses": "No doses logged yet.",
+    "noVials": "No vials tracked."
   }
 }

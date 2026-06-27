@@ -10,6 +10,7 @@ import { createContext, useContext, useMemo, useState, type ReactNode } from 're
 import { Modal } from 'react-native';
 
 import { AddCompoundScreen } from '@/features/protocol/add-compound-screen';
+import { CompoundDetailScreen } from '@/features/protocol/compound-detail-screen';
 import { SettingsScreen } from '@/features/settings/settings-screen';
 import { LoggingScreen } from '@/features/logging/logging-screen';
 
@@ -17,14 +18,16 @@ export type LoggingMode = 'quick' | 'detailed';
 
 type OverlayState =
   | { kind: 'settings' }
-  | { kind: 'logging'; mode: LoggingMode; seedPrompt?: 'macros' }
+  | { kind: 'logging'; mode: LoggingMode; seedPrompt?: 'macros'; quickOnly?: boolean }
   | { kind: 'addCompound' }
+  | { kind: 'compoundDetail'; itemId: string }
   | null;
 
 type OverlayContextValue = {
   openSettings: () => void;
-  openLogging: (mode: LoggingMode, seedPrompt?: 'macros') => void;
+  openLogging: (mode: LoggingMode, seedPrompt?: 'macros', quickOnly?: boolean) => void;
   openAddCompound: () => void;
+  openCompoundDetail: (itemId: string) => void;
   close: () => void;
   state: OverlayState;
 };
@@ -43,8 +46,10 @@ export function OverlayProvider({ children }: { children: ReactNode }) {
   const value = useMemo<OverlayContextValue>(
     () => ({
       openSettings: () => setState({ kind: 'settings' }),
-      openLogging: (mode, seedPrompt) => setState({ kind: 'logging', mode, seedPrompt }),
+      openLogging: (mode, seedPrompt, quickOnly) =>
+        setState({ kind: 'logging', mode, seedPrompt, quickOnly }),
       openAddCompound: () => setState({ kind: 'addCompound' }),
+      openCompoundDetail: (itemId) => setState({ kind: 'compoundDetail', itemId }),
       close: () => setState(null),
       state,
     }),
@@ -69,6 +74,15 @@ function OverlayContent({ state, onClose }: { state: OverlayState; onClose: () =
   if (!state) return null;
   if (state.kind === 'settings') return <SettingsScreen onClose={onClose} />;
   if (state.kind === 'logging')
-    return <LoggingScreen onClose={onClose} initialMode={state.mode} seedPrompt={state.seedPrompt} />;
+    return (
+      <LoggingScreen
+        onClose={onClose}
+        initialMode={state.mode}
+        seedPrompt={state.seedPrompt}
+        quickOnly={state.quickOnly}
+      />
+    );
+  if (state.kind === 'compoundDetail')
+    return <CompoundDetailScreen itemId={state.itemId} onClose={onClose} />;
   return <AddCompoundScreen onClose={onClose} />;
 }

@@ -215,7 +215,16 @@
     "dosesEmpty": "Noch keine Dosen erfasst.",
     "addCompound": "Wirkstoff hinzufügen",
     "addFirstPrompt": "Füge deinen ersten Wirkstoff hinzu, um Dosen und Bestand zu verfolgen.",
-    "flaggedCount": "{{count}} markiert"
+    "flaggedCount": "{{count}} markiert",
+    "compoundCount_one": "{{count}} Wirkstoff",
+    "compoundCount_other": "{{count}} Wirkstoffe",
+    "vialCount_one": "{{count}} Fläschchen",
+    "vialCount_other": "{{count}} Fläschchen",
+    "nominal": "Nominal",
+    "lastPrefix": "Letzte: {{when}}",
+    "lastToday": "Heute",
+    "lastDaysAgo": "vor {{count}}T",
+    "never": "Nie"
   },
   "inventory": {
     "title": "Bestand",
@@ -562,7 +571,10 @@
     "onTrack": "AUF KURS",
     "pending": "AUSSTEHEND",
     "todayLabel": "HEUTE",
-    "dayBadge": "TAG {{count}}"
+    "dayBadge": "TAG {{count}}",
+    "dosesTitle": "Heutige Dosen",
+    "dosePending": "Ausstehend",
+    "doseDone": "Erledigt"
   },
   "addCompound": {
     "title": "Wirkstoff hinzufügen",
@@ -592,5 +604,13 @@
     "sleep": "Erholung",
     "recovery": "Reparatur",
     "wellness": "Vitalität"
+  },
+  "compoundDetail": {
+    "history": "Dosisverlauf",
+    "vials": "Fläschchen",
+    "addVial": "Fläschchen hinzufügen",
+    "removeFromProtocol": "Aus Protokoll entfernen",
+    "noDoses": "Noch keine Dosen erfasst.",
+    "noVials": "Keine Fläschchen erfasst."
   }
 }
