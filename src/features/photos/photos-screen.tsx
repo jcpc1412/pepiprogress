@@ -5,12 +5,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { Insights } from '@/features/insights/insights';
 import { ProgressPhotos } from '@/features/photos/progress-photos';
 
 /**
  * The Photos tab — the product's wedge as a first-class destination (spec 04).
- * The progress timeline + AI photo analysis. (Data-grounded AI insights moved to
- * their own Insights tab in redesign R2.)
+ * The progress timeline + AI photo analysis, with the data-grounded AI insights
+ * surface alongside. (The dedicated Insights tab adds summary cards + trend
+ * charts on top of this — redesign R2.)
  */
 export function PhotosScreen() {
   const { t } = useTranslation();
@@ -20,6 +22,7 @@ export function PhotosScreen() {
         <ThemedText type="display">{t('photos.title')}</ThemedText>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           <ProgressPhotos />
+          <Insights />
         </ScrollView>
       </SafeAreaView>
     </ThemedView>
