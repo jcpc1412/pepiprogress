@@ -29,7 +29,8 @@
     "explore": "Explore",
     "protocol": "Protocol",
     "today": "Today",
-    "photos": "Photos"
+    "photos": "Photos",
+    "insights": "Insights"
   },
   "units": {
     "metric": "Metric",
@@ -514,7 +515,8 @@
     "notConfigured": "AI insights aren't set up yet.",
     "error": "Couldn't analyze right now. Try again.",
     "insufficient": "Not enough logged data yet to find a pattern. Keep logging.",
-    "disclaimer": "Observational analysis of your own data, not medical advice."
+    "disclaimer": "Observational analysis of your own data, not medical advice.",
+    "heading": "Your data"
   },
   "sync": {
     "syncing": "Syncing…",
@@ -545,7 +547,7 @@
     "footer": "PEPIPROGRESS"
   },
   "logging": {
-    "title": "Log",
+    "title": "Log entry",
     "quick": "Quick",
     "detailed": "Detailed"
   },

@@ -24,9 +24,39 @@ function flattenValues(obj, out = []) {
   return out;
 }
 
+// Flatten to a key→value map so we can detect untranslated values.
+function flattenMap(obj, prefix = '', out = {}) {
+  for (const [k, v] of Object.entries(obj)) {
+    const key = prefix ? `${prefix}.${k}` : k;
+    if (v && typeof v === 'object' && !Array.isArray(v)) flattenMap(v, key, out);
+    else out[key] = v;
+  }
+  return out;
+}
+
+// Keys whose value may legitimately equal the English value in some locale:
+// units/symbols, codes, brand/proper nouns, and cross-language identical words
+// (e.g. French "Nutrition"/"Dose"/"Date", German "Protein"/"Name"). A NEW key
+// added with an English value in a non-EN locale (a real miss) is NOT in this
+// list and will fail the check. Keep this tight — only add verified identicals.
+const IDENTICAL_OK = new Set([
+  'addCompound.reconTitle', 'ageGate.ageOk', 'ageGate.dayPlaceholder', 'ageGate.monthPlaceholder',
+  'app.name', 'appearance.auto', 'checkin.nutrition', 'common.ok', 'compounds.customName',
+  'compounds.injectable', 'doseUnits.mcg', 'doseUnits.mg', 'doseUnits.iu', 'fields.calories',
+  'fields.libido', 'fields.note', 'fields.protein', 'goalCat.body_comp', 'insights.trends',
+  'integrations.appleHealth', 'integrations.healthConnect', 'integrations.terra', 'inventory.kind',
+  'inventory.label', 'inventory.ok', 'inventoryKinds.vial', 'lab.range', 'lab.vialResult',
+  'markers.estradiol', 'markers.glucose', 'measurements.unitCm', 'measurements.unitIn',
+  'photos.comparable', 'protocol.dose', 'report.date', 'routes.im', 'routes.nasal', 'routes.oral',
+  'settings.footer', 'sex.ftm', 'sex.mtf', 'symptoms.minutesShort', 'tabs.photos',
+  'units.g', 'units.imperial', 'units.kcal', 'units.kg', 'units.lb',
+]);
+
 const load = (file) => JSON.parse(readFileSync(join(localesDir, file), 'utf8'));
 const files = readdirSync(localesDir).filter((f) => f.endsWith('.json'));
-const baseKeys = new Set(flatten(load(`${BASE}.json`)));
+const baseObj = load(`${BASE}.json`);
+const baseKeys = new Set(flatten(baseObj));
+const baseMap = flattenMap(baseObj);
 
 let failed = false;
 for (const file of files) {
@@ -41,11 +71,17 @@ for (const file of files) {
   const keys = new Set(flatten(load(file)));
   const missing = [...baseKeys].filter((k) => !keys.has(k));
   const extra = [...keys].filter((k) => !baseKeys.has(k));
-  if (missing.length || extra.length) {
+  // Untranslated: value identical to English and not an allowlisted identical.
+  const map = flattenMap(load(file));
+  const untranslated = Object.keys(baseMap).filter(
+    (k) => typeof baseMap[k] === 'string' && map[k] === baseMap[k] && !IDENTICAL_OK.has(k),
+  );
+  if (missing.length || extra.length || untranslated.length) {
     failed = true;
-    console.error(`✗ ${lang}: ${missing.length} missing, ${extra.length} extra`);
-    missing.forEach((k) => console.error(`    missing: ${k}`));
-    extra.forEach((k) => console.error(`    extra:   ${k}`));
+    console.error(`✗ ${lang}: ${missing.length} missing, ${extra.length} extra, ${untranslated.length} untranslated`);
+    missing.forEach((k) => console.error(`    missing:      ${k}`));
+    extra.forEach((k) => console.error(`    extra:        ${k}`));
+    untranslated.forEach((k) => console.error(`    untranslated: ${k} = "${baseMap[k]}"`));
   } else {
     console.log(`✓ ${lang}: in sync with ${BASE}`);
   }

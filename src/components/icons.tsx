@@ -44,6 +44,50 @@ export function BackIcon({ size = 24, color }: IconProps) {
   );
 }
 
+export function HomeIcon({ size = 22, color }: IconProps) {
+  const stroke = useStroke(color);
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M4 10.5 12 4l8 6.5V19a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z"
+        stroke={stroke}
+        strokeWidth={1.5}
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
+    </Svg>
+  );
+}
+
+/** Pulse / line-chart glyph — the Insights tab. */
+export function InsightsIcon({ size = 22, color }: IconProps) {
+  const stroke = useStroke(color);
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Polyline
+        points="3,15 8,15 10,9 13,17 15,12 21,12"
+        stroke={stroke}
+        strokeWidth={1.5}
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
+    </Svg>
+  );
+}
+
+/** List-with-arrow glyph — the Protocol tab. */
+export function ProtocolIcon({ size = 22, color }: IconProps) {
+  const stroke = useStroke(color);
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Line x1={4} y1={7} x2={20} y2={7} stroke={stroke} strokeWidth={1.5} strokeLinecap="round" />
+      <Line x1={4} y1={12} x2={16} y2={12} stroke={stroke} strokeWidth={1.5} strokeLinecap="round" />
+      <Line x1={4} y1={17} x2={12} y2={17} stroke={stroke} strokeWidth={1.5} strokeLinecap="round" />
+      <Polyline points="16,14 20,17 16,20" stroke={stroke} strokeWidth={1.5} strokeLinejoin="round" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
 export function CameraIcon({ size = 22, color }: IconProps) {
   const stroke = useStroke(color);
   return (

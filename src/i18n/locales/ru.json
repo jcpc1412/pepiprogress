@@ -12,7 +12,7 @@
     "retry": "Повторить",
     "errorNetwork": "Не удалось подключиться к сервису. Проверьте соединение.",
     "errorServer": "Что-то пошло не так. Попробуйте ещё раз.",
-    "back": "Back",
+    "back": "Назад",
     "loading": "Загрузка"
   },
   "home": {
@@ -29,7 +29,8 @@
     "explore": "Обзор",
     "protocol": "Протокол",
     "today": "Сегодня",
-    "photos": "Фото"
+    "photos": "Фото",
+    "insights": "Аналитика"
   },
   "units": {
     "metric": "Метрическая",
@@ -127,12 +128,12 @@
     "voiceHint": "Совет: нажмите микрофон на клавиатуре, чтобы говорить вместо набора.",
     "undo": "Отменить",
     "addedCount": "Добавлено: {{count}}",
-    "macroSeed": "How much protein and calories did you have today?",
-    "suggestionsLabel": "Quick add",
-    "sugSleep": "slept well",
-    "sugEnergy": "energy 4",
-    "sugWeight": "weight",
-    "sugDose": "took my dose",
+    "macroSeed": "Сколько белка и калорий вы съели сегодня?",
+    "suggestionsLabel": "Быстрое добавление",
+    "sugSleep": "хорошо спал",
+    "sugEnergy": "энергия 4",
+    "sugWeight": "вес",
+    "sugDose": "принял дозу",
     "parseApply": "Разобрать + применить",
     "confirm": "Подтвердить",
     "reviewLabel": "Обнаружено"
@@ -140,7 +141,7 @@
   "photos": {
     "title": "Фото прогресса",
     "analyzing": "Анализ…",
-    "comparable": "Сравнимо",
+    "comparable": "Сопоставимо",
     "notComparable": "Низкая сопоставимость",
     "retakeHint": "Переснимите для более точного сравнения.",
     "sessionFace": "Лицо",
@@ -212,9 +213,9 @@
     "lastSite": "Последнее: {{site}}",
     "dosesTitle": "Недавние дозы",
     "dosesEmpty": "Доз пока нет.",
-    "addCompound": "Add compound",
-    "addFirstPrompt": "Add your first compound to start tracking doses and inventory.",
-    "flaggedCount": "{{count}} flagged"
+    "addCompound": "Добавить препарат",
+    "addFirstPrompt": "Добавьте первый препарат, чтобы отслеживать дозы и запасы.",
+    "flaggedCount": "{{count}} отмечено"
   },
   "inventory": {
     "title": "Запасы",
@@ -235,7 +236,7 @@
     "expired": "Просрочено",
     "expiringSoon": "Скоро истекает",
     "consumable": "Расходник",
-    "summaryTitle": "Inventory",
+    "summaryTitle": "Запасы",
     "ok": "OK"
   },
   "inventoryKinds": {
@@ -401,9 +402,9 @@
     "inventoryBody_other": "{{count}} позиций заканчиваются или скоро истекают.",
     "photoTitle": "Время для фото прогресса",
     "photoBody": "Готово новое сравнение прогресса для съёмки.",
-    "macros": "End-of-day macros",
-    "macroTitle": "Log your macros",
-    "macroBody": "How much protein and calories did you have today?"
+    "macros": "Макросы в конце дня",
+    "macroTitle": "Запишите свои макросы",
+    "macroBody": "Сколько белка и калорий вы съели сегодня?"
   },
   "cycle": {
     "section": "ОТСЛЕЖИВАНИЕ ЦИКЛА",
@@ -474,15 +475,15 @@
     "empty": "Ничего не распознано. Сделайте более чёткое и хорошо освещённое фото.",
     "confirm": "Сохранить эти значения",
     "labDate": "Дата анализа: {{date}}",
-    "range": "Норма: {{range}}",
+    "range": "Реф.: {{range}}",
     "error": "Не удалось прочитать. Попробуйте ещё раз.",
     "permissionNeeded": "Для импорта результата нужен доступ к камере или галерее.",
     "vialScan": "Сканировать этикетку флакона",
     "vialScanning": "Чтение этикетки…",
     "vialUnreadable": "Этикетка нечёткая. Сделайте фото ближе и при хорошем освещении.",
     "vialResult": "{{compound}}, {{concentration}} mg/mL",
-    "uploadPdf": "Upload PDF",
-    "pdfSaved": "Saved {{name}}. PDF parsing is coming soon."
+    "uploadPdf": "Загрузить PDF",
+    "pdfSaved": "{{name}} сохранён. Разбор PDF скоро появится."
   },
   "drive": {
     "section": "РЕЗЕРВНАЯ КОПИЯ GOOGLE DRIVE",
@@ -514,7 +515,8 @@
     "notConfigured": "ИИ-аналитика ещё не настроена.",
     "error": "Сейчас не удалось проанализировать. Попробуйте ещё раз.",
     "insufficient": "Пока недостаточно данных для выявления закономерности. Продолжайте вести записи.",
-    "disclaimer": "Наблюдательный анализ ваших данных, не медицинская рекомендация."
+    "disclaimer": "Наблюдательный анализ ваших данных, не медицинская рекомендация.",
+    "heading": "Ваши данные"
   },
   "sync": {
     "syncing": "Синхронизация…",
@@ -522,73 +524,73 @@
     "error": "Ошибка синхронизации"
   },
   "appearance": {
-    "section": "Appearance",
-    "light": "Light",
-    "dark": "Dark",
-    "auto": "Auto"
+    "section": "Оформление",
+    "light": "Светлая",
+    "dark": "Тёмная",
+    "auto": "Авто"
   },
   "compounds": {
-    "search": "Search compounds",
-    "searchPlaceholder": "Type a name",
-    "noResults": "No matches. Add it as a custom compound below.",
-    "addCustom": "Cannot find it? Add custom",
-    "customTitle": "Custom compound",
-    "customName": "Name",
-    "injectable": "Injectable",
-    "reconstituted": "Reconstituted powder",
-    "vialSizes": "Common vial sizes (mg)",
-    "vialSizesPlaceholder": "e.g. 5, 10",
-    "createCustom": "Create"
+    "search": "Поиск препаратов",
+    "searchPlaceholder": "Введите название",
+    "noResults": "Нет совпадений. Добавьте свой препарат ниже.",
+    "addCustom": "Не нашли? Добавить свой",
+    "customTitle": "Свой препарат",
+    "customName": "Название",
+    "injectable": "Инъекционный",
+    "reconstituted": "Восстановленный порошок",
+    "vialSizes": "Обычные размеры флаконов (мг)",
+    "vialSizesPlaceholder": "напр. 5, 10",
+    "createCustom": "Создать"
   },
   "settings": {
-    "title": "Settings",
+    "title": "Настройки",
     "footer": "PEPIPROGRESS"
   },
   "logging": {
-    "title": "Log",
-    "quick": "Quick",
-    "detailed": "Detailed"
+    "title": "Запись",
+    "quick": "Быстро",
+    "detailed": "Подробно"
   },
   "dashboard": {
-    "empty": "Log a few days or add a photo to see your progress here.",
-    "loggedToday": "Logged today",
-    "notLoggedToday": "Not logged yet today",
-    "dosesToday": "{{count}} doses logged today",
-    "quickLog": "Quick log",
-    "detailedLog": "Detailed log",
-    "dayCount": "Day {{count}}",
-    "onTrack": "ON TRACK",
-    "pending": "PENDING",
+    "empty": "Запишите несколько дней или добавьте фото, чтобы увидеть прогресс.",
+    "loggedToday": "Записано сегодня",
+    "notLoggedToday": "Сегодня ещё не записано",
+    "dosesToday": "{{count}} доз записано сегодня",
+    "quickLog": "Быстрая запись",
+    "detailedLog": "Подробная запись",
+    "dayCount": "День {{count}}",
+    "onTrack": "В НОРМЕ",
+    "pending": "ОЖИДАЕТ",
     "todayLabel": "СЕГОДНЯ",
     "dayBadge": "ДЕНЬ {{count}}"
   },
   "addCompound": {
-    "title": "Add compound",
-    "reconTitle": "Reconstitution",
-    "vialMg": "Vial size (mg)",
-    "vialMgPlaceholder": "Vial strength in mg",
-    "reconSuggestion": "Add {{water}} mL BAC water for {{conc}} mg/mL",
-    "reconDraw": "Draw {{units}} units ({{volume}} mL) per dose",
-    "logVial": "I have this vial on hand",
-    "reconHint": "Enter a dose and vial size for a reconstitution suggestion.",
+    "title": "Добавить препарат",
+    "reconTitle": "Восстановление",
+    "vialMg": "Размер флакона (мг)",
+    "vialMgPlaceholder": "Концентрация флакона в мг",
+    "reconSuggestion": "Добавьте {{water}} мл бактериостатической воды для {{conc}} мг/мл",
+    "reconDraw": "Набирайте {{units}} единиц ({{volume}} мл) на дозу",
+    "logVial": "У меня есть этот флакон",
+    "reconHint": "Введите дозу и размер флакона для рекомендации по восстановлению.",
     "configure": "Настроить"
   },
   "about": {
-    "title": "About you",
-    "sex": "Sex"
+    "title": "О вас",
+    "sex": "Пол"
   },
   "sex": {
-    "male": "Male",
-    "female": "Female",
-    "ftm": "Trans masc (FTM)",
-    "mtf": "Trans fem (MTF)"
+    "male": "Мужской",
+    "female": "Женский",
+    "ftm": "Транс-мужчина (FTM)",
+    "mtf": "Транс-женщина (MTF)"
   },
   "goalCat": {
-    "weight_loss": "Metabolic",
-    "skin": "Tissue",
-    "body_comp": "Composition",
-    "sleep": "Recovery",
-    "recovery": "Repair",
-    "wellness": "Vitality"
+    "weight_loss": "Метаболизм",
+    "skin": "Ткани",
+    "body_comp": "Композиция",
+    "sleep": "Восстановление",
+    "recovery": "Регенерация",
+    "wellness": "Жизненная сила"
   }
 }
