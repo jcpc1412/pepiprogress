@@ -128,7 +128,7 @@ the screen.
 ## Build order
 
 1. **A — Foundations** (native-stack nav, safe-area headers, scrollbars, button
-   feedback, cog, hide Terra).
+   feedback, cog, hide Terra). ✅
 2. **B — Settings restructure** (Me, Privacy & data, Notifications nested pages).
 3. **C — Today** (charts default + pencil modal, single Log button, reorder).
 4. **D — Photos** (recent strip, floating capture, Photo History + cycle tagging,
@@ -139,3 +139,53 @@ the screen.
 
 Native-build-required items (camera, health) are sequenced last so the JS-only work
 ships and tests via preview/OTA first.
+
+---
+
+## Things to test (device checklist)
+
+### A — Foundations ✅ (commit in main; verify on next TestFlight build)
+- [ ] Settings gear icon is a cog (not a sun).
+- [ ] Scrollbars hidden on all tab screens and all overlays.
+- [ ] Quick Log button: tap, wait → spinner shows → checkmark flashes → idle. No double-tap issues.
+- [ ] Terra integration is not visible in the Data sources list.
+- [ ] **Native back gesture (the main A goal):** open Settings, swipe left-edge → closes. Open Logging, swipe left-edge → closes. Same for Add Compound and Compound Detail.
+- [ ] Android hardware back button: opens Settings → back button → closes (no white screen).
+- [ ] Overlay headers are NOT under the status bar (safe-area fix).
+- [ ] Switching between all 4 tabs works normally after the (tabs) group refactor.
+- [ ] Today, Photos, Insights, Protocol — all render data as before.
+
+### B — Settings restructure (next to build)
+- [ ] "Me" page appears as a nested route; tapping back returns to Settings.
+- [ ] Language, sex, height, weight, body-fat, body-comp dropdown all persist.
+- [ ] Weight prefilled from latest check-in.
+- [ ] Privacy & data is a nested page; account delete and export still work.
+- [ ] Notifications is a nested page; time pickers still work.
+
+### C — Today
+- [ ] All charts rendered with empty frames when < 2 data points.
+- [ ] Pencil icon opens toggle modal; toggling a chart persists across app restarts.
+- [ ] Single "Log" button visible; no separate "Detailed" button.
+- [ ] Log button is above the distillation summary.
+
+### D — Photos
+- [ ] Horizontal thumbnail strip shows latest 4, scrollable.
+- [ ] Floating capture button above tab bar on the Photos screen.
+- [ ] Photo History page reachable; grouped by month.
+- [ ] Compound + cycle week auto-tagged from dose history; editable per-photo.
+- [ ] Clothing guidance text is shorter.
+
+### F — Onboarding
+- [ ] Sex picker: Male / Female / Other (Other reveals FTM/MTF).
+- [ ] Weight collection step present.
+- [ ] Optional account creation step present.
+- [ ] Health connector step present (platform-appropriate).
+
+### H — Camera (device build required)
+- [ ] Camera overlay text stays legible on light and dark backgrounds.
+- [ ] Fit pre-check Haiku gate runs before the full Sonnet analysis.
+
+### G — Health retroactive import (device build required)
+- [ ] "Sync 1 year" is the default; "Sync all data" option available.
+- [ ] Weight, sleep, activity, HR, cycle data fill in correctly after connect + sync.
+- [ ] Manual protein/calories fields still work when Health has no nutrition data.
