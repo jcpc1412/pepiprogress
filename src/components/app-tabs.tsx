@@ -30,9 +30,12 @@ export default function AppTabs() {
   return (
     <Tabs>
       <TabSlot />
+      {/* TabTriggers must be DIRECT children of the element TabList adopts —
+          expo-router/ui discovers the navigator's screens from them. The groove
+          + highlight ride on the bar's borders so no wrapper View is needed. */}
       <TabList asChild>
         <View
-          style={[
+          style={StyleSheet.flatten([
             styles.bar,
             {
               backgroundColor: theme.background,
@@ -40,23 +43,19 @@ export default function AppTabs() {
               paddingBottom: insets.bottom,
               height: BAR_HEIGHT + insets.bottom,
             },
-          ]}>
-          {/* Highlight hairline directly under the groove (carved edge). */}
-          <View style={[styles.highlight, { backgroundColor: theme.borderHighlight }]} />
-          <View style={styles.row}>
-            <TabTrigger name="index" href="/" asChild>
-              <TabButton icon={HomeIcon} label={t('tabs.today')} />
-            </TabTrigger>
-            <TabTrigger name="photos" href="/photos" asChild>
-              <TabButton icon={CameraIcon} label={t('tabs.photos')} />
-            </TabTrigger>
-            <TabTrigger name="insights" href="/insights" asChild>
-              <TabButton icon={InsightsIcon} label={t('tabs.insights')} />
-            </TabTrigger>
-            <TabTrigger name="explore" href="/explore" asChild>
-              <TabButton icon={ProtocolIcon} label={t('tabs.protocol')} />
-            </TabTrigger>
-          </View>
+          ])}>
+          <TabTrigger name="index" href="/" asChild>
+            <TabButton icon={HomeIcon} label={t('tabs.today')} />
+          </TabTrigger>
+          <TabTrigger name="photos" href="/photos" asChild>
+            <TabButton icon={CameraIcon} label={t('tabs.photos')} />
+          </TabTrigger>
+          <TabTrigger name="insights" href="/insights" asChild>
+            <TabButton icon={InsightsIcon} label={t('tabs.insights')} />
+          </TabTrigger>
+          <TabTrigger name="explore" href="/explore" asChild>
+            <TabButton icon={ProtocolIcon} label={t('tabs.protocol')} />
+          </TabTrigger>
         </View>
       </TabList>
     </Tabs>
@@ -86,13 +85,12 @@ const BAR_HEIGHT = 64;
 
 const styles = StyleSheet.create({
   bar: {
+    flexDirection: 'row',
     borderTopWidth: StyleSheet.hairlineWidth,
     width: '100%',
     maxWidth: MaxContentWidth,
     alignSelf: 'center',
   },
-  highlight: { height: StyleSheet.hairlineWidth, width: '100%' },
-  row: { flexDirection: 'row', height: BAR_HEIGHT },
   item: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: Spacing.one },
   itemInactive: { opacity: 0.5 },
   label: { fontSize: 9 },
