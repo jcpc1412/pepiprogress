@@ -209,7 +209,7 @@ function Frame({ step, children }: { step: number; children: React.ReactNode }) 
             {`${String(step + 1).padStart(2, '0')}/${String(TOTAL_STEPS).padStart(2, '0')}`}
           </ThemedText>
         </View>
-        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           {children}
         </ScrollView>
       </SafeAreaView>

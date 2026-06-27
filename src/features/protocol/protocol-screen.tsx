@@ -82,7 +82,7 @@ export function ProtocolScreen() {
           </Pressable>
         </View>
 
-        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           {protocolItems.length === 0 ? (
             <ThemedText type="small" themeColor="textSecondary">
               {t('protocol.addFirstPrompt')}

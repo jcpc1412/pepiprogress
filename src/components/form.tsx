@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
 
 import { ChamferBox } from '@/components/chamfer';
+import { CheckIcon } from '@/components/icons';
 import { ThemedText } from '@/components/themed-text';
 import { Chamfer, Fonts, Radii, Spacing, type ThemeColor } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -206,33 +207,66 @@ export function PrimaryButton({
   onPress,
   disabled,
   loading,
+  confirm,
   variant = 'primary',
 }: {
   label: string;
-  onPress: () => void;
+  /** May return a Promise — the button auto-shows a spinner while it resolves
+   *  and a success checkmark on completion (redesign R3 button feedback). */
+  onPress: () => void | Promise<unknown>;
   disabled?: boolean;
   loading?: boolean;
+  /** For synchronous actions, flash a success checkmark after a press. */
+  confirm?: boolean;
   variant?: 'primary' | 'secondary';
 }) {
   const theme = useTheme();
   const isSecondary = variant === 'secondary';
-  const isDisabled = disabled || loading;
+  // 'idle' | 'busy' (async pending) | 'done' (brief success check)
+  const [phase, setPhase] = useState<'idle' | 'busy' | 'done'>('idle');
+  const doneTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const flashDone = () => {
+    setPhase('done');
+    if (doneTimer.current) clearTimeout(doneTimer.current);
+    doneTimer.current = setTimeout(() => setPhase('idle'), 1200);
+  };
+
+  const handlePress = () => {
+    const result = onPress();
+    if (result && typeof (result as Promise<unknown>).then === 'function') {
+      setPhase('busy');
+      (result as Promise<unknown>).then(
+        () => flashDone(),
+        () => setPhase('idle'),
+      );
+    } else if (confirm) {
+      flashDone();
+    }
+  };
+
+  const busy = loading || phase === 'busy';
+  const isDisabled = disabled || busy;
+  const fg: ThemeColor = isSecondary ? 'text' : 'onAccent';
+
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityState={{ disabled: !!isDisabled, busy: !!loading }}
+      accessibilityState={{ disabled: !!isDisabled, busy: !!busy }}
       disabled={isDisabled}
-      onPress={onPress}
+      onPress={handlePress}
       style={({ pressed: p }) => [isDisabled && styles.disabled, pressed(p)]}>
       <ChamferBox
         chamfer={Chamfer.button}
         fill={isSecondary ? theme.surfaceSunken : theme.accent}
         borderColor={isSecondary ? theme.border : undefined}>
         <View style={styles.button}>
-          {loading ? (
+          {busy ? (
             <ActivityIndicator color={isSecondary ? theme.text : theme.onAccent} />
+          ) : phase === 'done' ? (
+            <CheckIcon size={20} color={fg} />
           ) : (
-            <ThemedText type="label" themeColor={isSecondary ? 'text' : 'onAccent'} style={styles.buttonLabel}>
+            <ThemedText type="label" themeColor={fg} style={styles.buttonLabel}>
               {label}
             </ThemedText>
           )}

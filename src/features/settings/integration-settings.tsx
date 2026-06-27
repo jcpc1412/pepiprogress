@@ -87,7 +87,8 @@ function ProviderRow({ provider }: { provider: IntegrationProvider }) {
  * each can connect + sync, ingesting canonical readings into the store. */
 export function IntegrationSettings() {
   const { t } = useTranslation();
-  const providers = availableProviders();
+  // Terra is hidden until it's actually implemented (redesign R3).
+  const providers = availableProviders().filter((p) => p.id !== 'terra');
 
   return (
     <Card>

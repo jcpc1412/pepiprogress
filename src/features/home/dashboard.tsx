@@ -151,7 +151,7 @@ export function Dashboard() {
         </View>
         <SyncStatus />
 
-        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           {/* Swipeable card with overhanging prev/next chamfer-square nav buttons (handoff §2). */}
           <View style={styles.carouselWrapper}>
             <ScrollView

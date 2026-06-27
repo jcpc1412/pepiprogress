@@ -70,7 +70,7 @@ export function CompoundDetailScreen({ itemId, onClose }: { itemId: string; onCl
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safe} edges={['top']}>
         <OverlayHeader title={compoundName} onClose={onClose} />
-        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           {/* Edit dose / route / frequency / started-on */}
           <Card style={styles.section}>
             <EngravedLabel>{t('addCompound.configure')}</EngravedLabel>

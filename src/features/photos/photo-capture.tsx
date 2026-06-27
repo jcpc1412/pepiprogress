@@ -146,7 +146,7 @@ export function PhotoCapture({
           </SafeAreaView>
         ) : shot ? (
           // ── Review the captured shot ──
-          <ScrollView style={styles.fill} contentContainerStyle={styles.reviewContent} bounces={false}>
+          <ScrollView style={styles.fill} contentContainerStyle={styles.reviewContent} bounces={false} showsVerticalScrollIndicator={false}>
             <Image source={{ uri: shot }} style={styles.reviewPhoto} contentFit="cover" />
             {isBody && (
               <View style={styles.measurePanel}>

@@ -55,7 +55,7 @@ export function CompoundPicker({
         autoCapitalize="none"
       />
 
-      <ScrollView style={styles.resultsScroll} keyboardShouldPersistTaps="handled">
+      <ScrollView style={styles.resultsScroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
         <View style={styles.chips}>
           {results.map((c) => (
             <OptionChip

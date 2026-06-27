@@ -90,7 +90,7 @@ export function AddCompoundScreen({ onClose }: { onClose: () => void }) {
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safe} edges={['top']}>
         <OverlayHeader title={t('addCompound.title')} onClose={onClose} />
-        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           {/* Step 1: search + select a compound */}
           <Field label={t('protocol.compound')}>
             <CompoundPicker value={slug} onChange={setSlug} />

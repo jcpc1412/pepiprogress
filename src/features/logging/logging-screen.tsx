@@ -42,7 +42,7 @@ export function LoggingScreen({
             onChange={(v) => setMode(v as LoggingMode)}
           />
         )}
-        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           {mode === 'quick' ? (
             <QuickLog seedPrompt={seedPrompt} onDismiss={onClose} />
           ) : (

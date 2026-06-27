@@ -58,7 +58,7 @@ export function InsightsScreen() {
           </Pressable>
         </View>
 
-        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           <SummaryCards />
           <ChartsSection />
           {!unlocked && (

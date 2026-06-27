@@ -24,7 +24,7 @@ export function SettingsScreen({ onClose }: { onClose: () => void }) {
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safe} edges={['top']}>
         <OverlayHeader title={t('settings.title')} onClose={onClose} />
-        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           <AccountSection />
           <AppearanceSettings />
           <NotificationSettings />

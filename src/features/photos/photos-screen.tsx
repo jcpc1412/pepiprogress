@@ -25,7 +25,7 @@ export function PhotosScreen() {
           <ThemedText type="display">{t('photos.heading')}</ThemedText>
         </View>
         <Divider />
-        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           <ProgressPhotos />
           <Insights />
         </ScrollView>
