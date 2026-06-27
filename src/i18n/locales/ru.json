@@ -13,7 +13,8 @@
     "errorNetwork": "Не удалось подключиться к сервису. Проверьте соединение.",
     "errorServer": "Что-то пошло не так. Попробуйте ещё раз.",
     "back": "Назад",
-    "loading": "Загрузка"
+    "loading": "Загрузка",
+    "noData": "Пока нет данных"
   },
   "home": {
     "title": "Добро пожаловать в PepiProgress",
@@ -178,7 +179,9 @@
     "progressLabel": "Прогресс",
     "heading": "Фото",
     "dayShort": "Д{{count}}",
-    "timelineLabel": "Хронология"
+    "timelineLabel": "Хронология",
+    "timelinePlaceholder": "Хронология растёт с каждым фото",
+    "analysisPlaceholder": "ИИ-анализ появится после следующего сравнения"
   },
   "markers": {
     "hematocrit": "Гематокрит",
@@ -230,7 +233,8 @@
     "lastPrefix": "Последняя: {{when}}",
     "lastToday": "Сегодня",
     "lastDaysAgo": "{{count}}д назад",
-    "never": "Никогда"
+    "never": "Никогда",
+    "noVial": "Флакон не отслеживается"
   },
   "inventory": {
     "title": "Запасы",
@@ -591,7 +595,8 @@
     "dosePending": "Ожидает",
     "doseDone": "Готово",
     "distillation": "Сводка дня",
-    "compoundsLogged": "{{names}} записано"
+    "compoundsLogged": "{{names}} записано",
+    "dosesPlaceholder": "Добавьте протокол для отслеживания доз"
   },
   "addCompound": {
     "title": "Добавить препарат",

@@ -79,7 +79,6 @@ function SummaryCards() {
 
   const data = useMemo(() => {
     const list = Object.values(entries).sort((a, b) => a.date.localeCompare(b.date));
-    if (list.length === 0) return null;
 
     // Earliest protocol start → "since {compound}" weeks.
     const starts = protocolItems
@@ -116,27 +115,28 @@ function SummaryCards() {
     return { count: list.length, since, biggest };
   }, [entries, protocolItems, profile.goals]);
 
-  if (!data) return null;
-
   const fmtDelta = (d: number) => `${d > 0 ? '+' : d < 0 ? '−' : ''}${Math.abs(d).toFixed(1)}`;
 
+  // Always render all three cards — missing values show "—" to signal what fills in.
   return (
     <View style={styles.cardRow}>
-      {data.since && (
-        <Card style={styles.summaryCard}>
-          <EngravedLabel>{t('insights.sinceStarted', { compound: data.since.compound })}</EngravedLabel>
-          <Metric value={t('insights.weeks', { count: data.since.weeks })} />
-        </Card>
-      )}
-      {data.biggest && (
-        <Card style={styles.summaryCard}>
-          <EngravedLabel>{t('insights.biggestChange')}</EngravedLabel>
-          <ThemedText type="small" themeColor="textSecondary">
-            {t(data.biggest.labelKey as 'fields.weight')}
-          </ThemedText>
-          <SignalText tone={data.biggest.tone}>{fmtDelta(data.biggest.delta)}</SignalText>
-        </Card>
-      )}
+      <Card style={styles.summaryCard}>
+        <EngravedLabel>{t('insights.sinceStarted', { compound: data.since?.compound ?? '—' })}</EngravedLabel>
+        <Metric value={data.since ? t('insights.weeks', { count: data.since.weeks }) : '—'} />
+      </Card>
+      <Card style={styles.summaryCard}>
+        <EngravedLabel>{t('insights.biggestChange')}</EngravedLabel>
+        {data.biggest ? (
+          <>
+            <ThemedText type="small" themeColor="textSecondary">
+              {t(data.biggest.labelKey as 'fields.weight')}
+            </ThemedText>
+            <SignalText tone={data.biggest.tone}>{fmtDelta(data.biggest.delta)}</SignalText>
+          </>
+        ) : (
+          <Metric value="—" />
+        )}
+      </Card>
       <Card style={styles.summaryCard}>
         <EngravedLabel>{t('insights.daysLogged')}</EngravedLabel>
         <Metric value={String(data.count)} />
@@ -180,19 +180,22 @@ function ChartsSection() {
             .map((fraction) => ({ fraction }));
         }
         return { ...m, points, markers };
-      })
-      .filter((s) => s.points.length >= 2);
+      });
   }, [entries, protocolItems, selected]);
 
-  if (series.length === 0) return null;
-
+  // Always render the chart frames — empty ones show a dashed placeholder axis.
   return (
     <View style={styles.charts}>
       <EngravedLabel>{t('insights.trendsLabel')}</EngravedLabel>
       {series.map((s) => (
         <Card key={s.key as string} style={styles.chartCard}>
           <EngravedLabel>{t(s.labelKey as 'fields.weight')}</EngravedLabel>
-          <LineChart data={s.points} markers={s.markers} unit={s.unitKey ? t(s.unitKey as 'units.g') : undefined} />
+          <LineChart
+            data={s.points}
+            markers={s.markers}
+            unit={s.unitKey ? t(s.unitKey as 'units.g') : undefined}
+            emptyLabel={t('common.noData')}
+          />
         </Card>
       ))}
     </View>

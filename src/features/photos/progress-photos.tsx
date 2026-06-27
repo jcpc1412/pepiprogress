@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Animated, type LayoutChangeEvent, PanResponder, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { PrimaryButton, SingleSelectChips, TextButton } from '@/components/form';
-import { Card, Divider, EngravedLabel, Skeleton, StatusPill } from '@/components/surface';
+import { Card, Divider, EngravedLabel, Placeholder, Skeleton, StatusPill } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
 import { Radii, Spacing } from '@/constants/theme';
 import { PhotoCapture } from '@/features/photos/photo-capture';
@@ -196,6 +196,7 @@ const frameStyles = StyleSheet.create({
 
 export function ProgressPhotos() {
   const { t, i18n } = useTranslation();
+  const theme = useTheme();
   const { user } = useAuth();
   const { photos, entries, symptomEvents, protocolItems, profile, addPhoto, updatePhoto, setProfile } = useStore();
   const [session, setSession] = useState<PhotoSession>('face');
@@ -469,6 +470,20 @@ export function ProgressPhotos() {
         <PhotoFrame uri={resolvedUris[baseline.id] ?? baseline.uri} caption={t('photos.baseline')} />
       )}
 
+      {/* Timeline placeholder until there are ≥2 photos to compare */}
+      {sessionPhotos.length <= 1 && (
+        <View>
+          <EngravedLabel>{t('photos.timelineLabel')}</EngravedLabel>
+          <Placeholder label={t('photos.timelinePlaceholder')} height={72}>
+            <View style={styles.strip}>
+              {Array.from({ length: 5 }, (_, i) => (
+                <View key={i} style={[styles.thumb, { borderColor: theme.border, borderStyle: 'dashed' }]} />
+              ))}
+            </View>
+          </Placeholder>
+        </View>
+      )}
+
       {/* Timeline strip — oldest→newest with Dn day labels (mockup) */}
       {sessionPhotos.length > 1 && (
         <View>
@@ -578,6 +593,14 @@ export function ProgressPhotos() {
               </ThemedText>
             </>
           ) : null}
+        </Card>
+      )}
+
+      {/* Analysis placeholder — signals where AI notes will appear */}
+      {!note && !encouragementNote && !analyzing && (
+        <Card>
+          <EngravedLabel>{t('photos.analysisLabel')}</EngravedLabel>
+          <Placeholder label={t('photos.analysisPlaceholder')} height={64} />
         </Card>
       )}
 

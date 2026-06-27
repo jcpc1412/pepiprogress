@@ -175,21 +175,22 @@ function CompoundRow({
         <ThemedText type="monoSm" themeColor="textSecondary" style={styles.detail}>
           {detail.toUpperCase()}
         </ThemedText>
-        {pct != null && (
-          <View style={styles.depRow}>
-            <View style={[styles.depTrack, { backgroundColor: theme.surfaceSunken }]}>
+        {/* Always show the depletion row — an empty track signals "add a vial". */}
+        <View style={styles.depRow}>
+          <View style={[styles.depTrack, { backgroundColor: theme.surfaceSunken }]}>
+            {pct != null && (
               <View
                 style={[
                   styles.depFill,
                   { width: `${pct * 100}%`, backgroundColor: low ? theme.signalBad : theme.numeral },
                 ]}
               />
-            </View>
-            <ThemedText type="monoSm" themeColor={low ? 'signalBad' : 'textMuted'}>
-              {t('protocol.vialCount', { count: vials.length })}
-            </ThemedText>
+            )}
           </View>
-        )}
+          <ThemedText type="monoSm" themeColor={low ? 'signalBad' : 'textMuted'}>
+            {vials.length > 0 ? t('protocol.vialCount', { count: vials.length }) : t('protocol.noVial')}
+          </ThemedText>
+        </View>
       </View>
       <ChevronRightIcon color="textMuted" />
     </Pressable>

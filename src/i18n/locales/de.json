@@ -13,7 +13,8 @@
     "errorNetwork": "Dienst nicht erreichbar. Überprüfe deine Verbindung.",
     "errorServer": "Etwas ist schiefgelaufen. Bitte versuche es erneut.",
     "back": "Zurück",
-    "loading": "Laden"
+    "loading": "Laden",
+    "noData": "Noch keine Daten"
   },
   "home": {
     "title": "Willkommen bei PepiProgress",
@@ -178,7 +179,9 @@
     "progressLabel": "Fortschritt",
     "heading": "Fotos",
     "dayShort": "T{{count}}",
-    "timelineLabel": "Zeitverlauf"
+    "timelineLabel": "Zeitverlauf",
+    "timelinePlaceholder": "Dein Zeitverlauf wächst mit jedem Foto",
+    "analysisPlaceholder": "Die KI-Analyse erscheint nach dem nächsten Vergleich"
   },
   "markers": {
     "hematocrit": "Hämatokrit",
@@ -230,7 +233,8 @@
     "lastPrefix": "Letzte: {{when}}",
     "lastToday": "Heute",
     "lastDaysAgo": "vor {{count}}T",
-    "never": "Nie"
+    "never": "Nie",
+    "noVial": "Kein Fläschchen erfasst"
   },
   "inventory": {
     "title": "Bestand",
@@ -591,7 +595,8 @@
     "dosePending": "Ausstehend",
     "doseDone": "Erledigt",
     "distillation": "Tageszusammenfassung",
-    "compoundsLogged": "{{names}} erfasst"
+    "compoundsLogged": "{{names}} erfasst",
+    "dosesPlaceholder": "Füge ein Protokoll hinzu, um Dosen zu verfolgen"
   },
   "addCompound": {
     "title": "Wirkstoff hinzufügen",

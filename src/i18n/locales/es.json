@@ -13,7 +13,8 @@
     "errorNetwork": "No se pudo conectar con el servicio. Comprueba tu conexión.",
     "errorServer": "Algo salió mal. Inténtalo de nuevo.",
     "back": "Atrás",
-    "loading": "Cargando"
+    "loading": "Cargando",
+    "noData": "Sin datos aún"
   },
   "home": {
     "title": "Bienvenido a PepiProgress",
@@ -178,7 +179,9 @@
     "progressLabel": "Progreso",
     "heading": "Fotos",
     "dayShort": "D{{count}}",
-    "timelineLabel": "Cronología"
+    "timelineLabel": "Cronología",
+    "timelinePlaceholder": "Tu cronología crece con cada foto",
+    "analysisPlaceholder": "El análisis IA aparece tras tu próxima comparación"
   },
   "markers": {
     "hematocrit": "Hematocrito",
@@ -230,7 +233,8 @@
     "lastPrefix": "Última: {{when}}",
     "lastToday": "Hoy",
     "lastDaysAgo": "hace {{count}}d",
-    "never": "Nunca"
+    "never": "Nunca",
+    "noVial": "Sin vial registrado"
   },
   "inventory": {
     "title": "Inventario",
@@ -591,7 +595,8 @@
     "dosePending": "Pendiente",
     "doseDone": "Hecho",
     "distillation": "Resumen de hoy",
-    "compoundsLogged": "{{names}} registrado"
+    "compoundsLogged": "{{names}} registrado",
+    "dosesPlaceholder": "Añade un protocolo para registrar dosis diarias"
   },
   "addCompound": {
     "title": "Añadir compuesto",

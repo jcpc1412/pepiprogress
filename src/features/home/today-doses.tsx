@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { Card, Divider, EngravedLabel, StatusPill } from '@/components/surface';
+import { Card, Divider, EngravedLabel, Placeholder, StatusPill } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { compoundBySlug } from '@/data/compound-catalog';
@@ -57,7 +57,15 @@ export function TodayDoses() {
       .filter((r) => r.show);
   }, [protocolItems, doseEvents, today]);
 
-  if (rows.length === 0) return null;
+  // Always show the section — an empty placeholder signals where doses appear.
+  if (rows.length === 0) {
+    return (
+      <Card style={styles.card}>
+        <EngravedLabel>{t('dashboard.dosesTitle')}</EngravedLabel>
+        <Placeholder label={t('dashboard.dosesPlaceholder')} height={64} />
+      </Card>
+    );
+  }
 
   return (
     <Card style={styles.card}>

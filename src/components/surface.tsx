@@ -130,6 +130,34 @@ export function StatusPill({ label, tone = 'neutral' }: { label: string; tone?: 
   );
 }
 
+/** Empty-state box — a dashed sunken frame that signals "content lands here"
+ *  to encourage logging. Used everywhere a section would otherwise be hidden. */
+export function Placeholder({
+  label,
+  height = 88,
+  children,
+}: {
+  label?: string;
+  height?: number;
+  children?: ReactNode;
+}) {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.placeholder,
+        { borderColor: theme.border, backgroundColor: theme.surfaceSunken, minHeight: height },
+      ]}>
+      {children}
+      {label ? (
+        <ThemedText type="monoSm" themeColor="textMuted" style={styles.placeholderLabel}>
+          {label}
+        </ThemedText>
+      ) : null}
+    </View>
+  );
+}
+
 /** Content-shaped loading placeholder — gently pulsing sunken bars. Use instead
  *  of a centered spinner when the result is text/content (Emil: show the shape). */
 export function Skeleton({ lines = 3 }: { lines?: number }) {
@@ -163,6 +191,16 @@ export function Skeleton({ lines = 3 }: { lines?: number }) {
 
 const styles = StyleSheet.create({
   panelPad: { padding: Spacing.three },
+  placeholder: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderStyle: 'dashed',
+    borderRadius: Radii.chamfer,
+    padding: Spacing.three,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.two,
+  },
+  placeholderLabel: { textAlign: 'center' },
   skeletonWrap: { gap: Spacing.two },
   skeletonBar: { height: 12, borderRadius: Radii.chamfer },
   dividerWrap: { marginVertical: Spacing.three },

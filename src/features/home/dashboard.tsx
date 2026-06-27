@@ -54,14 +54,14 @@ export function Dashboard() {
 
   const series = useMemo(() => {
     const dates = Object.keys(entries).sort();
-    return CHECKIN_METRICS.filter((m) => selected.includes(m.key as string))
-      .map((m) => {
-        const points: ChartPoint[] = dates
-          .map((d) => ({ label: d.slice(5), value: entries[d]?.[m.key] }))
-          .filter((p): p is ChartPoint => typeof p.value === 'number');
-        return { ...m, points };
-      })
-      .filter((s) => s.points.length >= 2); // need ≥2 points to draw a line
+    // Keep every selected metric — charts with <2 points render an empty frame
+    // (a placeholder that signals "log to fill this in").
+    return CHECKIN_METRICS.filter((m) => selected.includes(m.key as string)).map((m) => {
+      const points: ChartPoint[] = dates
+        .map((d) => ({ label: d.slice(5), value: entries[d]?.[m.key] }))
+        .filter((p): p is ChartPoint => typeof p.value === 'number');
+      return { ...m, points };
+    });
   }, [entries, selected]);
 
   const latestPhotos = (session: 'face' | 'body') =>
@@ -196,6 +196,7 @@ export function Dashboard() {
                     <LineChart
                       data={s.points}
                       unit={s.unitKey ? t(s.unitKey as 'units.g') : undefined}
+                      emptyLabel={t('common.noData')}
                     />
                   </Card>
                 </View>
