@@ -4,7 +4,7 @@ import { ActivityIndicator, Animated, Pressable, StyleSheet, View } from 'react-
 
 import { LabeledInput, OptionChip, PrimaryButton, ScaleSelector, TextButton } from '@/components/form';
 import { SignalDotIcon } from '@/components/icons';
-import { Sunken } from '@/components/surface';
+import { EngravedLabel, Sunken } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { compoundBySlug } from '@/data/compound-catalog';
@@ -231,13 +231,13 @@ export function QuickLog({
   if (phase === 'input') {
     return (
       <View style={styles.container}>
-        <ThemedText type="smallBold">{t('quicklog.title')}</ThemedText>
         <LabeledInput
-          label={t('quicklog.label')}
+          label={t('quicklog.title')}
           placeholder={t('quicklog.placeholder')}
           value={text}
           onChangeText={setText}
           multiline
+          style={styles.inputWell}
           onSubmitEditing={submit}
         />
         <ThemedText type="small" themeColor="textSecondary">
@@ -245,13 +245,15 @@ export function QuickLog({
         </ThemedText>
 
         {/* Quick-add suggestion chips — append to the input */}
+        <EngravedLabel>{t('quicklog.suggestionsLabel')}</EngravedLabel>
         <View style={styles.suggestions}>
           {(
             [
               ['quicklog.sugSleep', t('quicklog.sugSleep')],
-              ['quicklog.sugEnergy', t('quicklog.sugEnergy')],
               ['quicklog.sugWeight', t('quicklog.sugWeight')],
+              ['quicklog.sugEnergy', t('quicklog.sugEnergy')],
               ['quicklog.sugDose', t('quicklog.sugDose')],
+              ['quicklog.sugSymptom', t('quicklog.sugSymptom')],
             ] as const
           ).map(([key, label]) => (
             <OptionChip
@@ -399,6 +401,7 @@ export function QuickLog({
 
 const styles = StyleSheet.create({
   container: { gap: Spacing.two },
+  inputWell: { minHeight: 120, textAlignVertical: 'top' },
   suggestions: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
   errorRow: {
     flexDirection: 'row',

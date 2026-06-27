@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
-import { LabeledInput, OptionChip, ScaleSelector } from '@/components/form';
+import { LabeledInput, OptionChip, PrimaryButton, ScaleSelector } from '@/components/form';
 import { Card, Divider, EngravedLabel, SignalText, Sunken } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
-import { Spacing } from '@/constants/theme';
+import { Fonts, Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 import { LabImport } from '@/features/lab/lab-import';
 import { SymptomEvents } from '@/features/symptoms/symptom-events';
 import { formatDateKey, shiftDateKey } from '@/lib/dates';
@@ -57,8 +58,9 @@ const TEXT_FIELDS: TextField[] = ['skin_notes', 'measurements', 'note'];
  * check-in. Surfaced fields, day-stepper backfill, customize, history, symptoms.
  * The conversational quick-log is the sibling Quick mode.
  */
-export function DetailedLog() {
+export function DetailedLog({ onDismiss }: { onDismiss?: () => void } = {}) {
   const { t, i18n } = useTranslation();
+  const theme = useTheme();
   const { profile, entries, protocolItems, doseEvents, metricReadings, upsertCheckin, setProfile } =
     useStore();
 
@@ -184,14 +186,16 @@ export function DetailedLog() {
       )}
 
       {fields.includes('weight') && (
-        <Card style={styles.weightCard}>
-          <View style={styles.weightInput}>
-            <LabeledInput
+        <View style={styles.section}>
+          <EngravedLabel>{t('fields.weight')}</EngravedLabel>
+          <Sunken style={styles.weightWell}>
+            <TextInput
               key={`${date}-weight-${num('weight') ?? ''}`}
-              label={`${t('fields.weight')} (${t(`units.${profile.units === 'imperial' ? 'lb' : 'kg'}` as const)})`}
+              style={[styles.weightNumeral, { color: theme.numeral }]}
               keyboardType="decimal-pad"
               defaultValue={num('weight') !== undefined ? String(num('weight')) : ''}
-              error={weightError}
+              placeholder="0"
+              placeholderTextColor={theme.textMuted}
               onEndEditing={(e) => {
                 const raw = e.nativeEvent.text.trim().replace(',', '.');
                 if (raw === '') {
@@ -208,27 +212,32 @@ export function DetailedLog() {
                 upsertCheckin(date, { weight: v });
               }}
             />
-            {(() => {
-              const reading = metricForDate(metricReadings, 'body.weight', date);
-              if (!reading) return null;
-              const synced = weightInUnits(reading.value, profile.units);
-              if (num('weight') === synced) return null;
-              return (
-                <Pressable accessibilityRole="button" onPress={() => upsertCheckin(date, { weight: synced })}>
-                  <ThemedText type="monoSm" themeColor="textSecondary" style={styles.autofill}>
-                    {t('checkin.autofillWeight', { value: synced })}
-                  </ThemedText>
-                </Pressable>
-              );
-            })()}
-          </View>
-          {weightDelta !== undefined && (
-            <View style={styles.delta}>
-              <EngravedLabel>{t('checkin.delta')}</EngravedLabel>
-              <SignalText tone={weightDelta.tone}>{weightDelta.text}</SignalText>
+            <View style={styles.weightSide}>
+              {weightDelta !== undefined && <SignalText tone={weightDelta.tone} size="metricSm">{weightDelta.text}</SignalText>}
+              <ThemedText type="monoSm" themeColor="textMuted">
+                {t(`units.${profile.units === 'imperial' ? 'lb' : 'kg'}` as const)}
+              </ThemedText>
             </View>
-          )}
-        </Card>
+          </Sunken>
+          {weightError ? (
+            <ThemedText type="monoSm" themeColor="signalBad">
+              {weightError}
+            </ThemedText>
+          ) : null}
+          {(() => {
+            const reading = metricForDate(metricReadings, 'body.weight', date);
+            if (!reading) return null;
+            const synced = weightInUnits(reading.value, profile.units);
+            if (num('weight') === synced) return null;
+            return (
+              <Pressable accessibilityRole="button" onPress={() => upsertCheckin(date, { weight: synced })}>
+                <ThemedText type="monoSm" themeColor="textSecondary" style={styles.autofill}>
+                  {t('checkin.autofillWeight', { value: synced })}
+                </ThemedText>
+              </Pressable>
+            );
+          })()}
+        </View>
       )}
 
       {NUTRITION_FIELDS.some((n) => fields.includes(n.field)) && (
@@ -355,6 +364,9 @@ export function DetailedLog() {
           ))
         )}
       </View>
+
+      {/* Fields persist on blur; SAVE LOG confirms + closes the overlay (mockup). */}
+      {onDismiss && <PrimaryButton label={t('checkin.saveLog')} onPress={onDismiss} />}
     </View>
   );
 }
@@ -362,10 +374,11 @@ export function DetailedLog() {
 const styles = StyleSheet.create({
   wrap: { gap: Spacing.four },
   stepper: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  weightCard: { flexDirection: 'row', alignItems: 'flex-end', gap: Spacing.three },
+  weightWell: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: Spacing.three },
+  weightNumeral: { flex: 1, fontFamily: Fonts.mono, fontSize: 40, fontVariant: ['tabular-nums'], padding: 0 },
+  weightSide: { alignItems: 'flex-end', gap: Spacing.one },
   weightInput: { flex: 1, gap: Spacing.one },
   autofill: { textDecorationLine: 'underline' },
-  delta: { alignItems: 'flex-end', gap: Spacing.one },
   sectionLabel: { marginBottom: Spacing.two },
   scaleField: { gap: Spacing.two, paddingVertical: Spacing.two },
   rowDivider: { marginVertical: 0 },

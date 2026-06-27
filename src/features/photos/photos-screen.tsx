@@ -1,7 +1,8 @@
 import { useTranslation } from 'react-i18next';
-import { ScrollView, StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { Divider, EngravedLabel } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
@@ -19,7 +20,11 @@ export function PhotosScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safe} edges={['top']}>
-        <ThemedText type="display">{t('photos.title')}</ThemedText>
+        <View style={styles.headerBlock}>
+          <EngravedLabel>{t('photos.progressLabel')}</EngravedLabel>
+          <ThemedText type="display">{t('photos.heading')}</ThemedText>
+        </View>
+        <Divider />
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           <ProgressPhotos />
           <Insights />
@@ -35,10 +40,11 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: Spacing.four,
     paddingTop: Spacing.three,
-    gap: Spacing.three,
+    gap: Spacing.two,
     width: '100%',
     maxWidth: MaxContentWidth,
     alignSelf: 'center',
   },
-  scroll: { gap: Spacing.four, paddingBottom: Spacing.six },
+  headerBlock: {},
+  scroll: { gap: Spacing.four, paddingBottom: Spacing.six, paddingTop: Spacing.two },
 });

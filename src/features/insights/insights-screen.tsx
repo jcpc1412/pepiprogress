@@ -25,7 +25,7 @@ const METRICS: { key: keyof CheckinEntry; labelKey: string; unitKey?: string }[]
   { key: 'weight', labelKey: 'fields.weight' },
   { key: 'energy', labelKey: 'fields.energy' },
   { key: 'sleep_quality', labelKey: 'fields.sleep_quality' },
-  { key: 'wellness', labelKey: 'fields.wellness' },
+  { key: 'soreness', labelKey: 'fields.soreness' },
 ];
 
 /**

@@ -1,14 +1,15 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { LabeledInput, OptionChip, PrimaryButton, SingleSelectChips } from '@/components/form';
 import { OverlayHeader } from '@/components/overlay-header';
-import { Card, EngravedLabel } from '@/components/surface';
+import { Card, EngravedLabel, Sunken } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { Fonts, MaxContentWidth, Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 import { compoundBySlug } from '@/data/compound-catalog';
 import { CompoundPicker } from '@/features/compounds/compound-picker';
 import { roundTo, suggestReconstitution } from '@/lib/reconstitution';
@@ -28,6 +29,7 @@ function toMg(dose: number, unit: string): number | null {
 /** Dedicated add-compound flow with live reconstitution + optional vial logging (P-03). */
 export function AddCompoundScreen({ onClose }: { onClose: () => void }) {
   const { t } = useTranslation();
+  const theme = useTheme();
   const { addProtocolItem, addInventoryItem, inventory } = useStore();
 
   const [slug, setSlug] = useState<string>();
@@ -97,14 +99,25 @@ export function AddCompoundScreen({ onClose }: { onClose: () => void }) {
           {/* Step 2: configure section reveals after a compound is selected */}
           {slug && (
             <Card style={styles.configureCard}>
-              <EngravedLabel>{t('addCompound.configure')}</EngravedLabel>
+              <EngravedLabel>{`${compound?.canonicalName ?? slug} · ${t('addCompound.configure')}`}</EngravedLabel>
 
-              <LabeledInput
-                label={t('protocol.dose')}
-                keyboardType="decimal-pad"
-                value={dose}
-                onChangeText={setDose}
-              />
+              {/* Dose as a big debossed numeral well (mockup) */}
+              <Sunken style={styles.doseWell}>
+                <TextInput
+                  style={[styles.doseNumeral, { color: theme.numeral }]}
+                  keyboardType="decimal-pad"
+                  value={dose}
+                  onChangeText={setDose}
+                  placeholder="0"
+                  placeholderTextColor={theme.textMuted}
+                />
+                <ThemedText type="monoSm" themeColor="textMuted">
+                  {[t(`doseUnits.${doseUnit}` as 'doseUnits.mg'), frequency ? t(`frequencies.${frequency}` as const) : null]
+                    .filter(Boolean)
+                    .join(' · ')
+                    .toUpperCase()}
+                </ThemedText>
+              </Sunken>
 
               <Field label={t('protocol.unit')}>
                 <SingleSelectChips
@@ -211,6 +224,8 @@ const styles = StyleSheet.create({
   scroll: { gap: Spacing.three, paddingTop: Spacing.three, paddingBottom: Spacing.six },
   field: { gap: Spacing.two },
   configureCard: { gap: Spacing.three },
+  doseWell: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: Spacing.three },
+  doseNumeral: { flex: 1, fontFamily: Fonts.mono, fontSize: 40, fontVariant: ['tabular-nums'], padding: 0 },
   reconCard: { gap: Spacing.two },
   vialToggle: { flexDirection: 'row', marginTop: Spacing.one },
 });

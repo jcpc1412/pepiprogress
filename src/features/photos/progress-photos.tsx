@@ -26,8 +26,9 @@ import {
   sessionEncouragementKey,
   sessionScientificKey,
 } from '@/lib/photo-cadence';
+import { daysBetween } from '@/lib/dates';
 import { copyPhotoToDocuments, uploadPhotoToCloud, useResolvedUris } from '@/lib/photos';
-import { useStore, type PhotoEntry, type PhotoSession } from '@/lib/store';
+import { localDateKey, useStore, type PhotoEntry, type PhotoSession } from '@/lib/store';
 
 // ─── Wipe/slider compare ────────────────────────────────────────────────────
 
@@ -468,27 +469,38 @@ export function ProgressPhotos() {
         <PhotoFrame uri={resolvedUris[baseline.id] ?? baseline.uri} caption={t('photos.baseline')} />
       )}
 
-      {/* Timeline strip */}
+      {/* Timeline strip — oldest→newest with Dn day labels (mockup) */}
       {sessionPhotos.length > 1 && (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.strip}>
-          {sessionPhotos.map((p) => {
-            const isActive = p.id === (selected?.id ?? latest?.id);
-            return (
-              <Pressable
-                key={p.id}
-                accessibilityRole="button"
-                onPress={() => setSelectedId(p.id)}
-                style={({ pressed }) => [
-                  styles.thumb,
-                  { borderColor: isActive ? '#9A9590' : 'transparent' },
-                  pressed && styles.thumbPressed,
-                ]}>
-                <Image source={{ uri: resolvedUris[p.id] ?? p.uri }} style={styles.thumbImg} contentFit="cover" />
-                <ComparabilityDot photo={p} />
-              </Pressable>
-            );
-          })}
-        </ScrollView>
+        <View>
+          <EngravedLabel>{t('photos.timelineLabel')}</EngravedLabel>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.strip}>
+            {[...sessionPhotos].reverse().map((p, i, arr) => {
+              const isActive = p.id === (selected?.id ?? latest?.id);
+              const baselineDay = arr[0]?.takenAt;
+              const dayNum = baselineDay
+                ? daysBetween(localDateKey(new Date(baselineDay)), localDateKey(new Date(p.takenAt))) + 1
+                : i + 1;
+              return (
+                <View key={p.id} style={styles.thumbCol}>
+                  <Pressable
+                    accessibilityRole="button"
+                    onPress={() => setSelectedId(p.id)}
+                    style={({ pressed }) => [
+                      styles.thumb,
+                      { borderColor: isActive ? '#9A9590' : 'transparent' },
+                      pressed && styles.thumbPressed,
+                    ]}>
+                    <Image source={{ uri: resolvedUris[p.id] ?? p.uri }} style={styles.thumbImg} contentFit="cover" />
+                    <ComparabilityDot photo={p} />
+                  </Pressable>
+                  <ThemedText type="monoSm" themeColor={isActive ? 'text' : 'textMuted'}>
+                    {t('photos.dayShort', { count: dayNum })}
+                  </ThemedText>
+                </View>
+              );
+            })}
+          </ScrollView>
+        </View>
       )}
 
       {/* Milestone section — both actions always available when 2+ photos exist */}
@@ -605,6 +617,7 @@ const styles = StyleSheet.create({
   clothingGuidance: { lineHeight: 18 },
   badgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.one },
   strip: { gap: Spacing.two, paddingVertical: Spacing.one },
+  thumbCol: { alignItems: 'center', gap: Spacing.half },
   thumb: {
     width: 48,
     height: 64,

@@ -79,7 +79,7 @@
     "wellness": "Настроение / самочувствие",
     "appetite": "Аппетит",
     "energy": "Энергия",
-    "soreness": "Мышечная боль",
+    "soreness": "Восстановление",
     "workout_effort": "Интенсивность тренировки",
     "libido": "Либидо",
     "skin_notes": "Заметки о коже",
@@ -111,12 +111,13 @@
     "donePhotoCta": "Сделать сегодняшнее фото прогресса",
     "nutrition": "Питание",
     "autofillProtein": "Использовать синхронизированный белок: {{value}} г",
-    "autofillCalories": "Использовать синхронизированные калории: {{value}} ккал"
+    "autofillCalories": "Использовать синхронизированные калории: {{value}} ккал",
+    "saveLog": "Сохранить запись"
   },
   "quicklog": {
     "title": "Быстрая запись",
     "label": "Своими словами",
-    "placeholder": "напр. принял 1мг аримидекса, плохо спал, проснулся с весом 82.3",
+    "placeholder": "Спал 7ч, энергия 4, вес 83,2…",
     "send": "Записать",
     "sending": "Читаю…",
     "applied": "Добавлено",
@@ -130,13 +131,14 @@
     "addedCount": "Добавлено: {{count}}",
     "macroSeed": "Сколько белка и калорий вы съели сегодня?",
     "suggestionsLabel": "Быстрое добавление",
-    "sugSleep": "хорошо спал",
-    "sugEnergy": "энергия 4",
-    "sugWeight": "вес",
-    "sugDose": "принял дозу",
+    "sugSleep": "Хорошо спал",
+    "sugEnergy": "Спад энергии",
+    "sugWeight": "Записать вес",
+    "sugDose": "Заметка после дозы",
     "parseApply": "Разобрать + применить",
     "confirm": "Подтвердить",
-    "reviewLabel": "Обнаружено"
+    "reviewLabel": "Обнаружено",
+    "sugSymptom": "Головная боль"
   },
   "photos": {
     "title": "Фото прогресса",
@@ -172,7 +174,11 @@
     "baselineSet": "Базовое фото сохранено. Первый отчёт запланирован на {{date}}.",
     "analysisLabel": "АНАЛИЗ",
     "checkinLabel": "ЗАМЕТКА ОБ ОТЧЁТЕ",
-    "flipCamera": "Перевернуть камеру"
+    "flipCamera": "Перевернуть камеру",
+    "progressLabel": "Прогресс",
+    "heading": "Фото",
+    "dayShort": "Д{{count}}",
+    "timelineLabel": "Хронология"
   },
   "markers": {
     "hematocrit": "Гематокрит",
@@ -583,7 +589,9 @@
     "dayBadge": "ДЕНЬ {{count}}",
     "dosesTitle": "Дозы на сегодня",
     "dosePending": "Ожидает",
-    "doseDone": "Готово"
+    "doseDone": "Готово",
+    "distillation": "Сводка дня",
+    "compoundsLogged": "{{names}} записано"
   },
   "addCompound": {
     "title": "Добавить препарат",

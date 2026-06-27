@@ -79,7 +79,7 @@
     "wellness": "Mood / wellness",
     "appetite": "Appetite",
     "energy": "Energy",
-    "soreness": "Soreness",
+    "soreness": "Recovery",
     "workout_effort": "Workout effort",
     "libido": "Libido",
     "skin_notes": "Skin notes",
@@ -111,12 +111,13 @@
     "donePhotoCta": "Take today's progress photo",
     "nutrition": "Nutrition",
     "autofillProtein": "Use synced protein: {{value}} g",
-    "autofillCalories": "Use synced calories: {{value}} kcal"
+    "autofillCalories": "Use synced calories: {{value}} kcal",
+    "saveLog": "Save log"
   },
   "quicklog": {
     "title": "Quick log",
     "label": "In your words",
-    "placeholder": "e.g. took 1mg arimidex, slept poorly, woke up at 82.3",
+    "placeholder": "Slept 7h, energy 4, weight 83.2…",
     "send": "Log it",
     "sending": "Reading…",
     "applied": "Added",
@@ -130,13 +131,14 @@
     "addedCount": "Added {{count}}",
     "macroSeed": "How much protein and calories did you have today?",
     "suggestionsLabel": "Quick add",
-    "sugSleep": "slept well",
-    "sugEnergy": "energy 4",
-    "sugWeight": "weight",
-    "sugDose": "took my dose",
+    "sugSleep": "Slept well",
+    "sugEnergy": "Energy dip",
+    "sugWeight": "Weight check",
+    "sugDose": "Post-dose note",
     "parseApply": "Parse + apply",
     "confirm": "Confirm",
-    "reviewLabel": "Detected"
+    "reviewLabel": "Detected",
+    "sugSymptom": "Headache"
   },
   "photos": {
     "title": "Progress photos",
@@ -172,7 +174,11 @@
     "baselineSet": "Baseline captured. First check-in scheduled for {{date}}.",
     "analysisLabel": "ANALYSIS",
     "checkinLabel": "CHECK-IN NOTE",
-    "flipCamera": "Flip camera"
+    "flipCamera": "Flip camera",
+    "progressLabel": "Progress",
+    "heading": "Photos",
+    "dayShort": "D{{count}}",
+    "timelineLabel": "Timeline"
   },
   "markers": {
     "hematocrit": "Hematocrit",
@@ -583,7 +589,9 @@
     "dayBadge": "DAY {{count}}",
     "dosesTitle": "Today's doses",
     "dosePending": "Pending",
-    "doseDone": "Done"
+    "doseDone": "Done",
+    "distillation": "Today's distillation",
+    "compoundsLogged": "{{names}} logged"
   },
   "addCompound": {
     "title": "Add compound",

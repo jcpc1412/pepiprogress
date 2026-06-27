@@ -79,7 +79,7 @@
     "wellness": "Ánimo / bienestar",
     "appetite": "Apetito",
     "energy": "Energía",
-    "soreness": "Dolor muscular",
+    "soreness": "Recuperación",
     "workout_effort": "Esfuerzo del entrenamiento",
     "libido": "Libido",
     "skin_notes": "Notas sobre la piel",
@@ -111,12 +111,13 @@
     "donePhotoCta": "Hacer la foto de progreso de hoy",
     "nutrition": "Nutrición",
     "autofillProtein": "Usar proteína sincronizada: {{value}} g",
-    "autofillCalories": "Usar calorías sincronizadas: {{value}} kcal"
+    "autofillCalories": "Usar calorías sincronizadas: {{value}} kcal",
+    "saveLog": "Guardar registro"
   },
   "quicklog": {
     "title": "Registro rápido",
     "label": "En tus palabras",
-    "placeholder": "p. ej. tomé 1mg de arimidex, dormí mal, amanecí en 82.3",
+    "placeholder": "Dormí 7h, energía 4, peso 83,2…",
     "send": "Registrar",
     "sending": "Leyendo…",
     "applied": "Añadido",
@@ -130,13 +131,14 @@
     "addedCount": "Añadido {{count}}",
     "macroSeed": "¿Cuánta proteína y calorías consumiste hoy?",
     "suggestionsLabel": "Añadir rápido",
-    "sugSleep": "dormí bien",
-    "sugEnergy": "energía 4",
-    "sugWeight": "peso",
-    "sugDose": "tomé mi dosis",
+    "sugSleep": "Dormí bien",
+    "sugEnergy": "Bajón de energía",
+    "sugWeight": "Registrar peso",
+    "sugDose": "Nota tras dosis",
     "parseApply": "Analizar + aplicar",
     "confirm": "Confirmar",
-    "reviewLabel": "Detectado"
+    "reviewLabel": "Detectado",
+    "sugSymptom": "Dolor de cabeza"
   },
   "photos": {
     "title": "Fotos de progreso",
@@ -172,7 +174,11 @@
     "baselineSet": "Foto base guardada. Primer check-in programado para el {{date}}.",
     "analysisLabel": "ANÁLISIS",
     "checkinLabel": "NOTA DE CHECK-IN",
-    "flipCamera": "Cambiar cámara"
+    "flipCamera": "Cambiar cámara",
+    "progressLabel": "Progreso",
+    "heading": "Fotos",
+    "dayShort": "D{{count}}",
+    "timelineLabel": "Cronología"
   },
   "markers": {
     "hematocrit": "Hematocrito",
@@ -583,7 +589,9 @@
     "dayBadge": "DÍA {{count}}",
     "dosesTitle": "Dosis de hoy",
     "dosePending": "Pendiente",
-    "doseDone": "Hecho"
+    "doseDone": "Hecho",
+    "distillation": "Resumen de hoy",
+    "compoundsLogged": "{{names}} registrado"
   },
   "addCompound": {
     "title": "Añadir compuesto",

@@ -46,7 +46,7 @@ export function LoggingScreen({
           {mode === 'quick' ? (
             <QuickLog seedPrompt={seedPrompt} onDismiss={onClose} />
           ) : (
-            <DetailedLog />
+            <DetailedLog onDismiss={onClose} />
           )}
         </ScrollView>
       </SafeAreaView>

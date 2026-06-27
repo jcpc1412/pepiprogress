@@ -79,7 +79,7 @@
     "wellness": "Humeur / bien-être",
     "appetite": "Appétit",
     "energy": "Énergie",
-    "soreness": "Courbatures",
+    "soreness": "Récupération",
     "workout_effort": "Intensité de l'entraînement",
     "libido": "Libido",
     "skin_notes": "Notes sur la peau",
@@ -111,12 +111,13 @@
     "donePhotoCta": "Prendre la photo de progrès du jour",
     "nutrition": "Nutrition",
     "autofillProtein": "Utiliser les protéines synchronisées : {{value}} g",
-    "autofillCalories": "Utiliser les calories synchronisées : {{value}} kcal"
+    "autofillCalories": "Utiliser les calories synchronisées : {{value}} kcal",
+    "saveLog": "Enregistrer"
   },
   "quicklog": {
     "title": "Journal rapide",
     "label": "Dans tes mots",
-    "placeholder": "ex. pris 1mg d'arimidex, mal dormi, réveillé à 82.3",
+    "placeholder": "Dormi 7h, énergie 4, poids 83,2…",
     "send": "Enregistrer",
     "sending": "Lecture…",
     "applied": "Ajouté",
@@ -130,13 +131,14 @@
     "addedCount": "Ajouté {{count}}",
     "macroSeed": "Combien de protéines et de calories avez-vous consommées aujourd'hui ?",
     "suggestionsLabel": "Ajout rapide",
-    "sugSleep": "bien dormi",
-    "sugEnergy": "énergie 4",
-    "sugWeight": "poids",
-    "sugDose": "pris ma dose",
+    "sugSleep": "Bien dormi",
+    "sugEnergy": "Baisse d'énergie",
+    "sugWeight": "Poids",
+    "sugDose": "Note post-dose",
     "parseApply": "Analyser + appliquer",
     "confirm": "Confirmer",
-    "reviewLabel": "Détecté"
+    "reviewLabel": "Détecté",
+    "sugSymptom": "Mal de tête"
   },
   "photos": {
     "title": "Photos de progression",
@@ -172,7 +174,11 @@
     "baselineSet": "Photo de référence enregistrée. Premier bilan prévu le {{date}}.",
     "analysisLabel": "ANALYSE",
     "checkinLabel": "NOTE DE BILAN",
-    "flipCamera": "Retourner la caméra"
+    "flipCamera": "Retourner la caméra",
+    "progressLabel": "Progression",
+    "heading": "Photos",
+    "dayShort": "J{{count}}",
+    "timelineLabel": "Chronologie"
   },
   "markers": {
     "hematocrit": "Hématocrite",
@@ -583,7 +589,9 @@
     "dayBadge": "JOUR {{count}}",
     "dosesTitle": "Doses du jour",
     "dosePending": "En attente",
-    "doseDone": "Fait"
+    "doseDone": "Fait",
+    "distillation": "Synthèse du jour",
+    "compoundsLogged": "{{names}} enregistré"
   },
   "addCompound": {
     "title": "Ajouter un composé",

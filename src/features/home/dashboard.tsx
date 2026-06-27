@@ -17,7 +17,7 @@ import { ChamferBox } from '@/components/chamfer';
 import { OptionChip, PrimaryButton } from '@/components/form';
 import { GearIcon } from '@/components/icons';
 import { LineChart, type ChartPoint } from '@/components/line-chart';
-import { Card, Divider, EngravedLabel, StatusPill } from '@/components/surface';
+import { Card, EngravedLabel, StatusPill } from '@/components/surface';
 import { SyncStatus } from '@/components/sync-status';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -28,12 +28,13 @@ import { useTheme } from '@/hooks/use-theme';
 import { useOverlay } from '@/lib/nav-overlay';
 import { localDateKey, useStore, type CheckinEntry, type PhotoEntry } from '@/lib/store';
 
-/** The 4 fixed dashboard chart metrics (handoff §2 — Weight / Energy / Sleep / Wellness). */
+/** The 4 fixed dashboard chart metrics (mockup — Weight / Energy / Sleep / Recovery).
+ *  "Recovery" reuses the soreness field (relabelled app-wide, redesign R2). */
 const CHECKIN_METRICS: { key: keyof CheckinEntry; labelKey: string; unitKey?: string }[] = [
   { key: 'weight', labelKey: 'fields.weight' },
   { key: 'energy', labelKey: 'fields.energy' },
   { key: 'sleep_quality', labelKey: 'fields.sleep_quality' },
-  { key: 'wellness', labelKey: 'fields.wellness' },
+  { key: 'soreness', labelKey: 'fields.soreness' },
 ];
 
 /** Today as a glanceable dashboard (H-01): swipeable photo/chart card + two log
@@ -75,8 +76,23 @@ export function Dashboard() {
   }
 
   const today = localDateKey();
-  const loggedToday = !!entries[today];
-  const dosesToday = doseEvents.filter((d) => localDateKey(new Date(d.takenAt)) === today).length;
+  const todayEntry = entries[today];
+  const loggedToday = !!todayEntry;
+  const dosesToday = doseEvents.filter((d) => localDateKey(new Date(d.takenAt)) === today);
+
+  // Data-rich distillation line: "BPC-157 logged · 83.4 kg · +42g" (mockup).
+  const distillation = useMemo(() => {
+    const names = Array.from(
+      new Set(dosesToday.map((d) => (d.compoundSlug ? compoundBySlug(d.compoundSlug)?.canonicalName : null)).filter(Boolean)),
+    ).slice(0, 2) as string[];
+    const unit = profile.units === 'imperial' ? t('units.lb') : t('units.kg');
+    const parts = [
+      names.length ? t('dashboard.compoundsLogged', { names: names.join(' + ') }) : null,
+      typeof todayEntry?.weight === 'number' ? `${todayEntry.weight} ${unit}` : null,
+      typeof todayEntry?.protein === 'number' ? `+${todayEntry.protein}${t('units.g')}` : null,
+    ].filter(Boolean);
+    return parts.join(' · ');
+  }, [dosesToday, todayEntry, profile.units, t]);
 
   const pageCount = photoPages.length + series.length || 1;
   const [page, setPage] = useState(0);
@@ -262,20 +278,17 @@ export function Dashboard() {
             ))}
           </View>
 
-          {/* Distillation summary */}
+          {/* Distillation summary — data-rich line + status pill (mockup) */}
           <Card style={styles.summary}>
             <View style={styles.summaryHead}>
-              <ThemedText type="small" themeColor="textSecondary">
-                {loggedToday ? t('dashboard.loggedToday') : t('dashboard.notLoggedToday')}
-              </ThemedText>
+              <EngravedLabel>{t('dashboard.distillation')}</EngravedLabel>
               <StatusPill
                 label={loggedToday ? t('dashboard.onTrack') : t('dashboard.pending')}
                 tone={loggedToday ? 'good' : 'neutral'}
               />
             </View>
-            <Divider />
             <ThemedText type="small" themeColor="textSecondary">
-              {t('dashboard.dosesToday', { count: dosesToday })}
+              {distillation || t('dashboard.notLoggedToday')}
             </ThemedText>
           </Card>
 

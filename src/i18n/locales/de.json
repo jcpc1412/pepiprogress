@@ -79,7 +79,7 @@
     "wellness": "Stimmung / Wohlbefinden",
     "appetite": "Appetit",
     "energy": "Energie",
-    "soreness": "Muskelkater",
+    "soreness": "Erholung",
     "workout_effort": "Trainingsintensität",
     "libido": "Libido",
     "skin_notes": "Hautnotizen",
@@ -111,12 +111,13 @@
     "donePhotoCta": "Heutiges Fortschrittsfoto aufnehmen",
     "nutrition": "Ernährung",
     "autofillProtein": "Synchronisiertes Protein verwenden: {{value}} g",
-    "autofillCalories": "Synchronisierte Kalorien verwenden: {{value}} kcal"
+    "autofillCalories": "Synchronisierte Kalorien verwenden: {{value}} kcal",
+    "saveLog": "Eintrag speichern"
   },
   "quicklog": {
     "title": "Schnell-Log",
     "label": "In deinen Worten",
-    "placeholder": "z. B. 1mg Arimidex genommen, schlecht geschlafen, mit 82.3 aufgewacht",
+    "placeholder": "7h geschlafen, Energie 4, Gewicht 83,2…",
     "send": "Erfassen",
     "sending": "Lese…",
     "applied": "Hinzugefügt",
@@ -130,13 +131,14 @@
     "addedCount": "{{count}} hinzugefügt",
     "macroSeed": "Wie viel Protein und Kalorien hattest du heute?",
     "suggestionsLabel": "Schnell hinzufügen",
-    "sugSleep": "gut geschlafen",
-    "sugEnergy": "Energie 4",
+    "sugSleep": "Gut geschlafen",
+    "sugEnergy": "Energietief",
     "sugWeight": "Gewicht",
-    "sugDose": "Dosis genommen",
+    "sugDose": "Notiz nach Dosis",
     "parseApply": "Analysieren + anwenden",
     "confirm": "Bestätigen",
-    "reviewLabel": "Erkannt"
+    "reviewLabel": "Erkannt",
+    "sugSymptom": "Kopfschmerzen"
   },
   "photos": {
     "title": "Fortschrittsfotos",
@@ -172,7 +174,11 @@
     "baselineSet": "Basisfoto gespeichert. Erstes Check-in geplant für {{date}}.",
     "analysisLabel": "ANALYSE",
     "checkinLabel": "CHECK-IN-NOTIZ",
-    "flipCamera": "Kamera wechseln"
+    "flipCamera": "Kamera wechseln",
+    "progressLabel": "Fortschritt",
+    "heading": "Fotos",
+    "dayShort": "T{{count}}",
+    "timelineLabel": "Zeitverlauf"
   },
   "markers": {
     "hematocrit": "Hämatokrit",
@@ -583,7 +589,9 @@
     "dayBadge": "TAG {{count}}",
     "dosesTitle": "Heutige Dosen",
     "dosePending": "Ausstehend",
-    "doseDone": "Erledigt"
+    "doseDone": "Erledigt",
+    "distillation": "Tageszusammenfassung",
+    "compoundsLogged": "{{names}} erfasst"
   },
   "addCompound": {
     "title": "Wirkstoff hinzufügen",
