@@ -27,11 +27,9 @@ import { useTheme } from '@/hooks/use-theme';
 import { useOverlay } from '@/lib/nav-overlay';
 import { localDateKey, useStore, type CheckinEntry, type PhotoEntry } from '@/lib/store';
 
-/** Chartable series the dashboard can pull from check-in entries. */
+/** The 4 fixed dashboard chart metrics (handoff §2 — Weight / Energy / Sleep / Wellness). */
 const CHECKIN_METRICS: { key: keyof CheckinEntry; labelKey: string; unitKey?: string }[] = [
   { key: 'weight', labelKey: 'fields.weight' },
-  { key: 'protein', labelKey: 'fields.protein', unitKey: 'units.g' },
-  { key: 'calories', labelKey: 'fields.calories', unitKey: 'units.kcal' },
   { key: 'energy', labelKey: 'fields.energy' },
   { key: 'sleep_quality', labelKey: 'fields.sleep_quality' },
   { key: 'wellness', labelKey: 'fields.wellness' },
@@ -54,12 +52,14 @@ export function Dashboard() {
 
   const series = useMemo(() => {
     const dates = Object.keys(entries).sort();
-    return CHECKIN_METRICS.filter((m) => selected.includes(m.key as string)).map((m) => {
-      const points: ChartPoint[] = dates
-        .map((d) => ({ label: d.slice(5), value: entries[d]?.[m.key] }))
-        .filter((p): p is ChartPoint => typeof p.value === 'number');
-      return { ...m, points };
-    });
+    return CHECKIN_METRICS.filter((m) => selected.includes(m.key as string))
+      .map((m) => {
+        const points: ChartPoint[] = dates
+          .map((d) => ({ label: d.slice(5), value: entries[d]?.[m.key] }))
+          .filter((p): p is ChartPoint => typeof p.value === 'number');
+        return { ...m, points };
+      })
+      .filter((s) => s.points.length >= 2); // need ≥2 points to draw a line
   }, [entries, selected]);
 
   const latestPhotos = (session: 'face' | 'body') =>
@@ -184,9 +184,9 @@ export function Dashboard() {
                 </View>
               ))}
 
-              {photoPages.length === 0 && series.every((s) => s.points.length < 2) && (
+              {photoPages.length === 0 && series.length === 0 && (
                 <View style={[styles.page, { width }]}>
-                  <Card style={styles.cardFill}>
+                  <Card style={styles.cardEmpty}>
                     <ThemedText type="small" themeColor="textSecondary">
                       {t('dashboard.empty')}
                     </ThemedText>
@@ -314,7 +314,8 @@ const styles = StyleSheet.create({
   scroll: { gap: Spacing.four, paddingTop: Spacing.three, paddingBottom: Spacing.six },
   carouselWrapper: { position: 'relative' },
   page: {},
-  cardFill: { gap: Spacing.two, minHeight: 200 },
+  cardFill: { gap: Spacing.two },
+  cardEmpty: { padding: Spacing.four, alignItems: 'center', justifyContent: 'center', minHeight: 120 },
   compareRow: { flexDirection: 'row', gap: Spacing.two },
   compareCol: { flex: 1, gap: Spacing.one, alignItems: 'center' },
   photo: { width: '100%', aspectRatio: 3 / 4, borderRadius: 2 },
