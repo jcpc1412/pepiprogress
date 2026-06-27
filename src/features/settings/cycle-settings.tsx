@@ -2,16 +2,14 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { LabeledInput, SingleSelectChips } from '@/components/form';
+import { LabeledInput } from '@/components/form';
 import { Card, Divider, EngravedLabel } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useStore } from '@/lib/store';
 
-const BODY_TYPES = ['slim', 'average', 'athletic', 'heavyset'] as const;
-type BodyType = (typeof BODY_TYPES)[number];
-
-/** Body composition + menstrual cycle calibration — both stored in LocalProfile. */
+/** Menstrual cycle calibration (stored in LocalProfile). Body composition lives
+ *  on the Me page now (R3-B); this is cycle-only. */
 export function CycleSettings() {
   const { t } = useTranslation();
   const { profile, setProfile } = useStore();
@@ -35,18 +33,6 @@ export function CycleSettings() {
 
   return (
     <Card>
-      <EngravedLabel>{t('bodyType.section')}</EngravedLabel>
-      <Divider />
-      <ThemedText type="small" themeColor="textSecondary">
-        {t('bodyType.description')}
-      </ThemedText>
-      <SingleSelectChips
-        options={BODY_TYPES.map((v) => ({ value: v, label: t(`bodyType.${v}`) }))}
-        value={(profile?.bodyType as BodyType | undefined) ?? undefined}
-        onChange={(v) => setProfile({ bodyType: v })}
-      />
-
-      <Divider />
       <EngravedLabel>{t('cycle.section')}</EngravedLabel>
       <Divider />
       <ThemedText type="small" themeColor="textSecondary">

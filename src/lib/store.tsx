@@ -157,6 +157,17 @@ export type LocalProfile = {
   themePreference?: ThemePreference;
   /** Birth/transition sex — drives cycle relevance + AI change context (O-02). */
   sex?: Sex;
+  // ── "Me" profile (R3-B) — identity + body baselines shown on the Me page. ──
+  /** Display name (optional; used in reports + greetings). */
+  displayName?: string;
+  /** Persisted language override; applied on store-ready. Undefined = follow device. */
+  language?: string;
+  /** Height in the user's unit system (cm or in). */
+  height?: number;
+  /** Baseline weight in the user's unit (kg or lb); prefilled from latest check-in. */
+  weightBaseline?: number;
+  /** Body-fat percentage (optional baseline). */
+  bodyFatPct?: number;
   /** Metric keys the user pinned to the Today dashboard charts (H-01). */
   dashboardMetrics?: string[];
   /** Dismissed the "add your first compound" soft prompt (O-04). */

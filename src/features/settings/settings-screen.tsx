@@ -1,24 +1,29 @@
 import Constants from 'expo-constants';
+import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { OverlayHeader } from '@/components/overlay-header';
+import { SettingsRow } from '@/components/settings-page';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { AccountSection } from '@/features/auth/account-section';
 import { AppearanceSettings } from '@/features/settings/appearance-settings';
-import { CycleSettings } from '@/features/settings/cycle-settings';
 import { IntegrationSettings } from '@/features/settings/integration-settings';
-import { NotificationSettings } from '@/features/settings/notification-settings';
-import { PrivacySettings } from '@/features/settings/privacy-settings';
+import { useStore } from '@/lib/store';
 
 const appVersion = Constants.expoConfig?.version ?? '1.0.0';
 
-/** App-wide settings, shown as a full-screen overlay from a gear icon (P-01). */
+/** App-wide settings (P-01). A navigation hub: identity/body and the data-heavy
+ *  sections live on nested pages (R3-B); compact controls stay inline. */
 export function SettingsScreen({ onClose }: { onClose: () => void }) {
   const { t } = useTranslation();
+  const router = useRouter();
+  const { profile } = useStore();
+
+  const meSub = profile.displayName?.trim() || undefined;
 
   return (
     <ThemedView style={styles.container}>
@@ -26,11 +31,18 @@ export function SettingsScreen({ onClose }: { onClose: () => void }) {
         <OverlayHeader title={t('settings.title')} onClose={onClose} />
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           <AccountSection />
+
+          {/* Nested navigation rows (R3-B). */}
+          <View style={styles.rows}>
+            <SettingsRow label={t('me.title')} sublabel={meSub} onPress={() => router.push('/me')} />
+            <SettingsRow label={t('notify.section')} onPress={() => router.push('/notifications-settings')} />
+            <SettingsRow label={t('privacy.pageTitle')} onPress={() => router.push('/privacy')} />
+          </View>
+
+          {/* Compact, inline controls. */}
           <AppearanceSettings />
-          <NotificationSettings />
           <IntegrationSettings />
-          <CycleSettings />
-          <PrivacySettings />
+
           <View style={styles.footer}>
             <ThemedText type="monoSm" themeColor="textMuted">
               {`${t('settings.footer')} · v${appVersion}`}
@@ -54,5 +66,6 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   scroll: { gap: Spacing.four, paddingTop: Spacing.three, paddingBottom: Spacing.six },
+  rows: { gap: Spacing.two },
   footer: { alignItems: 'center', paddingVertical: Spacing.three },
 });

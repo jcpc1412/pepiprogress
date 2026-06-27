@@ -144,8 +144,6 @@ export function PrivacySettings() {
 
   return (
     <View style={styles.wrap}>
-      <EngravedLabel>{t('privacy.title')}</EngravedLabel>
-
       {/* Account / cloud sync is promoted to its own Settings row (P-01). */}
 
       {/* Consent status */}

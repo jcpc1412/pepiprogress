@@ -129,7 +129,7 @@ the screen.
 
 1. **A — Foundations** (native-stack nav, safe-area headers, scrollbars, button
    feedback, cog, hide Terra). ✅
-2. **B — Settings restructure** (Me, Privacy & data, Notifications nested pages).
+2. **B — Settings restructure** (Me, Privacy & data, Notifications nested pages). ✅
 3. **C — Today** (charts default + pencil modal, single Log button, reorder).
 4. **D — Photos** (recent strip, floating capture, Photo History + cycle tagging,
    clothing text).

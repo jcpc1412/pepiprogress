@@ -372,7 +372,8 @@
     "deleteTitle": "Alle Daten löschen",
     "deleteConfirm": "Alles löschen",
     "notMedicalAdvice": "PepiProgress ist kein Medizinprodukt und gibt keine medizinischen Ratschläge. Konsultiere immer einen qualifizierten Gesundheitsexperten.",
-    "delete": "Alle meine Daten löschen"
+    "delete": "Alle meine Daten löschen",
+    "pageTitle": "Datenschutz & Daten"
   },
   "report": {
     "title": "PepiProgress-Bericht",
@@ -634,5 +635,17 @@
     "removeFromProtocol": "Aus Protokoll entfernen",
     "noDoses": "Noch keine Dosen erfasst.",
     "noVials": "Keine Fläschchen erfasst."
+  },
+  "me": {
+    "title": "Ich",
+    "identitySection": "IDENTITÄT",
+    "name": "Name",
+    "namePlaceholder": "Dein Name",
+    "language": "Sprache",
+    "sex": "Geschlecht",
+    "bodySection": "KÖRPER",
+    "height": "Größe",
+    "weight": "Gewicht",
+    "bodyFat": "Körperfett"
   }
 }

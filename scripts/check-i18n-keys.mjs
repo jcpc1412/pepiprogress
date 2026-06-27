@@ -46,7 +46,7 @@ const IDENTICAL_OK = new Set([
   'fields.libido', 'fields.note', 'fields.protein', 'goalCat.body_comp', 'insights.trends', 'insights.trendsLabel',
   'integrations.appleHealth', 'integrations.healthConnect', 'integrations.terra', 'inventory.kind',
   'inventory.label', 'inventory.ok', 'inventoryKinds.vial', 'lab.range', 'lab.vialResult',
-  'markers.estradiol', 'markers.glucose', 'measurements.unitCm', 'measurements.unitIn',
+  'markers.estradiol', 'markers.glucose', 'me.name', 'measurements.unitCm', 'measurements.unitIn',
   'photos.comparable', 'photos.dayShort', 'photos.heading', 'protocol.dose', 'protocol.nominal',
   'protocol.vialCount_one', 'report.date',
   'routes.im', 'routes.nasal', 'routes.oral',
