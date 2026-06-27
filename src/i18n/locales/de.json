@@ -525,7 +525,16 @@
     "error": "Analyse momentan nicht möglich. Versuche es erneut.",
     "insufficient": "Noch nicht genug Daten für ein Muster. Logge weiter.",
     "disclaimer": "Beobachtende Analyse deiner eigenen Daten, keine medizinische Beratung.",
-    "heading": "Deine Daten"
+    "heading": "Deine Daten",
+    "sinceStarted": "Seit {{compound}}",
+    "weeks": "{{count}} Wo",
+    "biggestChange": "Größte Veränderung",
+    "daysLogged": "Erfasste Tage",
+    "trendsLabel": "Trends",
+    "noTrends": "Logge weiter, um Trends zu sehen.",
+    "unlockTitle": "KI-Einblicke freischalten",
+    "unlockBody": "Einblicke finden Muster in deinen Einträgen: Trends, Zusammenhänge und Antworten zu deinen Daten.",
+    "unlockProgress": "Erfasse {{count}} weitere Check-ins zum Freischalten"
   },
   "sync": {
     "syncing": "Synchronisiert…",

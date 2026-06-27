@@ -525,7 +525,16 @@
     "error": "Não foi possível analisar agora. Tente novamente.",
     "insufficient": "Ainda não há dados suficientes para um padrão. Continue registrando.",
     "disclaimer": "Análise observacional dos seus próprios dados, não é orientação médica.",
-    "heading": "Seus dados"
+    "heading": "Seus dados",
+    "sinceStarted": "Desde {{compound}}",
+    "weeks": "{{count}} sem",
+    "biggestChange": "Maior mudança",
+    "daysLogged": "Dias registrados",
+    "trendsLabel": "Tendências",
+    "noTrends": "Continue registrando para ver tendências.",
+    "unlockTitle": "Desbloqueie a análise com IA",
+    "unlockBody": "A análise encontra padrões nos seus registros: tendências, correlações e respostas sobre seus dados.",
+    "unlockProgress": "Registre mais {{count}} dias para desbloquear"
   },
   "sync": {
     "syncing": "Sincronizando…",

@@ -525,7 +525,16 @@
     "error": "No se pudo analizar ahora. Inténtalo de nuevo.",
     "insufficient": "Aún no hay suficientes datos para encontrar un patrón. Sigue registrando.",
     "disclaimer": "Análisis observacional de tus propios datos, no es consejo médico.",
-    "heading": "Tus datos"
+    "heading": "Tus datos",
+    "sinceStarted": "Desde {{compound}}",
+    "weeks": "{{count}} sem",
+    "biggestChange": "Mayor cambio",
+    "daysLogged": "Días registrados",
+    "trendsLabel": "Tendencias",
+    "noTrends": "Sigue registrando para ver tendencias.",
+    "unlockTitle": "Desbloquea el análisis con IA",
+    "unlockBody": "El análisis encuentra patrones en tus registros: tendencias, correlaciones y respuestas sobre tus propios datos.",
+    "unlockProgress": "Registra {{count}} días más para desbloquear"
   },
   "sync": {
     "syncing": "Sincronizando…",

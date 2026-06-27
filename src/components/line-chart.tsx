@@ -1,21 +1,25 @@
 import { StyleSheet, View } from 'react-native';
-import Svg, { Circle, Polyline } from 'react-native-svg';
+import Svg, { Circle, Line, Polyline } from 'react-native-svg';
 
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 export type ChartPoint = { label: string; value: number };
+/** A vertical reference line (e.g. a dose/protocol start) at a 0–1 x-fraction. */
+export type ChartMarker = { fraction: number };
 
 /** Minimal line chart on react-native-svg, themed to the instrument aesthetic (H-01). */
 export function LineChart({
   data,
   height = 160,
   unit,
+  markers,
 }: {
   data: ChartPoint[];
   height?: number;
   unit?: string;
+  markers?: ChartMarker[];
 }) {
   const theme = useTheme();
   const width = 320;
@@ -57,6 +61,22 @@ export function LineChart({
         </ThemedText>
       </View>
       <Svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`}>
+        {/* Dose/protocol-start markers — faint vertical reference lines. */}
+        {markers?.map((m, i) => {
+          const x = padX + Math.max(0, Math.min(1, m.fraction)) * (width - padX * 2);
+          return (
+            <Line
+              key={`m${i}`}
+              x1={x}
+              y1={padY}
+              x2={x}
+              y2={height - padY}
+              stroke={theme.border}
+              strokeWidth={1}
+              strokeDasharray="3 3"
+            />
+          );
+        })}
         <Polyline
           points={points}
           fill="none"

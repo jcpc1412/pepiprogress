@@ -525,7 +525,16 @@
     "error": "Analyse impossible pour le moment. Réessayez.",
     "insufficient": "Pas encore assez de données pour dégager une tendance. Continuez à enregistrer.",
     "disclaimer": "Analyse observationnelle de vos propres données, pas un avis médical.",
-    "heading": "Vos données"
+    "heading": "Vos données",
+    "sinceStarted": "Depuis {{compound}}",
+    "weeks": "{{count}} sem",
+    "biggestChange": "Plus grand changement",
+    "daysLogged": "Jours enregistrés",
+    "trendsLabel": "Tendances",
+    "noTrends": "Continuez à enregistrer pour voir les tendances.",
+    "unlockTitle": "Débloquez l'analyse IA",
+    "unlockBody": "L'analyse trouve des tendances dans vos enregistrements : évolutions, corrélations et réponses sur vos données.",
+    "unlockProgress": "Enregistrez {{count}} jours de plus pour débloquer"
   },
   "sync": {
     "syncing": "Synchronisation…",

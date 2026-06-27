@@ -525,7 +525,16 @@
     "error": "Couldn't analyze right now. Try again.",
     "insufficient": "Not enough logged data yet to find a pattern. Keep logging.",
     "disclaimer": "Observational analysis of your own data, not medical advice.",
-    "heading": "Your data"
+    "heading": "Your data",
+    "sinceStarted": "Since {{compound}}",
+    "weeks": "{{count}} wk",
+    "biggestChange": "Biggest change",
+    "daysLogged": "Days logged",
+    "trendsLabel": "Trends",
+    "noTrends": "Keep logging to see trends.",
+    "unlockTitle": "Unlock AI insights",
+    "unlockBody": "Insights find patterns across your logs: trends, correlations, and answers about your own data.",
+    "unlockProgress": "Log {{count}} more check-ins to unlock"
   },
   "sync": {
     "syncing": "Syncing…",
