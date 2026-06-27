@@ -285,7 +285,8 @@
     "confirm": "Confirmar",
     "errorInvalid": "Por favor, insira uma data válida.",
     "errorAge": "Você deve ter 18 anos ou mais para usar este aplicativo.",
-    "whyWeAsk": "Exigimos verificação de idade para cumprir os requisitos legais e da loja de aplicativos. Sua data de nascimento é armazenada apenas no seu dispositivo."
+    "whyWeAsk": "Exigimos verificação de idade para cumprir os requisitos legais e da loja de aplicativos. Sua data de nascimento é armazenada apenas no seu dispositivo.",
+    "ageOk": "IDADE {{age}} · OK"
   },
   "consent": {
     "storage": {

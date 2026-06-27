@@ -285,7 +285,8 @@
     "confirm": "Confirmer",
     "errorInvalid": "Veuillez entrer une date valide.",
     "errorAge": "Vous devez avoir 18 ans ou plus pour utiliser cette application.",
-    "whyWeAsk": "Nous demandons votre âge pour respecter les exigences légales et des magasins d'applications. Votre date de naissance est stockée uniquement sur votre appareil."
+    "whyWeAsk": "Nous demandons votre âge pour respecter les exigences légales et des magasins d'applications. Votre date de naissance est stockée uniquement sur votre appareil.",
+    "ageOk": "AGE {{age}} · OK"
   },
   "consent": {
     "storage": {

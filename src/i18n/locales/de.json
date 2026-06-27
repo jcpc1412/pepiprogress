@@ -285,7 +285,8 @@
     "confirm": "Bestätigen",
     "errorInvalid": "Bitte gib ein gültiges Datum ein.",
     "errorAge": "Du musst 18 Jahre oder älter sein, um diese App zu nutzen.",
-    "whyWeAsk": "Wir verlangen eine Altersverifikation, um gesetzliche Anforderungen zu erfüllen. Dein Geburtsdatum wird nur auf deinem Gerät gespeichert."
+    "whyWeAsk": "Wir verlangen eine Altersverifikation, um gesetzliche Anforderungen zu erfüllen. Dein Geburtsdatum wird nur auf deinem Gerät gespeichert.",
+    "ageOk": "ALTER {{age}} · OK"
   },
   "consent": {
     "storage": {

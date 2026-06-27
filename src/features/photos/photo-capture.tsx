@@ -9,7 +9,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LabeledInput, PrimaryButton, SingleSelectChips } from '@/components/form';
 import { FlipCameraIcon } from '@/components/icons';
 import { ThemedText } from '@/components/themed-text';
-import { Radii, Spacing } from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
 import { copyPhotoToDocuments } from '@/lib/photos';
 import { useStore, type PhotoSession } from '@/lib/store';
 

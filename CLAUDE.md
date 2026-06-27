@@ -97,6 +97,7 @@ When adding a new i18n key, add it to **all 6 locale files** (`en`, `es`, `fr`, 
 ## Working style (important)
 - **Do not leave "Open questions" parking lots in plans/specs.** Drive every decision to a resolution — either ask, or state a sensible default as a decision. (Standing preference.)
 - Decisions are *locked* in the spec; don't silently relitigate them. If something needs changing, flag it and update the spec to match.
+- **Trunk-based development — commit directly to `main`, no feature branches.** As soon as a chunk of work is complete and passing the green gate (typecheck / lint / i18n / web export), commit + push to `main` immediately. Never leave work on a branch waiting for the owner to merge a PR. Before the owner runs an EAS build, verify `git status` is clean and `git log origin/main` shows the latest commits.
 
 ## Build plan entry point
 Continue M0 (i18n + lint/CI guardrails, Supabase local, design tokens), then **M1** (data model + auth + local-first) using the migrations from area 08. De-risk the local-first migration, on-device face/body detection, voice dictation, and cheap-model parse accuracy with spikes before building around them.

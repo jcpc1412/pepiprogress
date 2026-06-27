@@ -5,7 +5,7 @@ import { StyleSheet, TextInput, View } from 'react-native';
 import { OptionChip, PrimaryButton } from '@/components/form';
 import { EngravedLabel } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
-import { Radii, Spacing } from '@/constants/theme';
+import { Fonts, Radii, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { localDateKey, useStore, type Sex, type UnitsSystem } from '@/lib/store';
 import { Constants } from '@/types/database';
@@ -46,30 +46,26 @@ export function AgeGate({ onVerified }: { onVerified: (dobISO: string) => void }
   const monthRef = useRef<TextInput>(null);
   const yearRef = useRef<TextInput>(null);
 
-  const inputStyle = [
-    styles.input,
-    { borderColor: theme.border, backgroundColor: theme.surfaceSunken, color: theme.numeral },
-  ];
+  const d = parseInt(day, 10);
+  const m = parseInt(month, 10);
+  const y = parseInt(year, 10);
+  const dateComplete = day.length >= 1 && month.length >= 1 && year.length === 4;
+  const dateValid = dateComplete && isValidDate(d, m, y);
+  const is18 = dateValid && isAtLeast18(d, m, y);
+  const computedAge = dateValid ? new Date().getFullYear() - y : 0;
 
   const cycleOn = !!profile.lastPeriodDate;
   const showCycle = !!profile.sex && CYCLE_SEXES.includes(profile.sex);
-  const canSubmit = day.length >= 1 && month.length >= 1 && year.length === 4 && !!profile.sex;
+  const canSubmit = dateComplete && !!profile.sex;
 
   const submit = () => {
-    const d = parseInt(day, 10);
-    const m = parseInt(month, 10);
-    const y = parseInt(year, 10);
-    if (!isValidDate(d, m, y)) {
-      setError(t('ageGate.errorInvalid'));
-      return;
-    }
-    if (!isAtLeast18(d, m, y)) {
-      setError(t('ageGate.errorAge'));
-      return;
-    }
+    if (!isValidDate(d, m, y)) { setError(t('ageGate.errorInvalid')); return; }
+    if (!isAtLeast18(d, m, y)) { setError(t('ageGate.errorAge')); return; }
     setError(null);
     onVerified(new Date(y, m - 1, d).toISOString());
   };
+
+  const inputColor = (val: string) => ({ color: val ? theme.numeral : theme.textMuted });
 
   return (
     <View style={styles.wrap}>
@@ -79,53 +75,50 @@ export function AgeGate({ onVerified }: { onVerified: (dobISO: string) => void }
         {t('ageGate.subtitle')}
       </ThemedText>
 
-      <View style={styles.row}>
-        <View style={styles.fieldDay}>
-          <EngravedLabel>{t('ageGate.day')}</EngravedLabel>
+      {/* Unified DOB pill — DD · MM · YYYY with AGE NN · OK readout */}
+      <View style={styles.dobWrap}>
+        <EngravedLabel>{t('ageGate.title')}</EngravedLabel>
+        <View style={[styles.dobPill, { backgroundColor: theme.surfaceSunken, borderColor: theme.border }]}>
           <TextInput
-            style={inputStyle}
+            style={[styles.dobDigits, inputColor(day)]}
             value={day}
-            onChangeText={(v) => {
-              setDay(v);
-              if (v.length === 2) monthRef.current?.focus();
-            }}
-            placeholder={t('ageGate.dayPlaceholder')}
+            onChangeText={(v) => { setDay(v); if (v.length === 2) monthRef.current?.focus(); }}
+            placeholder="DD"
             placeholderTextColor={theme.textMuted}
             keyboardType="number-pad"
             maxLength={2}
             returnKeyType="next"
           />
-        </View>
-        <View style={styles.fieldMonth}>
-          <EngravedLabel>{t('ageGate.month')}</EngravedLabel>
+          <ThemedText type="mono" themeColor="textMuted" style={styles.sep}> · </ThemedText>
           <TextInput
             ref={monthRef}
-            style={inputStyle}
+            style={[styles.dobDigits, inputColor(month)]}
             value={month}
-            onChangeText={(v) => {
-              setMonth(v);
-              if (v.length === 2) yearRef.current?.focus();
-            }}
-            placeholder={t('ageGate.monthPlaceholder')}
+            onChangeText={(v) => { setMonth(v); if (v.length === 2) yearRef.current?.focus(); }}
+            placeholder="MM"
             placeholderTextColor={theme.textMuted}
             keyboardType="number-pad"
             maxLength={2}
             returnKeyType="next"
           />
-        </View>
-        <View style={styles.fieldYear}>
-          <EngravedLabel>{t('ageGate.year')}</EngravedLabel>
+          <ThemedText type="mono" themeColor="textMuted" style={styles.sep}> · </ThemedText>
           <TextInput
             ref={yearRef}
-            style={inputStyle}
+            style={[styles.dobDigits, styles.dobYear, inputColor(year)]}
             value={year}
             onChangeText={setYear}
-            placeholder={t('ageGate.yearPlaceholder')}
+            placeholder="YYYY"
             placeholderTextColor={theme.textMuted}
             keyboardType="number-pad"
             maxLength={4}
             returnKeyType="done"
           />
+          <View style={styles.dobSpacer} />
+          {is18 && (
+            <ThemedText type="monoSm" themeColor="signalGood">
+              {t('ageGate.ageOk', { age: computedAge })}
+            </ThemedText>
+          )}
         </View>
       </View>
 
@@ -192,18 +185,26 @@ export function AgeGate({ onVerified }: { onVerified: (dobISO: string) => void }
 
 const styles = StyleSheet.create({
   wrap: { gap: Spacing.three },
-  row: { flexDirection: 'row', gap: Spacing.two },
-  fieldDay: { flex: 1 },
-  fieldMonth: { flex: 1 },
-  fieldYear: { flex: 2 },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
-  input: {
-    height: 48,
-    borderWidth: StyleSheet.hairlineWidth,
+  dobWrap: { gap: Spacing.one },
+  dobPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
     borderRadius: Radii.chamfer,
+    borderWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: Spacing.three,
+    height: 52,
+  },
+  dobDigits: {
+    fontFamily: Fonts.mono,
     fontSize: 18,
     fontVariant: ['tabular-nums'],
+    minWidth: 28,
+    textAlign: 'center',
+    padding: 0,
   },
+  dobYear: { minWidth: 48 },
+  sep: { paddingHorizontal: 2 },
+  dobSpacer: { flex: 1 },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
   disclaimer: { lineHeight: 18 },
 });

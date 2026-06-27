@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Svg, { Line } from 'react-native-svg';
 
 import { ChamferBox } from '@/components/chamfer';
 import { PrimaryButton } from '@/components/form';
@@ -170,10 +171,35 @@ function GoalChip({ goal, selected, onPress }: { goal: Goal; selected: boolean; 
   );
 }
 
+/** Faint 45° hatching lines in the top-right corner — instrument panel etch. */
+function DiagonalEtch() {
+  const theme = useTheme();
+  const size = 88;
+  const gap = 10;
+  return (
+    <View style={styles.etchWrap} pointerEvents="none">
+      <Svg width={size} height={size}>
+        {Array.from({ length: 9 }, (_, i) => (
+          <Line
+            key={i}
+            x1={size - (i + 1) * gap}
+            y1={0}
+            x2={size}
+            y2={(i + 1) * gap}
+            stroke={theme.border}
+            strokeWidth={0.8}
+          />
+        ))}
+      </Svg>
+    </View>
+  );
+}
+
 /** Shared fullscreen frame with the step progress bar + NN/04 counter. */
 function Frame({ step, children }: { step: number; children: React.ReactNode }) {
   return (
     <ThemedView style={styles.container}>
+      <DiagonalEtch />
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
         <View style={styles.progressHead}>
           <View style={styles.progressFill}>
@@ -215,4 +241,5 @@ const styles = StyleSheet.create({
   footer: { flexDirection: 'row', gap: Spacing.two, paddingBottom: Spacing.two },
   backButton: { flex: 1 },
   nextButton: { flex: 2 },
+  etchWrap: { position: 'absolute', top: 0, right: 0 },
 });

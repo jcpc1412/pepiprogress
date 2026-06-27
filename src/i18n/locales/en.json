@@ -285,7 +285,8 @@
     "confirm": "Confirm",
     "errorInvalid": "Please enter a valid date.",
     "errorAge": "You must be 18 or older to use this app.",
-    "whyWeAsk": "We require age verification to comply with app store and legal requirements. Your date of birth is stored only on your device."
+    "whyWeAsk": "We require age verification to comply with app store and legal requirements. Your date of birth is stored only on your device.",
+    "ageOk": "AGE {{age}} · OK"
   },
   "consent": {
     "storage": {
