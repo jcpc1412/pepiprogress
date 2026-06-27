@@ -8,6 +8,7 @@
 
 import { createContext, useContext, useMemo, useState, type ReactNode } from 'react';
 import { Modal } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AddCompoundScreen } from '@/features/protocol/add-compound-screen';
 import { CompoundDetailScreen } from '@/features/protocol/compound-detail-screen';
@@ -64,7 +65,13 @@ export function OverlayProvider({ children }: { children: ReactNode }) {
         animationType="slide"
         presentationStyle="fullScreen"
         onRequestClose={() => setState(null)}>
-        <OverlayContent state={state} onClose={() => setState(null)} />
+        {/* A Modal renders in its own native view tree outside the root
+            SafeAreaProvider, so SafeAreaView/insets read 0 inside it and the
+            header slides under the status bar (the "can't go back" bug). Give
+            the modal its own provider so insets resolve. */}
+        <SafeAreaProvider>
+          <OverlayContent state={state} onClose={() => setState(null)} />
+        </SafeAreaProvider>
       </Modal>
     </OverlayContext.Provider>
   );
