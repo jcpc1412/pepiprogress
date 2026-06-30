@@ -613,3 +613,20 @@ export function compoundBySlug(slug: string): CatalogCompound | undefined {
 export function allCompounds(): CatalogCompound[] {
   return customRegistry.length ? [...COMPOUND_CATALOG, ...customRegistry] : [...COMPOUND_CATALOG];
 }
+
+/** Best-effort name match (vial scan, AI parse) — exact name/alias, then substring. */
+export function findCompoundByName(name: string): CatalogCompound | undefined {
+  const q = name.toLowerCase().trim();
+  if (!q) return undefined;
+  const pool = allCompounds();
+  const exact = pool.find(
+    (c) => c.canonicalName.toLowerCase() === q || c.aliases?.some((a) => a.toLowerCase() === q),
+  );
+  if (exact) return exact;
+  return pool.find(
+    (c) =>
+      c.canonicalName.toLowerCase().includes(q) ||
+      q.includes(c.canonicalName.toLowerCase()) ||
+      c.aliases?.some((a) => a.toLowerCase().includes(q) || q.includes(a.toLowerCase())),
+  );
+}

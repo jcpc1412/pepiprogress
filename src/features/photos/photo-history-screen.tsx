@@ -21,6 +21,7 @@ import { Fonts, MaxContentWidth, Radii, Spacing } from '@/constants/theme';
 import { compoundBySlug } from '@/data/compound-catalog';
 import { daysBetween } from '@/lib/dates';
 import { useTheme } from '@/hooks/use-theme';
+import { useResolvedUris } from '@/lib/photos';
 import { localDateKey, useStore, type DoseEvent, type PhotoEntry, type PhotoSession, type ProtocolItem } from '@/lib/store';
 
 // ─── Auto-tag derivation ─────────────────────────────────────────────────────
@@ -308,6 +309,8 @@ export function PhotoHistoryScreen({ onClose }: { onClose: () => void }) {
     [photos, doseEvents, protocolItems],
   );
 
+  const resolvedUris = useResolvedUris(photos);
+
   const filtered = useMemo(() => {
     return photosWithTags.filter(({ photo }) => {
       if (filterSession !== 'all' && photo.session !== filterSession) return false;
@@ -383,7 +386,7 @@ export function PhotoHistoryScreen({ onClose }: { onClose: () => void }) {
                           accessibilityLabel={t('photos.editTags')}
                           onPress={() => setEditingPhoto({ photo, derived })}
                           style={[styles.thumb, { borderColor: theme.border }]}>
-                          <Image source={{ uri: photo.uri }} style={styles.thumbImg} contentFit="cover" />
+                          <Image source={{ uri: resolvedUris[photo.id] ?? photo.uri }} style={styles.thumbImg} contentFit="cover" />
                           <View style={[styles.sessionBadge, { backgroundColor: 'rgba(0,0,0,0.45)' }]}>
                             <ThemedText type="monoSm" style={styles.sessionText}>
                               {photo.session === 'face' ? t('photos.sessionFace') : t('photos.sessionBody')}

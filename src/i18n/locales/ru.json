@@ -160,7 +160,13 @@
     "parseApply": "Разобрать + применить",
     "confirm": "Подтвердить",
     "reviewLabel": "Обнаружено",
-    "sugSymptom": "Головная боль"
+    "sugSymptom": "Головная боль",
+    "unclearLabel": "НЕЯСНО",
+    "unclearCompound": "Соединение не найдено",
+    "compoundSearch": "Поиск соединения",
+    "unclearResolved": "Будет записано как {{name}}",
+    "skipItem": "Пропустить",
+    "unclearSkipped": "Пропущено"
   },
   "photos": {
     "title": "Фото прогресса",

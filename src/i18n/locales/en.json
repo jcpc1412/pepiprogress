@@ -160,7 +160,13 @@
     "parseApply": "Parse + apply",
     "confirm": "Confirm",
     "reviewLabel": "Detected",
-    "sugSymptom": "Headache"
+    "sugSymptom": "Headache",
+    "unclearLabel": "UNCLEAR",
+    "unclearCompound": "Compound not found",
+    "compoundSearch": "Search compound",
+    "unclearResolved": "Will log as {{name}}",
+    "skipItem": "Skip",
+    "unclearSkipped": "Skipped"
   },
   "photos": {
     "title": "Progress photos",

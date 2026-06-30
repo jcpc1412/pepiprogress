@@ -1,19 +1,20 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Animated, Pressable, StyleSheet, View } from 'react-native';
 
 import { LabeledInput, OptionChip, PrimaryButton, ScaleSelector, TextButton } from '@/components/form';
 import { SignalDotIcon } from '@/components/icons';
-import { EngravedLabel, Sunken } from '@/components/surface';
+import { Divider, EngravedLabel, Sunken } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
-import { compoundBySlug } from '@/data/compound-catalog';
+import { COMPOUND_CATALOG, compoundBySlug } from '@/data/compound-catalog';
 import { aiErrorKind, parseQuickLog, type ParsedItem } from '@/lib/ai';
 import { useTheme } from '@/hooks/use-theme';
 import { localDateKey, useStore, type CheckinEntry } from '@/lib/store';
 
 const AUTO_APPLY_CONFIDENCE = 0.7;
 const PARSE_ANIM_MS = 1700;
+const DISAMBIG_RESULTS = 4;
 
 /** A symptom parsed without a severity — completed conversationally (H-04). */
 type PendingSymptom = {
@@ -22,6 +23,15 @@ type PendingSymptom = {
   duration: string;
   note?: string;
   onsetISO?: string;
+};
+
+/** A dose whose compound the AI named but couldn't match in the catalog. */
+type UnmatchedDose = {
+  compoundName: string;
+  dose?: number;
+  unit?: string;
+  search: string;
+  pickedSlug?: string;
 };
 
 /** Enough to reverse a single applied item (the undo toast, spec 13). */
@@ -62,6 +72,8 @@ export function QuickLog({
   const [reply, setReply] = useState(seedPrompt === 'macros' ? t('quicklog.macroSeed') : '');
   const [items, setItems] = useState<ParsedItem[]>([]);
   const [pendingSymptoms, setPendingSymptoms] = useState<PendingSymptom[]>([]);
+  const [unmatchedDoses, setUnmatchedDoses] = useState<UnmatchedDose[]>([]);
+  const [unknownFragments, setUnknownFragments] = useState<string[]>([]);
   const [undoBatch, setUndoBatch] = useState<UndoEntry[]>([]);
   const [status, setStatus] = useState<'idle' | 'notConfigured' | 'network' | 'server' | 'empty'>(
     'idle',
@@ -129,6 +141,23 @@ export function QuickLog({
     setPhase('input');
   };
 
+  const setUnmatchedField = (idx: number, patch: Partial<UnmatchedDose>) =>
+    setUnmatchedDoses((prev) => prev.map((u, i) => (i === idx ? { ...u, ...patch } : u)));
+
+  const catalogSearch = useMemo(
+    () => (query: string) => {
+      const q = query.toLowerCase().trim();
+      if (!q) return COMPOUND_CATALOG.slice(0, DISAMBIG_RESULTS);
+      return COMPOUND_CATALOG.filter(
+        (c) =>
+          c.canonicalName.toLowerCase().includes(q) ||
+          c.slug.includes(q) ||
+          c.aliases?.some((a) => a.toLowerCase().includes(q)),
+      ).slice(0, DISAMBIG_RESULTS);
+    },
+    [],
+  );
+
   const setPendingField = (idx: number, patch: Partial<PendingSymptom>) =>
     setPendingSymptoms((prev) => prev.map((p, i) => (i === idx ? { ...p, ...patch } : p)));
 
@@ -155,11 +184,15 @@ export function QuickLog({
     setReply('');
     setItems([]);
     setPendingSymptoms([]);
+    setUnmatchedDoses([]);
+    setUnknownFragments([]);
     setUndoBatch([]);
     try {
       const result = await parseQuickLog(input, i18n.language);
       const parsed = result.items ?? [];
       const pending: PendingSymptom[] = [];
+      const unmatched: UnmatchedDose[] = [];
+      const unknown: string[] = [];
       parsed.forEach((item) => {
         if (item.kind === 'symptom' && item.symptomType && item.severity == null) {
           pending.push({
@@ -169,10 +202,23 @@ export function QuickLog({
             onsetISO: item.onsetISO,
           });
         }
+        if (item.kind === 'dose' && !item.compoundSlug && item.compoundName) {
+          unmatched.push({
+            compoundName: item.compoundName,
+            dose: item.dose,
+            unit: item.doseUnit,
+            search: item.compoundName,
+          });
+        }
+        if (item.kind === 'unknown' && item.note) {
+          unknown.push(item.note);
+        }
       });
       setReply(result.reply ?? '');
       setItems(parsed);
       setPendingSymptoms(pending);
+      setUnmatchedDoses(unmatched);
+      setUnknownFragments(unknown);
       setStatus(parsed.length === 0 ? 'empty' : 'idle');
       setPhase(parsed.length === 0 ? 'input' : 'reviewing');
     } catch (err) {
@@ -186,13 +232,22 @@ export function QuickLog({
     items.forEach((item) => {
       if (item.kind === 'unknown') return;
       if (item.kind === 'symptom' && item.severity == null) return;
+      if (item.kind === 'dose' && !item.compoundSlug) return; // handled via unmatchedDoses
       if ((item.confidence ?? 1) >= AUTO_APPLY_CONFIDENCE && isResolvable(item)) {
         const undo = applyItem(item);
         if (undo) undos.push(undo);
       }
     });
+    // Apply any unmatched doses the user resolved with a catalog pick
+    unmatchedDoses.forEach((u) => {
+      if (!u.pickedSlug || u.pickedSlug === '__skip__') return;
+      const id = logDose({ compoundSlug: u.pickedSlug, takenAt: new Date().toISOString(), dose: u.dose, doseUnit: u.unit });
+      undos.push({ kind: 'dose', id });
+    });
     setUndoBatch(undos);
     setText('');
+    setUnmatchedDoses([]);
+    setUnknownFragments([]);
     onDismiss?.();
   };
 
@@ -390,10 +445,69 @@ export function QuickLog({
         </Sunken>
       ))}
 
+      {/* ── Disambiguation: unmatched doses ── */}
+      {unmatchedDoses.length > 0 && (
+        <View style={styles.disambigSection}>
+          <Divider />
+          <EngravedLabel>{t('quicklog.unclearLabel')}</EngravedLabel>
+          {unmatchedDoses.map((u, idx) => {
+            const matches = catalogSearch(u.search);
+            return (
+              <Sunken key={idx} style={styles.disambigCard}>
+                <ThemedText type="monoSm" themeColor="textMuted">{t('quicklog.unclearCompound')}</ThemedText>
+                <ThemedText type="smallBold">
+                  {u.compoundName}{u.dose ? ` · ${u.dose}${u.unit ?? ''}` : ''}
+                </ThemedText>
+                <LabeledInput
+                  label={t('quicklog.compoundSearch')}
+                  placeholder={u.compoundName}
+                  value={u.search}
+                  onChangeText={(v) => setUnmatchedField(idx, { search: v, pickedSlug: undefined })}
+                />
+                {matches.length > 0 && (
+                  <View style={styles.suggestions}>
+                    {matches.map((c) => (
+                      <OptionChip
+                        key={c.slug}
+                        label={c.canonicalName}
+                        selected={u.pickedSlug === c.slug}
+                        onPress={() => setUnmatchedField(idx, { pickedSlug: c.slug, search: c.canonicalName })}
+                      />
+                    ))}
+                  </View>
+                )}
+                {u.pickedSlug ? (
+                  <ThemedText type="monoSm" themeColor="signalGood">
+                    {t('quicklog.unclearResolved', { name: compoundBySlug(u.pickedSlug)?.canonicalName ?? u.pickedSlug })}
+                  </ThemedText>
+                ) : (
+                  <Pressable accessibilityRole="button" onPress={() => setUnmatchedField(idx, { pickedSlug: '__skip__' })}>
+                    <ThemedText type="monoSm" themeColor="textMuted" style={styles.skipLink}>{t('quicklog.skipItem')}</ThemedText>
+                  </Pressable>
+                )}
+              </Sunken>
+            );
+          })}
+        </View>
+      )}
+
+      {/* ── Disambiguation: truly unknown fragments ── */}
+      {unknownFragments.length > 0 && (
+        <View style={styles.disambigSection}>
+          {unmatchedDoses.length === 0 && <Divider />}
+          {unknownFragments.map((note, idx) => (
+            <View key={idx} style={styles.unknownRow}>
+              <ThemedText type="monoSm" themeColor="textMuted">{t('quicklog.unclearSkipped')}</ThemedText>
+              <ThemedText type="monoSm" themeColor="textSecondary" style={styles.unknownNote}>{note}</ThemedText>
+            </View>
+          ))}
+        </View>
+      )}
+
       <PrimaryButton
         label={t('quicklog.confirm')}
         onPress={confirm}
-        disabled={reviewableItems.length === 0 && pendingSymptoms.length === 0}
+        disabled={reviewableItems.length === 0 && pendingSymptoms.length === 0 && unmatchedDoses.every(u => !u.pickedSlug || u.pickedSlug === '__skip__')}
       />
     </View>
   );
@@ -451,4 +565,9 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   rowText: { flex: 1 },
+  disambigSection: { gap: Spacing.two },
+  disambigCard: { gap: Spacing.two },
+  skipLink: { textDecorationLine: 'underline' },
+  unknownRow: { gap: Spacing.one },
+  unknownNote: { fontStyle: 'italic' },
 });

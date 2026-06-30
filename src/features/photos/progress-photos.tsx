@@ -632,7 +632,7 @@ export function ProgressPhotos({
       {session === 'face' ? (
         <VisionCameraCapture
           session={session}
-          ghostUri={latest?.uri}
+          ghostUri={latest ? resolvedUris[latest.id] ?? latest.uri : undefined}
           baseline={baseline}
           visible={capturing}
           onClose={() => setCapturing(false)}
@@ -640,7 +640,7 @@ export function ProgressPhotos({
       ) : (
         <PhotoCapture
           session={session}
-          ghostUri={latest?.uri}
+          ghostUri={latest ? resolvedUris[latest.id] ?? latest.uri : undefined}
           visible={capturing}
           onClose={() => setCapturing(false)}
         />

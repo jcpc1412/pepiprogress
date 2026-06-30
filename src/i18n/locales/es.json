@@ -160,7 +160,13 @@
     "parseApply": "Analizar + aplicar",
     "confirm": "Confirmar",
     "reviewLabel": "Detectado",
-    "sugSymptom": "Dolor de cabeza"
+    "sugSymptom": "Dolor de cabeza",
+    "unclearLabel": "POCO CLARO",
+    "unclearCompound": "Compuesto no encontrado",
+    "compoundSearch": "Buscar compuesto",
+    "unclearResolved": "Se registrara como {{name}}",
+    "skipItem": "Omitir",
+    "unclearSkipped": "Omitido"
   },
   "photos": {
     "title": "Fotos de progreso",

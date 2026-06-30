@@ -160,7 +160,13 @@
     "parseApply": "Analysieren + anwenden",
     "confirm": "Bestätigen",
     "reviewLabel": "Erkannt",
-    "sugSymptom": "Kopfschmerzen"
+    "sugSymptom": "Kopfschmerzen",
+    "unclearLabel": "UNKLAR",
+    "unclearCompound": "Verbindung nicht gefunden",
+    "compoundSearch": "Verbindung suchen",
+    "unclearResolved": "Wird als {{name}} gespeichert",
+    "skipItem": "Uberspringen",
+    "unclearSkipped": "Ubersprungen"
   },
   "photos": {
     "title": "Fortschrittsfotos",

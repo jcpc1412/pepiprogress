@@ -12,8 +12,10 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Fonts, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { compoundBySlug } from '@/data/compound-catalog';
+import { compoundBySlug, findCompoundByName } from '@/data/compound-catalog';
 import { CompoundPicker } from '@/features/compounds/compound-picker';
+import { VialScanner } from '@/features/lab/lab-import';
+import type { VialScanResult } from '@/lib/ai';
 import { roundTo, suggestReconstitution } from '@/lib/reconstitution';
 import { useStore, type DoseRoute } from '@/lib/store';
 import { Constants } from '@/types/database';
@@ -41,6 +43,7 @@ export function AddCompoundScreen({ onClose }: { onClose: () => void }) {
   const [startedAt, setStartedAt] = useState<string | undefined>(undefined);
   const [vialMgInput, setVialMgInput] = useState('');
   const [logVial, setLogVial] = useState(true);
+  const [vialScanNote, setVialScanNote] = useState<string | null>(null);
 
   const compound = slug ? compoundBySlug(slug) : undefined;
   const canReconstitute = !!compound?.injectable && !!compound?.reconstituted;
@@ -87,6 +90,21 @@ export function AddCompoundScreen({ onClose }: { onClose: () => void }) {
     onClose();
   };
 
+  const handleVialScan = (result: VialScanResult) => {
+    const match = result.compoundName ? findCompoundByName(result.compoundName) : undefined;
+    if (match) setSlug(match.slug);
+    const totalMg =
+      result.totalMg ??
+      (result.concentrationMgMl && result.volumeMl ? result.concentrationMgMl * result.volumeMl : undefined);
+    if (totalMg) setVialMgInput(String(totalMg));
+    setVialScanNote(
+      t('lab.vialResult', {
+        compound: match?.canonicalName ?? result.compoundName ?? '—',
+        concentration: result.concentrationMgMl ?? '—',
+      }),
+    );
+  };
+
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safe} edges={['top']}>
@@ -96,6 +114,12 @@ export function AddCompoundScreen({ onClose }: { onClose: () => void }) {
           <Field label={t('protocol.compound')}>
             <CompoundPicker value={slug} onChange={setSlug} />
           </Field>
+          <VialScanner onResult={handleVialScan} />
+          {vialScanNote && (
+            <ThemedText type="monoSm" themeColor="textSecondary">
+              {vialScanNote}
+            </ThemedText>
+          )}
 
           {/* Step 2: configure section reveals after a compound is selected */}
           {slug && (

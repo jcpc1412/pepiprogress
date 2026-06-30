@@ -160,7 +160,13 @@
     "parseApply": "Analyser + appliquer",
     "confirm": "Confirmer",
     "reviewLabel": "Détecté",
-    "sugSymptom": "Mal de tête"
+    "sugSymptom": "Mal de tête",
+    "unclearLabel": "AMBIGU",
+    "unclearCompound": "Compose non trouve",
+    "compoundSearch": "Rechercher compose",
+    "unclearResolved": "Sera enregistre comme {{name}}",
+    "skipItem": "Ignorer",
+    "unclearSkipped": "Ignore"
   },
   "photos": {
     "title": "Photos de progression",
