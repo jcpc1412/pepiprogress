@@ -37,6 +37,12 @@ export type PhotoAnalysis = {
   retake: boolean;
 };
 
+export type FitCheck = {
+  fit: 'good' | 'acceptable' | 'poor';
+  confidence: number;
+  hint?: string;
+};
+
 export type EncouragementResult = {
   message: string;
 };
@@ -196,6 +202,24 @@ export async function analyzePhoto(opts: {
   if (error) raiseAiError(error);
   if (!data) throw new Error('empty analysis');
   return data;
+}
+
+/**
+ * Quick pre-capture fit check using Haiku vision (R3-H). Compares the new shot
+ * to the baseline to catch angle/distance mismatches before the user saves.
+ * Fails open (returns good fit) when AI is unconfigured or the call errors.
+ */
+export async function checkFit(newUri: string, baselineUri?: string): Promise<FitCheck> {
+  if (!isSupabaseConfigured || !baselineUri) return { fit: 'good', confidence: 1 };
+  try {
+    const [newImage, baselineImage] = await Promise.all([toBase64(newUri), toBase64(baselineUri)]);
+    const { data } = await supabase.functions.invoke<FitCheck>('ai-service', {
+      body: { action: 'check_fit', newImage, baselineImage },
+    });
+    return data ?? { fit: 'good', confidence: 1 };
+  } catch {
+    return { fit: 'good', confidence: 1 };
+  }
 }
 
 /**

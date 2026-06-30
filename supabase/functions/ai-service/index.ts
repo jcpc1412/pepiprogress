@@ -4,6 +4,7 @@
 // Actions:
 //   parse_log       — Haiku; parses NL quick-log text into structured entities.
 //   analyze_photo   — Sonnet vision; drift score + hedged change note.
+//   check_fit       — Haiku vision; pre-capture fit check (position / angle / distance).
 //   simple_analysis — Haiku text-only; encouraging weekly check-in message.
 //   parse_lab       — Sonnet vision; extracts lab marker values from a photo.
 //   scan_vial       — Sonnet vision; extracts compound name + concentration from a vial label.
@@ -108,6 +109,12 @@ type InsightsRequest = {
   question?: string;
   locale?: string;
   history: InsightHistory;
+};
+
+type CheckFitRequest = {
+  action: 'check_fit';
+  newImage: string; // base64 JPEG
+  baselineImage?: string; // base64 JPEG — if absent, returns good fit
 };
 
 type TerraRequest = {
@@ -438,6 +445,7 @@ Deno.serve(async (req: Request) => {
     const body = (await req.json()) as
       | ParseLogRequest
       | AnalyzePhotoRequest
+      | CheckFitRequest
       | SimpleAnalysisRequest
       | ParseLabRequest
       | ScanVialRequest
@@ -620,6 +628,31 @@ Deno.serve(async (req: Request) => {
         messages: [{ role: 'user', content: userContent }],
       });
       return json(extractJson(message, { answer: '', insufficientData: true }), 200);
+    }
+
+    // ── check_fit ─────────────────────────────────────────────────────────────
+    if (body.action === 'check_fit') {
+      if (!body.baselineImage) return json({ fit: 'good', confidence: 1 }, 200);
+      const message = await client.messages.create({
+        model: PARSE_MODEL,
+        max_tokens: 120,
+        system: [
+          'You are a photo fit-checker. Given a baseline photo and a new photo, assess whether',
+          'the user\'s position, distance, and angle in the new photo are comparable to the baseline.',
+          'Return only JSON: {"fit":"good"|"acceptable"|"poor","confidence":0.0-1.0,"hint":"<10 words if poor/acceptable>"}.',
+          'Rules: "good" = similar framing; "acceptable" = minor difference; "poor" = substantially',
+          'different angle/distance or subject out of frame. hint must be specific and actionable.',
+        ].join(' '),
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: body.baselineImage } },
+            { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: body.newImage } },
+            { type: 'text', text: 'Baseline is the first image. New photo is the second. Return the JSON fit assessment.' },
+          ],
+        }],
+      });
+      return json(extractJson(message, { fit: 'good', confidence: 1 }), 200);
     }
 
     return json({ error: 'unsupported action' }, 400);

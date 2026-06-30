@@ -217,7 +217,11 @@
     "tagWeek": "W{{week}}",
     "editTags": "Edit tags",
     "addTag": "Add tag",
-    "tagPlaceholder": "e.g. BPC-157"
+    "tagPlaceholder": "e.g. BPC-157",
+    "ghostLevel": "GHOST {{pct}}%",
+    "fitChecking": "Checking fit…",
+    "fitWeak": "Position differs slightly from baseline.",
+    "fitPoor": "Very different from baseline. Consider retaking."
   },
   "markers": {
     "hematocrit": "Hematocrit",
@@ -438,7 +442,13 @@
     "lastSync": "Last synced {{when}}",
     "never": "never",
     "comingSoon": "Needs the latest app build",
-    "empty": "No data sources available on this device yet."
+    "empty": "No data sources available on this device yet.",
+    "importTitle": "Import your history?",
+    "importSubtitle": "Bring in past data to start with a richer baseline.",
+    "importLastYear": "Last 12 months",
+    "importAllTime": "All time",
+    "importSkip": "Skip",
+    "importing": "Importing…"
   },
   "notify": {
     "section": "REMINDERS",

@@ -3,18 +3,19 @@ import { Image } from 'expo-image';
 import { Accelerometer } from 'expo-sensors';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { LabeledInput, PrimaryButton, SingleSelectChips } from '@/components/form';
 import { FlipCameraIcon } from '@/components/icons';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
+import { checkFit, type FitCheck } from '@/lib/ai';
 import { copyPhotoToDocuments } from '@/lib/photos';
 import { useStore, type PhotoSession } from '@/lib/store';
 
-/** Faintness of the alignment guide (spec 04 — ghost overlay). */
-const GHOST_OPACITY = 0.35;
+/** Tap-cycle levels for the ghost overlay opacity (R3-H). */
+const GHOST_LEVELS = [0.2, 0.4, 0.6] as const;
 
 /**
  * Capture-time guidance (spec 04, Layer 1). Front camera with the prior photo of
@@ -42,6 +43,9 @@ export function PhotoCapture({
   const [shot, setShot] = useState<string | null>(null);
   const [shotTilt, setShotTilt] = useState<number | undefined>(undefined);
   const [busy, setBusy] = useState(false);
+  const [ghostLevelIdx, setGhostLevelIdx] = useState(0);
+  const [fitResult, setFitResult] = useState<FitCheck | null>(null);
+  const [fitChecking, setFitChecking] = useState(false);
   const [facing, setFacing] = useState<'front' | 'back'>('front');
 
   // Measurement inputs (body session only, all optional)
@@ -78,6 +82,8 @@ export function PhotoCapture({
   const close = () => {
     setShot(null);
     setShotTilt(undefined);
+    setFitResult(null);
+    setFitChecking(false);
     setWaist('');
     setHips('');
     setExtraKey(undefined);
@@ -93,6 +99,14 @@ export function PhotoCapture({
       if (pic?.uri) {
         setShotTilt(Math.round(tiltRef.current));
         setShot(pic.uri);
+        if (ghostUri) {
+          setFitChecking(true);
+          setFitResult(null);
+          checkFit(pic.uri, ghostUri).then((r) => {
+            setFitResult(r);
+            setFitChecking(false);
+          });
+        }
       }
     } finally {
       setBusy(false);
@@ -148,6 +162,20 @@ export function PhotoCapture({
           // ── Review the captured shot ──
           <ScrollView style={styles.fill} contentContainerStyle={styles.reviewContent} bounces={false} showsVerticalScrollIndicator={false}>
             <Image source={{ uri: shot }} style={styles.reviewPhoto} contentFit="cover" />
+            {ghostUri && (fitChecking || (fitResult && fitResult.fit !== 'good')) ? (
+              <View style={[styles.fitBanner, fitResult?.fit === 'poor' ? styles.fitBannerPoor : styles.fitBannerWeak]}>
+                {fitChecking ? (
+                  <ActivityIndicator size="small" color="#F0EFEC" />
+                ) : null}
+                <ThemedText type="monoSm" style={styles.fitBannerText}>
+                  {fitChecking
+                    ? t('photos.fitChecking')
+                    : fitResult?.fit === 'poor'
+                    ? fitResult.hint ?? t('photos.fitPoor')
+                    : fitResult?.hint ?? t('photos.fitWeak')}
+                </ThemedText>
+              </View>
+            ) : null}
             {isBody && (
               <View style={styles.measurePanel}>
                 <ThemedText type="monoSm" themeColor="textSecondary">
@@ -208,20 +236,31 @@ export function PhotoCapture({
           <View style={styles.fill}>
             <CameraView ref={camRef} style={styles.fill} facing={facing} mirror={facing === 'front'} />
             {ghostUri ? (
-              <Image
-                source={{ uri: ghostUri }}
-                style={[StyleSheet.absoluteFill, { opacity: GHOST_OPACITY }]}
-                contentFit="cover"
-              />
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t('photos.ghostLevel', { pct: Math.round(GHOST_LEVELS[ghostLevelIdx] * 100) })}
+                style={StyleSheet.absoluteFill}
+                onPress={() => setGhostLevelIdx((i) => (i + 1) % GHOST_LEVELS.length)}>
+                <Image
+                  source={{ uri: ghostUri }}
+                  style={[StyleSheet.absoluteFill, { opacity: GHOST_LEVELS[ghostLevelIdx] }]}
+                  contentFit="cover"
+                />
+              </Pressable>
             ) : null}
             <SafeAreaView style={styles.topBar} edges={['top']} pointerEvents="none">
               <ThemedText type="label" style={styles.overlayText}>
                 {sessionLabel}
               </ThemedText>
               {ghostUri ? (
-                <ThemedText type="monoSm" style={styles.overlayDim}>
-                  {t('photos.ghostHint')}
-                </ThemedText>
+                <>
+                  <ThemedText type="monoSm" style={styles.overlayDim}>
+                    {t('photos.ghostHint')}
+                  </ThemedText>
+                  <ThemedText type="monoSm" style={styles.overlayDim}>
+                    {t('photos.ghostLevel', { pct: Math.round(GHOST_LEVELS[ghostLevelIdx] * 100) })}
+                  </ThemedText>
+                </>
               ) : (
                 <ThemedText type="monoSm" style={styles.overlayDim}>
                   {t('photos.clothingHint')}
@@ -315,4 +354,14 @@ const styles = StyleSheet.create({
   levelWrap: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' },
   levelRef: { position: 'absolute', width: 170, height: StyleSheet.hairlineWidth, backgroundColor: 'rgba(240,239,236,0.3)' },
   levelBar: { width: 120, height: 2, borderRadius: 1 },
+  fitBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+    paddingHorizontal: Spacing.four,
+    paddingVertical: Spacing.two,
+  },
+  fitBannerWeak: { backgroundColor: 'rgba(180,120,0,0.85)' },
+  fitBannerPoor: { backgroundColor: 'rgba(160,40,40,0.9)' },
+  fitBannerText: { color: '#F0EFEC', flex: 1 },
 });

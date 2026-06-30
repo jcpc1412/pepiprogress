@@ -412,8 +412,9 @@ function AccountStep({ onNext }: { onNext: () => void }) {
 
 function HealthStep({ onDone }: { onDone: () => void }) {
   const { t } = useTranslation();
-  const { integrations, setIntegration } = useStore();
+  const { integrations, setIntegration, addMetricReadings } = useStore();
   const [busy, setBusy] = useState(false);
+  const [showImport, setShowImport] = useState(false);
 
   const providers = availableProviders().filter((p) => p.id !== 'terra');
   const provider = providers[0];
@@ -423,9 +424,32 @@ function HealthStep({ onDone }: { onDone: () => void }) {
     setBusy(true);
     try {
       const { ok, patch } = await provider.authenticate();
-      if (ok) setIntegration(provider.id, { connectedAt: new Date().toISOString(), ...patch });
+      if (ok) {
+        setIntegration(provider.id, { connectedAt: new Date().toISOString(), ...patch });
+        setShowImport(true);
+        return;
+      }
     } finally {
       setBusy(false);
+    }
+    onDone();
+  };
+
+  const handleImport = async (range: 'lastYear' | 'allTime' | 'skip') => {
+    setShowImport(false);
+    if (range !== 'skip' && provider) {
+      setBusy(true);
+      try {
+        const since =
+          range === 'lastYear'
+            ? new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString()
+            : undefined;
+        const readings = await provider.pull({ since, connection: integrations[provider.id] });
+        addMetricReadings(readings);
+        setIntegration(provider.id, { lastSyncAt: new Date().toISOString() });
+      } finally {
+        setBusy(false);
+      }
     }
     onDone();
   };
@@ -450,7 +474,7 @@ function HealthStep({ onDone }: { onDone: () => void }) {
           ) : connected ? (
             <ThemedText type="monoSm" themeColor="signalGood">{t('onboarding.health.connected')}</ThemedText>
           ) : busy ? (
-            <ThemedText type="monoSm" themeColor="textMuted">{t('integrations.connecting')}</ThemedText>
+            <ActivityIndicator size="small" />
           ) : (
             <Pressable accessibilityRole="button" onPress={connect}>
               <ThemedText type="monoSm" themeColor="accent" style={styles.link}>{t('integrations.connect')}</ThemedText>
@@ -459,10 +483,24 @@ function HealthStep({ onDone }: { onDone: () => void }) {
         </View>
       )}
 
-      <PrimaryButton
-        label={connected ? t('onboarding.finish') : t('onboarding.health.skip')}
-        onPress={onDone}
-      />
+      {showImport ? (
+        <View style={styles.importCard}>
+          <ThemedText type="smallBold">{t('integrations.importTitle')}</ThemedText>
+          <ThemedText type="small" themeColor="textSecondary">{t('integrations.importSubtitle')}</ThemedText>
+          <PrimaryButton
+            label={busy ? t('integrations.importing') : t('integrations.importLastYear')}
+            disabled={busy}
+            onPress={() => handleImport('lastYear')}
+          />
+          <TextButton label={t('integrations.importAllTime')} onPress={() => handleImport('allTime')} />
+          <TextButton label={t('integrations.importSkip')} onPress={() => handleImport('skip')} />
+        </View>
+      ) : (
+        <PrimaryButton
+          label={connected ? t('onboarding.finish') : t('onboarding.health.skip')}
+          onPress={onDone}
+        />
+      )}
     </View>
   );
 }
@@ -661,6 +699,12 @@ const styles = StyleSheet.create({
   toggleRow: { flexDirection: 'row', gap: Spacing.two, alignItems: 'center', justifyContent: 'center' },
   // Health step
   healthCard: {
+    borderRadius: Radii.panel,
+    borderWidth: StyleSheet.hairlineWidth,
+    padding: Spacing.three,
+    gap: Spacing.two,
+  },
+  importCard: {
     borderRadius: Radii.panel,
     borderWidth: StyleSheet.hairlineWidth,
     padding: Spacing.three,

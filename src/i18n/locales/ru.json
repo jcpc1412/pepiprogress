@@ -217,7 +217,11 @@
     "tagWeek": "Н{{week}}",
     "editTags": "Редактировать теги",
     "addTag": "Добавить тег",
-    "tagPlaceholder": "напр. BPC-157"
+    "tagPlaceholder": "напр. BPC-157",
+    "ghostLevel": "КОНТУР {{pct}}%",
+    "fitChecking": "Проверка кадрирования…",
+    "fitWeak": "Позиция немного отличается от базовой линии.",
+    "fitPoor": "Сильно отличается от базовой линии. Рекомендуется переснять."
   },
   "markers": {
     "hematocrit": "Гематокрит",
@@ -438,7 +442,13 @@
     "comingSoon": "Требуется последняя сборка приложения",
     "empty": "На этом устройстве пока нет доступных источников данных.",
     "healthConnect": "Health Connect",
-    "terra": "Terra (Wearables)"
+    "terra": "Terra (Wearables)",
+    "importTitle": "Импортировать историю?",
+    "importSubtitle": "Начните с прошлыми данными для более полной базовой линии.",
+    "importLastYear": "Последние 12 месяцев",
+    "importAllTime": "Всё время",
+    "importSkip": "Пропустить",
+    "importing": "Импорт…"
   },
   "notify": {
     "section": "НАПОМИНАНИЯ",

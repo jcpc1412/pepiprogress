@@ -217,7 +217,11 @@
     "tagWeek": "W{{week}}",
     "editTags": "Tags bearbeiten",
     "addTag": "Tag hinzufügen",
-    "tagPlaceholder": "z. B. BPC-157"
+    "tagPlaceholder": "z. B. BPC-157",
+    "ghostLevel": "FÜHRUNG {{pct}}%",
+    "fitChecking": "Bild prüfen…",
+    "fitWeak": "Position weicht leicht von der Basislinie ab.",
+    "fitPoor": "Sehr abweichend von der Basislinie. Erneutes Aufnehmen empfohlen."
   },
   "markers": {
     "hematocrit": "Hämatokrit",
@@ -438,7 +442,13 @@
     "comingSoon": "Erfordert die neueste App-Version",
     "empty": "Auf diesem Gerät sind noch keine Datenquellen verfügbar.",
     "healthConnect": "Health Connect",
-    "terra": "Terra (Wearables)"
+    "terra": "Terra (Wearables)",
+    "importTitle": "Verlauf importieren?",
+    "importSubtitle": "Starten Sie mit früheren Daten für eine bessere Ausgangsbasis.",
+    "importLastYear": "Letzte 12 Monate",
+    "importAllTime": "Gesamte Zeit",
+    "importSkip": "Überspringen",
+    "importing": "Importiere…"
   },
   "notify": {
     "section": "ERINNERUNGEN",

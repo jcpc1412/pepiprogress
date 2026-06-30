@@ -217,7 +217,11 @@
     "tagWeek": "S{{week}}",
     "editTags": "Modifier les étiquettes",
     "addTag": "Ajouter une étiquette",
-    "tagPlaceholder": "ex. BPC-157"
+    "tagPlaceholder": "ex. BPC-157",
+    "ghostLevel": "GUIDE {{pct}} %",
+    "fitChecking": "Vérification du cadrage…",
+    "fitWeak": "La position diffère légèrement de la référence.",
+    "fitPoor": "Très différent de la référence. Envisagez de reprendre."
   },
   "markers": {
     "hematocrit": "Hématocrite",
@@ -438,7 +442,13 @@
     "comingSoon": "Nécessite la dernière version de l'app",
     "empty": "Aucune source de données disponible sur cet appareil pour l'instant.",
     "healthConnect": "Health Connect",
-    "terra": "Terra (Wearables)"
+    "terra": "Terra (Wearables)",
+    "importTitle": "Importer votre historique ?",
+    "importSubtitle": "Commencez avec des données passées pour une meilleure référence.",
+    "importLastYear": "12 derniers mois",
+    "importAllTime": "Tout le temps",
+    "importSkip": "Ignorer",
+    "importing": "Importation…"
   },
   "notify": {
     "section": "RAPPELS",

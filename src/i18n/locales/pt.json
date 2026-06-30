@@ -217,7 +217,11 @@
     "tagWeek": "S{{week}}",
     "editTags": "Editar etiquetas",
     "addTag": "Adicionar etiqueta",
-    "tagPlaceholder": "ex. BPC-157"
+    "tagPlaceholder": "ex. BPC-157",
+    "ghostLevel": "GUIA {{pct}}%",
+    "fitChecking": "Verificando encaixe…",
+    "fitWeak": "Posição difere ligeiramente da linha base.",
+    "fitPoor": "Muito diferente da linha base. Considere repetir."
   },
   "markers": {
     "hematocrit": "Hematócrito",
@@ -438,7 +442,13 @@
     "comingSoon": "Requer a versão mais recente do app",
     "empty": "Ainda não há fontes de dados disponíveis neste dispositivo.",
     "healthConnect": "Health Connect",
-    "terra": "Terra (Wearables)"
+    "terra": "Terra (Wearables)",
+    "importTitle": "Importar seu histórico?",
+    "importSubtitle": "Comece com dados anteriores para uma linha base mais rica.",
+    "importLastYear": "Últimos 12 meses",
+    "importAllTime": "Sempre",
+    "importSkip": "Pular",
+    "importing": "Importando…"
   },
   "notify": {
     "section": "LEMBRETES",

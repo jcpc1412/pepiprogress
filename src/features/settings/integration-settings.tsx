@@ -1,26 +1,92 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { PrimaryButton, TextButton } from '@/components/form';
 import { Card, Divider, EngravedLabel } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 import { availableProviders } from '@/lib/integrations/registry';
-import type { IntegrationProvider } from '@/lib/integrations/types';
+import type { IntegrationProvider, ProviderId } from '@/lib/integrations/types';
 import { useStore } from '@/lib/store';
+
+type ImportRange = 'lastYear' | 'allTime' | 'skip';
+
+function ImportRangeModal({
+  visible,
+  providerId,
+  onSelect,
+}: {
+  visible: boolean;
+  providerId: ProviderId | null;
+  onSelect: (range: ImportRange) => void;
+}) {
+  const { t } = useTranslation();
+  const theme = useTheme();
+  if (!visible) return null;
+  return (
+    <Modal visible={visible} transparent animationType="fade">
+      <View style={[importStyles.backdrop, { backgroundColor: 'rgba(0,0,0,0.7)' }]}>
+        <SafeAreaView edges={['bottom']} style={importStyles.sheet}>
+          <View style={[importStyles.card, { backgroundColor: theme.backgroundElement }]}>
+            <ThemedText type="smallBold">{t('integrations.importTitle')}</ThemedText>
+            <ThemedText type="small" themeColor="textSecondary">
+              {t('integrations.importSubtitle')}
+            </ThemedText>
+            <View style={importStyles.actions}>
+              <PrimaryButton label={t('integrations.importLastYear')} onPress={() => onSelect('lastYear')} />
+              <TextButton label={t('integrations.importAllTime')} onPress={() => onSelect('allTime')} />
+              <TextButton label={t('integrations.importSkip')} onPress={() => onSelect('skip')} />
+            </View>
+          </View>
+        </SafeAreaView>
+      </View>
+    </Modal>
+  );
+}
+
+const importStyles = StyleSheet.create({
+  backdrop: { flex: 1, justifyContent: 'flex-end' },
+  sheet: { padding: Spacing.four },
+  card: { borderRadius: 12, padding: Spacing.four, gap: Spacing.three },
+  actions: { gap: Spacing.two },
+});
 
 function ProviderRow({ provider }: { provider: IntegrationProvider }) {
   const { t } = useTranslation();
   const { integrations, setIntegration, addMetricReadings } = useStore();
   const [busy, setBusy] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const conn = integrations[provider.id];
   const connected = !!conn?.connectedAt;
+
+  const handleImport = async (range: ImportRange) => {
+    setShowImport(false);
+    if (range === 'skip') return;
+    setBusy(true);
+    try {
+      const since =
+        range === 'lastYear'
+          ? new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString()
+          : undefined;
+      const readings = await provider.pull({ since, connection: conn });
+      addMetricReadings(readings);
+      setIntegration(provider.id, { lastSyncAt: new Date().toISOString() });
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const connect = async () => {
     setBusy(true);
     try {
       const { ok, patch } = await provider.authenticate();
-      if (ok) setIntegration(provider.id, { connectedAt: new Date().toISOString(), ...patch });
+      if (ok) {
+        setIntegration(provider.id, { connectedAt: new Date().toISOString(), ...patch });
+        setShowImport(true);
+      }
     } finally {
       setBusy(false);
     }
@@ -40,13 +106,15 @@ function ProviderRow({ provider }: { provider: IntegrationProvider }) {
   const disconnect = () => setIntegration(provider.id, { connectedAt: undefined, lastSyncAt: undefined });
 
   return (
-    <View style={styles.row}>
-      <View style={styles.rowHead}>
-        <ThemedText type="smallBold">{t(provider.nameKey as never)}</ThemedText>
-        <ThemedText type="monoSm" themeColor="textMuted">
-          {t('integrations.provides', { count: provider.capabilities.length })}
-        </ThemedText>
-      </View>
+    <>
+      <ImportRangeModal visible={showImport} providerId={provider.id} onSelect={handleImport} />
+      <View style={styles.row}>
+        <View style={styles.rowHead}>
+          <ThemedText type="smallBold">{t(provider.nameKey as never)}</ThemedText>
+          <ThemedText type="monoSm" themeColor="textMuted">
+            {t('integrations.provides', { count: provider.capabilities.length })}
+          </ThemedText>
+        </View>
 
       {!provider.nativeReady ? (
         <ThemedText type="monoSm" themeColor="textMuted">
@@ -79,7 +147,8 @@ function ProviderRow({ provider }: { provider: IntegrationProvider }) {
           </ThemedText>
         </Pressable>
       )}
-    </View>
+      </View>
+    </>
   );
 }
 

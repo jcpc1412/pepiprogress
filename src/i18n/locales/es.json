@@ -217,7 +217,11 @@
     "tagWeek": "S{{week}}",
     "editTags": "Editar etiquetas",
     "addTag": "Añadir etiqueta",
-    "tagPlaceholder": "ej. BPC-157"
+    "tagPlaceholder": "ej. BPC-157",
+    "ghostLevel": "GUÍA {{pct}}%",
+    "fitChecking": "Verificando encuadre…",
+    "fitWeak": "Posición ligeramente diferente a la línea base.",
+    "fitPoor": "Muy diferente a la línea base. Considera repetir la foto."
   },
   "markers": {
     "hematocrit": "Hematocrito",
@@ -438,7 +442,13 @@
     "comingSoon": "Requiere la última versión de la app",
     "empty": "Aún no hay fuentes de datos disponibles en este dispositivo.",
     "healthConnect": "Health Connect",
-    "terra": "Terra (Wearables)"
+    "terra": "Terra (Wearables)",
+    "importTitle": "¿Importar tu historial?",
+    "importSubtitle": "Empieza con datos previos para una línea base más completa.",
+    "importLastYear": "Últimos 12 meses",
+    "importAllTime": "Todo el tiempo",
+    "importSkip": "Omitir",
+    "importing": "Importando…"
   },
   "notify": {
     "section": "RECORDATORIOS",
