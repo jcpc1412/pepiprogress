@@ -49,6 +49,7 @@ function RootContent() {
           <Stack.Screen name="me" />
           <Stack.Screen name="notifications-settings" />
           <Stack.Screen name="privacy" />
+          <Stack.Screen name="photo-history" />
         </Stack>
       </CloudSync>
     </ThemeProvider>

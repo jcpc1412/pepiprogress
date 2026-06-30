@@ -125,6 +125,8 @@ export type PhotoEntry = {
   driftScore?: number; // 0–1, lower = more comparable to baseline
   comparable?: boolean;
   lighting?: 'ok' | 'too_dark' | 'too_bright' | 'different'; // from vision response
+  // User-edited tags (overrides auto-derived compound+week tags in Photo History).
+  customTags?: string[];
 };
 
 /** A normalized reading ingested from an integration source (spec 06). The daily
