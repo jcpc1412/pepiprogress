@@ -66,6 +66,9 @@ export type ProtocolItem = {
   doseUnit?: string; // mg, mcg, iu
   route?: DoseRoute;
   frequency?: Frequency;
+  /** Explicit day-of-week schedule (0=Sun … 6=Sat). When set, supersedes
+   *  the legacy `frequency` field for schedule calculations. */
+  doseDays?: number[];
   /** Vial concentration (mg/mL) for reconstitution + dose→volume math. */
   concentration?: number;
   /** When the user actually started this compound (YYYY-MM-DD). Drives cycle-week

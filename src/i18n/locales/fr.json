@@ -587,6 +587,9 @@
     "dosesToday": "{{count}} doses enregistrées aujourd'hui",
     "quickLog": "Saisie rapide",
     "detailedLog": "Saisie détaillée",
+    "log": "Journal",
+    "editCharts": "Modifier les graphiques",
+    "chartsModal": "GRAPHIQUES",
     "dayCount": "Jour {{count}}",
     "onTrack": "EN BONNE VOIE",
     "pending": "EN ATTENTE",
@@ -635,6 +638,15 @@
     "removeFromProtocol": "Retirer du protocole",
     "noDoses": "Aucune dose enregistrée.",
     "noVials": "Aucun flacon suivi."
+  },
+  "weekdays": {
+    "mon": "Lun",
+    "tue": "Mar",
+    "wed": "Mer",
+    "thu": "Jeu",
+    "fri": "Ven",
+    "sat": "Sam",
+    "sun": "Dim"
   },
   "me": {
     "title": "Moi",

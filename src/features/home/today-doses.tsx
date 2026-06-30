@@ -7,6 +7,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { compoundBySlug } from '@/data/compound-catalog';
 import { daysBetween } from '@/lib/dates';
+import { isDueOnDay } from '@/components/weekday-picker';
 import { localDateKey, useStore, type Frequency, type ProtocolItem } from '@/lib/store';
 
 /** Days that must pass since the last dose for a given frequency to be "due" again. */
@@ -43,15 +44,27 @@ export function TodayDoses() {
       }
     }
 
+    const todayDate = new Date();
+
     return protocolItems
-      .filter((p) => p.frequency !== 'as_needed')
       .map((p) => {
         const done = doneTodayItems.has(p.id);
-        const last = lastByItem[p.id];
-        const lastBeforeToday = last && last < today ? last : undefined;
-        const daysSince = lastBeforeToday ? daysBetween(lastBeforeToday, today) : Infinity;
-        const dueAfter = p.frequency ? DUE_AFTER[p.frequency] : undefined;
-        const dueToday = dueAfter == null ? true : daysSince >= dueAfter;
+        let dueToday: boolean;
+
+        if (p.doseDays !== undefined) {
+          // New weekday schedule: empty = as_needed (never auto-due)
+          dueToday = isDueOnDay(p.doseDays, todayDate);
+        } else if (p.frequency === 'as_needed') {
+          dueToday = false;
+        } else {
+          // Legacy frequency cadence
+          const last = lastByItem[p.id];
+          const lastBeforeToday = last && last < today ? last : undefined;
+          const daysSince = lastBeforeToday ? daysBetween(lastBeforeToday, today) : Infinity;
+          const dueAfter = p.frequency ? DUE_AFTER[p.frequency] : undefined;
+          dueToday = dueAfter == null ? true : daysSince >= dueAfter;
+        }
+
         return { item: p, done, show: dueToday || done };
       })
       .filter((r) => r.show);

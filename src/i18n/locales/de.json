@@ -587,6 +587,9 @@
     "dosesToday": "{{count}} Dosen heute erfasst",
     "quickLog": "Schnelleintrag",
     "detailedLog": "Detaillierter Eintrag",
+    "log": "Eintragen",
+    "editCharts": "Diagramme bearbeiten",
+    "chartsModal": "DIAGRAMME",
     "dayCount": "Tag {{count}}",
     "onTrack": "AUF KURS",
     "pending": "AUSSTEHEND",
@@ -635,6 +638,15 @@
     "removeFromProtocol": "Aus Protokoll entfernen",
     "noDoses": "Noch keine Dosen erfasst.",
     "noVials": "Keine Fläschchen erfasst."
+  },
+  "weekdays": {
+    "mon": "Mo",
+    "tue": "Di",
+    "wed": "Mi",
+    "thu": "Do",
+    "fri": "Fr",
+    "sat": "Sa",
+    "sun": "So"
   },
   "me": {
     "title": "Ich",

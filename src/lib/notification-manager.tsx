@@ -31,6 +31,15 @@ export function NotificationManager() {
     !!profile.notifyPhotosEnabled ||
     !!profile.notifyMacrosEnabled;
 
+  // An item is "scheduled" when it has explicit doseDays with at least one day,
+  // OR a legacy frequency that isn't as_needed/custom. Prevents the daily dose
+  // notification firing when the user has only as_needed compounds.
+  const hasScheduledDoses = protocolItems.some(
+    (p) =>
+      (p.doseDays !== undefined ? p.doseDays.length > 0 : false) ||
+      (p.frequency !== undefined && p.frequency !== 'as_needed' && p.frequency !== 'custom'),
+  );
+
   // Reschedule whenever the inputs that shape the schedule change.
   const scheduleKey = JSON.stringify({
     c: profile.notifyCheckinEnabled,
@@ -40,7 +49,7 @@ export function NotificationManager() {
     m: profile.notifyMacrosEnabled,
     mt: profile.notifyMacroTime,
     p: profile.notifyPhotosEnabled,
-    hp: protocolItems.length > 0,
+    hs: hasScheduledDoses,
     fe: profile.nextFaceEncouragementAt,
     fs: profile.nextFaceScientificAt,
     be: profile.nextBodyEncouragementAt,
@@ -53,7 +62,7 @@ export function NotificationManager() {
     void (async () => {
       const granted = await ensureNotificationPermission();
       if (cancelled || !granted) return;
-      await rescheduleReminders(profile, protocolItems.length > 0);
+      await rescheduleReminders(profile, hasScheduledDoses);
     })();
     return () => {
       cancelled = true;

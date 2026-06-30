@@ -587,6 +587,9 @@
     "dosesToday": "{{count}} doses registradas hoje",
     "quickLog": "Registro rápido",
     "detailedLog": "Registro detalhado",
+    "log": "Registar",
+    "editCharts": "Editar gráficos",
+    "chartsModal": "GRÁFICOS",
     "dayCount": "Dia {{count}}",
     "onTrack": "EM DIA",
     "pending": "PENDENTE",
@@ -635,6 +638,15 @@
     "removeFromProtocol": "Remover do protocolo",
     "noDoses": "Nenhuma dose registrada ainda.",
     "noVials": "Nenhum frasco registrado."
+  },
+  "weekdays": {
+    "mon": "Seg",
+    "tue": "Ter",
+    "wed": "Qua",
+    "thu": "Qui",
+    "fri": "Sex",
+    "sat": "Sáb",
+    "sun": "Dom"
   },
   "me": {
     "title": "Eu",

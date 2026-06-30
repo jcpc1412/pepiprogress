@@ -587,6 +587,9 @@
     "dosesToday": "{{count}} doses logged today",
     "quickLog": "Quick log",
     "detailedLog": "Detailed log",
+    "log": "Log",
+    "editCharts": "Edit charts",
+    "chartsModal": "CHARTS",
     "dayCount": "Day {{count}}",
     "onTrack": "ON TRACK",
     "pending": "PENDING",
@@ -635,6 +638,15 @@
     "removeFromProtocol": "Remove from protocol",
     "noDoses": "No doses logged yet.",
     "noVials": "No vials tracked."
+  },
+  "weekdays": {
+    "mon": "Mon",
+    "tue": "Tue",
+    "wed": "Wed",
+    "thu": "Thu",
+    "fri": "Fri",
+    "sat": "Sat",
+    "sun": "Sun"
   },
   "me": {
     "title": "Me",

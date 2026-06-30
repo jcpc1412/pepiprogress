@@ -78,8 +78,13 @@ async function scheduleDaily(identifier: string, time: string, fallback: string,
  * Rebuild all scheduled reminders from the current profile. This module is the
  * only scheduler, so it cancels everything then re-adds the enabled set —
  * idempotent, no leaked duplicates. No-op on web. Caller ensures permission.
+ *
+ * `hasScheduledDoses` should be true only when at least one protocol item is on
+ * a fixed schedule (i.e. has doseDays with days selected, or a non-as_needed /
+ * non-custom frequency). Prevents the dose notification from firing daily even
+ * when every compound is set to "as needed."
  */
-export async function rescheduleReminders(profile: LocalProfile, hasProtocol: boolean): Promise<void> {
+export async function rescheduleReminders(profile: LocalProfile, hasScheduledDoses: boolean): Promise<void> {
   if (isWeb) return;
   await Notifications.cancelAllScheduledNotificationsAsync();
 
@@ -87,7 +92,7 @@ export async function rescheduleReminders(profile: LocalProfile, hasProtocol: bo
     await scheduleDaily('pepi.checkin', profile.notifyCheckinTime ?? DEFAULT_CHECKIN_TIME, DEFAULT_CHECKIN_TIME,
       'notify.checkinTitle', 'notify.checkinBody');
   }
-  if (profile.notifyDosesEnabled && hasProtocol) {
+  if (profile.notifyDosesEnabled && hasScheduledDoses) {
     await scheduleDaily('pepi.doses', profile.notifyDoseTime ?? DEFAULT_DOSE_TIME, DEFAULT_DOSE_TIME,
       'notify.doseTitle', 'notify.doseBody');
   }

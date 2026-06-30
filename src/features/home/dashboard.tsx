@@ -4,6 +4,7 @@ import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Dimensions,
+  Modal,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
   Pressable,
@@ -14,14 +15,14 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ChamferBox } from '@/components/chamfer';
-import { OptionChip, PrimaryButton } from '@/components/form';
-import { GearIcon } from '@/components/icons';
+import { PrimaryButton } from '@/components/form';
+import { GearIcon, PencilIcon } from '@/components/icons';
 import { LineChart, type ChartPoint } from '@/components/line-chart';
 import { Card, EngravedLabel, StatusPill } from '@/components/surface';
 import { SyncStatus } from '@/components/sync-status';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Chamfer, MaxContentWidth, Spacing } from '@/constants/theme';
+import { Chamfer, MaxContentWidth, Radii, Spacing } from '@/constants/theme';
 import { compoundBySlug } from '@/data/compound-catalog';
 import { TodayDoses } from '@/features/home/today-doses';
 import { useTheme } from '@/hooks/use-theme';
@@ -37,8 +38,11 @@ const CHECKIN_METRICS: { key: keyof CheckinEntry; labelKey: string; unitKey?: st
   { key: 'soreness', labelKey: 'fields.soreness' },
 ];
 
-/** Today as a glanceable dashboard (H-01): swipeable photo/chart card + two log
- *  buttons + a small distillation summary. No form. */
+const ALL_METRIC_KEYS = CHECKIN_METRICS.map((m) => m.key as string);
+
+/** Today as a glanceable dashboard (H-01): swipeable photo/chart card + single log
+ *  button above a distillation summary. Charts default to all 4; pencil icon opens
+ *  a modal to toggle which show (R3-C). */
 export function Dashboard() {
   const { t, i18n } = useTranslation();
   const router = useRouter();
@@ -46,16 +50,18 @@ export function Dashboard() {
   const { openSettings, openLogging } = useOverlay();
   const { entries, photos, doseEvents, profile, setProfile } = useStore();
 
+  const [chartPickerOpen, setChartPickerOpen] = useState(false);
+
   const width = Math.min(Dimensions.get('window').width - Spacing.four * 2, MaxContentWidth);
+
+  // Default to all 4 charts when no preference has been saved (R3-C).
   const selected = useMemo(
-    () => (profile.dashboardMetrics?.length ? profile.dashboardMetrics : ['weight']),
+    () => (profile.dashboardMetrics?.length ? profile.dashboardMetrics : ALL_METRIC_KEYS),
     [profile.dashboardMetrics],
   );
 
   const series = useMemo(() => {
     const dates = Object.keys(entries).sort();
-    // Keep every selected metric — charts with <2 points render an empty frame
-    // (a placeholder that signals "log to fill this in").
     return CHECKIN_METRICS.filter((m) => selected.includes(m.key as string)).map((m) => {
       const points: ChartPoint[] = dates
         .map((d) => ({ label: d.slice(5), value: entries[d]?.[m.key] }))
@@ -80,7 +86,6 @@ export function Dashboard() {
   const loggedToday = !!todayEntry;
   const dosesToday = doseEvents.filter((d) => localDateKey(new Date(d.takenAt)) === today);
 
-  // Data-rich distillation line: "BPC-157 logged · 83.4 kg · +42g" (mockup).
   const distillation = useMemo(() => {
     const names = Array.from(
       new Set(dosesToday.map((d) => (d.compoundSlug ? compoundBySlug(d.compoundSlug)?.canonicalName : null)).filter(Boolean)),
@@ -109,7 +114,6 @@ export function Dashboard() {
     setPage(clamped);
   };
 
-  // Header: locale-formatted date (e.g. "25 JUN 2026") + day badge + compounds.
   const dayCount = Object.keys(entries).length;
   const dateStr = new Date()
     .toLocaleDateString(i18n.language, { day: 'numeric', month: 'short', year: 'numeric' })
@@ -127,6 +131,17 @@ export function Dashboard() {
   ]
     .filter(Boolean)
     .join(' · ');
+
+  const toggleMetric = (key: string) => {
+    const set = new Set(selected);
+    if (set.has(key)) {
+      if (set.size === 1) return; // keep at least one chart
+      set.delete(key);
+    } else {
+      set.add(key);
+    }
+    setProfile({ dashboardMetrics: [...set] });
+  };
 
   return (
     <ThemedView style={styles.container}>
@@ -152,7 +167,7 @@ export function Dashboard() {
         <SyncStatus />
 
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-          {/* Swipeable card with overhanging prev/next chamfer-square nav buttons (handoff §2). */}
+          {/* Swipeable chart/photo carousel with pencil icon to edit which charts show */}
           <View style={styles.carouselWrapper}>
             <ScrollView
               ref={scrollRef}
@@ -213,7 +228,17 @@ export function Dashboard() {
               )}
             </ScrollView>
 
-            {/* Overhanging prev/next buttons at −13px from card edges */}
+            {/* Pencil icon — top-right of carousel area, opens chart toggle modal */}
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('dashboard.editCharts')}
+              onPress={() => setChartPickerOpen(true)}
+              hitSlop={8}
+              style={styles.pencilBtn}>
+              <PencilIcon size={16} color="textMuted" />
+            </Pressable>
+
+            {/* Overhanging prev/next nav buttons */}
             {page > 0 && (
               <Pressable
                 accessibilityRole="button"
@@ -246,7 +271,7 @@ export function Dashboard() {
             )}
           </View>
 
-          {/* Page dots — active = 16px pill in accent; inactive = 5px circle */}
+          {/* Page dots */}
           {pageCount > 1 && (
             <View style={styles.dots}>
               {Array.from({ length: pageCount }, (_, i) => (
@@ -262,24 +287,10 @@ export function Dashboard() {
             </View>
           )}
 
-          {/* Metric selector chips */}
-          <View style={styles.metricChips}>
-            {CHECKIN_METRICS.map((m) => (
-              <OptionChip
-                key={m.key as string}
-                label={t(m.labelKey as 'fields.weight')}
-                selected={selected.includes(m.key as string)}
-                onPress={() => {
-                  const set = new Set(selected);
-                  if (set.has(m.key as string)) set.delete(m.key as string);
-                  else set.add(m.key as string);
-                  setProfile({ dashboardMetrics: [...set] });
-                }}
-              />
-            ))}
-          </View>
+          {/* Single Log button — above the distillation summary (R3-C) */}
+          <PrimaryButton label={t('dashboard.log')} onPress={() => openLogging('quick')} />
 
-          {/* Distillation summary — data-rich line + status pill (mockup) */}
+          {/* Distillation summary */}
           <Card style={styles.summary}>
             <View style={styles.summaryHead}>
               <EngravedLabel>{t('dashboard.distillation')}</EngravedLabel>
@@ -293,24 +304,50 @@ export function Dashboard() {
             </ThemedText>
           </Card>
 
-          {/* Two log buttons */}
-          <View style={styles.buttons}>
-            <View style={styles.buttonHalf}>
-              <PrimaryButton label={t('dashboard.quickLog')} onPress={() => openLogging('quick')} />
-            </View>
-            <View style={styles.buttonHalf}>
-              <PrimaryButton
-                label={t('dashboard.detailedLog')}
-                variant="secondary"
-                onPress={() => openLogging('detailed')}
-              />
-            </View>
-          </View>
-
-          {/* Today's doses — pending/done checklist (redesign R2) */}
+          {/* Today's doses */}
           <TodayDoses />
         </ScrollView>
       </SafeAreaView>
+
+      {/* Chart toggle modal */}
+      <Modal
+        visible={chartPickerOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setChartPickerOpen(false)}>
+        <Pressable style={styles.modalBackdrop} onPress={() => setChartPickerOpen(false)}>
+          <View
+            style={[styles.modalSheet, { backgroundColor: theme.surfaceRaised, borderColor: theme.border }]}
+            onStartShouldSetResponder={() => true}>
+            <EngravedLabel style={styles.modalTitle}>{t('dashboard.chartsModal')}</EngravedLabel>
+            {CHECKIN_METRICS.map((m) => {
+              const active = selected.includes(m.key as string);
+              return (
+                <Pressable
+                  key={m.key as string}
+                  accessibilityRole="checkbox"
+                  accessibilityState={{ checked: active }}
+                  onPress={() => toggleMetric(m.key as string)}
+                  style={[
+                    styles.chartRow,
+                    { borderColor: theme.border },
+                  ]}>
+                  <ThemedText type="smallBold">{t(m.labelKey as 'fields.weight')}</ThemedText>
+                  <View
+                    style={[
+                      styles.checkbox,
+                      {
+                        backgroundColor: active ? theme.accent : 'transparent',
+                        borderColor: active ? theme.accent : theme.border,
+                      },
+                    ]}
+                  />
+                </Pressable>
+              );
+            })}
+          </View>
+        </Pressable>
+      </Modal>
     </ThemedView>
   );
 }
@@ -337,6 +374,13 @@ const styles = StyleSheet.create({
   compareRow: { flexDirection: 'row', gap: Spacing.two },
   compareCol: { flex: 1, gap: Spacing.one, alignItems: 'center' },
   photo: { width: '100%', aspectRatio: 3 / 4, borderRadius: 2 },
+  pencilBtn: {
+    position: 'absolute',
+    top: Spacing.two,
+    right: Spacing.two,
+    zIndex: 20,
+    padding: Spacing.one,
+  },
   navBtn: {
     position: 'absolute',
     top: 0,
@@ -355,7 +399,6 @@ const styles = StyleSheet.create({
   dots: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: Spacing.one },
   dot: { width: 5, height: 5, borderRadius: 3 },
   dotActive: { width: 16, height: 5, borderRadius: 3 },
-  metricChips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
   summary: { gap: Spacing.two },
   summaryHead: {
     flexDirection: 'row',
@@ -363,6 +406,31 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: Spacing.two,
   },
-  buttons: { flexDirection: 'row', gap: Spacing.two },
-  buttonHalf: { flex: 1 },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalSheet: {
+    width: 260,
+    borderRadius: Radii.panel,
+    borderWidth: StyleSheet.hairlineWidth,
+    padding: Spacing.three,
+    gap: Spacing.two,
+  },
+  modalTitle: { marginBottom: Spacing.one },
+  chartRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: Spacing.two,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  checkbox: {
+    width: 18,
+    height: 18,
+    borderRadius: 3,
+    borderWidth: 1.5,
+  },
 });

@@ -587,6 +587,9 @@
     "dosesToday": "{{count}} доз записано сегодня",
     "quickLog": "Быстрая запись",
     "detailedLog": "Подробная запись",
+    "log": "Записать",
+    "editCharts": "Настроить графики",
+    "chartsModal": "ГРАФИКИ",
     "dayCount": "День {{count}}",
     "onTrack": "В НОРМЕ",
     "pending": "ОЖИДАЕТ",
@@ -635,6 +638,15 @@
     "removeFromProtocol": "Удалить из протокола",
     "noDoses": "Дозы ещё не записаны.",
     "noVials": "Флаконы не отслеживаются."
+  },
+  "weekdays": {
+    "mon": "Пн",
+    "tue": "Вт",
+    "wed": "Ср",
+    "thu": "Чт",
+    "fri": "Пт",
+    "sat": "Сб",
+    "sun": "Вс"
   },
   "me": {
     "title": "Я",

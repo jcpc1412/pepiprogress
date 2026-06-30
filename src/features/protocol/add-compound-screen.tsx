@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { DatePicker } from '@/components/date-picker';
+import { WeekdayPicker } from '@/components/weekday-picker';
 import { LabeledInput, OptionChip, PrimaryButton, SingleSelectChips } from '@/components/form';
 import { OverlayHeader } from '@/components/overlay-header';
 import { Card, EngravedLabel, Sunken } from '@/components/surface';
@@ -13,12 +15,11 @@ import { useTheme } from '@/hooks/use-theme';
 import { compoundBySlug } from '@/data/compound-catalog';
 import { CompoundPicker } from '@/features/compounds/compound-picker';
 import { roundTo, suggestReconstitution } from '@/lib/reconstitution';
-import { useStore, type DoseRoute, type Frequency } from '@/lib/store';
+import { useStore, type DoseRoute } from '@/lib/store';
 import { Constants } from '@/types/database';
 
 const DOSE_UNITS = ['mg', 'mcg', 'iu'] as const;
 const ROUTES = Constants.public.Enums.dose_route;
-const FREQUENCIES: Frequency[] = ['daily', 'eod', 'twice_weekly', 'weekly', 'as_needed', 'custom'];
 
 function toMg(dose: number, unit: string): number | null {
   if (unit === 'mcg') return dose / 1000;
@@ -36,8 +37,8 @@ export function AddCompoundScreen({ onClose }: { onClose: () => void }) {
   const [dose, setDose] = useState('');
   const [doseUnit, setDoseUnit] = useState<string>('mg');
   const [route, setRoute] = useState<DoseRoute>();
-  const [frequency, setFrequency] = useState<Frequency>();
-  const [startedAt, setStartedAt] = useState('');
+  const [doseDays, setDoseDays] = useState<number[] | undefined>(undefined);
+  const [startedAt, setStartedAt] = useState<string | undefined>(undefined);
   const [vialMgInput, setVialMgInput] = useState('');
   const [logVial, setLogVial] = useState(true);
 
@@ -69,8 +70,8 @@ export function AddCompoundScreen({ onClose }: { onClose: () => void }) {
       dose: Number.isFinite(doseNum) ? doseNum : undefined,
       doseUnit,
       route,
-      frequency,
-      startedAt: startedAt.trim() || undefined,
+      doseDays,
+      startedAt: startedAt ?? undefined,
       concentration,
     });
     if (canReconstitute && logVial && vialMg > 0) {
@@ -112,7 +113,14 @@ export function AddCompoundScreen({ onClose }: { onClose: () => void }) {
                   placeholderTextColor={theme.textMuted}
                 />
                 <ThemedText type="monoSm" themeColor="textMuted">
-                  {[t(`doseUnits.${doseUnit}` as 'doseUnits.mg'), frequency ? t(`frequencies.${frequency}` as const) : null]
+                  {[
+                    t(`doseUnits.${doseUnit}` as 'doseUnits.mg'),
+                    doseDays && doseDays.length > 0
+                      ? `${doseDays.length}× ${t('frequencies.weekly')}`
+                      : doseDays !== undefined
+                        ? t('frequencies.as_needed')
+                        : null,
+                  ]
                     .filter(Boolean)
                     .join(' · ')
                     .toUpperCase()}
@@ -136,18 +144,14 @@ export function AddCompoundScreen({ onClose }: { onClose: () => void }) {
               </Field>
 
               <Field label={t('protocol.frequency')}>
-                <SingleSelectChips
-                  options={FREQUENCIES.map((f) => ({ value: f, label: t(`frequencies.${f}` as const) }))}
-                  value={frequency}
-                  onChange={setFrequency}
-                />
+                <WeekdayPicker value={doseDays} onChange={setDoseDays} />
               </Field>
 
-              <LabeledInput
+              <DatePicker
                 label={t('protocol.startedAt')}
                 placeholder={t('protocol.startedAtPlaceholder')}
                 value={startedAt}
-                onChangeText={setStartedAt}
+                onChange={setStartedAt}
               />
 
               {canReconstitute && (
