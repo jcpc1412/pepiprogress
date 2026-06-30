@@ -7,12 +7,10 @@ import { EngravedLabel } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
 import { Fonts, Radii, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { localDateKey, useStore, type Sex, type UnitsSystem } from '@/lib/store';
+import { useStore, type UnitsSystem } from '@/lib/store';
 import { Constants } from '@/types/database';
 
 const UNITS = Constants.public.Enums.units_system;
-const SEXES: Sex[] = ['male', 'female', 'ftm', 'mtf'];
-const CYCLE_SEXES: Sex[] = ['female', 'ftm'];
 
 function isAtLeast18(day: number, month: number, year: number): boolean {
   const today = new Date();
@@ -54,9 +52,7 @@ export function AgeGate({ onVerified }: { onVerified: (dobISO: string) => void }
   const is18 = dateValid && isAtLeast18(d, m, y);
   const computedAge = dateValid ? new Date().getFullYear() - y : 0;
 
-  const cycleOn = !!profile.lastPeriodDate;
-  const showCycle = !!profile.sex && CYCLE_SEXES.includes(profile.sex);
-  const canSubmit = dateComplete && !!profile.sex;
+  const canSubmit = dateComplete;
 
   const submit = () => {
     if (!isValidDate(d, m, y)) { setError(t('ageGate.errorInvalid')); return; }
@@ -122,19 +118,6 @@ export function AgeGate({ onVerified }: { onVerified: (dobISO: string) => void }
         </View>
       </View>
 
-      {/* Sex (drives cycle relevance + AI change context) */}
-      <EngravedLabel>{t('about.sex')}</EngravedLabel>
-      <View style={styles.chips}>
-        {SEXES.map((s) => (
-          <OptionChip
-            key={s}
-            label={t(`sex.${s}` as const)}
-            selected={profile.sex === s}
-            onPress={() => setProfile({ sex: s })}
-          />
-        ))}
-      </View>
-
       {/* Units */}
       <EngravedLabel>{t('onboarding.units.title')}</EngravedLabel>
       <View style={styles.chips}>
@@ -147,26 +130,6 @@ export function AgeGate({ onVerified }: { onVerified: (dobISO: string) => void }
           />
         ))}
       </View>
-
-      {/* Cycle opt-in (menstruating users only) */}
-      {showCycle && (
-        <>
-          <EngravedLabel>{t('onboarding.cycle.title')}</EngravedLabel>
-          <View style={styles.chips}>
-            <OptionChip
-              label={t('onboarding.cycle.optIn')}
-              selected={cycleOn}
-              onPress={() =>
-                setProfile(
-                  cycleOn
-                    ? { lastPeriodDate: undefined, cycleLength: undefined }
-                    : { lastPeriodDate: localDateKey(), cycleLength: 28 },
-                )
-              }
-            />
-          </View>
-        </>
-      )}
 
       {error ? (
         <ThemedText type="monoSm" themeColor="signalBad">

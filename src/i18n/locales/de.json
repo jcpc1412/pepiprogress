@@ -72,7 +72,28 @@
       "optIn": "Meinen Zyklus verfolgen"
     },
     "intakeProcedure": "AUFNAHMEVERFAHREN",
-    "beginSelected": "Beginnen · {{count}} ausge."
+    "beginSelected": "Beginnen · {{count}} ausge.",
+    "skip": "Jetzt überspringen",
+    "sex": {
+      "title": "Über dich",
+      "subtitle": "Optional. Hilft, deinen Fortschritt zu kontextualisieren.",
+      "other": "Andere"
+    },
+    "weight": {
+      "title": "Dein Startgewicht",
+      "subtitle": "Optional. Legt deine Basis für die Verlaufsverfolgung fest.",
+      "placeholder": "z.B. 80",
+      "save": "Gewicht speichern"
+    },
+    "account": {
+      "skip": "Ohne Konto fortfahren"
+    },
+    "health": {
+      "title": "Gesundheitsdaten verbinden",
+      "subtitle": "Gewicht, Schlaf und Aktivität aus deinem Tracker abrufen.",
+      "skip": "Überspringen, ich gebe Daten manuell ein",
+      "connected": "Verbunden"
+    }
   },
   "fields": {
     "weight": "Gewicht",

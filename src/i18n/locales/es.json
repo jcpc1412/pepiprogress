@@ -72,7 +72,28 @@
       "optIn": "Seguir mi ciclo"
     },
     "intakeProcedure": "PROCEDIMIENTO DE INGRESO",
-    "beginSelected": "Comenzar · {{count}} sel."
+    "beginSelected": "Comenzar · {{count}} sel.",
+    "skip": "Omitir por ahora",
+    "sex": {
+      "title": "Sobre ti",
+      "subtitle": "Opcional. Ayuda a contextualizar tu progreso.",
+      "other": "Otro"
+    },
+    "weight": {
+      "title": "Tu peso inicial",
+      "subtitle": "Opcional. Establece tu línea base de seguimiento.",
+      "placeholder": "ej. 80",
+      "save": "Guardar peso"
+    },
+    "account": {
+      "skip": "Continuar sin cuenta"
+    },
+    "health": {
+      "title": "Conectar datos de salud",
+      "subtitle": "Rellena peso, sueño y actividad desde tu rastreador.",
+      "skip": "Omitir, introduciré los datos manualmente",
+      "connected": "Conectado"
+    }
   },
   "fields": {
     "weight": "Peso",

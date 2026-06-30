@@ -72,7 +72,28 @@
       "optIn": "Suivre mon cycle"
     },
     "intakeProcedure": "PROCÉDURE D'ENTRÉE",
-    "beginSelected": "Commencer · {{count}} sél."
+    "beginSelected": "Commencer · {{count}} sél.",
+    "skip": "Passer pour l'instant",
+    "sex": {
+      "title": "À votre sujet",
+      "subtitle": "Facultatif. Aide à contextualiser vos progrès.",
+      "other": "Autre"
+    },
+    "weight": {
+      "title": "Votre poids de départ",
+      "subtitle": "Facultatif. Définit votre référence de suivi.",
+      "placeholder": "ex. 80",
+      "save": "Enregistrer le poids"
+    },
+    "account": {
+      "skip": "Continuer sans compte"
+    },
+    "health": {
+      "title": "Connecter les données de santé",
+      "subtitle": "Remplissez poids, sommeil et activité depuis votre tracker.",
+      "skip": "Ignorer, je saisirai les données manuellement",
+      "connected": "Connecté"
+    }
   },
   "fields": {
     "weight": "Poids",

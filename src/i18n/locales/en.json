@@ -72,6 +72,27 @@
       "title": "Track your cycle?",
       "subtitle": "Optional. Flags normal water-retention weeks so you don't mistake them for lack of progress. You can change this anytime.",
       "optIn": "Track my cycle"
+    },
+    "skip": "Skip for now",
+    "sex": {
+      "title": "About you",
+      "subtitle": "Optional. Helps contextualize your progress.",
+      "other": "Other"
+    },
+    "weight": {
+      "title": "Your starting weight",
+      "subtitle": "Optional. Sets your baseline for trend tracking.",
+      "placeholder": "e.g. 80",
+      "save": "Save weight"
+    },
+    "account": {
+      "skip": "Start without account"
+    },
+    "health": {
+      "title": "Connect health data",
+      "subtitle": "Auto-fill weight, sleep, and activity from your health tracker.",
+      "skip": "Skip, I'll enter data manually",
+      "connected": "Connected"
     }
   },
   "fields": {
