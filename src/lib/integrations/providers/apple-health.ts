@@ -34,7 +34,11 @@ async function authenticate(): Promise<boolean> {
     'HKCategoryTypeIdentifierSleepAnalysis',
   ] as Parameters<ReturnType<typeof hk>['requestAuthorization']>[0]['toRead'] & string[];
   try {
-    return await mod.requestAuthorization({ toRead });
+    await mod.requestAuthorization({ toRead });
+    // iOS never exposes whether the user actually granted — the promise resolves
+    // regardless of the choice (Apple privacy). Assume granted after the sheet
+    // dismisses; if they denied, reads will return empty and we handle gracefully.
+    return true;
   } catch {
     return false;
   }
