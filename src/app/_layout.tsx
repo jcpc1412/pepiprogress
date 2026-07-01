@@ -11,6 +11,7 @@ import '@/i18n';
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { AuthProvider } from '@/lib/auth';
 import { CloudSync } from '@/lib/cloud-sync';
+import { IntegrationSync } from '@/lib/integration-sync';
 import { LanguageSync } from '@/lib/language-sync';
 import { NotificationManager } from '@/lib/notification-manager';
 import { StoreProvider } from '@/lib/store';
@@ -34,6 +35,8 @@ function RootContent() {
       <NotificationManager />
       {/* Applies the saved language preference on launch; renders nothing. */}
       <LanguageSync />
+      {/* Passively pulls connected health sources on foreground; renders nothing. */}
+      <IntegrationSync />
       {/* Provides SyncStatus context + debounced cloud backup while signed in. */}
       <CloudSync>
         <Stack screenOptions={{ headerShown: false }}>

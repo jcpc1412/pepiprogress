@@ -117,6 +117,37 @@ export function DetailedLog({ onDismiss }: { onDismiss?: () => void } = {}) {
   );
   const shown = useMemo(() => new Set(fields), [fields]);
 
+  // Nutrition surfaces when a goal/effect-tag asks for it OR a health source has
+  // supplied a reading for the day — so passively-synced calories/macros always
+  // have somewhere to land, even if the user's goals wouldn't surface them.
+  const nutritionActive = useMemo(
+    () =>
+      NUTRITION_FIELDS.filter(
+        (n) => fields.includes(n.field) || metricForDate(metricReadings, n.metric, date),
+      ),
+    [fields, metricReadings, date],
+  );
+
+  // Passive fill: when a synced nutrition reading exists and the field is still
+  // empty, write it once (per date/field, per session) so the value is "filled
+  // up by the integration". A conflicting user-typed value is never overwritten
+  // — that case still shows the tap-to-apply link below the input.
+  const autoFilledRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    for (const n of nutritionActive) {
+      const key = `${date}-${n.field}`;
+      if (autoFilledRef.current.has(key)) continue;
+      if (entries[date]?.[n.field] !== undefined) {
+        autoFilledRef.current.add(key);
+        continue;
+      }
+      const reading = metricForDate(metricReadings, n.metric, date);
+      if (!reading) continue;
+      autoFilledRef.current.add(key);
+      upsertCheckin(date, { [n.field]: Math.round(reading.value) });
+    }
+  }, [nutritionActive, date, entries, metricReadings, upsertCheckin]);
+
   const history = useMemo(
     () => Object.keys(entries).sort((a, b) => (a < b ? 1 : -1)).slice(0, 7),
     [entries],
@@ -240,10 +271,10 @@ export function DetailedLog({ onDismiss }: { onDismiss?: () => void } = {}) {
         </View>
       )}
 
-      {NUTRITION_FIELDS.some((n) => fields.includes(n.field)) && (
+      {nutritionActive.length > 0 && (
         <Card style={styles.section}>
           <EngravedLabel>{t('checkin.nutrition')}</EngravedLabel>
-          {NUTRITION_FIELDS.filter((n) => fields.includes(n.field)).map((n) => {
+          {nutritionActive.map((n) => {
             const reading = metricForDate(metricReadings, n.metric, date);
             const synced = reading ? Math.round(reading.value) : undefined;
             return (
