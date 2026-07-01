@@ -122,8 +122,10 @@ M0 → M1 → M2 → M3 → M4 → M5 → Polish → V2 → V3
 
 - **Integrations (06):**
   - **Provider framework ✅ (foundation in)** — canonical metric model (`src/lib/integrations/types.ts`), provider registry (`registry.ts`), `MetricReading` + `integrations` connection state in the store (`addMetricReadings` dedupes by provider+metric+ts; `setIntegration`), and a "Data sources" settings card (`integration-settings.tsx`, Protocol tab) that connects + syncs + ingests readings. Readings ride the `user_state` snapshot.
-  - **Apple Health ⏳** — registered Tier-0 provider (iOS-gated, declares 7 capabilities), `nativeReady: false`: the HealthKit native read (`readHealthKit` in `providers/apple-health.ts`) is the device-build step (needs a HealthKit dep + config plugin + physical iOS device; not installed blind against RN 0.85). Flip `nativeReady` + implement the mapper to switch on — no other file changes.
-  - **Next:** Health Connect (Android) provider, Terra aggregator, then auto-fill canonical readings into the daily log (the "lower logging burden" payoff). Tier-1 direct adapters are V2.
+  - **Apple Health + Health Connect ✅ (code)** — both Tier-0 providers implemented and `nativeReady: true`: `readHealthKit` (`providers/apple-health.ts`, `@kingstinct/react-native-healthkit`) and `readHealthConnect` (`providers/health-connect.ts`, `react-native-health-connect`) request read permission and map to canonical metrics — body weight/fat/lean, steps, active energy, resting HR, HRV, sleep, **nutrition (calories + protein + carbs + fat)**, cycle. ⚠️ **Native rebuild required:** the nutrition read scope is newer than any build made before it was added, so an installed build won't request nutrition permission until rebuilt (`npx expo run:ios` / `run:android`). Device-verify the HealthKit/Health Connect permission + read path.
+  - **Passive sync ✅** — `src/lib/integration-sync.tsx` (`IntegrationSync`, mounted in the root layout) pulls every connected + native-ready + platform-available provider on mount and on app foreground (`AppState`), incremental since `lastSyncAt`, rate-limited to 15 min, no-op on web. Removes the "tap Sync now or nothing updates" gap — this is the "pull passively" behavior. The manual "Sync now" in Data sources still works.
+  - **Nutrition autofill ✅** — the daily check-in surfaces protein/calories whenever a goal/effect-tag asks OR a synced reading exists for the day, and passively fills an empty field from the reading (a conflicting typed value is never overwritten — it shows a tap-to-apply link instead). `detailed-log.tsx` + `metricForDate`.
+  - **Next:** Terra aggregator (dormant on cost). Tier-1 direct adapters are V2.
   - Deferrable overall — AI chat logging already makes manual input painless.
 - **Coach/doctor export ✅** — client-side PDF via `expo-print` (`src/lib/report.ts`: check-ins, dose log, symptoms; localized; HTML-escaped; "self-reported, not a medical record" footer). Button in Privacy settings. Premium-gateable at launch (03/12).
 - **Retroactive photo import ✅** — `expo-image-picker` "Import a photo from your library" in `progress-photos.tsx`; uses the photo's EXIF capture date when available, else now. Lets mid-cycle joiners establish a real baseline (04).
@@ -136,6 +138,17 @@ M0 → M1 → M2 → M3 → M4 → M5 → Polish → V2 → V3
 - **Typography + chamfers** — IBM Plex Mono / Inter via `@expo-google-fonts/*` (needs a weight→family map in `themed-text` so bold renders) + true 45° chamfers via `react-native-svg`. Cosmetic, token-swappable. *(Deferred — focused visual task.)*
 - **Lab-PDF parsing & vial scan** — AI-vision features (05/06); build them alongside the integrations/AI focus, not here.
 - **Drive backup** — Google OAuth + Drive API (06); its own OAuth-heavy track.
+
+### Harvested from product review (2026-06-30) — see `docs/gpt-analysis-review.md`
+
+Cheap, high-leverage items pulled from the GPT architecture/vision review. Kept small on purpose; the big ideas from that doc (experiment-engine rewrite, knowledge graph, multi-agent AI) are **not** adopted — they're a V2+ lens, not a pre-launch refactor.
+
+- **Provenance surfacing** — metric cards / autofill show the source + freshness ("from Apple Health", "estimated") using the `MetricReading.sourceProvider` + `confidence` the data model already carries. Trust win, near-zero cost.
+- **"No measurable change detected"** — a deterministic negative-result output (nothing happened within current data quality). Differentiated + honest for compound users; the encouragement/scientific AI actions narrate it, they don't invent it.
+- **Designed silence** — "nothing meaningful changed since your last visit" is a valid, styled home state (Today's Distillation), not a gap to fill with noise. Overproducing insights kills trust.
+- **Outcome-first copy** — lead marketing/onboarding with "know whether your protocol is working"; AI mentioned late, never in the headline (it's table stakes in 2026, not a differentiator).
+
+**Locked decisions from the review:** no data-model rewrite pre-launch; wedge stays on peptides/anabolics/hormones while the engine stays intervention-generic underneath; keep the "observability, not recommendations" line (do not adopt the doc's "decision engine" framing — it reintroduces deferred-dosing/advice risk); the **photo reveal is the emotional payoff** (treat it as the reward, not "just another evidence type").
 
 ---
 
@@ -158,6 +171,8 @@ M0 → M1 → M2 → M3 → M4 → M5 → Polish → V2 → V3
 - Stratify outcomes by compound covariates (peptide + TRT/AAS + ancillaries + supplements) and by the confounders the integrations now capture (training load, protein, calories, sleep) — the scientific edge (06).
 
 **Deeper AI insights (05/13):** compound-specific trend analysis, own-data Q&A across full history, "what changed when I added X" correlations. Larger model calls than the M3 quick-parse path.
+
+**"Ask Pepi" — query-bar navigation (from the product review):** a Spotlight/⌘K-style bar ("Search your biology…"), **not** a chatbot, that answers a fixed set of deterministic question shapes over existing metrics (nutrition, sleep, workload, weight, doses) — "show my sleep last week", "when did I log the most protein", "compare this week to last". Deterministic layer computes; the `insights` AI action only phrases the result, with hard "insufficient data" guards. Rationale: solves the navigation-doesn't-scale problem as history grows, fits the instrument aesthetic, and keeps AI as invisible infrastructure. **Deferred to V2 on purpose** — the query bar is empty-feeling until there's a history worth querying; at beta-scale the swipeable charts already cover it. Must never become a friendly assistant ("Hi! 😊") — it's a lab query bar.
 
 ---
 
