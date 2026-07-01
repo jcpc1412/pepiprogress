@@ -10,12 +10,13 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  TextInput,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ChamferBox } from '@/components/chamfer';
-import { PrimaryButton } from '@/components/form';
+import { PrimaryButton, TextButton } from '@/components/form';
 import { GearIcon, PencilIcon } from '@/components/icons';
 import { LineChart, type ChartPoint } from '@/components/line-chart';
 import { Card, EngravedLabel, StatusPill } from '@/components/surface';
@@ -49,9 +50,11 @@ export function Dashboard() {
   const router = useRouter();
   const theme = useTheme();
   const { openSettings, openLogging } = useOverlay();
-  const { entries, photos, doseEvents, profile, setProfile } = useStore();
+  const { entries, photos, doseEvents, profile, setProfile, upsertCheckin } = useStore();
 
   const [chartPickerOpen, setChartPickerOpen] = useState(false);
+  const [editingNote, setEditingNote] = useState(false);
+  const [noteDraft, setNoteDraft] = useState('');
 
   const width = Math.min(Dimensions.get('window').width - Spacing.four * 2, MaxContentWidth);
 
@@ -100,6 +103,15 @@ export function Dashboard() {
     ].filter(Boolean);
     return parts.join(' · ');
   }, [dosesToday, todayEntry, profile.units, t]);
+
+  const startEditNote = () => {
+    setNoteDraft(todayEntry?.note ?? '');
+    setEditingNote(true);
+  };
+  const saveNote = () => {
+    upsertCheckin(today, { note: noteDraft.trim() || undefined });
+    setEditingNote(false);
+  };
 
   const pageCount = photoPages.length + series.length || 1;
   const [page, setPage] = useState(0);
@@ -292,30 +304,72 @@ export function Dashboard() {
           {/* Single Log button — above the distillation summary (R3-C) */}
           <PrimaryButton label={t('dashboard.log')} onPress={() => openLogging('quick')} />
 
-          {/* Distillation summary — shows background quick-log status when active. */}
+          {/* Distillation summary — shows background quick-log status when active,
+              and an editable personal note (pencil) the user can amend/append. */}
           <Card style={styles.summary}>
             <View style={styles.summaryHead}>
               <EngravedLabel>{t('dashboard.distillation')}</EngravedLabel>
-              {quickLog.state === 'distilling' ? (
-                <StatusPill label={t('dashboard.distillingPill')} tone="neutral" />
-              ) : quickLog.state === 'error' ? (
-                <StatusPill label={t('dashboard.distillErrorPill')} tone="bad" />
-              ) : (
-                <StatusPill
-                  label={loggedToday ? t('dashboard.onTrack') : t('dashboard.pending')}
-                  tone={loggedToday ? 'good' : 'neutral'}
-                />
-              )}
+              <View style={styles.summaryHeadRight}>
+                {quickLog.state === 'distilling' ? (
+                  <StatusPill label={t('dashboard.distillingPill')} tone="neutral" />
+                ) : quickLog.state === 'error' ? (
+                  <StatusPill label={t('dashboard.distillErrorPill')} tone="bad" />
+                ) : (
+                  <StatusPill
+                    label={loggedToday ? t('dashboard.onTrack') : t('dashboard.pending')}
+                    tone={loggedToday ? 'good' : 'neutral'}
+                  />
+                )}
+                {quickLog.state !== 'distilling' && !editingNote && (
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={t('dashboard.editNote')}
+                    onPress={startEditNote}
+                    hitSlop={8}>
+                    <PencilIcon size={16} color="textMuted" />
+                  </Pressable>
+                )}
+              </View>
             </View>
-            <ThemedText type="small" themeColor="textSecondary">
-              {quickLog.state === 'distilling'
-                ? t('dashboard.distilling')
-                : quickLog.state === 'error'
-                  ? t('dashboard.distillError')
-                  : quickLog.state === 'done' && quickLog.summary
-                    ? quickLog.summary
-                    : distillation || t('dashboard.notLoggedToday')}
-            </ThemedText>
+
+            {editingNote ? (
+              <View style={styles.noteEditor}>
+                <TextInput
+                  style={[styles.noteInput, { color: theme.text, borderColor: theme.border }]}
+                  value={noteDraft}
+                  onChangeText={setNoteDraft}
+                  placeholder={t('dashboard.notePlaceholder')}
+                  placeholderTextColor={theme.textMuted}
+                  multiline
+                  autoFocus
+                />
+                <View style={styles.noteActions}>
+                  <TextButton label={t('common.cancel')} onPress={() => setEditingNote(false)} />
+                  <Pressable accessibilityRole="button" onPress={saveNote} hitSlop={8}>
+                    <ThemedText type="smallBold" themeColor="accent">
+                      {t('common.save')}
+                    </ThemedText>
+                  </Pressable>
+                </View>
+              </View>
+            ) : (
+              <>
+                <ThemedText type="small" themeColor="textSecondary">
+                  {quickLog.state === 'distilling'
+                    ? t('dashboard.distilling')
+                    : quickLog.state === 'error'
+                      ? t('dashboard.distillError')
+                      : quickLog.state === 'done' && quickLog.summary
+                        ? quickLog.summary
+                        : distillation || t('dashboard.notLoggedToday')}
+                </ThemedText>
+                {todayEntry?.note ? (
+                  <ThemedText type="small" themeColor="text" style={styles.noteText}>
+                    {todayEntry.note}
+                  </ThemedText>
+                ) : null}
+              </>
+            )}
           </Card>
 
           {/* Today's doses */}
@@ -419,6 +473,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: Spacing.two,
+  },
+  summaryHeadRight: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
+  noteText: { fontStyle: 'italic' },
+  noteEditor: { gap: Spacing.two },
+  noteInput: {
+    minHeight: 60,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: Radii.chamfer,
+    padding: Spacing.two,
+    textAlignVertical: 'top',
+    fontSize: 14,
+  },
+  noteActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   modalBackdrop: {
     flex: 1,

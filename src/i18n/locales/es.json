@@ -664,7 +664,9 @@
     "distilling": "Destilando tu entrada…",
     "distillingPill": "Destilando",
     "distillError": "No se pudo conectar. Reintentaremos automáticamente.",
-    "distillErrorPill": "En cola"
+    "distillErrorPill": "En cola",
+    "editNote": "Editar nota",
+    "notePlaceholder": "Añade una nota de hoy…"
   },
   "addCompound": {
     "title": "Añadir compuesto",

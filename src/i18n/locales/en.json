@@ -664,7 +664,9 @@
     "distilling": "Distilling your entry…",
     "distillingPill": "Distilling",
     "distillError": "Couldn’t reach the service. We’ll retry automatically.",
-    "distillErrorPill": "Queued"
+    "distillErrorPill": "Queued",
+    "editNote": "Edit note",
+    "notePlaceholder": "Add a note for today…"
   },
   "addCompound": {
     "title": "Add compound",

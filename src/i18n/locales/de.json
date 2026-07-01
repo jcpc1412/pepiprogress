@@ -664,7 +664,9 @@
     "distilling": "Dein Eintrag wird destilliert…",
     "distillingPill": "Läuft",
     "distillError": "Dienst nicht erreichbar. Wir versuchen es automatisch erneut.",
-    "distillErrorPill": "In Warteschlange"
+    "distillErrorPill": "In Warteschlange",
+    "editNote": "Notiz bearbeiten",
+    "notePlaceholder": "Notiz für heute hinzufügen…"
   },
   "addCompound": {
     "title": "Wirkstoff hinzufügen",

@@ -664,7 +664,9 @@
     "distilling": "Distillation de votre saisie…",
     "distillingPill": "Distillation",
     "distillError": "Service injoignable. Nouvelle tentative automatique.",
-    "distillErrorPill": "En file"
+    "distillErrorPill": "En file",
+    "editNote": "Modifier la note",
+    "notePlaceholder": "Ajouter une note pour aujourd’hui…"
   },
   "addCompound": {
     "title": "Ajouter un composé",

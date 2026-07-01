@@ -664,7 +664,9 @@
     "distilling": "Destilando sua entrada…",
     "distillingPill": "Destilando",
     "distillError": "Serviço indisponível. Tentaremos de novo automaticamente.",
-    "distillErrorPill": "Na fila"
+    "distillErrorPill": "Na fila",
+    "editNote": "Editar nota",
+    "notePlaceholder": "Adicione uma nota de hoje…"
   },
   "addCompound": {
     "title": "Adicionar composto",

@@ -664,7 +664,9 @@
     "distilling": "Обрабатываем вашу запись…",
     "distillingPill": "Обработка",
     "distillError": "Сервис недоступен. Повторим попытку автоматически.",
-    "distillErrorPill": "В очереди"
+    "distillErrorPill": "В очереди",
+    "editNote": "Изменить заметку",
+    "notePlaceholder": "Добавьте заметку на сегодня…"
   },
   "addCompound": {
     "title": "Добавить препарат",
