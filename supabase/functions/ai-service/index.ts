@@ -472,7 +472,7 @@ Deno.serve(async (req: Request) => {
         model: PARSE_MODEL,
         max_tokens: 1024,
         system: parseSystemPrompt(body.catalog ?? [], nowISO, locale),
-        output_config: { format: { type: 'json_schema', schema: PARSE_SCHEMA } },
+        ...structured(PARSE_SCHEMA),
         messages: [{ role: 'user', content: body.text }],
       });
       return json(extractJson(message, { reply: '', items: [] }), 200);
@@ -503,7 +503,7 @@ Deno.serve(async (req: Request) => {
           bodyTypeCalibration: body.bodyTypeCalibration,
           cycleWeek: body.cycleWeek,
         }),
-        output_config: { format: { type: 'json_schema', schema: ANALYZE_SCHEMA } },
+        ...structured(ANALYZE_SCHEMA),
         // deno-lint-ignore no-explicit-any
         messages: [{ role: 'user', content: content as any }],
       });
@@ -556,7 +556,7 @@ Deno.serve(async (req: Request) => {
         model: ENCOURAGE_MODEL,
         max_tokens: 300,
         system: simpleSystemPrompt(locale),
-        output_config: { format: { type: 'json_schema', schema: SIMPLE_SCHEMA } },
+        ...structured(SIMPLE_SCHEMA),
         messages: [{ role: 'user', content: userContext }],
       });
       return json(extractJson(message, { message: '' }), 200);
@@ -570,7 +570,7 @@ Deno.serve(async (req: Request) => {
         model: VISION_MODEL,
         max_tokens: 1024,
         system: labSystemPrompt(locale),
-        output_config: { format: { type: 'json_schema', schema: LAB_SCHEMA } },
+        ...structured(LAB_SCHEMA),
         messages: [
           {
             role: 'user',
@@ -590,7 +590,7 @@ Deno.serve(async (req: Request) => {
         model: VISION_MODEL,
         max_tokens: 256,
         system: vialSystemPrompt(locale),
-        output_config: { format: { type: 'json_schema', schema: VIAL_SCHEMA } },
+        ...structured(VIAL_SCHEMA),
         messages: [
           {
             role: 'user',
@@ -624,7 +624,7 @@ Deno.serve(async (req: Request) => {
         model: INSIGHTS_MODEL,
         max_tokens: 900,
         system: insightsSystemPrompt(mode, locale),
-        output_config: { format: { type: 'json_schema', schema: INSIGHTS_SCHEMA } },
+        ...structured(INSIGHTS_SCHEMA),
         messages: [{ role: 'user', content: userContent }],
       });
       return json(extractJson(message, { answer: '', insufficientData: true }), 200);
@@ -636,10 +636,19 @@ Deno.serve(async (req: Request) => {
       const message = await client.messages.create({
         model: PARSE_MODEL,
         max_tokens: 120,
+        ...structured({
+          type: 'object',
+          additionalProperties: false,
+          properties: {
+            fit: { type: 'string', enum: ['good', 'acceptable', 'poor'] },
+            confidence: { type: 'number', description: '0..1' },
+            hint: { type: 'string', description: 'Under 10 words; specific + actionable when fit is not good.' },
+          },
+          required: ['fit', 'confidence'],
+        }),
         system: [
           'You are a photo fit-checker. Given a baseline photo and a new photo, assess whether',
           'the user\'s position, distance, and angle in the new photo are comparable to the baseline.',
-          'Return only JSON: {"fit":"good"|"acceptable"|"poor","confidence":0.0-1.0,"hint":"<10 words if poor/acceptable>"}.',
           'Rules: "good" = similar framing; "acceptable" = minor difference; "poor" = substantially',
           'different angle/distance or subject out of frame. hint must be specific and actionable.',
         ].join(' '),
@@ -777,10 +786,30 @@ function mapTerraRecord(type: string, r: any, out: ProviderReading[]) {
   }
 }
 
+// Structured output is produced via a forced tool call (see `structured` below),
+// so the result rides a tool_use block. Falls back to parsing a text block for
+// any prompt that still returns raw JSON.
 // deno-lint-ignore no-explicit-any
 function extractJson(message: any, fallback: unknown): unknown {
+  const toolBlock = message.content.find((b: { type: string }) => b.type === 'tool_use');
+  if (toolBlock && 'input' in toolBlock) return toolBlock.input;
   const textBlock = message.content.find((b: { type: string }) => b.type === 'text');
-  return textBlock && 'text' in textBlock ? JSON.parse(textBlock.text) : fallback;
+  if (textBlock && 'text' in textBlock) {
+    try { return JSON.parse(textBlock.text); } catch { /* fall through */ }
+  }
+  return fallback;
+}
+
+/**
+ * Forced-tool-call params for structured output. Replaces the `output_config`
+ * json_schema path, whose grammar compilation timed out on the larger schemas
+ * (the parse_log spinner). Tool use is the robust way to get JSON from Claude.
+ */
+function structured(schema: unknown) {
+  return {
+    tools: [{ name: 'record', description: 'Record the structured result.', input_schema: schema }],
+    tool_choice: { type: 'tool' as const, name: 'record' },
+  };
 }
 
 function json(data: unknown, status: number): Response {
