@@ -10,6 +10,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { compoundBySlug } from '@/data/compound-catalog';
+import { AskPepi } from '@/features/ask/ask-pepi';
 import { Insights } from '@/features/insights/insights';
 import { daysBetween } from '@/lib/dates';
 import { useOverlay } from '@/lib/nav-overlay';
@@ -59,6 +60,7 @@ export function InsightsScreen() {
         </View>
 
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+          <AskPepi />
           <SummaryCards />
           <ChartsSection />
           {!unlocked && (

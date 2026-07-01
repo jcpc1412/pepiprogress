@@ -40,6 +40,7 @@ function flattenMap(obj, prefix = '', out = {}) {
 // added with an English value in a non-EN locale (a real miss) is NOT in this
 // list and will fail the check. Keep this tight — only add verified identicals.
 const IDENTICAL_OK = new Set([
+  'ask.ratingSuffix', 'ask.sampleCount', 'ask.aggSum', 'ask.doses', 'ask.dosesUnit',
   'addCompound.reconTitle', 'ageGate.ageOk', 'ageGate.dayPlaceholder', 'ageGate.monthPlaceholder',
   'app.name', 'appearance.auto', 'checkin.nutrition', 'common.ok', 'compounds.customName',
   'compounds.injectable', 'doseUnits.mcg', 'doseUnits.mg', 'doseUnits.iu', 'fields.calories',
