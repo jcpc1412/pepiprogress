@@ -83,7 +83,8 @@
       "title": "Tu peso inicial",
       "subtitle": "Opcional. Establece tu línea base de seguimiento.",
       "placeholder": "ej. 80",
-      "save": "Guardar peso"
+      "save": "Guardar peso",
+      "fromHealth": "Rellenado desde tus datos de Salud."
     },
     "account": {
       "skip": "Continuar sin cuenta"
@@ -528,7 +529,10 @@
     "restoredTitle": "Datos restaurados",
     "restoredBody": "Tus datos han sido cargados en este dispositivo.",
     "partialSync": "{{count}} elemento(s) no pudieron sincronizarse, tus datos locales están seguros.",
-    "errorMissingFields": "Por favor ingresa tu email y contraseña."
+    "errorMissingFields": "Por favor ingresa tu email y contraseña.",
+    "continueApple": "Continuar con Apple",
+    "continueGoogle": "Continuar con Google",
+    "orEmail": "o con correo"
   },
   "account": {
     "section": "CUENTA",

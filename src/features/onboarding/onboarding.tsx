@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -11,10 +11,11 @@ import { ThemedView } from '@/components/themed-view';
 import { Chamfer, Fonts, MaxContentWidth, Radii, Spacing } from '@/constants/theme';
 import { BodySilhouette } from '@/features/onboarding/body-silhouette';
 import { useTheme } from '@/hooks/use-theme';
-import { useAuth } from '@/lib/auth';
+import { useAuth, type OAuthProvider } from '@/lib/auth';
 import type { Goal } from '@/lib/field-surfacing';
+import { weightInUnits } from '@/lib/integrations/autofill';
 import { availableProviders } from '@/lib/integrations/registry';
-import { useStore, type Sex } from '@/lib/store';
+import { useStore } from '@/lib/store';
 import { mergeStates, migrateToCloud, pullFromCloud, pullSnapshot, pushSnapshot } from '@/lib/sync';
 import { isSupabaseConfigured } from '@/lib/supabase';
 import { Constants } from '@/types/database';
@@ -25,15 +26,14 @@ import { ConsentPhotoAI, ConsentPhotoStorage } from './consent-photos';
 const GOALS = Constants.public.Enums.goal;
 
 // Steps:
-// 0 = Age gate
-// 1 = Sex picker
-// 2 = Weight baseline
-// 3 = Photo-storage consent
-// 4 = Photo-AI consent
-// 5 = Goals
-// 6 = Account (optional)
-// 7 = Health connector (optional)
-const TOTAL_STEPS = 8;
+// 0 = Account (optional — sign in/up first, incl. Apple/Google)
+// 1 = Age gate (DOB + sex + units)
+// 2 = Health connector (optional — enables weight autofill)
+// 3 = Weight baseline (prefilled from Health when available)
+// 4 = Photo-storage consent
+// 5 = Photo-AI consent
+// 6 = Goals
+const TOTAL_STEPS = 7;
 
 // ─── Progress bar ────────────────────────────────────────────────────────────
 
@@ -129,121 +129,28 @@ function GoalChip({ goal, selected, onPress }: { goal: Goal; selected: boolean; 
   );
 }
 
-// ─── Sex chip ────────────────────────────────────────────────────────────────
-
-function SexChip({ label, selected, onPress }: { label: string; selected: boolean; onPress: () => void }) {
-  const theme = useTheme();
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityState={{ selected }}
-      onPress={onPress}
-      style={[
-        styles.sexChip,
-        {
-          backgroundColor: selected ? theme.accent : theme.surfaceSunken,
-          borderColor: selected ? theme.accent : theme.border,
-        },
-      ]}>
-      <ThemedText type="mono" themeColor={selected ? 'onAccent' : 'text'}>
-        {label}
-      </ThemedText>
-    </Pressable>
-  );
-}
-
-// ─── Step 1: Sex picker ───────────────────────────────────────────────────────
-
-const CYCLE_SEXES: Sex[] = ['female', 'ftm'];
-
-function SexStep({ onNext, onBack }: { onNext: () => void; onBack: () => void }) {
-  const { t } = useTranslation();
-  const { profile, setProfile } = useStore();
-  const [showTrans, setShowTrans] = useState(profile.sex === 'ftm' || profile.sex === 'mtf');
-
-  const setSex = (s: Sex | undefined) => setProfile({ sex: s });
-  const showCycle = !!profile.sex && CYCLE_SEXES.includes(profile.sex);
-  const cycleOn = !!profile.lastPeriodDate;
-
-  return (
-    <View style={styles.section}>
-      <View style={styles.titleBlock}>
-        <ThemedText type="label" themeColor="textMuted">{t('onboarding.intakeProcedure')}</ThemedText>
-        <ThemedText type="display">{t('onboarding.sex.title')}</ThemedText>
-        <ThemedText themeColor="textSecondary">{t('onboarding.sex.subtitle')}</ThemedText>
-      </View>
-
-      <View style={styles.sexRow}>
-        <SexChip
-          label={t('sex.male')}
-          selected={profile.sex === 'male'}
-          onPress={() => { setSex('male'); setShowTrans(false); }}
-        />
-        <SexChip
-          label={t('sex.female')}
-          selected={profile.sex === 'female'}
-          onPress={() => { setSex('female'); setShowTrans(false); }}
-        />
-        <SexChip
-          label={t('onboarding.sex.other')}
-          selected={showTrans && profile.sex !== 'male' && profile.sex !== 'female'}
-          onPress={() => {
-            setShowTrans(true);
-            if (profile.sex === 'male' || profile.sex === 'female') setSex(undefined);
-          }}
-        />
-      </View>
-
-      {showTrans && (
-        <View style={styles.sexRow}>
-          <SexChip
-            label={t('sex.ftm')}
-            selected={profile.sex === 'ftm'}
-            onPress={() => setSex('ftm')}
-          />
-          <SexChip
-            label={t('sex.mtf')}
-            selected={profile.sex === 'mtf'}
-            onPress={() => setSex('mtf')}
-          />
-        </View>
-      )}
-
-      {showCycle && (
-        <View style={styles.cycleRow}>
-          <SexChip
-            label={t('onboarding.cycle.optIn')}
-            selected={cycleOn}
-            onPress={() =>
-              setProfile(
-                cycleOn
-                  ? { lastPeriodDate: undefined, cycleLength: undefined }
-                  : { lastPeriodDate: new Date().toISOString().slice(0, 10), cycleLength: 28 },
-              )
-            }
-          />
-        </View>
-      )}
-
-      <View style={styles.footer}>
-        <View style={styles.backButton}>
-          <PrimaryButton label={t('onboarding.back')} variant="secondary" onPress={onBack} />
-        </View>
-        <View style={styles.nextButton}>
-          <PrimaryButton label={t('onboarding.skip')} onPress={onNext} />
-        </View>
-      </View>
-    </View>
-  );
-}
-
-// ─── Step 2: Weight baseline ──────────────────────────────────────────────────
+// ─── Weight baseline ─────────────────────────────────────────────────────────
 
 function WeightStep({ onNext, onBack }: { onNext: () => void; onBack: () => void }) {
   const { t } = useTranslation();
   const theme = useTheme();
-  const { profile, setProfile } = useStore();
-  const [raw, setRaw] = useState(profile.weightBaseline ? String(profile.weightBaseline) : '');
+  const { profile, setProfile, metricReadings } = useStore();
+  // Latest Health weight reading (decision: weight from integration), computed at
+  // render so we can seed the input without a setState-in-effect.
+  const healthWeight = useMemo(() => {
+    const latest = metricReadings
+      .filter((r) => r.metric === 'body.weight')
+      .sort((a, b) => (a.ts < b.ts ? 1 : -1))[0];
+    return latest ? weightInUnits(latest.value, profile.units) : undefined;
+  }, [metricReadings, profile.units]);
+  const [raw, setRaw] = useState(
+    profile.weightBaseline != null
+      ? String(profile.weightBaseline)
+      : healthWeight != null
+        ? String(healthWeight)
+        : '',
+  );
+  const [fromHealth, setFromHealth] = useState(profile.weightBaseline == null && healthWeight != null);
   const [error, setError] = useState<string | null>(null);
   const unit = profile.units === 'imperial' ? t('units.lb') : t('units.kg');
 
@@ -274,12 +181,15 @@ function WeightStep({ onNext, onBack }: { onNext: () => void; onBack: () => void
             placeholderTextColor={theme.textMuted}
             keyboardType="decimal-pad"
             value={raw}
-            onChangeText={(v) => { setRaw(v); setError(null); }}
+            onChangeText={(v) => { setRaw(v); setError(null); setFromHealth(false); }}
             returnKeyType="done"
             onSubmitEditing={submit}
           />
           <ThemedText type="monoSm" themeColor="textMuted">{unit}</ThemedText>
         </View>
+        {fromHealth && !error && (
+          <ThemedText type="monoSm" themeColor="signalGood">{t('onboarding.weight.fromHealth')}</ThemedText>
+        )}
         {error && (
           <ThemedText type="monoSm" style={{ color: theme.signalBad }}>{error}</ThemedText>
         )}
@@ -297,12 +207,12 @@ function WeightStep({ onNext, onBack }: { onNext: () => void; onBack: () => void
   );
 }
 
-// ─── Step 6: Account (optional) ───────────────────────────────────────────────
+// ─── Step 0: Account (optional, first) ────────────────────────────────────────
 
 function AccountStep({ onNext }: { onNext: () => void }) {
   const { t } = useTranslation();
   const theme = useTheme();
-  const { signUp, signInWithPassword } = useAuth();
+  const { signUp, signInWithPassword, signInWithProvider } = useAuth();
   const { exportState, replaceState } = useStore();
   const [mode, setMode] = useState<'signUp' | 'signIn'>('signUp');
   const [email, setEmail] = useState('');
@@ -320,28 +230,47 @@ function AccountStep({ onNext }: { onNext: () => void }) {
     );
   }
 
-  const submit = async () => {
+  // Unified post-auth: restore from an existing cloud snapshot, or seed the cloud
+  // from local data for a brand-new account. Works for email + OAuth alike.
+  const afterAuth = async (userId: string) => {
+    const cloud = (await pullSnapshot(userId)) ?? (await pullFromCloud(userId));
+    if (cloud) {
+      replaceState(mergeStates(exportState(), cloud));
+    } else {
+      const local = exportState();
+      await migrateToCloud(local, userId);
+      await pushSnapshot(local, userId);
+    }
+  };
+
+  const currentUserId = async () =>
+    (await (await import('@/lib/supabase')).supabase.auth.getUser()).data.user?.id;
+
+  const submitEmail = async () => {
     if (!email.trim() || !password) { setError(t('auth.errorMissingFields')); return; }
     setError(null);
     setBusy(true);
     try {
-      if (mode === 'signUp') {
-        await signUp(email.trim(), password);
-        const { data } = await (await import('@/lib/supabase')).supabase.auth.getUser();
-        if (data.user) {
-          const local = exportState();
-          await migrateToCloud(local, data.user.id);
-          await pushSnapshot(local, data.user.id);
-        }
-      } else {
-        await signInWithPassword(email.trim(), password);
-        const { data } = await (await import('@/lib/supabase')).supabase.auth.getUser();
-        if (data.user) {
-          const cloudState =
-            (await pullSnapshot(data.user.id)) ?? (await pullFromCloud(data.user.id));
-          if (cloudState) replaceState(mergeStates(exportState(), cloudState));
-        }
-      }
+      if (mode === 'signUp') await signUp(email.trim(), password);
+      else await signInWithPassword(email.trim(), password);
+      const uid = await currentUserId();
+      if (uid) await afterAuth(uid);
+      onNext();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : t('common.errorServer'));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const submitOAuth = async (provider: OAuthProvider) => {
+    setError(null);
+    setBusy(true);
+    try {
+      const ok = await signInWithProvider(provider);
+      if (!ok) return; // cancelled
+      const uid = await currentUserId();
+      if (uid) await afterAuth(uid);
       onNext();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : t('common.errorServer'));
@@ -363,46 +292,67 @@ function AccountStep({ onNext }: { onNext: () => void }) {
           </ThemedText>
         </View>
 
-        <LabeledInput
-          label={t('auth.email')}
-          value={email}
-          onChangeText={(v) => { setEmail(v); setError(null); }}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          autoComplete="email"
-        />
-        <LabeledInput
-          label={t('auth.password')}
-          value={password}
-          onChangeText={(v) => { setPassword(v); setError(null); }}
-          secureTextEntry
-          autoComplete={mode === 'signUp' ? 'new-password' : 'current-password'}
-        />
-        {error && <ThemedText type="monoSm" style={{ color: theme.signalBad }}>{error}</ThemedText>}
-
         {busy ? (
           <ActivityIndicator color={theme.accent} />
         ) : (
-          <PrimaryButton
-            label={mode === 'signUp' ? t('auth.signUp') : t('auth.signIn')}
-            onPress={submit}
-          />
+          <>
+            {/* OAuth — providers configured in Supabase Auth (owner rigs up). */}
+            <View style={styles.oauthCol}>
+              {Platform.OS === 'ios' && (
+                <PrimaryButton label={t('auth.continueApple')} onPress={() => submitOAuth('apple')} />
+              )}
+              <PrimaryButton
+                label={t('auth.continueGoogle')}
+                variant="secondary"
+                onPress={() => submitOAuth('google')}
+              />
+            </View>
+
+            <View style={styles.dividerRow}>
+              <View style={[styles.dividerLine, { backgroundColor: theme.border }]} />
+              <ThemedText type="monoSm" themeColor="textMuted">{t('auth.orEmail')}</ThemedText>
+              <View style={[styles.dividerLine, { backgroundColor: theme.border }]} />
+            </View>
+
+            <LabeledInput
+              label={t('auth.email')}
+              value={email}
+              onChangeText={(v) => { setEmail(v); setError(null); }}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoComplete="email"
+            />
+            <LabeledInput
+              label={t('auth.password')}
+              value={password}
+              onChangeText={(v) => { setPassword(v); setError(null); }}
+              secureTextEntry
+              autoComplete={mode === 'signUp' ? 'new-password' : 'current-password'}
+            />
+            {error && <ThemedText type="monoSm" style={{ color: theme.signalBad }}>{error}</ThemedText>}
+
+            <PrimaryButton
+              label={mode === 'signUp' ? t('auth.signUp') : t('auth.signIn')}
+              variant="secondary"
+              onPress={submitEmail}
+            />
+
+            <View style={styles.toggleRow}>
+              <ThemedText type="monoSm" themeColor="textMuted">
+                {mode === 'signUp' ? t('auth.haveAccount') : t('auth.noAccount')}
+              </ThemedText>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => { setMode(mode === 'signUp' ? 'signIn' : 'signUp'); setError(null); }}>
+                <ThemedText type="monoSm" themeColor="accent">
+                  {mode === 'signUp' ? t('auth.signIn') : t('auth.signUp')}
+                </ThemedText>
+              </Pressable>
+            </View>
+
+            <TextButton label={t('onboarding.account.skip')} onPress={onNext} />
+          </>
         )}
-
-        <View style={styles.toggleRow}>
-          <ThemedText type="monoSm" themeColor="textMuted">
-            {mode === 'signUp' ? t('auth.haveAccount') : t('auth.noAccount')}
-          </ThemedText>
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => { setMode(mode === 'signUp' ? 'signIn' : 'signUp'); setError(null); }}>
-            <ThemedText type="monoSm" themeColor="accent">
-              {mode === 'signUp' ? t('auth.signIn') : t('auth.signUp')}
-            </ThemedText>
-          </Pressable>
-        </View>
-
-        <TextButton label={t('onboarding.account.skip')} onPress={onNext} />
       </View>
     </KeyboardAvoidingView>
   );
@@ -518,8 +468,17 @@ export function Onboarding() {
   const toggle = <T,>(list: T[], item: T): T[] =>
     list.includes(item) ? list.filter((x) => x !== item) : [...list, item];
 
-  // Step 0 — Age gate
+  // Step 0 — Account (optional, first)
   if (step === 0) {
+    return (
+      <Frame step={step}>
+        <AccountStep onNext={next} />
+      </Frame>
+    );
+  }
+
+  // Step 1 — Age gate (DOB + sex + units)
+  if (step === 1) {
     return (
       <Frame step={step}>
         <AgeGate
@@ -532,17 +491,17 @@ export function Onboarding() {
     );
   }
 
-  // Step 1 — Sex
-  if (step === 1) {
+  // Step 2 — Health connector (optional; enables weight autofill next)
+  if (step === 2) {
     return (
       <Frame step={step}>
-        <SexStep onNext={next} onBack={back} />
+        <HealthStep onDone={next} />
       </Frame>
     );
   }
 
-  // Step 2 — Weight
-  if (step === 2) {
+  // Step 3 — Weight
+  if (step === 3) {
     return (
       <Frame step={step}>
         <WeightStep onNext={next} onBack={back} />
@@ -550,8 +509,8 @@ export function Onboarding() {
     );
   }
 
-  // Step 3 — Photo storage consent
-  if (step === 3) {
+  // Step 4 — Photo storage consent
+  if (step === 4) {
     return (
       <Frame step={step}>
         <ConsentPhotoStorage
@@ -568,8 +527,8 @@ export function Onboarding() {
     );
   }
 
-  // Step 4 — Photo AI consent
-  if (step === 4) {
+  // Step 5 — Photo AI consent
+  if (step === 5) {
     return (
       <Frame step={step}>
         <ConsentPhotoAI
@@ -586,66 +545,48 @@ export function Onboarding() {
     );
   }
 
-  // Step 5 — Goals
-  if (step === 5) {
-    return (
-      <Frame step={step}>
-        <View style={styles.section}>
-          <ThemedText type="display">{t('onboarding.goals.title')}</ThemedText>
-          <ThemedText themeColor="textSecondary">{t('onboarding.goals.subtitle')}</ThemedText>
-
-          <BodySilhouette goals={profile.goals} />
-
-          <View style={styles.goalGrid}>
-            {GOALS.map((g) => (
-              <GoalChip
-                key={g}
-                goal={g}
-                selected={profile.goals.includes(g)}
-                onPress={() => setProfile({ goals: toggle<Goal>(profile.goals, g) })}
-              />
-            ))}
-          </View>
-          {profile.goals.length === 0 && (
-            <ThemedText type="monoSm" themeColor="textMuted">
-              {t('onboarding.goals.required')}
-            </ThemedText>
-          )}
-        </View>
-
-        <View style={styles.footer}>
-          <View style={styles.backButton}>
-            <PrimaryButton label={t('onboarding.back')} variant="secondary" onPress={back} />
-          </View>
-          <View style={styles.nextButton}>
-            <PrimaryButton
-              label={
-                profile.goals.length > 0
-                  ? t('onboarding.beginSelected', { count: profile.goals.length })
-                  : t('onboarding.goals.required')
-              }
-              disabled={profile.goals.length === 0}
-              onPress={next}
-            />
-          </View>
-        </View>
-      </Frame>
-    );
-  }
-
-  // Step 6 — Account (optional)
-  if (step === 6) {
-    return (
-      <Frame step={step}>
-        <AccountStep onNext={next} />
-      </Frame>
-    );
-  }
-
-  // Step 7 — Health connector (optional) → completeOnboarding
+  // Step 6 — Goals → completeOnboarding
   return (
     <Frame step={step}>
-      <HealthStep onDone={completeOnboarding} />
+      <View style={styles.section}>
+        <ThemedText type="display">{t('onboarding.goals.title')}</ThemedText>
+        <ThemedText themeColor="textSecondary">{t('onboarding.goals.subtitle')}</ThemedText>
+
+        <BodySilhouette goals={profile.goals} />
+
+        <View style={styles.goalGrid}>
+          {GOALS.map((g) => (
+            <GoalChip
+              key={g}
+              goal={g}
+              selected={profile.goals.includes(g)}
+              onPress={() => setProfile({ goals: toggle<Goal>(profile.goals, g) })}
+            />
+          ))}
+        </View>
+        {profile.goals.length === 0 && (
+          <ThemedText type="monoSm" themeColor="textMuted">
+            {t('onboarding.goals.required')}
+          </ThemedText>
+        )}
+      </View>
+
+      <View style={styles.footer}>
+        <View style={styles.backButton}>
+          <PrimaryButton label={t('onboarding.back')} variant="secondary" onPress={back} />
+        </View>
+        <View style={styles.nextButton}>
+          <PrimaryButton
+            label={
+              profile.goals.length > 0
+                ? t('onboarding.beginSelected', { count: profile.goals.length })
+                : t('onboarding.goals.required')
+            }
+            disabled={profile.goals.length === 0}
+            onPress={completeOnboarding}
+          />
+        </View>
+      </View>
     </Frame>
   );
 }
@@ -675,15 +616,10 @@ const styles = StyleSheet.create({
   backButton: { flex: 1 },
   nextButton: { flex: 2 },
   etchWrap: { position: 'absolute', top: 0, right: 0 },
-  // Sex step
-  sexRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
-  cycleRow: { gap: Spacing.one },
-  sexChip: {
-    borderRadius: Radii.chamfer,
-    borderWidth: StyleSheet.hairlineWidth,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-  },
+  // Account step — OAuth
+  oauthCol: { gap: Spacing.two },
+  dividerRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
+  dividerLine: { flex: 1, height: StyleSheet.hairlineWidth },
   // Weight step
   weightInputRow: {
     flexDirection: 'row',

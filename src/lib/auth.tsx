@@ -1,4 +1,5 @@
 import type { Session, User } from '@supabase/supabase-js';
+import * as WebBrowser from 'expo-web-browser';
 import {
   createContext,
   useCallback,
@@ -11,6 +12,12 @@ import {
 
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 
+/** OAuth providers offered in the UI. Provider config lives in Supabase Auth. */
+export type OAuthProvider = 'apple' | 'google';
+
+/** Deep-link the OAuth flow redirects back to (app scheme `pepi`, see app.json). */
+const OAUTH_REDIRECT = 'pepi://auth-callback';
+
 type AuthContextValue = {
   /** Current session, or null when signed out. `undefined` only before the first restore. */
   session: Session | null;
@@ -19,6 +26,9 @@ type AuthContextValue = {
   initializing: boolean;
   signInWithPassword: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, locale?: string) => Promise<void>;
+  /** Native OAuth via the system browser; resolves true once a session is set,
+   *  false if the user cancelled. Provider must be enabled in Supabase Auth. */
+  signInWithProvider: (provider: OAuthProvider) => Promise<boolean>;
   signOut: () => Promise<void>;
 };
 
@@ -74,6 +84,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) throw error;
   }, []);
 
+  const signInWithProvider = useCallback(async (provider: OAuthProvider) => {
+    // Ask Supabase for the provider's authorize URL (PKCE), open it in the
+    // system browser, then exchange the returned code for a session. The
+    // provider itself is configured in the Supabase dashboard (owner rigs up).
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: { redirectTo: OAUTH_REDIRECT, skipBrowserRedirect: true },
+    });
+    if (error) throw error;
+    if (!data?.url) throw new Error('No OAuth URL returned');
+
+    const result = await WebBrowser.openAuthSessionAsync(data.url, OAUTH_REDIRECT);
+    if (result.type !== 'success' || !result.url) return false; // cancelled/dismissed
+
+    const url = new URL(result.url);
+    const code = url.searchParams.get('code');
+    if (code) {
+      const { error: exchangeErr } = await supabase.auth.exchangeCodeForSession(code);
+      if (exchangeErr) throw exchangeErr;
+      return true;
+    }
+    // Implicit-flow fallback: tokens in the URL fragment.
+    const frag = new URLSearchParams(url.hash.replace(/^#/, ''));
+    const access_token = frag.get('access_token');
+    const refresh_token = frag.get('refresh_token');
+    if (access_token && refresh_token) {
+      const { error: sessErr } = await supabase.auth.setSession({ access_token, refresh_token });
+      if (sessErr) throw sessErr;
+      return true;
+    }
+    return false;
+  }, []);
+
   const signOut = useCallback(async () => {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
@@ -86,9 +129,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       initializing,
       signInWithPassword,
       signUp,
+      signInWithProvider,
       signOut,
     }),
-    [session, initializing, signInWithPassword, signUp, signOut],
+    [session, initializing, signInWithPassword, signUp, signInWithProvider, signOut],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

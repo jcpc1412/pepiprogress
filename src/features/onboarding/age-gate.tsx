@@ -1,4 +1,5 @@
-import { useRef, useState } from 'react';
+import { getLocales } from 'expo-localization';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, TextInput, View } from 'react-native';
 
@@ -7,10 +8,17 @@ import { EngravedLabel } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
 import { Fonts, Radii, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { useStore, type UnitsSystem } from '@/lib/store';
+import { useStore, type Sex, type UnitsSystem } from '@/lib/store';
 import { Constants } from '@/types/database';
 
 const UNITS = Constants.public.Enums.units_system;
+
+/** Sexes for whom the menstrual-cycle opt-in is relevant. */
+const CYCLE_SEXES: Sex[] = ['female', 'ftm'];
+
+/** Applied once per app launch so revisiting the step doesn't clobber a manual
+ *  units choice. Region → imperial for US/UK, metric elsewhere (decision: geo units). */
+let geoUnitsApplied = false;
 
 function isAtLeast18(day: number, month: number, year: number): boolean {
   const today = new Date();
@@ -40,9 +48,23 @@ export function AgeGate({ onVerified }: { onVerified: (dobISO: string) => void }
   const [month, setMonth] = useState('');
   const [year, setYear] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [showTrans, setShowTrans] = useState(profile.sex === 'ftm' || profile.sex === 'mtf');
 
   const monthRef = useRef<TextInput>(null);
   const yearRef = useRef<TextInput>(null);
+
+  // Geo-based units default (once per launch, before the user touches the chips).
+  useEffect(() => {
+    if (geoUnitsApplied) return;
+    geoUnitsApplied = true;
+    const ms = getLocales()[0]?.measurementSystem;
+    const geo: UnitsSystem = ms === 'us' || ms === 'uk' ? 'imperial' : 'metric';
+    if (profile.units !== geo) setProfile({ units: geo });
+  }, [profile.units, setProfile]);
+
+  const setSex = (s: Sex | undefined) => setProfile({ sex: s });
+  const showCycle = !!profile.sex && CYCLE_SEXES.includes(profile.sex);
+  const cycleOn = !!profile.lastPeriodDate;
 
   const d = parseInt(day, 10);
   const m = parseInt(month, 10);
@@ -130,6 +152,51 @@ export function AgeGate({ onVerified }: { onVerified: (dobISO: string) => void }
           />
         ))}
       </View>
+
+      {/* Sex (optional) */}
+      <EngravedLabel>{t('about.sex')}</EngravedLabel>
+      <ThemedText type="monoSm" themeColor="textMuted">{t('onboarding.sex.subtitle')}</ThemedText>
+      <View style={styles.chips}>
+        <OptionChip
+          label={t('sex.male')}
+          selected={profile.sex === 'male'}
+          onPress={() => { setSex('male'); setShowTrans(false); }}
+        />
+        <OptionChip
+          label={t('sex.female')}
+          selected={profile.sex === 'female'}
+          onPress={() => { setSex('female'); setShowTrans(false); }}
+        />
+        <OptionChip
+          label={t('onboarding.sex.other')}
+          selected={showTrans && profile.sex !== 'male' && profile.sex !== 'female'}
+          onPress={() => {
+            setShowTrans(true);
+            if (profile.sex === 'male' || profile.sex === 'female') setSex(undefined);
+          }}
+        />
+      </View>
+      {showTrans && (
+        <View style={styles.chips}>
+          <OptionChip label={t('sex.ftm')} selected={profile.sex === 'ftm'} onPress={() => setSex('ftm')} />
+          <OptionChip label={t('sex.mtf')} selected={profile.sex === 'mtf'} onPress={() => setSex('mtf')} />
+        </View>
+      )}
+      {showCycle && (
+        <View style={styles.chips}>
+          <OptionChip
+            label={t('onboarding.cycle.optIn')}
+            selected={cycleOn}
+            onPress={() =>
+              setProfile(
+                cycleOn
+                  ? { lastPeriodDate: undefined, cycleLength: undefined }
+                  : { lastPeriodDate: new Date().toISOString().slice(0, 10), cycleLength: 28 },
+              )
+            }
+          />
+        </View>
+      )}
 
       {error ? (
         <ThemedText type="monoSm" themeColor="signalBad">

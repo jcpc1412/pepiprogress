@@ -25,6 +25,26 @@ const QUANTITY_MAP = [
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const hk = () => require('@kingstinct/react-native-healthkit') as typeof import('@kingstinct/react-native-healthkit');
 
+/**
+ * Coerce a HealthKit sample date into a JS Date. Nitro modules can hand back a
+ * `Date`, an epoch-millisecond number, or an ISO string depending on the bridge —
+ * calling `.toISOString()` on a non-Date throws, which the per-type catch below
+ * would silently swallow, dropping every sample (the "nothing synced" bug).
+ */
+function toDate(v: unknown): Date | null {
+  if (v instanceof Date) return Number.isNaN(v.getTime()) ? null : v;
+  if (typeof v === 'number') {
+    // Heuristic: seconds vs milliseconds since epoch.
+    const d = new Date(v < 1e12 ? v * 1000 : v);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+  if (typeof v === 'string') {
+    const d = new Date(v);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+  return null;
+}
+
 /** Returns { ok } on success, or { ok:false, error } with the real reason so the
  *  UI can surface it (missing entitlement, HealthKit unavailable, native module
  *  not in the build). Silent failure was making a broken build indistinguishable
@@ -77,7 +97,9 @@ async function readHealthKit(since?: string): Promise<ProviderReading[]> {
       if (entry.sumPerDay) {
         const daily: Record<string, number> = {};
         for (const s of samples) {
-          const dateKey = (s.startDate as Date).toISOString().slice(0, 10);
+          const d = toDate(s.startDate);
+          if (!d || typeof s.quantity !== 'number') continue;
+          const dateKey = d.toISOString().slice(0, 10);
           daily[dateKey] = (daily[dateKey] ?? 0) + s.quantity;
         }
         for (const [dateKey, value] of Object.entries(daily)) {
@@ -85,10 +107,12 @@ async function readHealthKit(since?: string): Promise<ProviderReading[]> {
         }
       } else {
         for (const s of samples) {
+          const d = toDate(s.startDate);
+          if (!d || typeof s.quantity !== 'number') continue;
           readings.push({
             metric: entry.metric,
             value: s.quantity,
-            ts: (s.startDate as Date).toISOString(),
+            ts: d.toISOString(),
             sourceProvider: PROVIDER_ID,
           });
         }
@@ -110,9 +134,11 @@ async function readHealthKit(since?: string): Promise<ProviderReading[]> {
     for (const s of sleepSamples) {
       const value = s.value as number;
       if (value === 0 || value === 2) continue; // inBed or awake — not actual sleep
-      const dateKey = (s.startDate as Date).toISOString().slice(0, 10);
-      const durationHours =
-        ((s.endDate as Date).getTime() - (s.startDate as Date).getTime()) / 3_600_000;
+      const start = toDate(s.startDate);
+      const end = toDate(s.endDate);
+      if (!start || !end) continue;
+      const dateKey = start.toISOString().slice(0, 10);
+      const durationHours = (end.getTime() - start.getTime()) / 3_600_000;
       dailySleep[dateKey] = (dailySleep[dateKey] ?? 0) + durationHours;
     }
     for (const [dateKey, hours] of Object.entries(dailySleep)) {

@@ -83,7 +83,8 @@
       "title": "Votre poids de départ",
       "subtitle": "Facultatif. Définit votre référence de suivi.",
       "placeholder": "ex. 80",
-      "save": "Enregistrer le poids"
+      "save": "Enregistrer le poids",
+      "fromHealth": "Prérempli à partir de vos données Santé."
     },
     "account": {
       "skip": "Continuer sans compte"
@@ -528,7 +529,10 @@
     "restoredTitle": "Données restaurées",
     "restoredBody": "Vos données ont été chargées sur cet appareil.",
     "partialSync": "{{count}} élément(s) n'ont pas pu être synchronisés, vos données locales sont sécurisées.",
-    "errorMissingFields": "Veuillez entrer votre email et mot de passe."
+    "errorMissingFields": "Veuillez entrer votre email et mot de passe.",
+    "continueApple": "Continuer avec Apple",
+    "continueGoogle": "Continuer avec Google",
+    "orEmail": "ou par e-mail"
   },
   "account": {
     "section": "COMPTE",

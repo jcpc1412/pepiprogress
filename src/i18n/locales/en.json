@@ -83,7 +83,8 @@
       "title": "Your starting weight",
       "subtitle": "Optional. Sets your baseline for trend tracking.",
       "placeholder": "e.g. 80",
-      "save": "Save weight"
+      "save": "Save weight",
+      "fromHealth": "Prefilled from your Health data."
     },
     "account": {
       "skip": "Start without account"
@@ -528,7 +529,10 @@
     "restoredTitle": "Data restored",
     "restoredBody": "Your data has been loaded onto this device.",
     "partialSync": "{{count}} item(s) could not sync, your local data is safe.",
-    "errorMissingFields": "Please enter your email and password."
+    "errorMissingFields": "Please enter your email and password.",
+    "continueApple": "Continue with Apple",
+    "continueGoogle": "Continue with Google",
+    "orEmail": "or with email"
   },
   "account": {
     "section": "ACCOUNT",

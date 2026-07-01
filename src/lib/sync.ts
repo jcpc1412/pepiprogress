@@ -420,9 +420,21 @@ export function mergeStates(local: PersistedState, cloud: PersistedState): Persi
   }
   const metricReadings = Array.from(metricMap.values());
 
-  // Integrations: union, LWW on connectedAt
-  const integrations: Record<string, IntegrationState> = { ...cloud.integrations };
+  // Integrations: union, LWW on connectedAt — EXCEPT native health providers,
+  // whose "connected" state is device-specific OS authorization that doesn't
+  // transfer across installs. Carrying the cloud's connectedAt made a fresh
+  // reinstall show Apple Health as already connected while nothing was actually
+  // authorized. For those, the local (this-device) state is authoritative.
+  const NATIVE_PROVIDERS = new Set(['apple_health', 'health_connect']);
+  const integrations: Record<string, IntegrationState> = {};
+  for (const [id, cloudInt] of Object.entries(cloud.integrations)) {
+    if (!NATIVE_PROVIDERS.has(id)) integrations[id] = cloudInt;
+  }
   for (const [id, localInt] of Object.entries(local.integrations)) {
+    if (NATIVE_PROVIDERS.has(id)) {
+      integrations[id] = localInt; // device truth wins for native health
+      continue;
+    }
     const cloudInt = integrations[id];
     if (!cloudInt || (localInt.connectedAt ?? '') > (cloudInt.connectedAt ?? '')) {
       integrations[id] = localInt;

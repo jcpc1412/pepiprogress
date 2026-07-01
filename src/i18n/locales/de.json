@@ -83,7 +83,8 @@
       "title": "Dein Startgewicht",
       "subtitle": "Optional. Legt deine Basis für die Verlaufsverfolgung fest.",
       "placeholder": "z.B. 80",
-      "save": "Gewicht speichern"
+      "save": "Gewicht speichern",
+      "fromHealth": "Aus deinen Health-Daten vorausgefüllt."
     },
     "account": {
       "skip": "Ohne Konto fortfahren"
@@ -528,7 +529,10 @@
     "restoredTitle": "Daten wiederhergestellt",
     "restoredBody": "Deine Daten wurden auf dieses Gerät geladen.",
     "partialSync": "{{count}} Element(e) konnten nicht synchronisiert werden, deine lokalen Daten sind sicher.",
-    "errorMissingFields": "Bitte gib deine E-Mail und dein Passwort ein."
+    "errorMissingFields": "Bitte gib deine E-Mail und dein Passwort ein.",
+    "continueApple": "Mit Apple fortfahren",
+    "continueGoogle": "Mit Google fortfahren",
+    "orEmail": "oder mit E-Mail"
   },
   "account": {
     "section": "KONTO",
