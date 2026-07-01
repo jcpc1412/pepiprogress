@@ -59,4 +59,4 @@ export type IntegrationProvider = {
   pull: (opts: { since?: string; connection?: IntegrationState }) => Promise<ProviderReading[]>;
 };
 
-export type AuthResult = { ok: boolean; patch?: Partial<IntegrationState> };
+export type AuthResult = { ok: boolean; patch?: Partial<IntegrationState>; error?: string };

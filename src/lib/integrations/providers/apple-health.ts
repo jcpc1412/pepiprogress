@@ -25,22 +25,38 @@ const QUANTITY_MAP = [
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const hk = () => require('@kingstinct/react-native-healthkit') as typeof import('@kingstinct/react-native-healthkit');
 
-async function authenticate(): Promise<boolean> {
+/** Returns { ok } on success, or { ok:false, error } with the real reason so the
+ *  UI can surface it (missing entitlement, HealthKit unavailable, native module
+ *  not in the build). Silent failure was making a broken build indistinguishable
+ *  from a denied grant. */
+async function authenticate(): Promise<{ ok: boolean; error?: string }> {
   const mod = hk();
-  // Guard: if the native module isn't in this build, fail soft instead of throwing.
-  if (typeof mod?.requestAuthorization !== 'function') return false;
+  // Guard: if the native module isn't in this build, say so explicitly.
+  if (typeof mod?.requestAuthorization !== 'function') {
+    return { ok: false, error: 'HealthKit native module not linked in this build' };
+  }
+  // HealthKit is unavailable on iPad / when the entitlement is missing.
+  try {
+    if (typeof mod.isHealthDataAvailable === 'function' && !mod.isHealthDataAvailable()) {
+      return { ok: false, error: 'HealthKit is not available on this device' };
+    }
+  } catch {
+    // isHealthDataAvailable itself failing means the native module is broken.
+    return { ok: false, error: 'HealthKit native module failed to load' };
+  }
   const toRead = [
     ...QUANTITY_MAP.map((m) => m.id),
     'HKCategoryTypeIdentifierSleepAnalysis',
   ] as Parameters<ReturnType<typeof hk>['requestAuthorization']>[0]['toRead'] & string[];
   try {
-    await mod.requestAuthorization({ toRead });
-    // iOS never exposes whether the user actually granted — the promise resolves
-    // regardless of the choice (Apple privacy). Assume granted after the sheet
-    // dismisses; if they denied, reads will return empty and we handle gracefully.
-    return true;
-  } catch {
-    return false;
+    // v14 returns true once the request completes (sheet shown or already
+    // decided); it throws on a real error (e.g. missing entitlement). iOS never
+    // reveals grant vs. deny, so a resolved call means "proceed" — empty reads
+    // handle the denied case gracefully.
+    const ok = await mod.requestAuthorization({ toRead });
+    return { ok: ok !== false };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : String(e) };
   }
 }
 
@@ -136,8 +152,7 @@ export const appleHealthProvider: IntegrationProvider = {
   nativeReady: true,
   authenticate: async () => {
     if (Platform.OS !== 'ios') return { ok: false };
-    const ok = await authenticate();
-    return { ok };
+    return authenticate();
   },
   pull: ({ since } = {}) => readHealthKit(since),
 };

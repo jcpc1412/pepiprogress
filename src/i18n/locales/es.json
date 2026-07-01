@@ -440,6 +440,7 @@
     "provides": "Aporta {{count}} métricas",
     "connect": "Conectar",
     "connecting": "Conectando…",
+    "connectError": "No se pudo conectar: {{reason}}",
     "disconnect": "Desconectar",
     "sync": "Sincronizar ahora",
     "syncing": "Sincronizando…",

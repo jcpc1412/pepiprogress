@@ -59,6 +59,7 @@ function ProviderRow({ provider }: { provider: IntegrationProvider }) {
   const { integrations, setIntegration, addMetricReadings } = useStore();
   const [busy, setBusy] = useState(false);
   const [showImport, setShowImport] = useState(false);
+  const [connectError, setConnectError] = useState<string | null>(null);
   const conn = integrations[provider.id];
   const connected = !!conn?.connectedAt;
 
@@ -81,11 +82,14 @@ function ProviderRow({ provider }: { provider: IntegrationProvider }) {
 
   const connect = async () => {
     setBusy(true);
+    setConnectError(null);
     try {
-      const { ok, patch } = await provider.authenticate();
+      const { ok, patch, error } = await provider.authenticate();
       if (ok) {
         setIntegration(provider.id, { connectedAt: new Date().toISOString(), ...patch });
         setShowImport(true);
+      } else if (error) {
+        setConnectError(error);
       }
     } finally {
       setBusy(false);
@@ -141,11 +145,18 @@ function ProviderRow({ provider }: { provider: IntegrationProvider }) {
           </View>
         </View>
       ) : (
-        <Pressable accessibilityRole="button" onPress={connect} disabled={busy}>
-          <ThemedText type="monoSm" themeColor="textSecondary" style={styles.link}>
-            {busy ? t('integrations.connecting') : t('integrations.connect')}
-          </ThemedText>
-        </Pressable>
+        <View style={styles.actions}>
+          <Pressable accessibilityRole="button" onPress={connect} disabled={busy}>
+            <ThemedText type="monoSm" themeColor="textSecondary" style={styles.link}>
+              {busy ? t('integrations.connecting') : t('integrations.connect')}
+            </ThemedText>
+          </Pressable>
+          {connectError && (
+            <ThemedText type="monoSm" themeColor="signalBad">
+              {t('integrations.connectError', { reason: connectError })}
+            </ThemedText>
+          )}
+        </View>
       )}
       </View>
     </>

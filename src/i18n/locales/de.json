@@ -440,6 +440,7 @@
     "provides": "Liefert {{count}} Messwerte",
     "connect": "Verbinden",
     "connecting": "Verbinde…",
+    "connectError": "Verbindung fehlgeschlagen: {{reason}}",
     "disconnect": "Trennen",
     "sync": "Jetzt synchronisieren",
     "syncing": "Synchronisiere…",

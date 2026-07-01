@@ -440,6 +440,7 @@
     "provides": "Fournit {{count}} mesures",
     "connect": "Connecter",
     "connecting": "Connexion…",
+    "connectError": "Connexion impossible : {{reason}}",
     "disconnect": "Déconnecter",
     "sync": "Synchroniser",
     "syncing": "Synchronisation…",

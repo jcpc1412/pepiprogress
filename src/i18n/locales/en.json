@@ -442,6 +442,7 @@
     "provides": "Provides {{count}} metrics",
     "connect": "Connect",
     "connecting": "Connecting…",
+    "connectError": "Couldn't connect: {{reason}}",
     "disconnect": "Disconnect",
     "sync": "Sync now",
     "syncing": "Syncing…",
