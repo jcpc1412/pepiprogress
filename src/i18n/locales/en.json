@@ -621,7 +621,8 @@
     "reconstituted": "Reconstituted powder",
     "vialSizes": "Common vial sizes (mg)",
     "vialSizesPlaceholder": "e.g. 5, 10",
-    "createCustom": "Create"
+    "createCustom": "Create",
+    "popular": "POPULAR"
   },
   "settings": {
     "title": "Settings",

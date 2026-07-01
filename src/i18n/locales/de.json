@@ -621,7 +621,8 @@
     "reconstituted": "Rekonstituiertes Pulver",
     "vialSizes": "Übliche Fläschchengrößen (mg)",
     "vialSizesPlaceholder": "z. B. 5, 10",
-    "createCustom": "Erstellen"
+    "createCustom": "Erstellen",
+    "popular": "BELIEBT"
   },
   "settings": {
     "title": "Einstellungen",

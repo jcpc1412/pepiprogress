@@ -621,7 +621,8 @@
     "reconstituted": "Pó reconstituído",
     "vialSizes": "Tamanhos comuns de frasco (mg)",
     "vialSizesPlaceholder": "ex. 5, 10",
-    "createCustom": "Criar"
+    "createCustom": "Criar",
+    "popular": "POPULARES"
   },
   "settings": {
     "title": "Configurações",

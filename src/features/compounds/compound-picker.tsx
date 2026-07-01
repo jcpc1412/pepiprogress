@@ -1,12 +1,17 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { LabeledInput, OptionChip, PrimaryButton, TextButton } from '@/components/form';
+import { EngravedLabel } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
-import { allCompounds, type CatalogCompound } from '@/data/compound-catalog';
+import { allCompounds, compoundBySlug, type CatalogCompound } from '@/data/compound-catalog';
 import { useStore } from '@/lib/store';
+
+const POPULAR_SLUGS = [
+  'bpc-157', 'tb-500', 'semaglutide', 'testosterone', 'ipamorelin', 'mk-677',
+] as const;
 
 function kebab(s: string): string {
   return s
@@ -17,9 +22,9 @@ function kebab(s: string): string {
 }
 
 /**
- * Searchable single-select compound picker with a custom-compound escape hatch
- * (O-04). Shared by the add-compound screen (P-03) and inventory. Filters the
- * merged catalog (bundled ∪ custom) by name + aliases.
+ * Compound picker: shows a "popular" set by default; typing narrows to up to
+ * 8 matches. Avoids the wall-of-chips UX that grows unusable as the catalog
+ * expands. Custom-compound escape hatch preserved (O-04).
  */
 export function CompoundPicker({
   value,
@@ -34,16 +39,40 @@ export function CompoundPicker({
   const [query, setQuery] = useState('');
   const [customOpen, setCustomOpen] = useState(false);
 
+  const popular = useMemo(
+    () => POPULAR_SLUGS.map((s) => compoundBySlug(s)).filter(Boolean) as CatalogCompound[],
+    [],
+  );
+
   const results = useMemo(() => {
-    const all = allCompounds();
     const q = query.trim().toLowerCase();
-    if (!q) return all;
-    return all.filter(
-      (c) =>
-        c.canonicalName.toLowerCase().includes(q) ||
-        c.aliases.some((a) => a.toLowerCase().includes(q)),
-    );
+    if (!q) return null;
+    return allCompounds()
+      .filter(
+        (c) =>
+          c.canonicalName.toLowerCase().includes(q) ||
+          c.aliases.some((a) => a.toLowerCase().includes(q)),
+      )
+      .slice(0, 8);
   }, [query]);
+
+  const isSearching = results !== null;
+  const selected = value ? compoundBySlug(value) : undefined;
+  const selectedInView = !selected
+    ? true
+    : isSearching
+      ? results!.some((r) => r.slug === value)
+      : popular.some((p) => p.slug === value);
+
+  const chips = (list: CatalogCompound[]) =>
+    list.map((c) => (
+      <OptionChip
+        key={c.slug}
+        label={c.canonicalName}
+        selected={value === c.slug}
+        onPress={() => onChange(c.slug)}
+      />
+    ));
 
   return (
     <View style={styles.container}>
@@ -55,23 +84,26 @@ export function CompoundPicker({
         autoCapitalize="none"
       />
 
-      <ScrollView style={styles.resultsScroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-        <View style={styles.chips}>
-          {results.map((c) => (
-            <OptionChip
-              key={c.slug}
-              label={c.canonicalName}
-              selected={value === c.slug}
-              onPress={() => onChange(c.slug)}
-            />
-          ))}
+      {selected && !selectedInView && (
+        <View style={styles.chips}>{chips([selected])}</View>
+      )}
+
+      {!isSearching && (
+        <View style={styles.section}>
+          <EngravedLabel>{t('compounds.popular')}</EngravedLabel>
+          <View style={styles.chips}>{chips(popular)}</View>
         </View>
-        {results.length === 0 && (
-          <ThemedText type="small" themeColor="textSecondary">
-            {t('compounds.noResults')}
-          </ThemedText>
-        )}
-      </ScrollView>
+      )}
+
+      {isSearching && results!.length > 0 && (
+        <View style={styles.chips}>{chips(results!)}</View>
+      )}
+
+      {isSearching && results!.length === 0 && !customOpen && (
+        <ThemedText type="small" themeColor="textSecondary">
+          {t('compounds.noResults')}
+        </ThemedText>
+      )}
 
       {customOpen ? (
         <CustomCompoundForm
@@ -170,7 +202,7 @@ function CustomCompoundForm({
 
 const styles = StyleSheet.create({
   container: { gap: Spacing.two },
-  resultsScroll: { maxHeight: 220 },
+  section: { gap: Spacing.one },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
   customForm: { gap: Spacing.two, marginTop: Spacing.one },
   toggleRow: { flexDirection: 'row', gap: Spacing.two },

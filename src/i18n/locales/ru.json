@@ -621,7 +621,8 @@
     "reconstituted": "Восстановленный порошок",
     "vialSizes": "Обычные размеры флаконов (мг)",
     "vialSizesPlaceholder": "напр. 5, 10",
-    "createCustom": "Создать"
+    "createCustom": "Создать",
+    "popular": "ПОПУЛЯРНЫЕ"
   },
   "settings": {
     "title": "Настройки",

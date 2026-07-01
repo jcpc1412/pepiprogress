@@ -621,7 +621,8 @@
     "reconstituted": "Polvo reconstituido",
     "vialSizes": "Tamaños de vial comunes (mg)",
     "vialSizesPlaceholder": "p. ej. 5, 10",
-    "createCustom": "Crear"
+    "createCustom": "Crear",
+    "popular": "POPULARES"
   },
   "settings": {
     "title": "Ajustes",
