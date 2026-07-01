@@ -150,6 +150,24 @@ export type IntegrationState = {
   terraUserId?: string; // Terra-issued user id, captured from the Connect widget redirect
 };
 
+/** A queued natural-language quick-log (spec 13). Submitted fire-and-forget so
+ *  the user never waits on the AI: the runner (quick-log-runner.tsx) parses it in
+ *  the background, applies confident items, and retries on failure. Persisted so a
+ *  pending/failed job survives an app restart. */
+export type QuickLogJob = {
+  id: string;
+  text: string;
+  locale: string;
+  dateKey: string; // day (YYYY-MM-DD) to log against — the day it was submitted
+  createdAt: string; // ISO
+  status: 'pending' | 'error' | 'done';
+  attempts: number;
+  nextRetryAt?: string; // ISO — set on error for backoff
+  summary?: string; // on done: the AI's short confirmation (already localized)
+  appliedCount?: number;
+  skippedCount?: number;
+};
+
 export type ThemePreference = 'light' | 'dark' | 'auto';
 export type Sex = 'male' | 'female' | 'ftm' | 'mtf';
 
@@ -224,6 +242,8 @@ export type PersistedState = {
   integrations: Record<string, IntegrationState>;
   /** User-created compounds not in the bundled catalog (O-04). */
   customCompounds: CatalogCompound[];
+  /** Background natural-language quick-log queue (spec 13). */
+  quickLogJobs: QuickLogJob[];
 };
 
 /** Convert a dose to mg for inventory decrement. IU can't be converted → null. */
@@ -255,6 +275,7 @@ const EMPTY_STATE: PersistedState = {
   metricReadings: [],
   integrations: {},
   customCompounds: [],
+  quickLogJobs: [],
 };
 
 /** Local date as YYYY-MM-DD (not UTC — the check-in is anchored to the user's day). */
@@ -283,6 +304,11 @@ type StoreContextValue = {
   metricReadings: MetricReading[];
   integrations: Record<string, IntegrationState>;
   customCompounds: CatalogCompound[];
+  quickLogJobs: QuickLogJob[];
+  /** Queue a natural-language quick-log for background parsing; returns its id. */
+  enqueueQuickLog: (text: string, locale: string) => string;
+  updateQuickLogJob: (id: string, patch: Partial<QuickLogJob>) => void;
+  removeQuickLogJob: (id: string) => void;
   setProfile: (patch: Partial<LocalProfile>) => void;
   completeOnboarding: () => void;
   /** Add a user-created compound (O-04). */
@@ -535,6 +561,32 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
+  const enqueueQuickLog = useCallback<StoreContextValue['enqueueQuickLog']>((text, locale) => {
+    const id = uid();
+    const job: QuickLogJob = {
+      id,
+      text,
+      locale,
+      dateKey: localDateKey(),
+      createdAt: new Date().toISOString(),
+      status: 'pending',
+      attempts: 0,
+    };
+    setState((s) => ({ ...s, quickLogJobs: [...s.quickLogJobs, job] }));
+    return id;
+  }, []);
+
+  const updateQuickLogJob = useCallback<StoreContextValue['updateQuickLogJob']>((id, patch) => {
+    setState((s) => ({
+      ...s,
+      quickLogJobs: s.quickLogJobs.map((j) => (j.id === id ? { ...j, ...patch } : j)),
+    }));
+  }, []);
+
+  const removeQuickLogJob = useCallback<StoreContextValue['removeQuickLogJob']>((id) => {
+    setState((s) => ({ ...s, quickLogJobs: s.quickLogJobs.filter((j) => j.id !== id) }));
+  }, []);
+
   const value = useMemo<StoreContextValue>(
     () => ({
       ready,
@@ -548,6 +600,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       metricReadings: state.metricReadings,
       integrations: state.integrations,
       customCompounds: state.customCompounds,
+      quickLogJobs: state.quickLogJobs,
+      enqueueQuickLog,
+      updateQuickLogJob,
+      removeQuickLogJob,
       setProfile,
       completeOnboarding,
       addCustomCompound,
@@ -574,6 +630,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [
       ready,
       state,
+      enqueueQuickLog,
+      updateQuickLogJob,
+      removeQuickLogJob,
       setProfile,
       completeOnboarding,
       addCustomCompound,

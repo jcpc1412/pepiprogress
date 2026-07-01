@@ -167,7 +167,9 @@
     "compoundSearch": "Pesquisar composto",
     "unclearResolved": "Sera registrado como {{name}}",
     "skipItem": "Pular",
-    "unclearSkipped": "Pulado"
+    "unclearSkipped": "Pulado",
+    "distilling": "Destilando…",
+    "backgroundHint": "Registre e siga. Destilaremos em segundo plano."
   },
   "photos": {
     "title": "Fotos de progresso",
@@ -658,7 +660,11 @@
     "doseDone": "Feito",
     "distillation": "Resumo de hoje",
     "compoundsLogged": "{{names}} registrado",
-    "dosesPlaceholder": "Adicione um protocolo para registrar doses"
+    "dosesPlaceholder": "Adicione um protocolo para registrar doses",
+    "distilling": "Destilando sua entrada…",
+    "distillingPill": "Destilando",
+    "distillError": "Serviço indisponível. Tentaremos de novo automaticamente.",
+    "distillErrorPill": "Na fila"
   },
   "addCompound": {
     "title": "Adicionar composto",

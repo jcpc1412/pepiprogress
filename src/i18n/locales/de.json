@@ -167,7 +167,9 @@
     "compoundSearch": "Verbindung suchen",
     "unclearResolved": "Wird als {{name}} gespeichert",
     "skipItem": "Uberspringen",
-    "unclearSkipped": "Ubersprungen"
+    "unclearSkipped": "Ubersprungen",
+    "distilling": "Wird destilliert…",
+    "backgroundHint": "Eintragen und weiter. Wir destillieren es im Hintergrund."
   },
   "photos": {
     "title": "Fortschrittsfotos",
@@ -658,7 +660,11 @@
     "doseDone": "Erledigt",
     "distillation": "Tageszusammenfassung",
     "compoundsLogged": "{{names}} erfasst",
-    "dosesPlaceholder": "Füge ein Protokoll hinzu, um Dosen zu verfolgen"
+    "dosesPlaceholder": "Füge ein Protokoll hinzu, um Dosen zu verfolgen",
+    "distilling": "Dein Eintrag wird destilliert…",
+    "distillingPill": "Läuft",
+    "distillError": "Dienst nicht erreichbar. Wir versuchen es automatisch erneut.",
+    "distillErrorPill": "In Warteschlange"
   },
   "addCompound": {
     "title": "Wirkstoff hinzufügen",

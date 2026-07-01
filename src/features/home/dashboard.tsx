@@ -27,6 +27,7 @@ import { compoundBySlug } from '@/data/compound-catalog';
 import { TodayDoses } from '@/features/home/today-doses';
 import { useTheme } from '@/hooks/use-theme';
 import { useOverlay } from '@/lib/nav-overlay';
+import { useQuickLogActivity } from '@/lib/quick-log-runner';
 import { localDateKey, useStore, type CheckinEntry, type PhotoEntry } from '@/lib/store';
 
 /** The 4 fixed dashboard chart metrics (mockup — Weight / Energy / Sleep / Recovery).
@@ -84,6 +85,7 @@ export function Dashboard() {
   const today = localDateKey();
   const todayEntry = entries[today];
   const loggedToday = !!todayEntry;
+  const quickLog = useQuickLogActivity();
   const dosesToday = doseEvents.filter((d) => localDateKey(new Date(d.takenAt)) === today);
 
   const distillation = useMemo(() => {
@@ -290,17 +292,29 @@ export function Dashboard() {
           {/* Single Log button — above the distillation summary (R3-C) */}
           <PrimaryButton label={t('dashboard.log')} onPress={() => openLogging('quick')} />
 
-          {/* Distillation summary */}
+          {/* Distillation summary — shows background quick-log status when active. */}
           <Card style={styles.summary}>
             <View style={styles.summaryHead}>
               <EngravedLabel>{t('dashboard.distillation')}</EngravedLabel>
-              <StatusPill
-                label={loggedToday ? t('dashboard.onTrack') : t('dashboard.pending')}
-                tone={loggedToday ? 'good' : 'neutral'}
-              />
+              {quickLog.state === 'distilling' ? (
+                <StatusPill label={t('dashboard.distillingPill')} tone="neutral" />
+              ) : quickLog.state === 'error' ? (
+                <StatusPill label={t('dashboard.distillErrorPill')} tone="bad" />
+              ) : (
+                <StatusPill
+                  label={loggedToday ? t('dashboard.onTrack') : t('dashboard.pending')}
+                  tone={loggedToday ? 'good' : 'neutral'}
+                />
+              )}
             </View>
             <ThemedText type="small" themeColor="textSecondary">
-              {distillation || t('dashboard.notLoggedToday')}
+              {quickLog.state === 'distilling'
+                ? t('dashboard.distilling')
+                : quickLog.state === 'error'
+                  ? t('dashboard.distillError')
+                  : quickLog.state === 'done' && quickLog.summary
+                    ? quickLog.summary
+                    : distillation || t('dashboard.notLoggedToday')}
             </ThemedText>
           </Card>
 

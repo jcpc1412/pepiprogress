@@ -186,7 +186,8 @@ const PARSE_SCHEMA = {
   properties: {
     reply: {
       type: 'string',
-      description: "One short, friendly confirmation in the user's language. No dosing advice.",
+      description:
+        "One short line in the user's language, in a precise instrument voice: reflect the logged readings back plainly, e.g. 'Logged: sleep 7h, energy 4/5, weight 83.2 kg.' No exclamation marks, no emoji, no encouragement, no advice.",
     },
     items: {
       type: 'array',
@@ -284,7 +285,7 @@ function parseSystemPrompt(catalog: CatalogEntry[], nowISO: string, locale: stri
     .join('\n');
   return [
     "You parse a peptide/health tracker user's natural-language message into structured log entities.",
-    'Output ONLY via the provided JSON schema. Each message may contain zero, one, or several items.',
+    'Output ONLY via the record tool. Each message may contain zero, one, or several items.',
     '',
     'Mapping:',
     '- A reported body weight => kind="weight" (keep the number as stated; do not convert units).',
@@ -297,7 +298,9 @@ function parseSystemPrompt(catalog: CatalogEntry[], nowISO: string, locale: stri
     catalogLines || '(none provided)',
     '',
     `Resolve relative times ("this morning", "an hour ago", "yesterday") against now = ${nowISO}.`,
-    `Write the "reply" field in this locale: ${locale}.`,
+    `Write the "reply" in this locale: ${locale}. Voice = a precise lab instrument reflecting the`,
+    'readings back: one short line, no exclamation marks, no emoji, no encouragement, no advice.',
+    'Example: "Logged: sleep 7h, energy 4/5, weight 83.2 kg."',
     '',
     'CRITICAL - never give medical or dosing advice. Do not suggest doses, lengths, schedules, or',
     'synergies for ANY compound (controlled or not). You only record what the user already said.',
@@ -417,6 +420,7 @@ function insightsSystemPrompt(mode: string, locale: string): string {
     '- NEVER claim causation. Use association language ("around the time", "coincided with", "appears to track with").',
     '- Hedge ("appears", "may", "trends toward"). Never definitive health claims.',
     '- If the data is too sparse to say anything useful, set insufficientData=true and say so plainly.',
+    '- Voice: precise and analytical, like a trusted instrument. No exclamation marks, no emoji, no hype.',
     `- Write the "answer" in this locale: ${locale}.`,
   ].join('\n');
 }
@@ -432,6 +436,7 @@ function simpleSystemPrompt(locale: string): string {
     '- Never give dosing or medical advice of any kind.',
     '- Never make definitive health claims. Use hedged language ("appears", "may", "suggests").',
     '- Keep it to one paragraph, warm and direct.',
+    '- Voice: calm and precise, like a trusted instrument. Supportive, never hype. No exclamation marks, no emoji.',
     `- Write in this locale: ${locale}.`,
   ].join('\n');
 }

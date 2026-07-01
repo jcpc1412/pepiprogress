@@ -167,7 +167,9 @@
     "compoundSearch": "Поиск соединения",
     "unclearResolved": "Будет записано как {{name}}",
     "skipItem": "Пропустить",
-    "unclearSkipped": "Пропущено"
+    "unclearSkipped": "Пропущено",
+    "distilling": "Обработка…",
+    "backgroundHint": "Запишите и продолжайте. Мы обработаем это в фоне."
   },
   "photos": {
     "title": "Фото прогресса",
@@ -658,7 +660,11 @@
     "doseDone": "Готово",
     "distillation": "Сводка дня",
     "compoundsLogged": "{{names}} записано",
-    "dosesPlaceholder": "Добавьте протокол для отслеживания доз"
+    "dosesPlaceholder": "Добавьте протокол для отслеживания доз",
+    "distilling": "Обрабатываем вашу запись…",
+    "distillingPill": "Обработка",
+    "distillError": "Сервис недоступен. Повторим попытку автоматически.",
+    "distillErrorPill": "В очереди"
   },
   "addCompound": {
     "title": "Добавить препарат",

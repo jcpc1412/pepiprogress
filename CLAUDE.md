@@ -9,6 +9,7 @@ A daily peptide-tracking journal that turns subjective check-ins + consistent ph
 ## Read these first (source of truth)
 - **[docs/spec/SPEC.md](docs/spec/SPEC.md)** — the index to 14 fully-specced areas. Every product/architecture decision is locked there. Read it before touching anything.
 - **[docs/ROADMAP.md](docs/ROADMAP.md)** — full implementation sequence (M0→M5→Polish→V2→V3), locked product/legal decisions, cost model, and M4 test checklist.
+- **[docs/VOICE.md](docs/VOICE.md)** — brand voice & tone ("The Instrument"). Match it for every user-facing string + AI-generated copy (quick-log replies, insights, encouragement). Don't invent a new register per feature.
 
 ## Status
 - **Scoping complete.** All 14 spec areas written, reconciled, decided — no open parking lots (except the deliberately-deferred dosing-card questions in area 05).

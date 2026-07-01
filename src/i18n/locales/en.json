@@ -167,7 +167,9 @@
     "compoundSearch": "Search compound",
     "unclearResolved": "Will log as {{name}}",
     "skipItem": "Skip",
-    "unclearSkipped": "Skipped"
+    "unclearSkipped": "Skipped",
+    "distilling": "Distilling…",
+    "backgroundHint": "Log it and go. We’ll distill it in the background."
   },
   "photos": {
     "title": "Progress photos",
@@ -658,7 +660,11 @@
     "doseDone": "Done",
     "distillation": "Today's distillation",
     "compoundsLogged": "{{names}} logged",
-    "dosesPlaceholder": "Add a protocol to track daily doses"
+    "dosesPlaceholder": "Add a protocol to track daily doses",
+    "distilling": "Distilling your entry…",
+    "distillingPill": "Distilling",
+    "distillError": "Couldn’t reach the service. We’ll retry automatically.",
+    "distillErrorPill": "Queued"
   },
   "addCompound": {
     "title": "Add compound",

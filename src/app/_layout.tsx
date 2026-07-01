@@ -14,6 +14,7 @@ import { CloudSync } from '@/lib/cloud-sync';
 import { IntegrationSync } from '@/lib/integration-sync';
 import { LanguageSync } from '@/lib/language-sync';
 import { NotificationManager } from '@/lib/notification-manager';
+import { QuickLogRunner } from '@/lib/quick-log-runner';
 import { StoreProvider } from '@/lib/store';
 import { AppThemeProvider, useResolvedScheme } from '@/lib/theme-provider';
 
@@ -37,6 +38,8 @@ function RootContent() {
       <LanguageSync />
       {/* Passively pulls connected health sources on foreground; renders nothing. */}
       <IntegrationSync />
+      {/* Parses queued natural-language quick-logs in the background; renders nothing. */}
+      <QuickLogRunner />
       {/* Provides SyncStatus context + debounced cloud backup while signed in. */}
       <CloudSync>
         <Stack screenOptions={{ headerShown: false }}>

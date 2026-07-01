@@ -167,7 +167,9 @@
     "compoundSearch": "Rechercher compose",
     "unclearResolved": "Sera enregistre comme {{name}}",
     "skipItem": "Ignorer",
-    "unclearSkipped": "Ignore"
+    "unclearSkipped": "Ignore",
+    "distilling": "Distillation…",
+    "backgroundHint": "Notez et continuez. Nous le distillerons en arrière-plan."
   },
   "photos": {
     "title": "Photos de progression",
@@ -658,7 +660,11 @@
     "doseDone": "Fait",
     "distillation": "Synthèse du jour",
     "compoundsLogged": "{{names}} enregistré",
-    "dosesPlaceholder": "Ajoutez un protocole pour suivre les doses"
+    "dosesPlaceholder": "Ajoutez un protocole pour suivre les doses",
+    "distilling": "Distillation de votre saisie…",
+    "distillingPill": "Distillation",
+    "distillError": "Service injoignable. Nouvelle tentative automatique.",
+    "distillErrorPill": "En file"
   },
   "addCompound": {
     "title": "Ajouter un composé",

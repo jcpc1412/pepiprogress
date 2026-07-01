@@ -363,6 +363,7 @@ export async function pullFromCloud(userId: string): Promise<PersistedState | nu
     metricReadings: [],
     integrations: {},
     customCompounds: [],
+    quickLogJobs: [],
   };
 }
 
@@ -479,5 +480,7 @@ export function mergeStates(local: PersistedState, cloud: PersistedState): Persi
     integrations,
     // Custom compounds ride the snapshot; preserve whichever side has them.
     customCompounds: cloud.customCompounds?.length ? cloud.customCompounds : local.customCompounds,
+    // The quick-log queue is a device-local job list — never restored from cloud.
+    quickLogJobs: local.quickLogJobs ?? [],
   };
 }

@@ -167,7 +167,9 @@
     "compoundSearch": "Buscar compuesto",
     "unclearResolved": "Se registrara como {{name}}",
     "skipItem": "Omitir",
-    "unclearSkipped": "Omitido"
+    "unclearSkipped": "Omitido",
+    "distilling": "Destilando…",
+    "backgroundHint": "Regístralo y sigue. Lo destilaremos en segundo plano."
   },
   "photos": {
     "title": "Fotos de progreso",
@@ -658,7 +660,11 @@
     "doseDone": "Hecho",
     "distillation": "Resumen de hoy",
     "compoundsLogged": "{{names}} registrado",
-    "dosesPlaceholder": "Añade un protocolo para registrar dosis diarias"
+    "dosesPlaceholder": "Añade un protocolo para registrar dosis diarias",
+    "distilling": "Destilando tu entrada…",
+    "distillingPill": "Destilando",
+    "distillError": "No se pudo conectar. Reintentaremos automáticamente.",
+    "distillErrorPill": "En cola"
   },
   "addCompound": {
     "title": "Añadir compuesto",
