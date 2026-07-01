@@ -32,9 +32,11 @@ import { useQuickLogActivity } from '@/lib/quick-log-runner';
 import { localDateKey, useStore, type CheckinEntry, type PhotoEntry } from '@/lib/store';
 
 /** The 4 fixed dashboard chart metrics (mockup — Weight / Energy / Sleep / Recovery).
- *  "Recovery" reuses the soreness field (relabelled app-wide, redesign R2). */
-const CHECKIN_METRICS: { key: keyof CheckinEntry; labelKey: string; unitKey?: string }[] = [
-  { key: 'weight', labelKey: 'fields.weight' },
+ *  "Recovery" reuses the soreness field (relabelled app-wide, redesign R2).
+ *  `canonicalMetric`: when set, supplement chart points from metricReadings for
+ *  dates where no manual check-in entry exists (integration autofill, spec 06). */
+const CHECKIN_METRICS: { key: keyof CheckinEntry; labelKey: string; unitKey?: string; canonicalMetric?: string }[] = [
+  { key: 'weight', labelKey: 'fields.weight', canonicalMetric: 'body.weight' },
   { key: 'energy', labelKey: 'fields.energy' },
   { key: 'sleep_quality', labelKey: 'fields.sleep_quality' },
   { key: 'soreness', labelKey: 'fields.soreness' },
@@ -50,7 +52,7 @@ export function Dashboard() {
   const router = useRouter();
   const theme = useTheme();
   const { openSettings, openLogging } = useOverlay();
-  const { entries, photos, doseEvents, profile, setProfile, upsertCheckin } = useStore();
+  const { entries, photos, doseEvents, metricReadings, profile, setProfile, upsertCheckin } = useStore();
 
   const [chartPickerOpen, setChartPickerOpen] = useState(false);
   const [editingNote, setEditingNote] = useState(false);
@@ -65,14 +67,38 @@ export function Dashboard() {
   );
 
   const series = useMemo(() => {
-    const dates = Object.keys(entries).sort();
+    // Build a date→value map from metricReadings for each canonical metric,
+    // taking the most-recent reading per day (readings are stored newest-first).
+    const readingsByMetricAndDate = new Map<string, Map<string, number>>();
+    for (const r of metricReadings) {
+      if (typeof r.value !== 'number') continue;
+      let byDate = readingsByMetricAndDate.get(r.metric);
+      if (!byDate) { byDate = new Map(); readingsByMetricAndDate.set(r.metric, byDate); }
+      // addMetricReadings inserts newest first, so first write wins (most recent).
+      if (!byDate.has(r.ts.slice(0, 10))) byDate.set(r.ts.slice(0, 10), r.value);
+    }
+
+    // Union of dates from manual entries + integration readings.
+    const entryDates = new Set(Object.keys(entries));
+    const allDates = new Set(entryDates);
+    for (const byDate of readingsByMetricAndDate.values()) {
+      for (const d of byDate.keys()) allDates.add(d);
+    }
+    const dates = Array.from(allDates).sort();
+
     return CHECKIN_METRICS.filter((m) => selected.includes(m.key as string)).map((m) => {
+      const byDate = m.canonicalMetric ? readingsByMetricAndDate.get(m.canonicalMetric) : undefined;
       const points: ChartPoint[] = dates
-        .map((d) => ({ label: d.slice(5), value: entries[d]?.[m.key] }))
+        .map((d) => {
+          const manual = entries[d]?.[m.key];
+          // Manual check-in always wins; fall back to integration reading.
+          const value = typeof manual === 'number' ? manual : byDate?.get(d);
+          return { label: d.slice(5), value };
+        })
         .filter((p): p is ChartPoint => typeof p.value === 'number');
       return { ...m, points };
     });
-  }, [entries, selected]);
+  }, [entries, metricReadings, selected]);
 
   const latestPhotos = (session: 'face' | 'body') =>
     photos.filter((p) => p.session === session).sort((a, b) => (a.takenAt < b.takenAt ? 1 : -1));
