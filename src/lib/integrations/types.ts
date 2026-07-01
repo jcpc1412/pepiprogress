@@ -57,6 +57,12 @@ export type IntegrationProvider = {
    * omitted. `opts.connection` gives the stored connection state (tokens, ids).
    */
   pull: (opts: { since?: string; connection?: IntegrationState }) => Promise<ProviderReading[]>;
+  /**
+   * Optional on-device diagnostic. Returns a short human-readable report (module
+   * linked? permission status? raw sample counts per metric?) that the user can
+   * read/screenshot when a sync mysteriously returns nothing. Native-only.
+   */
+  diagnose?: () => Promise<string>;
 };
 
 export type AuthResult = { ok: boolean; patch?: Partial<IntegrationState>; error?: string };

@@ -60,6 +60,9 @@ function ProviderRow({ provider }: { provider: IntegrationProvider }) {
   const [busy, setBusy] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [connectError, setConnectError] = useState<string | null>(null);
+  const [syncResult, setSyncResult] = useState<string | null>(null);
+  const [diagReport, setDiagReport] = useState<string | null>(null);
+  const [diagBusy, setDiagBusy] = useState(false);
   const conn = integrations[provider.id];
   const connected = !!conn?.connectedAt;
 
@@ -74,9 +77,23 @@ function ProviderRow({ provider }: { provider: IntegrationProvider }) {
           : undefined;
       const readings = await provider.pull({ since, connection: conn });
       addMetricReadings(readings);
+      setSyncResult(t('integrations.imported', { count: readings.length }));
       setIntegration(provider.id, { lastSyncAt: new Date().toISOString() });
     } finally {
       setBusy(false);
+    }
+  };
+
+  const runDiagnostics = async () => {
+    if (!provider.diagnose) return;
+    setDiagBusy(true);
+    setDiagReport(null);
+    try {
+      setDiagReport(await provider.diagnose());
+    } catch (e) {
+      setDiagReport(e instanceof Error ? e.message : String(e));
+    } finally {
+      setDiagBusy(false);
     }
   };
 
@@ -101,6 +118,7 @@ function ProviderRow({ provider }: { provider: IntegrationProvider }) {
     try {
       const readings = await provider.pull({ since: conn?.lastSyncAt, connection: conn });
       addMetricReadings(readings);
+      setSyncResult(t('integrations.imported', { count: readings.length }));
       setIntegration(provider.id, { lastSyncAt: new Date().toISOString() });
     } finally {
       setBusy(false);
@@ -131,18 +149,37 @@ function ProviderRow({ provider }: { provider: IntegrationProvider }) {
               ? t('integrations.lastSync', { when: new Date(conn.lastSyncAt).toLocaleDateString() })
               : t('integrations.lastSync', { when: t('integrations.never') })}
           </ThemedText>
+          {syncResult && (
+            <ThemedText type="monoSm" themeColor="textSecondary">
+              {syncResult}
+            </ThemedText>
+          )}
           <View style={styles.actionLinks}>
             <Pressable accessibilityRole="button" onPress={sync} disabled={busy}>
               <ThemedText type="monoSm" themeColor="textSecondary" style={styles.link}>
                 {busy ? t('integrations.syncing') : t('integrations.sync')}
               </ThemedText>
             </Pressable>
+            {provider.diagnose && (
+              <Pressable accessibilityRole="button" onPress={runDiagnostics} disabled={diagBusy}>
+                <ThemedText type="monoSm" themeColor="textSecondary" style={styles.link}>
+                  {diagBusy ? t('integrations.diagnosing') : t('integrations.diagnose')}
+                </ThemedText>
+              </Pressable>
+            )}
             <Pressable accessibilityRole="button" onPress={disconnect} disabled={busy}>
               <ThemedText type="monoSm" themeColor="signalBad" style={styles.link}>
                 {t('integrations.disconnect')}
               </ThemedText>
             </Pressable>
           </View>
+          {diagReport && (
+            <View style={styles.diagBox}>
+              <ThemedText type="monoSm" themeColor="textMuted" selectable>
+                {diagReport}
+              </ThemedText>
+            </View>
+          )}
         </View>
       ) : (
         <View style={styles.actions}>
@@ -199,4 +236,5 @@ const styles = StyleSheet.create({
   actions: { gap: Spacing.one },
   actionLinks: { flexDirection: 'row', gap: Spacing.four },
   link: { textDecorationLine: 'underline' },
+  diagBox: { marginTop: Spacing.one, paddingVertical: Spacing.two },
 });

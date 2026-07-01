@@ -21,6 +21,13 @@ const QUANTITY_MAP = [
   { id: 'HKQuantityTypeIdentifierDietaryFatTotal', metric: CanonicalMetric.nutritionFat, unit: 'g', sumPerDay: true },
 ] as const;
 
+// Writeable types we also request share access for. Read-only authorization is
+// deliberately opaque on iOS (`authorizationStatusFor` returns "denied" even when
+// a read is granted, and reads come back empty either way), so requesting *write*
+// for weight gives us one type whose status we can actually read back in the
+// diagnostic — and sets up writing the check-in weight back to Health later.
+const SHARE_MAP = ['HKQuantityTypeIdentifierBodyMass'] as const;
+
 // Loaded lazily so the module can be imported on web without bundling the native SDK.
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const hk = () => require('@kingstinct/react-native-healthkit') as typeof import('@kingstinct/react-native-healthkit');
@@ -68,16 +75,94 @@ async function authenticate(): Promise<{ ok: boolean; error?: string }> {
     ...QUANTITY_MAP.map((m) => m.id),
     'HKCategoryTypeIdentifierSleepAnalysis',
   ] as Parameters<ReturnType<typeof hk>['requestAuthorization']>[0]['toRead'] & string[];
+  const toShare = [...SHARE_MAP] as Parameters<
+    ReturnType<typeof hk>['requestAuthorization']
+  >[0]['toShare'] & string[];
   try {
     // v14 returns true once the request completes (sheet shown or already
     // decided); it throws on a real error (e.g. missing entitlement). iOS never
     // reveals grant vs. deny, so a resolved call means "proceed" — empty reads
     // handle the denied case gracefully.
-    const ok = await mod.requestAuthorization({ toRead });
+    const ok = await mod.requestAuthorization({ toRead, toShare });
     return { ok: ok !== false };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : String(e) };
   }
+}
+
+/**
+ * On-device sanity report. Answers the three questions a silent empty sync can't:
+ * is the native module actually in this build, has the OS recorded a permission
+ * decision, and how many raw samples does each type return? Purely observational —
+ * no writes, safe to run anytime. Returned as plain lines for a screenshot.
+ */
+async function diagnose(): Promise<string> {
+  const lines: string[] = [];
+  const mod = hk();
+  const linked = typeof mod?.requestAuthorization === 'function';
+  lines.push(`module linked: ${linked ? 'yes' : 'NO'}`);
+  if (!linked) {
+    lines.push('→ native HealthKit module is not in this build. Rebuild with the config plugin.');
+    return lines.join('\n');
+  }
+
+  try {
+    const available = typeof mod.isHealthDataAvailable === 'function' ? mod.isHealthDataAvailable() : true;
+    lines.push(`health data available: ${available ? 'yes' : 'NO'}`);
+  } catch {
+    lines.push('health data available: error');
+  }
+
+  // Aggregate request status. shouldRequest = the sheet was never completed;
+  // unnecessary = a decision exists (granted OR denied — iOS hides which).
+  try {
+    const toRead = [
+      ...QUANTITY_MAP.map((m) => m.id),
+      'HKCategoryTypeIdentifierSleepAnalysis',
+    ] as Parameters<typeof mod.getRequestStatusForAuthorization>[0]['toRead'] & string[];
+    const status = await mod.getRequestStatusForAuthorization({ toRead });
+    const label = status === 1 ? 'shouldRequest (sheet not completed)' : status === 2 ? 'unnecessary (decision recorded)' : 'unknown';
+    lines.push(`request status: ${label}`);
+  } catch (e) {
+    lines.push(`request status: error ${e instanceof Error ? e.message : String(e)}`);
+  }
+
+  // Weight is the one type we also requested write for, so its status is real.
+  try {
+    const s = mod.authorizationStatusFor('HKQuantityTypeIdentifierBodyMass');
+    const label = s === 2 ? 'sharingAuthorized' : s === 1 ? 'sharingDenied' : 'notDetermined';
+    lines.push(`weight share status: ${label}`);
+  } catch {
+    // older module without this export
+  }
+
+  // Raw sample counts over the last 30 days, before any mapping — this is the
+  // number that tells us whether HealthKit is actually handing data back.
+  const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const endDate = new Date();
+  lines.push('raw samples (30d):');
+  for (const entry of QUANTITY_MAP) {
+    try {
+      const samples = await mod.queryQuantitySamples(entry.id as never, {
+        filter: { date: { startDate, endDate } },
+        limit: -1,
+      });
+      lines.push(`  ${entry.metric}: ${samples.length}`);
+    } catch (e) {
+      lines.push(`  ${entry.metric}: error ${e instanceof Error ? e.message : String(e)}`);
+    }
+  }
+  try {
+    const sleep = await mod.queryCategorySamples('HKCategoryTypeIdentifierSleepAnalysis', {
+      filter: { date: { startDate, endDate } },
+      limit: -1,
+    });
+    lines.push(`  sleep.duration: ${sleep.length}`);
+  } catch (e) {
+    lines.push(`  sleep.duration: error ${e instanceof Error ? e.message : String(e)}`);
+  }
+
+  return lines.join('\n');
 }
 
 async function readHealthKit(since?: string): Promise<ProviderReading[]> {
@@ -181,4 +266,5 @@ export const appleHealthProvider: IntegrationProvider = {
     return authenticate();
   },
   pull: ({ since } = {}) => readHealthKit(since),
+  diagnose: () => (Platform.OS === 'ios' ? diagnose() : Promise.resolve('Apple Health is iOS-only.')),
 };
