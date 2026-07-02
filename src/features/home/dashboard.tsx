@@ -25,6 +25,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Chamfer, MaxContentWidth, Radii, Spacing } from '@/constants/theme';
 import { compoundBySlug } from '@/data/compound-catalog';
+import { deriveMetrics, type DerivedMetricKey } from '@/lib/derived-metrics';
 import { TodayDoses } from '@/features/home/today-doses';
 import { useTheme } from '@/hooks/use-theme';
 import { useOverlay } from '@/lib/nav-overlay';
@@ -86,6 +87,10 @@ export function Dashboard() {
     }
     const dates = Array.from(allDates).sort();
 
+    // Wearable-derived estimates for the subjective fields (energy/sleep/recovery).
+    const estMode = profile.estimatedMetricsMode ?? 'fill';
+    const derived = estMode === 'off' ? null : deriveMetrics(metricReadings, { dobISO: profile.dobISO, sex: profile.sex });
+
     return CHECKIN_METRICS.filter((m) => selected.includes(m.key as string)).map((m) => {
       const byDate = m.canonicalMetric ? readingsByMetricAndDate.get(m.canonicalMetric) : undefined;
       const points: ChartPoint[] = dates
@@ -96,9 +101,22 @@ export function Dashboard() {
           return { label: d.slice(5), value };
         })
         .filter((p): p is ChartPoint => typeof p.value === 'number');
-      return { ...m, points };
+
+      // Estimated overlay: only for the three derivable subjective fields.
+      let estimated: ChartPoint[] | undefined;
+      const derivedForMetric = derived?.[m.key as DerivedMetricKey];
+      if (derivedForMetric) {
+        estimated = [];
+        for (const [d, pt] of derivedForMetric) {
+          const hasManual = typeof entries[d]?.[m.key] === 'number';
+          // 'fill' shows estimates only where nothing was logged; 'always' shows all.
+          if (estMode === 'fill' && hasManual) continue;
+          estimated.push({ label: d.slice(5), value: pt.value });
+        }
+      }
+      return { ...m, points, estimated };
     });
-  }, [entries, metricReadings, selected]);
+  }, [entries, metricReadings, selected, profile.estimatedMetricsMode, profile.dobISO, profile.sex]);
 
   const latestPhotos = (session: 'face' | 'body') =>
     photos.filter((p) => p.session === session).sort((a, b) => (a.takenAt < b.takenAt ? 1 : -1));
@@ -250,9 +268,15 @@ export function Dashboard() {
                     <EngravedLabel>{t(s.labelKey as 'fields.weight')}</EngravedLabel>
                     <LineChart
                       data={s.points}
+                      estimated={s.estimated}
                       unit={s.unitKey ? t(s.unitKey as 'units.g') : undefined}
                       emptyLabel={t('common.noData')}
                     />
+                    {s.estimated && s.estimated.length > 0 && (
+                      <ThemedText type="monoSm" themeColor="textMuted">
+                        {t('dashboard.estimatedHint')}
+                      </ThemedText>
+                    )}
                   </Card>
                 </View>
               ))}
@@ -439,6 +463,31 @@ export function Dashboard() {
                 </Pressable>
               );
             })}
+            {/* Estimated (wearable-derived) overlay mode. */}
+            <EngravedLabel style={styles.modalTitle}>{t('dashboard.estimatedModeTitle')}</EngravedLabel>
+            <View style={styles.estimatedModeRow}>
+              {(['off', 'fill', 'always'] as const).map((mode) => {
+                const active = (profile.estimatedMetricsMode ?? 'fill') === mode;
+                return (
+                  <Pressable
+                    key={mode}
+                    accessibilityRole="radio"
+                    accessibilityState={{ selected: active }}
+                    onPress={() => setProfile({ estimatedMetricsMode: mode })}
+                    style={[
+                      styles.estimatedModeChip,
+                      { borderColor: active ? theme.accent : theme.border, backgroundColor: active ? theme.accent : 'transparent' },
+                    ]}>
+                    <ThemedText type="monoSm" themeColor={active ? 'background' : 'textSecondary'}>
+                      {t(`dashboard.estimatedMode_${mode}` as 'dashboard.estimatedMode_fill')}
+                    </ThemedText>
+                  </Pressable>
+                );
+              })}
+            </View>
+            <ThemedText type="monoSm" themeColor="textMuted" style={styles.modalTitle}>
+              {t('dashboard.estimatedModeHint')}
+            </ThemedText>
           </View>
         </Pressable>
       </Modal>
@@ -449,6 +498,14 @@ export function Dashboard() {
 const NAV_BTN_SIZE = 28;
 
 const styles = StyleSheet.create({
+  estimatedModeRow: { flexDirection: 'row', gap: Spacing.two, marginTop: Spacing.one },
+  estimatedModeChip: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: Spacing.two,
+    borderWidth: 1,
+    borderRadius: Radii.panel,
+  },
   container: { flex: 1 },
   safe: {
     flex: 1,

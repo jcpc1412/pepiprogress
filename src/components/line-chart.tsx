@@ -9,15 +9,20 @@ export type ChartPoint = { label: string; value: number };
 /** A vertical reference line (e.g. a dose/protocol start) at a 0–1 x-fraction. */
 export type ChartMarker = { fraction: number };
 
-/** Minimal line chart on react-native-svg, themed to the instrument aesthetic (H-01). */
+/** Minimal line chart on react-native-svg, themed to the instrument aesthetic (H-01).
+ *  `estimated` is an optional secondary series (wearable-derived) drawn dashed +
+ *  hollow so it reads as inferred, not logged. Both series share one x-domain
+ *  (sorted unique labels) so they align by date rather than array index. */
 export function LineChart({
   data,
+  estimated,
   height = 160,
   unit,
   markers,
   emptyLabel,
 }: {
   data: ChartPoint[];
+  estimated?: ChartPoint[];
   height?: number;
   unit?: string;
   markers?: ChartMarker[];
@@ -28,20 +33,16 @@ export function LineChart({
   const padX = 8;
   const padY = 14;
 
+  const est = estimated ?? [];
+  const totalPoints = data.length + est.length;
+
   // Empty/insufficient — draw a dashed baseline + axis so it reads as a chart
   // waiting for data (encourages logging).
-  if (data.length < 2) {
+  if (totalPoints < 2) {
     return (
       <View style={styles.wrap}>
         <Svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`}>
-          <Line
-            x1={padX}
-            y1={height - padY}
-            x2={width - padX}
-            y2={height - padY}
-            stroke={theme.border}
-            strokeWidth={1}
-          />
+          <Line x1={padX} y1={height - padY} x2={width - padX} y2={height - padY} stroke={theme.border} strokeWidth={1} />
           <Line
             x1={padX}
             y1={height / 2}
@@ -61,21 +62,27 @@ export function LineChart({
     );
   }
 
-  const values = data.map((d) => d.value);
-  const min = Math.min(...values);
-  const max = Math.max(...values);
+  // Shared x-domain: sorted unique labels across both series.
+  const domain = Array.from(new Set([...data, ...est].map((d) => d.label))).sort();
+  const xIndex = new Map(domain.map((l, i) => [l, i]));
+  const stepX = (width - padX * 2) / Math.max(1, domain.length - 1);
+  const xFor = (label: string) => padX + (xIndex.get(label) ?? 0) * stepX;
+
+  // Shared y-scale across both series so they're comparable.
+  const allValues = [...data, ...est].map((d) => d.value);
+  const min = Math.min(...allValues);
+  const max = Math.max(...allValues);
   const span = max - min || 1;
-  const stepX = (width - padX * 2) / (data.length - 1);
+  const yFor = (v: number) => padY + (1 - (v - min) / span) * (height - padY * 2);
 
-  const points = data
-    .map((d, i) => {
-      const x = padX + i * stepX;
-      const y = padY + (1 - (d.value - min) / span) * (height - padY * 2);
-      return `${x},${y}`;
-    })
-    .join(' ');
+  const sortedData = [...data].sort((a, b) => a.label.localeCompare(b.label));
+  const sortedEst = [...est].sort((a, b) => a.label.localeCompare(b.label));
 
-  const last = data[data.length - 1];
+  const mainPoints = sortedData.map((d) => `${xFor(d.label)},${yFor(d.value)}`).join(' ');
+  const estPoints = sortedEst.map((d) => `${xFor(d.label)},${yFor(d.value)}`).join(' ');
+
+  // Header shows the most recent value we have (manual preferred, else estimated).
+  const last = sortedData[sortedData.length - 1] ?? sortedEst[sortedEst.length - 1];
 
   return (
     <View style={styles.wrap}>
@@ -90,32 +97,34 @@ export function LineChart({
         {markers?.map((m, i) => {
           const x = padX + Math.max(0, Math.min(1, m.fraction)) * (width - padX * 2);
           return (
-            <Line
-              key={`m${i}`}
-              x1={x}
-              y1={padY}
-              x2={x}
-              y2={height - padY}
-              stroke={theme.border}
-              strokeWidth={1}
-              strokeDasharray="3 3"
-            />
+            <Line key={`m${i}`} x1={x} y1={padY} x2={x} y2={height - padY} stroke={theme.border} strokeWidth={1} strokeDasharray="3 3" />
           );
         })}
-        <Polyline
-          points={points}
-          fill="none"
-          stroke={theme.accent}
-          strokeWidth={2}
-          strokeLinejoin="round"
-          strokeLinecap="round"
-        />
-        {data.map((d, i) => (
+        {/* Estimated (wearable-derived) overlay — dashed line, hollow dots. */}
+        {sortedEst.length >= 2 && (
+          <Polyline
+            points={estPoints}
+            fill="none"
+            stroke={theme.textMuted}
+            strokeWidth={1.5}
+            strokeDasharray="4 4"
+            strokeLinejoin="round"
+            strokeLinecap="round"
+          />
+        )}
+        {sortedEst.map((d, i) => (
+          <Circle key={`e${i}`} cx={xFor(d.label)} cy={yFor(d.value)} r={2} fill={theme.background} stroke={theme.textMuted} strokeWidth={1} />
+        ))}
+        {/* Subjective (logged) series — solid accent line, filled dots. */}
+        {sortedData.length >= 2 && (
+          <Polyline points={mainPoints} fill="none" stroke={theme.accent} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
+        )}
+        {sortedData.map((d, i) => (
           <Circle
             key={i}
-            cx={padX + i * stepX}
-            cy={padY + (1 - (d.value - min) / span) * (height - padY * 2)}
-            r={i === data.length - 1 ? 3 : 1.5}
+            cx={xFor(d.label)}
+            cy={yFor(d.value)}
+            r={i === sortedData.length - 1 ? 3 : 1.5}
             fill={theme.accent}
           />
         ))}

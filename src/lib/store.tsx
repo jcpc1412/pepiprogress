@@ -193,6 +193,10 @@ export type LocalProfile = {
   bodyFatPct?: number;
   /** Metric keys the user pinned to the Today dashboard charts (H-01). */
   dashboardMetrics?: string[];
+  /** How estimated (wearable-derived) metric values appear on charts:
+   *  'fill' = only on days with no manual entry (default), 'always' = plotted
+   *  alongside the subjective series, 'off' = never. */
+  estimatedMetricsMode?: 'off' | 'fill' | 'always';
   /** Dismissed the "add your first compound" soft prompt (O-04). */
   dismissedAddCompoundPrompt?: boolean;
   /** End-of-day macro reminder (H-05). */
