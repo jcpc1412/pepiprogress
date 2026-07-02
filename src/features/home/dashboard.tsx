@@ -32,18 +32,38 @@ import { useOverlay } from '@/lib/nav-overlay';
 import { useQuickLogActivity } from '@/lib/quick-log-runner';
 import { localDateKey, useStore, type CheckinEntry, type PhotoEntry } from '@/lib/store';
 
-/** The 4 fixed dashboard chart metrics (mockup — Weight / Energy / Sleep / Recovery).
- *  "Recovery" reuses the soreness field (relabelled app-wide, redesign R2).
- *  `canonicalMetric`: when set, supplement chart points from metricReadings for
- *  dates where no manual check-in entry exists (integration autofill, spec 06). */
-const CHECKIN_METRICS: { key: keyof CheckinEntry; labelKey: string; unitKey?: string; canonicalMetric?: string }[] = [
-  { key: 'weight', labelKey: 'fields.weight', canonicalMetric: 'body.weight' },
-  { key: 'energy', labelKey: 'fields.energy' },
-  { key: 'sleep_quality', labelKey: 'fields.sleep_quality' },
-  { key: 'soreness', labelKey: 'fields.soreness' },
+/** Dashboard chart metric config.
+ *  `id`: unique key used for selection/storage.
+ *  `checkinKey`: manual check-in field (omit for wearable-only insight metrics).
+ *  `derivedKey`: wearable-derived metric key from deriveMetrics().
+ *  `canonicalMetric`: supplement chart from integration metricReadings. */
+type MetricConfig = {
+  id: string;
+  checkinKey?: keyof CheckinEntry;
+  labelKey: string;
+  unitKey?: string;
+  canonicalMetric?: string;
+  derivedKey?: DerivedMetricKey;
+};
+
+const CHECKIN_METRICS: MetricConfig[] = [
+  // ── Core subjective + integration ──────────────────────────────────────────
+  { id: 'weight',       checkinKey: 'weight',        labelKey: 'fields.weight',       canonicalMetric: 'body.weight' },
+  { id: 'energy',       checkinKey: 'energy',        labelKey: 'fields.energy',       derivedKey: 'energy' },
+  { id: 'sleep_quality',checkinKey: 'sleep_quality', labelKey: 'fields.sleep_quality',derivedKey: 'sleep_quality' },
+  { id: 'soreness',     checkinKey: 'soreness',      labelKey: 'fields.soreness',     derivedKey: 'soreness' },
+  // ── Wearable-only insight metrics (opt-in, no manual entry) ────────────────
+  { id: 'sleep_deep_pct',     labelKey: 'fields.sleep_deep_pct',     derivedKey: 'sleep_deep_pct' },
+  { id: 'sleep_rem_pct',      labelKey: 'fields.sleep_rem_pct',      derivedKey: 'sleep_rem_pct' },
+  { id: 'protein_adequacy',   labelKey: 'fields.protein_adequacy',   derivedKey: 'protein_adequacy' },
+  { id: 'caloric_balance',    labelKey: 'fields.caloric_balance',    derivedKey: 'caloric_balance' },
+  { id: 'body_comp_velocity', labelKey: 'fields.body_comp_velocity', derivedKey: 'body_comp_velocity' },
+  { id: 'cv_strain',          labelKey: 'fields.cv_strain',          derivedKey: 'cv_strain' },
+  { id: 'inflammation',       labelKey: 'fields.inflammation',       derivedKey: 'inflammation' },
 ];
 
-const ALL_METRIC_KEYS = CHECKIN_METRICS.map((m) => m.key as string);
+// Insight-only metrics are opt-in; default to showing the original 4.
+const DEFAULT_METRIC_IDS = ['weight', 'energy', 'sleep_quality', 'soreness'];
 
 /** Today as a glanceable dashboard (H-01): swipeable photo/chart card + single log
  *  button above a distillation summary. Charts default to all 4; pencil icon opens
@@ -61,9 +81,8 @@ export function Dashboard() {
 
   const width = Math.min(Dimensions.get('window').width - Spacing.four * 2, MaxContentWidth);
 
-  // Default to all 4 charts when no preference has been saved (R3-C).
   const selected = useMemo(
-    () => (profile.dashboardMetrics?.length ? profile.dashboardMetrics : ALL_METRIC_KEYS),
+    () => (profile.dashboardMetrics?.length ? profile.dashboardMetrics : DEFAULT_METRIC_IDS),
     [profile.dashboardMetrics],
   );
 
@@ -87,29 +106,37 @@ export function Dashboard() {
     }
     const dates = Array.from(allDates).sort();
 
-    // Wearable-derived estimates for the subjective fields (energy/sleep/recovery).
     const estMode = profile.estimatedMetricsMode ?? 'fill';
     const derived = estMode === 'off' ? null : deriveMetrics(metricReadings, { dobISO: profile.dobISO, sex: profile.sex });
 
-    return CHECKIN_METRICS.filter((m) => selected.includes(m.key as string)).map((m) => {
+    return CHECKIN_METRICS.filter((m) => selected.includes(m.id)).map((m) => {
       const byDate = m.canonicalMetric ? readingsByMetricAndDate.get(m.canonicalMetric) : undefined;
+      const derivedForMetric = m.derivedKey ? derived?.[m.derivedKey] : undefined;
+      const insightOnly = !m.checkinKey && !!m.derivedKey;
+
+      // Insight-only metrics (no manual check-in) render derived data as the primary
+      // solid series so they look like real data, not an overlay.
+      if (insightOnly) {
+        const points: ChartPoint[] = derivedForMetric
+          ? Array.from(derivedForMetric.values()).map((pt) => ({ label: pt.dateKey.slice(5), value: pt.value }))
+          : [];
+        return { ...m, points, estimated: undefined };
+      }
+
       const points: ChartPoint[] = dates
         .map((d) => {
-          const manual = entries[d]?.[m.key];
-          // Manual check-in always wins; fall back to integration reading.
+          const manual = m.checkinKey ? entries[d]?.[m.checkinKey] : undefined;
           const value = typeof manual === 'number' ? manual : byDate?.get(d);
           return { label: d.slice(5), value };
         })
         .filter((p): p is ChartPoint => typeof p.value === 'number');
 
-      // Estimated overlay: only for the three derivable subjective fields.
+      // Estimated overlay: dashed + hollow, only for metrics with a derivedKey.
       let estimated: ChartPoint[] | undefined;
-      const derivedForMetric = derived?.[m.key as DerivedMetricKey];
       if (derivedForMetric) {
         estimated = [];
         for (const [d, pt] of derivedForMetric) {
-          const hasManual = typeof entries[d]?.[m.key] === 'number';
-          // 'fill' shows estimates only where nothing was logged; 'always' shows all.
+          const hasManual = m.checkinKey ? typeof entries[d]?.[m.checkinKey] === 'number' : false;
           if (estMode === 'fill' && hasManual) continue;
           estimated.push({ label: d.slice(5), value: pt.value });
         }
@@ -190,13 +217,13 @@ export function Dashboard() {
     .filter(Boolean)
     .join(' · ');
 
-  const toggleMetric = (key: string) => {
+  const toggleMetric = (id: string) => {
     const set = new Set(selected);
-    if (set.has(key)) {
+    if (set.has(id)) {
       if (set.size === 1) return; // keep at least one chart
-      set.delete(key);
+      set.delete(id);
     } else {
-      set.add(key);
+      set.add(id);
     }
     setProfile({ dashboardMetrics: [...set] });
   };
@@ -263,7 +290,7 @@ export function Dashboard() {
               ))}
 
               {series.map((s) => (
-                <View key={s.key as string} style={[styles.page, { width }]}>
+                <View key={s.id} style={[styles.page, { width }]}>
                   <Card style={styles.cardFill}>
                     <EngravedLabel>{t(s.labelKey as 'fields.weight')}</EngravedLabel>
                     <LineChart
@@ -439,17 +466,14 @@ export function Dashboard() {
             onStartShouldSetResponder={() => true}>
             <EngravedLabel style={styles.modalTitle}>{t('dashboard.chartsModal')}</EngravedLabel>
             {CHECKIN_METRICS.map((m) => {
-              const active = selected.includes(m.key as string);
+              const active = selected.includes(m.id);
               return (
                 <Pressable
-                  key={m.key as string}
+                  key={m.id}
                   accessibilityRole="checkbox"
                   accessibilityState={{ checked: active }}
-                  onPress={() => toggleMetric(m.key as string)}
-                  style={[
-                    styles.chartRow,
-                    { borderColor: theme.border },
-                  ]}>
+                  onPress={() => toggleMetric(m.id)}
+                  style={[styles.chartRow, { borderColor: theme.border }]}>
                   <ThemedText type="smallBold">{t(m.labelKey as 'fields.weight')}</ThemedText>
                   <View
                     style={[

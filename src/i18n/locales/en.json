@@ -109,7 +109,14 @@
     "measurements": "Measurements",
     "note": "Notes",
     "protein": "Protein",
-    "calories": "Calories"
+    "calories": "Calories",
+    "sleep_deep_pct": "Deep Sleep",
+    "sleep_rem_pct": "REM Sleep",
+    "protein_adequacy": "Protein Adequacy",
+    "caloric_balance": "Caloric Balance",
+    "body_comp_velocity": "Body Comp",
+    "cv_strain": "Cardiac Strain",
+    "inflammation": "Inflammation"
   },
   "checkin": {
     "title": "Daily check-in",

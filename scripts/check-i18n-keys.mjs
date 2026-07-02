@@ -44,7 +44,7 @@ const IDENTICAL_OK = new Set([
   'addCompound.reconTitle', 'ageGate.ageOk', 'ageGate.dayPlaceholder', 'ageGate.monthPlaceholder',
   'app.name', 'appearance.auto', 'checkin.nutrition', 'common.ok', 'compounds.customName',
   'compounds.injectable', 'doseUnits.mcg', 'doseUnits.mg', 'doseUnits.iu', 'fields.calories',
-  'fields.libido', 'fields.note', 'fields.protein', 'goalCat.body_comp', 'insights.trends', 'insights.trendsLabel',
+  'fields.inflammation', 'fields.libido', 'fields.note', 'fields.protein', 'goalCat.body_comp', 'insights.trends', 'insights.trendsLabel',
   'integrations.appleHealth', 'integrations.healthConnect', 'integrations.terra', 'inventory.kind',
   'inventory.label', 'inventory.ok', 'inventoryKinds.vial', 'lab.range', 'lab.vialResult',
   'markers.estradiol', 'markers.glucose', 'me.name', 'measurements.unitCm', 'measurements.unitIn',

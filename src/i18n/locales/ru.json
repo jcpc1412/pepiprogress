@@ -109,7 +109,14 @@
     "measurements": "Замеры",
     "note": "Заметки",
     "protein": "Белок",
-    "calories": "Калории"
+    "calories": "Калории",
+    "sleep_deep_pct": "Глубокий сон",
+    "sleep_rem_pct": "REM-сон",
+    "protein_adequacy": "Достаточность белка",
+    "caloric_balance": "Калорийный баланс",
+    "body_comp_velocity": "Состав тела",
+    "cv_strain": "Кардиальная нагрузка",
+    "inflammation": "Воспаление"
   },
   "checkin": {
     "title": "Ежедневный чек-ин",

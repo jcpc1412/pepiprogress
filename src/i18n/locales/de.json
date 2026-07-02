@@ -109,7 +109,14 @@
     "measurements": "Maße",
     "note": "Notizen",
     "protein": "Protein",
-    "calories": "Kalorien"
+    "calories": "Kalorien",
+    "sleep_deep_pct": "Tiefschlaf",
+    "sleep_rem_pct": "REM-Schlaf",
+    "protein_adequacy": "Proteinversorgung",
+    "caloric_balance": "Kalorienbilanz",
+    "body_comp_velocity": "Körperzusammensetzung",
+    "cv_strain": "Kardiale Belastung",
+    "inflammation": "Entzündung"
   },
   "checkin": {
     "title": "Täglicher Check-in",

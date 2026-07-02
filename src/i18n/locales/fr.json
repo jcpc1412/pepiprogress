@@ -109,7 +109,14 @@
     "measurements": "Mensurations",
     "note": "Notes",
     "protein": "Protéines",
-    "calories": "Calories"
+    "calories": "Calories",
+    "sleep_deep_pct": "Sommeil profond",
+    "sleep_rem_pct": "Sommeil REM",
+    "protein_adequacy": "Apport protéique",
+    "caloric_balance": "Balance calorique",
+    "body_comp_velocity": "Composition corporelle",
+    "cv_strain": "Stress cardiaque",
+    "inflammation": "Inflammation"
   },
   "checkin": {
     "title": "Suivi quotidien",
