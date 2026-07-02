@@ -14,13 +14,22 @@ export const CanonicalMetric = {
   activityEffort: 'activity.effort',
   sleepDuration: 'sleep.duration',
   sleepQuality: 'sleep.quality',
+  sleepDeep: 'sleep.deep',
+  sleepRem: 'sleep.rem',
   nutritionEnergy: 'nutrition.energy',
   nutritionProtein: 'nutrition.protein',
   nutritionCarbs: 'nutrition.carbs',
   nutritionFat: 'nutrition.fat',
   vitalsHrRest: 'vitals.hr_rest',
   vitalsHrv: 'vitals.hrv',
+  vitalsRespRate: 'vitals.resp_rate',
+  vitalsSpo2: 'vitals.spo2',
+  vitalsBodyTemp: 'vitals.body_temp',
   vitalsGlucose: 'vitals.glucose',
+  // Per-workout facts (paired by ts) — the derived-metrics engine reads these to
+  // compute Banister TRIMP load; kept as flat readings to fit the MetricReading model.
+  activityWorkoutMin: 'activity.workout_min',
+  activityWorkoutHr: 'activity.workout_hr',
   cyclePhase: 'cycle.phase',
 } as const;
 

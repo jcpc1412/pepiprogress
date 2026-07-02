@@ -14,6 +14,10 @@ const QUANTITY_MAP = [
   { id: 'HKQuantityTypeIdentifierActiveEnergyBurned', metric: CanonicalMetric.activityEnergy, unit: 'kcal', sumPerDay: true },
   { id: 'HKQuantityTypeIdentifierRestingHeartRate', metric: CanonicalMetric.vitalsHrRest, unit: 'count/min', sumPerDay: false },
   { id: 'HKQuantityTypeIdentifierHeartRateVariabilitySDNN', metric: CanonicalMetric.vitalsHrv, unit: 'ms', sumPerDay: false },
+  // Recovery/sleep vitals — one point per reading; the derivation averages per day.
+  { id: 'HKQuantityTypeIdentifierRespiratoryRate', metric: CanonicalMetric.vitalsRespRate, unit: 'count/min', sumPerDay: false },
+  { id: 'HKQuantityTypeIdentifierOxygenSaturation', metric: CanonicalMetric.vitalsSpo2, unit: '%', sumPerDay: false },
+  { id: 'HKQuantityTypeIdentifierAppleSleepingWristTemperature', metric: CanonicalMetric.vitalsBodyTemp, unit: 'degC', sumPerDay: false },
   // Nutrition — logged per-meal, summed to daily total
   { id: 'HKQuantityTypeIdentifierDietaryEnergyConsumed', metric: CanonicalMetric.nutritionEnergy, unit: 'kcal', sumPerDay: true },
   { id: 'HKQuantityTypeIdentifierDietaryProtein', metric: CanonicalMetric.nutritionProtein, unit: 'g', sumPerDay: true },
@@ -74,6 +78,8 @@ async function authenticate(): Promise<{ ok: boolean; error?: string }> {
   const toRead = [
     ...QUANTITY_MAP.map((m) => m.id),
     'HKCategoryTypeIdentifierSleepAnalysis',
+    'HKQuantityTypeIdentifierHeartRate', // read per-workout avg HR for TRIMP load
+    'HKWorkoutTypeIdentifier',
   ] as Parameters<ReturnType<typeof hk>['requestAuthorization']>[0]['toRead'] & string[];
   const toShare = [...SHARE_MAP] as Parameters<
     ReturnType<typeof hk>['requestAuthorization']
@@ -168,7 +174,7 @@ async function diagnose(): Promise<string> {
 async function readHealthKit(since?: string): Promise<ProviderReading[]> {
   const startDate = since ? new Date(since) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
   const endDate = new Date();
-  const { queryQuantitySamples, queryCategorySamples } = hk();
+  const { queryQuantitySamples, queryCategorySamples, queryWorkoutSamples } = hk();
   const readings: ProviderReading[] = [];
 
   // --- Quantity samples ---
@@ -207,7 +213,7 @@ async function readHealthKit(since?: string): Promise<ProviderReading[]> {
     }
   }
 
-  // --- Sleep: sum asleep stages per calendar day ---
+  // --- Sleep: total asleep hours + deep/REM stage hours per calendar day ---
   // CategoryValueSleepAnalysis: inBed=0, asleep=1, awake=2, asleepCore=3, asleepDeep=4, asleepREM=5
   try {
     const sleepSamples = await queryCategorySamples('HKCategoryTypeIdentifierSleepAnalysis', {
@@ -215,7 +221,9 @@ async function readHealthKit(since?: string): Promise<ProviderReading[]> {
       limit: -1,
     });
 
-    const dailySleep: Record<string, number> = {};
+    const dailyTotal: Record<string, number> = {};
+    const dailyDeep: Record<string, number> = {};
+    const dailyRem: Record<string, number> = {};
     for (const s of sleepSamples) {
       const value = s.value as number;
       if (value === 0 || value === 2) continue; // inBed or awake — not actual sleep
@@ -224,18 +232,57 @@ async function readHealthKit(since?: string): Promise<ProviderReading[]> {
       if (!start || !end) continue;
       const dateKey = start.toISOString().slice(0, 10);
       const durationHours = (end.getTime() - start.getTime()) / 3_600_000;
-      dailySleep[dateKey] = (dailySleep[dateKey] ?? 0) + durationHours;
+      dailyTotal[dateKey] = (dailyTotal[dateKey] ?? 0) + durationHours;
+      if (value === 4) dailyDeep[dateKey] = (dailyDeep[dateKey] ?? 0) + durationHours;
+      if (value === 5) dailyRem[dateKey] = (dailyRem[dateKey] ?? 0) + durationHours;
     }
-    for (const [dateKey, hours] of Object.entries(dailySleep)) {
-      readings.push({
-        metric: CanonicalMetric.sleepDuration,
-        value: hours,
-        ts: `${dateKey}T00:00:00.000Z`,
-        sourceProvider: PROVIDER_ID,
-      });
-    }
+    const pushDaily = (map: Record<string, number>, metric: string) => {
+      for (const [dateKey, hours] of Object.entries(map)) {
+        readings.push({ metric, value: hours, ts: `${dateKey}T00:00:00.000Z`, sourceProvider: PROVIDER_ID });
+      }
+    };
+    pushDaily(dailyTotal, CanonicalMetric.sleepDuration);
+    pushDaily(dailyDeep, CanonicalMetric.sleepDeep);
+    pushDaily(dailyRem, CanonicalMetric.sleepRem);
   } catch {
     // Sleep unavailable.
+  }
+
+  // --- Workouts: duration + average HR per session (feeds Banister TRIMP) ---
+  try {
+    const workouts = await queryWorkoutSamples({
+      filter: { date: { startDate, endDate } },
+      limit: -1,
+    });
+    for (const w of workouts) {
+      const start = toDate(w.startDate);
+      if (!start || typeof w.duration !== 'number') continue;
+      const minutes = w.duration / 60;
+      if (minutes < 1) continue; // ignore sub-minute noise
+      readings.push({
+        metric: CanonicalMetric.activityWorkoutMin,
+        value: minutes,
+        ts: start.toISOString(),
+        sourceProvider: PROVIDER_ID,
+      });
+      // Average HR is a per-workout statistic — best-effort; skip if unavailable.
+      try {
+        const stat = await w.getStatistic('HKQuantityTypeIdentifierHeartRate' as never);
+        const avgHr = stat?.averageQuantity?.quantity;
+        if (typeof avgHr === 'number' && avgHr > 0) {
+          readings.push({
+            metric: CanonicalMetric.activityWorkoutHr,
+            value: avgHr,
+            ts: start.toISOString(),
+            sourceProvider: PROVIDER_ID,
+          });
+        }
+      } catch {
+        // No HR for this workout — TRIMP falls back to an energy-based load proxy.
+      }
+    }
+  } catch {
+    // Workouts unavailable.
   }
 
   return readings;
@@ -249,10 +296,17 @@ export const appleHealthProvider: IntegrationProvider = {
     CanonicalMetric.bodyFatPct,
     CanonicalMetric.bodyLeanMass,
     CanonicalMetric.sleepDuration,
+    CanonicalMetric.sleepDeep,
+    CanonicalMetric.sleepRem,
     CanonicalMetric.activitySteps,
     CanonicalMetric.activityEnergy,
+    CanonicalMetric.activityWorkoutMin,
+    CanonicalMetric.activityWorkoutHr,
     CanonicalMetric.vitalsHrRest,
     CanonicalMetric.vitalsHrv,
+    CanonicalMetric.vitalsRespRate,
+    CanonicalMetric.vitalsSpo2,
+    CanonicalMetric.vitalsBodyTemp,
     CanonicalMetric.nutritionEnergy,
     CanonicalMetric.nutritionProtein,
     CanonicalMetric.nutritionCarbs,
