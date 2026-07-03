@@ -1,0 +1,154 @@
+import { deriveMetrics, type DerivedMetricKey, type DerivedProfile } from '@/lib/derived-metrics';
+import type { CheckinEntry, MetricReading } from '@/lib/store';
+
+/**
+ * Single source of truth for the trend charts shown on the Today dashboard and the
+ * Insights tab. Both surfaces used to build their series independently and drifted
+ * (the Insights charts silently ignored integration + derived data); this module
+ * merges the three data sources once so they can't diverge again:
+ *   1. manual check-in entries (always win),
+ *   2. integration metricReadings (Apple Health etc. — fill days with no check-in),
+ *   3. wearable-derived estimates (deriveMetrics — the dashed overlay).
+ */
+
+export type ChartMetricConfig = {
+  /** Stable id used for selection + persistence (profile.dashboardMetrics). */
+  id: string;
+  labelKey: string;
+  unitKey?: string;
+  /** Manual check-in field. Omit for wearable-only insight metrics. */
+  checkinKey?: keyof CheckinEntry;
+  /** Canonical integration metric that supplements the manual series. */
+  canonicalMetric?: string;
+  /** Derived metric key (deriveMetrics output). */
+  derivedKey?: DerivedMetricKey;
+};
+
+/** The full chart catalog. The first four are the core subjective/weight trends;
+ *  the rest are opt-in wearable-only insight metrics (no manual entry). */
+export const CHART_METRICS: ChartMetricConfig[] = [
+  { id: 'weight',        labelKey: 'fields.weight',        checkinKey: 'weight',        canonicalMetric: 'body.weight' },
+  { id: 'energy',        labelKey: 'fields.energy',        checkinKey: 'energy',        derivedKey: 'energy' },
+  { id: 'sleep_quality', labelKey: 'fields.sleep_quality', checkinKey: 'sleep_quality', derivedKey: 'sleep_quality' },
+  { id: 'soreness',      labelKey: 'fields.soreness',      checkinKey: 'soreness',      derivedKey: 'soreness' },
+  { id: 'sleep_deep_pct',     labelKey: 'fields.sleep_deep_pct',     derivedKey: 'sleep_deep_pct' },
+  { id: 'sleep_rem_pct',      labelKey: 'fields.sleep_rem_pct',      derivedKey: 'sleep_rem_pct' },
+  { id: 'protein_adequacy',   labelKey: 'fields.protein_adequacy',   derivedKey: 'protein_adequacy' },
+  { id: 'caloric_balance',    labelKey: 'fields.caloric_balance',    derivedKey: 'caloric_balance' },
+  { id: 'body_comp_velocity', labelKey: 'fields.body_comp_velocity', derivedKey: 'body_comp_velocity' },
+  { id: 'cv_strain',          labelKey: 'fields.cv_strain',          derivedKey: 'cv_strain' },
+  { id: 'inflammation',       labelKey: 'fields.inflammation',       derivedKey: 'inflammation' },
+];
+
+/** Charts shown by default (the original four); insight metrics are opt-in. */
+export const DEFAULT_CHART_METRIC_IDS = ['weight', 'energy', 'sleep_quality', 'soreness'];
+
+export type DatedPoint = { dateKey: string; value: number };
+
+export type MetricSeries = ChartMetricConfig & {
+  /** Solid line: manual + integration (or derived, for insight-only metrics). */
+  primary: DatedPoint[];
+  /** Dashed overlay: wearable-derived estimate. Empty for insight-only metrics. */
+  estimated: DatedPoint[];
+  /** True when the metric has no manual equivalent (renders derived as primary). */
+  insightOnly: boolean;
+};
+
+export type ChartProfile = DerivedProfile & {
+  estimatedMetricsMode?: 'off' | 'fill' | 'always';
+};
+
+/** Latest date-key across manual entries + integration readings (for anchoring a
+ *  trailing window). Returns undefined when there's no data at all. */
+export function latestDataDate(
+  entries: Record<string, CheckinEntry>,
+  metricReadings: MetricReading[],
+): string | undefined {
+  let max = '';
+  for (const d of Object.keys(entries)) if (d > max) max = d;
+  for (const r of metricReadings) {
+    const d = r.ts.slice(0, 10);
+    if (d > max) max = d;
+  }
+  return max || undefined;
+}
+
+/**
+ * Build the merged series for the selected metrics, optionally clipped to an
+ * inclusive [windowStart, windowEnd] date-key window (YYYY-MM-DD; string-comparable).
+ */
+export function buildMetricSeries(opts: {
+  selectedIds: string[];
+  entries: Record<string, CheckinEntry>;
+  metricReadings: MetricReading[];
+  profile: ChartProfile;
+  windowStart?: string;
+  windowEnd?: string;
+}): MetricSeries[] {
+  const { selectedIds, entries, metricReadings, profile, windowStart, windowEnd } = opts;
+
+  // Integration readings: metric → dateKey → value (most recent reading per day;
+  // addMetricReadings stores newest-first, so the first write per day wins).
+  const readingsByMetric = new Map<string, Map<string, number>>();
+  for (const r of metricReadings) {
+    if (typeof r.value !== 'number') continue;
+    let byDate = readingsByMetric.get(r.metric);
+    if (!byDate) { byDate = new Map(); readingsByMetric.set(r.metric, byDate); }
+    const dk = r.ts.slice(0, 10);
+    if (!byDate.has(dk)) byDate.set(dk, r.value);
+  }
+
+  const estMode = profile.estimatedMetricsMode ?? 'fill';
+  const derived = estMode === 'off'
+    ? null
+    : deriveMetrics(metricReadings, { dobISO: profile.dobISO, sex: profile.sex });
+
+  const inWindow = (dk: string) =>
+    (windowStart === undefined || dk >= windowStart) &&
+    (windowEnd === undefined || dk <= windowEnd);
+  const byDateAsc = (a: DatedPoint, b: DatedPoint) => a.dateKey.localeCompare(b.dateKey);
+
+  const entryDates = Object.keys(entries);
+
+  return CHART_METRICS.filter((m) => selectedIds.includes(m.id)).map((m) => {
+    const derivedForMetric = m.derivedKey ? derived?.[m.derivedKey] : undefined;
+    const insightOnly = !m.checkinKey && !!m.derivedKey;
+    const byDate = m.canonicalMetric ? readingsByMetric.get(m.canonicalMetric) : undefined;
+
+    // Insight-only: derived data IS the primary (solid) series, no manual equivalent.
+    if (insightOnly) {
+      const primary = derivedForMetric
+        ? [...derivedForMetric.values()]
+            .filter((pt) => inWindow(pt.dateKey))
+            .map((pt) => ({ dateKey: pt.dateKey, value: pt.value }))
+            .sort(byDateAsc)
+        : [];
+      return { ...m, primary, estimated: [], insightOnly: true };
+    }
+
+    // Primary = manual (wins) ∪ integration, over the union of their dates.
+    const dateSet = new Set<string>(entryDates);
+    if (byDate) for (const d of byDate.keys()) dateSet.add(d);
+    const primary: DatedPoint[] = [];
+    for (const d of dateSet) {
+      if (!inWindow(d)) continue;
+      const manual = m.checkinKey ? entries[d]?.[m.checkinKey] : undefined;
+      const value = typeof manual === 'number' ? manual : byDate?.get(d);
+      if (typeof value === 'number') primary.push({ dateKey: d, value });
+    }
+    primary.sort(byDateAsc);
+
+    // Estimated overlay (dashed). 'fill' hides it where a manual value exists.
+    const estimated: DatedPoint[] = [];
+    if (derivedForMetric) {
+      for (const [d, pt] of derivedForMetric) {
+        if (!inWindow(d)) continue;
+        const hasManual = m.checkinKey ? typeof entries[d]?.[m.checkinKey] === 'number' : false;
+        if (estMode === 'fill' && hasManual) continue;
+        estimated.push({ dateKey: d, value: pt.value });
+      }
+      estimated.sort(byDateAsc);
+    }
+    return { ...m, primary, estimated, insightOnly: false };
+  });
+}

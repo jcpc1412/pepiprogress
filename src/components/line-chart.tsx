@@ -81,6 +81,13 @@ export function LineChart({
   const mainPoints = sortedData.map((d) => `${xFor(d.label)},${yFor(d.value)}`).join(' ');
   const estPoints = sortedEst.map((d) => `${xFor(d.label)},${yFor(d.value)}`).join(' ');
 
+  // With many points, per-point dots turn the line into a dense "barcode". Past a
+  // threshold, draw the line alone — the solid series keeps only its trailing dot
+  // as the current-value marker.
+  const DOT_LIMIT = 16;
+  const showDataDots = sortedData.length <= DOT_LIMIT;
+  const showEstDots = sortedEst.length <= DOT_LIMIT;
+
   // Header shows the most recent value we have (manual preferred, else estimated).
   const last = sortedData[sortedData.length - 1] ?? sortedEst[sortedEst.length - 1];
 
@@ -112,22 +119,27 @@ export function LineChart({
             strokeLinecap="round"
           />
         )}
-        {sortedEst.map((d, i) => (
-          <Circle key={`e${i}`} cx={xFor(d.label)} cy={yFor(d.value)} r={2} fill={theme.background} stroke={theme.textMuted} strokeWidth={1} />
-        ))}
+        {showEstDots &&
+          sortedEst.map((d, i) => (
+            <Circle key={`e${i}`} cx={xFor(d.label)} cy={yFor(d.value)} r={2} fill={theme.background} stroke={theme.textMuted} strokeWidth={1} />
+          ))}
         {/* Subjective (logged) series — solid accent line, filled dots. */}
         {sortedData.length >= 2 && (
           <Polyline points={mainPoints} fill="none" stroke={theme.accent} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
         )}
-        {sortedData.map((d, i) => (
-          <Circle
-            key={i}
-            cx={xFor(d.label)}
-            cy={yFor(d.value)}
-            r={i === sortedData.length - 1 ? 3 : 1.5}
-            fill={theme.accent}
-          />
-        ))}
+        {sortedData.map((d, i) => {
+          const isLast = i === sortedData.length - 1;
+          if (!showDataDots && !isLast) return null;
+          return (
+            <Circle
+              key={i}
+              cx={xFor(d.label)}
+              cy={yFor(d.value)}
+              r={isLast ? 3 : 1.5}
+              fill={theme.accent}
+            />
+          );
+        })}
       </Svg>
     </View>
   );

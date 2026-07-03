@@ -12,6 +12,7 @@ import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { compoundBySlug } from '@/data/compound-catalog';
 import { AskPepi } from '@/features/ask/ask-pepi';
 import { Insights } from '@/features/insights/insights';
+import { buildMetricSeries, CHART_METRICS, DEFAULT_CHART_METRIC_IDS } from '@/lib/chart-series';
 import { daysBetween } from '@/lib/dates';
 import { useOverlay } from '@/lib/nav-overlay';
 import { localDateKey, useStore, type CheckinEntry } from '@/lib/store';
@@ -21,13 +22,8 @@ const MIN_CHECKINS = 4;
 
 type DeltaTone = 'good' | 'bad' | 'neutral';
 
-/** Chartable metrics on the Insights tab (mirrors the dashboard's set). */
-const METRICS: { key: keyof CheckinEntry; labelKey: string; unitKey?: string }[] = [
-  { key: 'weight', labelKey: 'fields.weight' },
-  { key: 'energy', labelKey: 'fields.energy' },
-  { key: 'sleep_quality', labelKey: 'fields.sleep_quality' },
-  { key: 'soreness', labelKey: 'fields.soreness' },
-];
+/** Core subjective/weight metrics used by the summary "biggest change" card. */
+const CORE_METRICS = CHART_METRICS.filter((m) => m.checkinKey);
 
 /**
  * The Insights tab (redesign R2 #3) — local summary cards + trend charts (always
@@ -95,16 +91,17 @@ function SummaryCards() {
 
     // Biggest normalized change across tracked metrics.
     let biggest: { labelKey: string; delta: number; tone: DeltaTone; mag: number } | null = null;
-    for (const m of METRICS) {
-      const pts = list.filter((e) => typeof e[m.key] === 'number') as (CheckinEntry & Record<string, number>)[];
+    for (const m of CORE_METRICS) {
+      const key = m.checkinKey as keyof CheckinEntry;
+      const pts = list.filter((e) => typeof e[key] === 'number') as (CheckinEntry & Record<string, number>)[];
       if (pts.length < 2) continue;
-      const first = pts[0][m.key] as number;
-      const last = pts[pts.length - 1][m.key] as number;
+      const first = pts[0][key] as number;
+      const last = pts[pts.length - 1][key] as number;
       const delta = last - first;
       if (delta === 0) continue;
-      const mag = m.key === 'weight' ? Math.abs(delta) / (first || 1) : Math.abs(delta) / 4;
+      const mag = m.id === 'weight' ? Math.abs(delta) / (first || 1) : Math.abs(delta) / 4;
       let tone: DeltaTone = 'neutral';
-      if (m.key === 'weight') {
+      if (m.id === 'weight') {
         const wantsLoss = profile.goals.includes('weight_loss');
         const wantsGain = profile.goals.includes('body_comp');
         if (wantsLoss !== wantsGain) tone = (wantsLoss ? delta < 0 : delta > 0) ? 'good' : 'bad';
@@ -147,59 +144,72 @@ function SummaryCards() {
   );
 }
 
-/** Trend charts with dose/protocol-start markers (redesign R2). */
+/** Trend charts over the full protocol span, with protocol-start markers (redesign
+ *  R2). Unlike the dashboard's 10-day glance, this shows the whole cycle from when
+ *  the earliest compound started, and — like the dashboard — merges integration +
+ *  wearable-derived data, not just manual check-ins. */
 function ChartsSection() {
   const { t } = useTranslation();
-  const { entries, protocolItems, profile } = useStore();
+  const { entries, metricReadings, protocolItems, profile } = useStore();
 
   const selected = useMemo(
-    () => (profile.dashboardMetrics?.length ? profile.dashboardMetrics : ['weight']),
+    () => (profile.dashboardMetrics?.length ? profile.dashboardMetrics : DEFAULT_CHART_METRIC_IDS),
     [profile.dashboardMetrics],
   );
 
-  const series = useMemo(() => {
-    const dates = Object.keys(entries).sort();
-    const startKeys = protocolItems
+  const { series, startKeys } = useMemo(() => {
+    const starts = protocolItems
       .map((p) => p.startedAt)
       .filter((s): s is string => !!s)
+      .map((s) => s.slice(0, 10))
       .sort();
+    // Anchor the window at the earliest protocol start (the "since X weeks" date).
+    const windowStart = starts[0];
+    const windowEnd = localDateKey();
 
-    return METRICS.filter((m) => selected.includes(m.key as string))
-      .map((m) => {
-        const keyed = dates
-          .map((d) => ({ date: d, value: entries[d]?.[m.key] }))
-          .filter((p): p is { date: string; value: number } => typeof p.value === 'number');
-        const points: ChartPoint[] = keyed.map((p) => ({ label: p.date.slice(5), value: p.value }));
-        // Map protocol-start dates to x-fractions within the chart's date range.
-        let markers: ChartMarker[] = [];
-        if (keyed.length >= 2) {
-          const first = keyed[0].date;
-          const last = keyed[keyed.length - 1].date;
-          const span = daysBetween(first, last) || 1;
-          markers = startKeys
-            .map((s) => daysBetween(first, s) / span)
-            .filter((f) => f >= 0 && f <= 1)
-            .map((fraction) => ({ fraction }));
-        }
-        return { ...m, points, markers };
-      });
-  }, [entries, protocolItems, selected]);
+    const built = buildMetricSeries({
+      selectedIds: selected,
+      entries,
+      metricReadings,
+      profile,
+      windowStart,
+      windowEnd,
+    });
+    return { series: built, startKeys: starts };
+  }, [entries, metricReadings, protocolItems, selected, profile]);
 
   // Always render the chart frames — empty ones show a dashed placeholder axis.
   return (
     <View style={styles.charts}>
       <EngravedLabel>{t('insights.trendsLabel')}</EngravedLabel>
-      {series.map((s) => (
-        <Card key={s.key as string} style={styles.chartCard}>
-          <EngravedLabel>{t(s.labelKey as 'fields.weight')}</EngravedLabel>
-          <LineChart
-            data={s.points}
-            markers={s.markers}
-            unit={s.unitKey ? t(s.unitKey as 'units.g') : undefined}
-            emptyLabel={t('common.noData')}
-          />
-        </Card>
-      ))}
+      {series.map((s) => {
+        const points: ChartPoint[] = s.primary.map((p) => ({ label: p.dateKey.slice(5), value: p.value }));
+        const estimated: ChartPoint[] = s.estimated.map((p) => ({ label: p.dateKey.slice(5), value: p.value }));
+        // Protocol-start markers positioned across the chart's actual date span.
+        const span = [...s.primary, ...s.estimated];
+        let markers: ChartMarker[] = [];
+        if (span.length >= 2) {
+          const first = span.reduce((a, b) => (a.dateKey < b.dateKey ? a : b)).dateKey;
+          const last = span.reduce((a, b) => (a.dateKey > b.dateKey ? a : b)).dateKey;
+          const days = daysBetween(first, last) || 1;
+          markers = startKeys
+            .map((k) => daysBetween(first, k) / days)
+            .filter((f) => f >= 0 && f <= 1)
+            .map((fraction) => ({ fraction }));
+        }
+        return (
+          <Card key={s.id} style={styles.chartCard}>
+            <EngravedLabel>{t(s.labelKey as 'fields.weight')}</EngravedLabel>
+            <LineChart
+              data={points}
+              estimated={estimated}
+              markers={markers}
+              unit={s.unitKey ? t(s.unitKey as 'units.g') : undefined}
+              emptyLabel={t('common.noData')}
+            />
+          </Card>
+        );
+      })}
     </View>
   );
 }
