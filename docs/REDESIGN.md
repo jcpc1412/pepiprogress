@@ -1,4 +1,4 @@
-# Pepi Redesign — Instrument / Verdict-First (implementation plan)
+# Pepi Redesign – Instrument / Verdict-First (implementation plan)
 
 > Status: **proposal, not started.** Explored as a live HTML mock at `.preview-mockup/index.html`
 > (throwaway, gitignored). This document scopes turning that direction into the real app. Nothing
@@ -13,7 +13,7 @@
 ## 1. Thesis (the locked direction)
 
 Pepi is not a dashboard. It is a **reassurance instrument**: the user opens it exhausted mid-protocol
-and needs one thing answered fast — "is my suffering producing measurable results?" Every screen
+and needs one thing answered fast – "is my suffering producing measurable results?" Every screen
 serves that by reducing uncertainty, and shows the *conclusion before the data*.
 
 Principles, applied app-wide:
@@ -31,21 +31,25 @@ Principles, applied app-wide:
    hard outcomes, or prescribe. A mild goal-timeline forecast ("~18 days to target") is allowed.
    Dosing stays deferred app-wide; controlled compounds track-only. Gate enforced at the AI layer.
 7. **Two co-equal themes** (at-night + luminous daylight), one engraved treatment.
-8. **Faint breathing background** (molecular lattice; logo stand-in until a real mark exists) — barely
+8. **Faint breathing background** (molecular lattice; logo stand-in until a real mark exists) – barely
    noticeable, desaturated.
 9. **No em dashes**, ever, in any string (guard already enforces for i18n).
+10. **Lean mobile, analytics on web** (owner decision). The phone app is for glance + log + chat.
+    Deep analytics move to the web app; protocol *configuration* moves into Settings; the app never
+    traps the user in analysis. AI is invisible infrastructure, surfaced through a Chat page, never
+    marketed as "AI".
 
 The signature, only-Pepi interaction: **the verdict reconciles felt-bad against measured-good, and can
-be cracked open to show its work** — the weighted stack of signals that produced it. No spreadsheet or
+be cracked open to show its work** – the weighted stack of signals that produced it. No spreadsheet or
 single-metric health app can do this because it fuses subjective + wearable + photo + protocol layers.
 
 ---
 
-## 2. Design-system foundation (Phase 1 — app-wide, low risk, no behavior change)
+## 2. Design-system foundation (Phase 1 – app-wide, low risk, no behavior change)
 
 All screens consume these, so land them first. No feature logic changes here.
 
-### 2.1 Tokens — `src/constants/theme.ts`
+### 2.1 Tokens – `src/constants/theme.ts`
 - **Add a "watch" certainty token** to both themes: `signalWatch` + `signalWatchBg` (amber). Today only
   `signalGood`/`signalBad` exist; the verdict needs a three-state scale (good / watch / bad).
 - **Add `lattice` tokens**: the desaturated sage used by the background (a ~50%-desaturated green),
@@ -53,13 +57,13 @@ All screens consume these, so land them first. No feature logic changes here.
 - Confirm accent stays monochrome (near-white at night / near-black daylight). Certainty colors are the
   *only* hues in the app.
 
-### 2.2 Typography — `src/components/themed-text.tsx`
+### 2.2 Typography – `src/components/themed-text.tsx`
 - Fonts are already loaded (Inter + IBM Plex Mono). Formalize the **mono = measured / sans = prose**
   rule and audit existing screens for violations (mono used decoratively, or numbers set in sans).
 - Add scale entries the mock needs: `hero` (large tabular mono figure, ~46px) and `heroUnit` (small
   mono unit). Keep `display` (sans H1), `metric`, `mono*`, `body`, `small*`.
 
-### 2.3 Background — new `src/components/instrument-background.tsx`
+### 2.3 Background – new `src/components/instrument-background.tsx`
 - Tiling molecular-lattice (hexagon + node) rendered with `react-native-svg`, absolutely positioned
   behind screen content, `pointerEvents="none"`.
 - **Breathing**: slow opacity + scale pulse (~11s) via `react-native-reanimated` (already a dep chain
@@ -67,7 +71,7 @@ All screens consume these, so land them first. No feature logic changes here.
 - Barely-visible (desaturated `lattice` token, ~0.03–0.07 opacity). Mounted once in the tab/root layout,
   not per screen, so it is continuous behind the app.
 
-### 2.4 Primitives — `src/components/surface.tsx` (+ a few new files)
+### 2.4 Primitives – `src/components/surface.tsx` (+ a few new files)
 Restyle/extend existing; add the new verdict pieces:
 - **Exists, keep:** `Card`, `Sunken`, `Divider`, `EngravedLabel`, `Metric`, `SignalText`, `StatusPill`,
   `Placeholder`, `Skeleton`.
@@ -93,7 +97,7 @@ no em dashes), web export. Existing screens still work, now on the enriched toke
 
 ---
 
-## 3. The verdict engine (Phase 2 — the core new logic, behind the scenes)
+## 3. The verdict engine (Phase 2 – the core new logic, behind the scenes)
 
 The real engineering. A **pure, deterministic** module plus a **thin AI prose layer**. Build and test it
 in isolation before any screen depends on it.
@@ -120,11 +124,11 @@ type Verdict = {
 ```
 
 ### 3.2 Hero-figure selection (engine picks, not the user)
-The hero is **whichever signal is most decision-relevant today**, per protocol goals — not always weight.
+The hero is **whichever signal is most decision-relevant today**, per protocol goals – not always weight.
 Ranked by: (a) largest deviation from personal baseline (anomaly), OR (b) the signal most load-bearing for
 today's state, tie-broken by goal relevance (a healing protocol favors a recovery/symptom marker; a cut
 favors fat-loss velocity or weight; a GH protocol favors sleep/recovery). Must handle **multi-compound**
-protocols — the engine reads the active compounds' effect/monitoring tags to weight relevance.
+protocols – the engine reads the active compounds' effect/monitoring tags to weight relevance.
 
 ### 3.3 Verdict state + confidence + cold-start
 - **Cold-start:** below the observation threshold (reuse the `BASELINE_MIN_SAMPLES` honesty bar from
@@ -136,9 +140,13 @@ protocols — the engine reads the active compounds' effect/monitoring tags to w
   training load (ACWR/TRIMP), cycle week, or a logged compound's known effect. If explained, annotate
   ("expected at week 7") rather than counting it as failure. This is the felt-bad vs measured-good line.
 
-### 3.4 Prose layer — reuse `ai-service` + `src/lib/ai.ts`
+### 3.4 Prose layer – reuse `ai-service` + `src/lib/ai.ts`
 - One short **descriptive** sentence per verdict, produced by the existing cheap-model path (Haiku), with
   the observational/no-diagnosis/no-dosing gate reaffirmed in the system prompt.
+- **Cold voice via prompt first (owner decision).** The current deep-analysis output reads as fluffy;
+  fix it by rewriting the vision + verdict prompts to be clinical and terse (matches VOICE.md and the
+  redesign register), NOT by swapping providers. A Gemini bake-off stays deferred (see the
+  `ai-provider-decision-deferred` memory); only revisit if cold-Claude genuinely cannot get there.
 - **Deterministic template fallback** when AI is unavailable (local-first, no keys) so the Home always
   renders a sentence. The engine output is complete without the AI; AI only prettifies the prose.
 
@@ -152,48 +160,103 @@ multi-compound, reconciliation, confidence tiers). Engine is not yet wired to an
 
 ---
 
-## 4. Screen-by-screen application (Phases 3–4)
+## 4. Information architecture + screens (Phases 3–4)
 
-### 4.1 Home / Today — full rebuild (Phase 3) — `src/features/home/dashboard.tsx`
-Replace the carousel-of-equal-charts with the verdict-first flow:
+### 4.0 New mobile IA (lean) – decided
+The phone app collapses to **three bottom tabs**; everything else is configuration or moves to the web.
+- **Today** (verdict Home) · **Photos** (capture + evidence) · **Chat** (conversational log + AI).
+- **Protocol configuration** (compounds, doses, routes, inventory, reconstitution) **moves into Settings**.
+  It is set-and-forget config, not a daily destination.
+- **Dose logging** (the daily action) does NOT go to Settings. It stays instant from Today via a
+  **dose drawer** (see 4.1) so logging is never buried. Config lives in Settings; the *act* of logging
+  lives on Today.
+- **Deep analytics / trends move to the web app.** Mobile keeps only the verdict + its decompose. Where a
+  user wants the full charts, the app points to web ("View full analytics on web"). The existing Insights
+  charts stay reachable but demoted; they are no longer a primary tab.
+- Rationale: the phone is the reassurance + logging loop; the web is the analysis surface. This keeps the
+  app lean and stops it competing with the user's spreadsheets on small screens.
+
+### 4.1 Today (Home) – full rebuild (Phase 3) – `src/features/home/dashboard.tsx`
+Verdict-first flow, replacing the carousel-of-equal-charts:
 1. Eyebrow (`DD MMM · TYPE · WEEK N`) + gear.
 2. **Hero figure** (engine-picked) + `favour` trend marker + optional forecast sub-line.
-3. **Explanation** (one sans sentence — the old "distillation" finds its home here).
-4. **ReasonButton** → decompose screen.
+3. **Explanation** (one sans sentence; the old "distillation" finds its home here).
+4. **ReasonButton** into the decompose screen.
 5. **Evidence** (engine-picked: contextual photo compare, or the single most relevant chart) with camera
-   reticle framing for photos.
-6. **Actions:** primary `Log` + quick `Quick / Photo / Dose`.
-The existing 10-day chart window + `chart-series` builder feed the evidence slot; the carousel is retired.
+   reticle framing for photos. Fed by the 10-day window + `chart-series` builder; carousel retired.
+6. **Actions:** primary `Log` + quick access.
+- **Dose drawer (MyTherapy-style).** A bottom drawer for fast dose logging: scheduled doses for today,
+  tap-to-confirm with time logging, and a visible **dose-change history**. This is the "log and leave"
+  surface; it must open in one tap from Today and never route through Settings.
 
-### 4.2 Decompose / reasoning screen (Phase 3) — new `src/features/home/verdict-reasoning.tsx`
+### 4.2 Decompose / reasoning screen (Phase 3) – new `src/features/home/verdict-reasoning.tsx`
 The signature interaction. Renders `verdict.signals` as the weighted stack (name, sparkline, weight,
-role: supports / drags / neutral) + the reconciliation footer. Reached from the Home ReasonButton and
-(recommended) by tapping the hero figure itself, so the signature interaction is discoverable even though
-the button is quiet.
+role: supports / drags / neutral) + the reconciliation footer. Reached from the Home ReasonButton and by
+tapping the hero figure itself, so the signature interaction stays discoverable even with a quiet button.
 
-### 4.3 Insights tab — `src/features/insights/insights-screen.tsx`
-Already refactored this session (shared `chart-series`, protocol-span window, integration + derived data).
-Restyle to the instrument language; ensure charts use mono numerals and the certainty palette. The AI
-insights surface (`insights.tsx`, `ask-pepi`) becomes "invisible infrastructure" — no "AI" branding.
+### 4.3 Chat (new tab) – `src/features/chat/*`
+The conversational surface that absorbs "the fluff". Everything that is narrative rather than a glanceable
+verdict lives here: conversational quick-log (already built), the deep photo-analysis narrative, own-data
+Q&A (`ask-pepi`), and general education. **AI is invisible infrastructure** here: it reads as "Pepi
+understands my protocol," never "ask the AI". Cold, clinical voice (see 3.4). This is where the existing
+quick-log + insights Q&A consolidate.
 
-### 4.4 Check-in / logging — `src/features/checkin/daily-checkin.tsx`
-Restyle onto the tokens + primitives (already partly done). Keep frictionless. Fields stay mono for values,
-sans for labels. This is where logging happens, so honor the "log and leave" calm (see §7 button question).
+### 4.4 Photos + Capture v2 – `src/features/photos/*`
+Reframed as measured evidence and substantially upgraded. See the dedicated **§4A Photo Capture v2** for
+the full feature set (quality score, measurement overlay, BF%, review/edit, side shots, custom parts).
 
-### 4.5 Protocol tab — `src/features/protocol/*`
-Restyle inventory / dose logging / reconstitution to the instrument surfaces. Attention banner uses the
-certainty palette (watch = amber, expired = bad).
+### 4.5 Protocol (now inside Settings) – `src/features/protocol/*` mounted under `src/features/settings/*`
+Move the protocol config surfaces (items, inventory, reconstitution, cycle/body settings) under Settings.
+Restyle to the instrument surfaces; attention banner uses the certainty palette (watch = amber, expired =
+bad). The Protocol *tab* is removed; a Settings entry replaces it.
 
-### 4.6 Photos — `src/features/photos/*`
-Reframe as measured evidence: reticle framing, comparability as a reading, milestones as observations
-(not "Photo #14"). Aligns with the Home evidence slot.
+### 4.6 Settings – `src/features/settings/*`
+Now also hosts Protocol config (4.5) and the **sync status** removed from the top strip
+(`settings-screen.tsx`). Theme toggle already exists (`appearance-settings.tsx`). Restyle.
 
-### 4.7 Settings — `src/features/settings/*`
-New home for the **sync status** removed from the top strip (`settings-screen.tsx`). Theme toggle already
-exists (`appearance-settings.tsx`). Restyle.
+### 4.7 Onboarding + tab bar
+Restyle onboarding chrome to match. Rebuild the tab bar for the new three-tab model (Today / Photos / Chat),
+mono/uppercase, against the final palette.
 
-### 4.8 Onboarding + tab bar
-Restyle onboarding chrome to match. Tab bar is already mono/uppercase; verify against the final palette.
+---
+
+## 4A. Photo Capture v2 (own workstream; plugs into the Home evidence slot)
+
+The photo USP gets a dedicated upgrade. Current-app defects folded in (see §0 fix-now list).
+
+**Capture:**
+- **Quality score on first shot + preview** (Dead-Rising-style readout): a live composite of framing,
+  distance vs the ghost `boxRatio`, level (tilt), lighting/luma, and blur. Shown live and on the review step.
+- **Native camera controls:** volume-button capture, digital zoom. Body session currently on expo-camera;
+  volume/zoom need the vision-camera path, so unify capture on vision-camera where feasible.
+- **Darker ghost overlay** (raise contrast of the prior-photo guide).
+- **Auto-crop** a little toward the ghost framing so successive shots line up (image-manipulator + the
+  face/body box).
+- **Stricter comparability / clothing:** push toward minimal clothing for accuracy. NOTE: this makes
+  **storage hardening a prerequisite, not deferred** (encrypted bucket, never trained on, ideally a
+  local-only option) before we nudge toward nude photos. Reaffirm the private-by-default, never-trained rule.
+- **Side photos** for both body and face (add a `view: front | side` axis to `PhotoEntry`).
+
+**Measurements + body composition:**
+- **Measurement inputs as an overlay on the photo** (waist, neck, hip/circumference), not a separate screen.
+- **Body-fat % (Navy method)** from waist + neck + height (+ hip for women), rendered as an **observational
+  estimate with error bars**, never a medical measurement. Respect the **user's unit system** (current bug:
+  analysis defaults to imperial; must read `profile.units`).
+- **App-inferred body composition:** drop the manual body-type chip as the primary input; infer body
+  composition from measurements/BF% and pass that to the vision AI. Keep the chip only as a cold-start
+  fallback. (Answers the owner's "why not have the app choose for you?")
+
+**Review + analysis:**
+- **Review/edit measurements** after capture (current gap: no way to correct them) and surface them in the
+  distillation.
+- **Two-stage analysis:** an immediate **quick, no-fluff** readout on submitting the second photo (drift +
+  headline change), while the **deep** comparison (weight/measurement trends) loads. Deep analysis uses the
+  cold-Claude prompt (3.4).
+
+**Photos page:**
+- **Default to the body part with the most recent capture** (current bug: defaults to face even with no
+  face pics). Always show the most recent captured part first.
+- **Custom / "problem" body parts** (belly, thighs, pubis, double chin) addable alongside face/body.
 
 ---
 
@@ -201,16 +264,19 @@ Restyle onboarding chrome to match. Tab bar is already mono/uppercase; verify ag
 
 | Phase | Scope | Risk | Gate |
 |------|-------|------|------|
-| 0 | This doc signed off + owner notes reconciled | — | agreement |
+| 0 | This doc signed off + owner notes reconciled | – | agreement |
+| 0.5 | **Fix-now bugs (current app, no redesign dependency):** analysis honors `profile.units` (not imperial default); measurement review/edit + surface in distillation; Photos default to the body part with the most recent capture | low | green gate |
 | 1 | Design-system foundation (§2): tokens, watch color, hero/reason primitives, breathing background, chrome | low | green gate, screens unchanged in behavior |
 | 2 | Verdict engine (§3), pure + tests, no UI | med | engine tests green |
-| 3 | Home rebuild + decompose screen onto the engine (§4.1–4.2) | high | on-device verdict correct across states |
-| 4 | Propagate instrument language to Insights / Check-in / Protocol / Photos / Settings / Onboarding (§4.3–4.8) | low–med | green gate per screen |
-| 5 | Polish: a11y (reduce-motion, contrast), both themes, i18n (6 locales), copy pass | low | full green gate |
+| 3 | Today rebuild + decompose + dose drawer onto the engine (§4.1–4.2) | high | on-device verdict correct across states |
+| 4 | IA restructure: 3-tab model, Protocol into Settings, Chat tab, Insights demoted / analytics to web (§4.0, 4.3, 4.5–4.7) | med | green gate, nav works |
+| 5 | Photo Capture v2 (§4A): quality score, native controls, measurement overlay, BF% + inferred body comp, review/edit, two-stage analysis, side shots, custom parts | med–high | green gate; storage hardening landed before nude-clothing nudge |
+| 6 | Cold-Claude prompt rewrite for vision + verdict (§3.4) | low | qualitative review vs VOICE.md |
+| 7 | Polish: a11y (reduce-motion, contrast), both themes, i18n (6 locales), copy pass | low | full green gate |
 
 Rationale: the visual language (Phase 1/4) is low-risk and independently shippable. The verdict engine
-(Phase 2/3) is the real bet and must prove itself in tests before the Home screen depends on it. Do not
-big-bang all of it at once.
+(Phase 2/3) is the real bet and must prove itself in tests before Today depends on it. Phase 0.5 bugs can
+ship immediately, before any redesign work. Do not big-bang all of it at once.
 
 ---
 
@@ -221,21 +287,26 @@ through `t()` and into all 6 locales in the same commit, machine-translated, **n
 
 ---
 
-## 7. Decisions defaulted here (confirm on review — owner has notes)
-Per the no-open-questions rule these are **decisions with a default**, not unresolved questions. Flag any
-you disagree with:
-- **Verdict register = descriptive only (rung 1).** Default locked for legal reasons; going further
-  (predict/recommend) is a separate product+legal track, not this redesign.
+## 7. Decisions (owner-confirmed + defaults)
+Confirmed with owner on 2026-07-05:
+- **Full lean IA restructure** (§4.0): 3 tabs (Today / Photos / Chat), Protocol into Settings, deep
+  analytics to web.
+- **AI tone: cold-Claude via prompt first** (§3.4); Gemini bake-off stays deferred.
+- **Body-fat % = hedged Navy-method estimate + app-inferred body composition** (§4A); minimal-clothing
+  accuracy nudge gated behind storage hardening.
+
+Still defaults (flag if you disagree):
+- **Verdict register = descriptive only (rung 1).** Going further (predict/recommend) is a separate
+  product+legal track, not this redesign.
 - **One primary verdict** (not per-goal dashboards). Secondary goals live inside the decompose stack.
-- **Cold-start hero = photo (or empty photo placeholder + baseline CTA).** No verdict until the
-  observation bar is met.
-- **Gauge parked** off the Home (too busy); may return on the decompose header.
-- **Logging emphasis / copy — the one genuinely open item.** The mock currently makes `Log` the bright
-  button and the reason button quiet, but the product goal is to *encourage logging*, so a shouty
-  all-caps `LOG` may fight that. Proposed default: keep `Log` visually present but **medium** weight
-  (not the max-contrast slab), and warm the copy (`Log today`) to invite rather than command. Decide at
-  sign-off.
+- **Cold-start hero = photo (or empty photo placeholder + baseline CTA).**
+- **Gauge parked** off Today (too busy); candidate for the decompose header.
+- **Logging emphasis / copy – the one open item.** Mock makes `Log` bright and the reason button quiet,
+  but the goal is to *encourage logging*. Proposed default: `Log` present but **medium** weight (not the
+  max-contrast slab), warmer copy (`Log today`). The dose drawer (§4.1) is the real logging workhorse.
 - **Hero is engine-picked and multi-compound-aware**, never weight-only.
+- **Insights not fully removed from mobile**, just demoted (reachable, not a tab). Confirm whether any
+  trend view stays on-device or it is web-only.
 
 ---
 
