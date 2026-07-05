@@ -48,3 +48,6 @@ example
 # generated native folders
 /ios
 /android
+
+# Local design mock (throwaway)
+.preview-mockup/
