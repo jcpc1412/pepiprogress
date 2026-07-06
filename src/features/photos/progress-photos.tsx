@@ -18,6 +18,7 @@ import {
   runEncouragementAnalysis,
   type PhotoAnalysis,
 } from '@/lib/ai';
+import { bodyFatNavy, inferBodyComposition } from '@/lib/body-composition';
 import { useAuth } from '@/lib/auth';
 import {
   getCadence,
@@ -346,12 +347,28 @@ export function ProgressPhotos({
         if (weeks >= 0) cycleWeek = weeks + 1;
       }
 
+      // App-inferred body composition (owner §4A): a measurement-derived band
+      // is preferred over the manual chip, which stays the cold-start fallback.
+      let bodyCalibration = profile.bodyType;
+      const latestMeas = withMeasurements[0];
+      if (latestMeas && profile.height) {
+        const heightCm = profile.units === 'imperial' ? profile.height * 2.54 : profile.height;
+        const bf = bodyFatNavy({
+          units: profile.units,
+          heightCm,
+          waist: latestMeas.waist,
+          neck: latestMeas.neck,
+          hip: latestMeas.hips,
+        });
+        if (bf) bodyCalibration = inferBodyComposition(bf.pct, profile.sex === 'female');
+      }
+
       const res = await analyzePhoto({
         uri: resolvedUris[latest.id] ?? latest.uri,
         baselineUri: resolvedUris[baseline.id] ?? baseline.uri,
         session,
         locale: i18n.language,
-        bodyTypeCalibration: profile.bodyType,
+        bodyTypeCalibration: bodyCalibration,
         cycleContext: cycleCtx,
         measurementDelta,
         symptomContext: symptomCtx,

@@ -238,7 +238,17 @@
     "ghostLevel": "GHOST {{pct}}%",
     "fitChecking": "Checking fit…",
     "fitWeak": "Position differs slightly from baseline.",
-    "fitPoor": "Very different from baseline. Consider retaking."
+    "fitPoor": "Very different from baseline. Consider retaking.",
+    "qualityLabel": "QUALITY",
+    "qualityLowTitle": "Low photo quality",
+    "qualityLowBody": "Your score is lower than recommended. We recommend using less tight or baggy clothing for a better read. Remember, we don't use your photos to train our algorithm.",
+    "retakePhoto": "Retake photo",
+    "ignoreProceed": "Ignore and proceed",
+    "bodyFat": "Est. body fat",
+    "bodyFatHedge": "range {{low}}–{{high}}%",
+    "bodyFatNeed": "Add waist + neck for a body-fat estimate",
+    "viewFront": "Front",
+    "viewSide": "Side"
   },
   "markers": {
     "hematocrit": "Hematocrit",
@@ -510,7 +520,8 @@
     "arms": "Arms",
     "thighs": "Thighs",
     "unitCm": "cm",
-    "unitIn": "in"
+    "unitIn": "in",
+    "neck": "Neck"
   },
   "bodyType": {
     "section": "BODY COMPOSITION",

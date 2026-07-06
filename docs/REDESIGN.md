@@ -230,6 +230,22 @@ mono/uppercase, against the final palette.
 
 ## 4A. Photo Capture v2 (own workstream; plugs into the Home evidence slot)
 
+> **Phase 5 status (built, code-green, device-verify pending).** Landed: pure
+> **Navy body-fat estimate** (`src/lib/body-composition.ts`, hedged with ±4 error
+> bars, unit-aware, women-formula when a hip is supplied) + **inferred body
+> composition** band feeding the vision AI (manual chip kept as cold-start
+> fallback); pure **quality score** (`src/lib/photo-quality.ts`, level + ghost-fit
+> + luma, threshold 80) with unit tests; the **low-score retry modal** (< 80 only,
+> owner copy: clothing nudge + "never trained on", Retake / Ignore and proceed);
+> a **neck** measurement input driving the live BF% readout in review; and a
+> **front / side** capture-angle axis (`PhotoEntry.view`). All behind the camera,
+> so verify on a device build (expo-camera does not render on web).
+> **Deferred within §4A:** native volume-button capture + digital zoom + auto-crop
+> (vision-camera path), live luma/blur metadata, custom "problem" body parts, and
+> the fully split two-stage quick+deep analysis (Haiku encouragement + Sonnet
+> vision already run; the instant on-submit quick readout is the remaining piece).
+
+
 The photo USP gets a dedicated upgrade. Current-app defects folded in (see §0 fix-now list).
 
 **Capture:**

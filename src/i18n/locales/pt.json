@@ -238,7 +238,17 @@
     "ghostLevel": "GUIA {{pct}}%",
     "fitChecking": "Verificando encaixe…",
     "fitWeak": "Posição difere ligeiramente da linha base.",
-    "fitPoor": "Muito diferente da linha base. Considere repetir."
+    "fitPoor": "Muito diferente da linha base. Considere repetir.",
+    "qualityLabel": "QUALIDADE",
+    "qualityLowTitle": "Qualidade da foto baixa",
+    "qualityLowBody": "Sua pontuação está mais baixa que o recomendado. Recomendamos roupas menos justas ou largas para uma leitura melhor. Lembre-se, não usamos suas fotos para treinar nosso algoritmo.",
+    "retakePhoto": "Refazer foto",
+    "ignoreProceed": "Ignorar e continuar",
+    "bodyFat": "Gordura corporal est.",
+    "bodyFatHedge": "faixa {{low}}–{{high}}%",
+    "bodyFatNeed": "Adicione cintura + pescoço para estimar a gordura corporal",
+    "viewFront": "Frente",
+    "viewSide": "Perfil"
   },
   "markers": {
     "hematocrit": "Hematócrito",
@@ -510,7 +520,8 @@
     "arms": "Braços",
     "thighs": "Coxas",
     "unitCm": "cm",
-    "unitIn": "pol"
+    "unitIn": "pol",
+    "neck": "Pescoço"
   },
   "bodyType": {
     "section": "COMPOSIÇÃO CORPORAL",

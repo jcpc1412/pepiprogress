@@ -39,6 +39,7 @@ export type CheckinEntry = {
   // Structured measurements (paired with photos for AI context).
   waist?: number;
   hips?: number;
+  neck?: number; // circumference, for the Navy body-fat estimate (spec 04)
   extraMeasurementKey?: 'chest' | 'arms' | 'thighs';
   extraMeasurementValue?: number;
   note?: string;
@@ -114,6 +115,7 @@ export type PhotoSession = 'face' | 'body';
 export type PhotoEntry = {
   id: string;
   session: PhotoSession;
+  view?: 'front' | 'side'; // capture angle (spec 04 §4A); defaults to front
   uri: string; // local file uri (persistent copy)
   cloudPath?: string; // Supabase Storage path after upload (progress-photos bucket)
   takenAt: string; // ISO

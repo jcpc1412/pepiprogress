@@ -238,7 +238,17 @@
     "ghostLevel": "FÜHRUNG {{pct}}%",
     "fitChecking": "Bild prüfen…",
     "fitWeak": "Position weicht leicht von der Basislinie ab.",
-    "fitPoor": "Sehr abweichend von der Basislinie. Erneutes Aufnehmen empfohlen."
+    "fitPoor": "Sehr abweichend von der Basislinie. Erneutes Aufnehmen empfohlen.",
+    "qualityLabel": "QUALITÄT",
+    "qualityLowTitle": "Geringe Fotoqualität",
+    "qualityLowBody": "Dein Wert ist niedriger als empfohlen. Wir empfehlen weniger enge oder weite Kleidung für eine bessere Auswertung. Denk daran: Wir verwenden deine Fotos nicht, um unseren Algorithmus zu trainieren.",
+    "retakePhoto": "Foto wiederholen",
+    "ignoreProceed": "Ignorieren und fortfahren",
+    "bodyFat": "Geschätzter Körperfettanteil",
+    "bodyFatHedge": "Bereich {{low}}–{{high}} %",
+    "bodyFatNeed": "Taille + Hals angeben für eine Körperfett-Schätzung",
+    "viewFront": "Vorne",
+    "viewSide": "Seite"
   },
   "markers": {
     "hematocrit": "Hämatokrit",
@@ -510,7 +520,8 @@
     "arms": "Arme",
     "thighs": "Oberschenkel",
     "unitCm": "cm",
-    "unitIn": "Zoll"
+    "unitIn": "Zoll",
+    "neck": "Hals"
   },
   "bodyType": {
     "section": "KÖRPERZUSAMMENSETZUNG",
