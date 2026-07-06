@@ -313,7 +313,7 @@ Still defaults (flag if you disagree):
   but the goal is to *encourage logging*. Proposed default: `Log` present but **medium** weight (not the
   max-contrast slab), warmer copy (`Log today`). The dose drawer (§4.1) is the real logging workhorse.
 - **Hero is engine-picked and multi-compound-aware**, never weight-only.
-- **Trends:** resolved — a lean *editable* trends page stays on mobile; advanced analytics live on web as
+- **Trends:** resolved – a lean *editable* trends page stays on mobile; advanced analytics live on web as
   an included plan perk (§4.0).
 
 ---
@@ -351,5 +351,5 @@ conflict with a locked rule and carry real legal weight:
   use." Photos carry the photographer's copyright and the subject's likeness/publicity rights; scraping to
   train is actively litigated and usually violates site ToS. Not needed either (see the formula point
   above). If a calibration/validation set is wanted, use **licensed or research body-composition datasets
-  collected with consent** (e.g. DEXA-labeled academic sets), or data from consenting testers — never
+  collected with consent** (e.g. DEXA-labeled academic sets), or data from consenting testers – never
   scraped web images. Claude's training data is not a redistributable image source for this.
