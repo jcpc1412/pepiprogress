@@ -29,7 +29,7 @@ import {
   sessionScientificKey,
 } from '@/lib/photo-cadence';
 import { daysBetween } from '@/lib/dates';
-import { copyPhotoToDocuments, uploadPhotoToCloud, useResolvedUris } from '@/lib/photos';
+import { copyPhotoToDocuments, syncPhotoRow, uploadPhotoToCloud, useResolvedUris } from '@/lib/photos';
 import { localDateKey, useStore, type PhotoEntry, type PhotoSession } from '@/lib/store';
 
 // ─── Wipe/slider compare ────────────────────────────────────────────────────
@@ -287,11 +287,21 @@ export function ProgressPhotos({
       if (photo.cloudPath || uploadedIds.current.has(photo.id)) continue;
       uploadedIds.current.add(photo.id);
       uploadPhotoToCloud(photo.uri, user.id, photo.id)
-        .then((cloudPath) => updatePhoto(photo.id, { cloudPath }))
+        .then(async (cloudPath) => {
+          // Link the Storage object to a normalized `photo` row (best-effort).
+          await syncPhotoRow(photo, user.id, cloudPath, {
+            storage: profile.consentPhotoStorage ?? false,
+            ai: profile.consentPhotoAI ?? false,
+          }).catch(() => {});
+          updatePhoto(photo.id, { cloudPath });
+        })
         .catch(() => {
           uploadedIds.current.delete(photo.id);
         });
     }
+    // Consents are read at upload time; re-running on their change is unnecessary
+    // (uploads are guarded per photo by cloudPath/uploadedIds).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [photos, user, updatePhoto]);
 
   // ── Scientific analysis ──────────────────────────────────────────────────

@@ -41,6 +41,42 @@ export async function uploadPhotoToCloud(
 }
 
 /**
+ * Inserts the photo's metadata row into the `photo` table, linking it to the
+ * Storage object at `storagePath`. Previously photos only reached the Storage
+ * bucket (via {@link uploadPhotoToCloud}) and the normalized `photo` table stayed
+ * empty except for the one-time sign-up migration; this closes that gap so every
+ * captured photo is a row. Best-effort: the caller ignores failures so capture
+ * never blocks on the network. The DB generates the uuid id (local ids are not
+ * uuids); rows are written once per photo, guarded by the upload effect.
+ */
+export async function syncPhotoRow(
+  photo: PhotoEntry,
+  userId: string,
+  storagePath: string,
+  consents: { storage: boolean; ai: boolean },
+): Promise<void> {
+  const { error } = await supabase.from('photo').insert({
+    user_id: userId,
+    session_type: photo.session,
+    captured_at: photo.takenAt,
+    storage_path: storagePath,
+    capture_meta: {
+      view: photo.view ?? 'front',
+      tilt: photo.tilt ?? null,
+      luma: photo.luma ?? null,
+      distance_proxy: photo.boxRatio ?? null,
+    },
+    ai_meta:
+      photo.driftScore !== undefined
+        ? { drift_score: photo.driftScore, comparable: photo.comparable ?? false }
+        : null,
+    storage_consent: consents.storage,
+    ai_consent: consents.ai,
+  });
+  if (error) throw error;
+}
+
+/**
  * Returns a 1-hour signed URL for displaying a cloud photo.
  * Don't persist the URL itself — it expires. Store the cloudPath and call this at render time.
  */

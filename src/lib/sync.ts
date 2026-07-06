@@ -155,8 +155,10 @@ export async function migrateToCloud(
     user_id: userId,
     session_type: p.session,
     captured_at: p.takenAt,
-    storage_path: p.uri,
-    capture_meta: { tilt: p.tilt ?? null, luma: p.luma ?? null, distance_proxy: p.boxRatio ?? null },
+    // Prefer the uploaded bucket path so the row points at the real Storage
+    // object; fall back to the local uri only if the upload hasn't run yet.
+    storage_path: p.cloudPath ?? p.uri,
+    capture_meta: { view: p.view ?? 'front', tilt: p.tilt ?? null, luma: p.luma ?? null, distance_proxy: p.boxRatio ?? null },
     ai_meta:
       p.driftScore !== undefined
         ? { drift_score: p.driftScore, comparable: p.comparable ?? false }
