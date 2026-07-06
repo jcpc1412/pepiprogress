@@ -105,10 +105,13 @@ export function Dashboard() {
       new Set(dosesToday.map((d) => (d.compoundSlug ? compoundBySlug(d.compoundSlug)?.canonicalName : null)).filter(Boolean)),
     ).slice(0, 2) as string[];
     const unit = profile.units === 'imperial' ? t('units.lb') : t('units.kg');
+    const munit = profile.units === 'imperial' ? t('measurements.unitIn') : t('measurements.unitCm');
     const parts = [
       names.length ? t('dashboard.compoundsLogged', { names: names.join(' + ') }) : null,
       typeof todayEntry?.weight === 'number' ? `${todayEntry.weight} ${unit}` : null,
       typeof todayEntry?.protein === 'number' ? `+${todayEntry.protein}${t('units.g')}` : null,
+      typeof todayEntry?.waist === 'number' ? `${t('measurements.waist')} ${todayEntry.waist}${munit}` : null,
+      typeof todayEntry?.hips === 'number' ? `${t('measurements.hips')} ${todayEntry.hips}${munit}` : null,
     ].filter(Boolean);
     return parts.join(' · ');
   }, [dosesToday, todayEntry, profile.units, t]);

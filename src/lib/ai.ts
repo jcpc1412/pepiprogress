@@ -176,6 +176,9 @@ export async function analyzePhoto(opts: {
   /** Weeks since the user started their (earliest) compound — so the AI calibrates
    * to "week N of a cycle" rather than treating every first photo as day 1. */
   cycleWeek?: number;
+  /** The user's chosen unit system, so measurements + any weight are reported in
+   * their units instead of defaulting to imperial. */
+  units?: 'metric' | 'imperial';
 }): Promise<PhotoAnalysis> {
   if (!isSupabaseConfigured) throw new AiNotConfiguredError();
 
@@ -196,6 +199,7 @@ export async function analyzePhoto(opts: {
       symptomContext: opts.symptomContext,
       bodyTypeCalibration: opts.bodyTypeCalibration,
       cycleWeek: opts.cycleWeek,
+      units: opts.units,
     },
   });
 
@@ -283,6 +287,7 @@ export async function runEncouragementAnalysis(opts: {
   recentLogs: { date: string; weight?: number; wellness?: number; energy?: number }[];
   cycleContext?: 'luteal' | 'follicular';
   locale: string;
+  units?: 'metric' | 'imperial';
 }): Promise<EncouragementResult> {
   if (!isSupabaseConfigured) throw new AiNotConfiguredError();
 

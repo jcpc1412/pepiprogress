@@ -60,6 +60,7 @@ type AnalyzePhotoRequest = {
   symptomContext?: string;
   bodyTypeCalibration?: string;
   cycleWeek?: number;
+  units?: 'metric' | 'imperial';
 };
 
 type ParseLabRequest = {
@@ -86,6 +87,7 @@ type SimpleAnalysisRequest = {
   recentLogs: { date: string; weight?: number; wellness?: number; energy?: number }[];
   cycleContext?: 'luteal' | 'follicular';
   locale?: string;
+  units?: 'metric' | 'imperial';
 };
 
 type InsightHistory = {
@@ -318,8 +320,10 @@ function visionSystemPrompt(
     symptomContext?: string;
     bodyTypeCalibration?: string;
     cycleWeek?: number;
+    units?: 'metric' | 'imperial';
   },
 ): string {
+  const unitLabel = ctx?.units === 'imperial' ? 'in' : 'cm';
   const lines = [
     `You assess progress photos for a health tracker. Session type: ${session}.`,
     hasBaseline
@@ -340,6 +344,7 @@ function visionSystemPrompt(
     '- Hedge everything ("appears", "may", "slightly"). Never definitive.',
     "- Do NOT identify or describe the person's identity. Judge framing/lighting/visible change only.",
     `- Write the "change" sentence in this locale: ${locale}.`,
+    `- The user's unit system is ${ctx?.units ?? 'metric'}. Report any measurement or weight in ${ctx?.units === 'imperial' ? 'imperial (in / lb)' : 'metric (cm / kg)'}. Do NOT default to imperial.`,
   ];
 
   if (ctx?.bodyTypeCalibration) {
@@ -348,13 +353,13 @@ function visionSystemPrompt(
   if (ctx?.measurementDelta) {
     const parts: string[] = [];
     if (ctx.measurementDelta.waist !== undefined) {
-      parts.push(`waist: ${ctx.measurementDelta.waist > 0 ? '+' : ''}${ctx.measurementDelta.waist}`);
+      parts.push(`waist: ${ctx.measurementDelta.waist > 0 ? '+' : ''}${ctx.measurementDelta.waist}${unitLabel}`);
     }
     if (ctx.measurementDelta.hips !== undefined) {
-      parts.push(`hips: ${ctx.measurementDelta.hips > 0 ? '+' : ''}${ctx.measurementDelta.hips}`);
+      parts.push(`hips: ${ctx.measurementDelta.hips > 0 ? '+' : ''}${ctx.measurementDelta.hips}${unitLabel}`);
     }
     if (ctx.measurementDelta.extra) {
-      parts.push(`${ctx.measurementDelta.extra.key}: ${ctx.measurementDelta.extra.delta > 0 ? '+' : ''}${ctx.measurementDelta.extra.delta}`);
+      parts.push(`${ctx.measurementDelta.extra.key}: ${ctx.measurementDelta.extra.delta > 0 ? '+' : ''}${ctx.measurementDelta.extra.delta}${unitLabel}`);
     }
     if (parts.length) {
       lines.push('', `Measurement changes since baseline: ${parts.join(', ')}. Reference these in your change note if relevant.`);
@@ -425,7 +430,7 @@ function insightsSystemPrompt(mode: string, locale: string): string {
   ].join('\n');
 }
 
-function simpleSystemPrompt(locale: string): string {
+function simpleSystemPrompt(locale: string, units?: 'metric' | 'imperial'): string {
   return [
     'You are a warm, supportive wellness companion for a health tracking app.',
     'Write one encouraging paragraph based on the user\'s recent log data and their progress photo journey.',
@@ -437,6 +442,7 @@ function simpleSystemPrompt(locale: string): string {
     '- Never make definitive health claims. Use hedged language ("appears", "may", "suggests").',
     '- Keep it to one paragraph, warm and direct.',
     '- Voice: calm and precise, like a trusted instrument. Supportive, never hype. No exclamation marks, no emoji.',
+    `- Report weight in ${units === 'imperial' ? 'imperial (lb)' : 'metric (kg)'}, matching the units shown in the data. Do NOT convert or default to pounds.`,
     `- Write in this locale: ${locale}.`,
   ].join('\n');
 }
@@ -507,6 +513,7 @@ Deno.serve(async (req: Request) => {
           symptomContext: body.symptomContext,
           bodyTypeCalibration: body.bodyTypeCalibration,
           cycleWeek: body.cycleWeek,
+          units: body.units,
         }),
         ...structured(ANALYZE_SCHEMA),
         // deno-lint-ignore no-explicit-any
@@ -528,12 +535,13 @@ Deno.serve(async (req: Request) => {
     // ── simple_analysis ──────────────────────────────────────────────────────
     if (body.action === 'simple_analysis') {
       const locale = body.locale ?? 'en';
+      const wUnit = body.units === 'imperial' ? 'lb' : 'kg';
       const logSummary = body.recentLogs.length
         ? body.recentLogs
             .slice(0, 7)
             .map(
               (l) =>
-                `${l.date}: weight=${l.weight ?? 'n/a'}, wellness=${l.wellness ?? 'n/a'}/5, energy=${l.energy ?? 'n/a'}/5`,
+                `${l.date}: weight=${l.weight !== undefined ? `${l.weight}${wUnit}` : 'n/a'}, wellness=${l.wellness ?? 'n/a'}/5, energy=${l.energy ?? 'n/a'}/5`,
             )
             .join('\n')
         : 'No recent logs.';
@@ -560,7 +568,7 @@ Deno.serve(async (req: Request) => {
       const message = await client.messages.create({
         model: ENCOURAGE_MODEL,
         max_tokens: 300,
-        system: simpleSystemPrompt(locale),
+        system: simpleSystemPrompt(locale, body.units),
         ...structured(SIMPLE_SCHEMA),
         messages: [{ role: 'user', content: userContext }],
       });

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -10,7 +10,7 @@ import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { Insights } from '@/features/insights/insights';
 import { ProgressPhotos } from '@/features/photos/progress-photos';
-import { type PhotoSession } from '@/lib/store';
+import { useStore, type PhotoSession } from '@/lib/store';
 
 /**
  * The Photos tab — progress timeline + AI analysis (spec 04, R3-D).
@@ -20,8 +20,21 @@ import { type PhotoSession } from '@/lib/store';
  */
 export function PhotosScreen() {
   const { t } = useTranslation();
+  const { photos } = useStore();
   const [session, setSession] = useState<PhotoSession>('face');
   const captureRef = useRef<(() => void) | null>(null);
+  // Default to the body part with the most recent capture (the store hydrates
+  // async, so do it in an effect), but never override a manual switch.
+  const userPickedSession = useRef(false);
+  useEffect(() => {
+    if (userPickedSession.current || photos.length === 0) return;
+    const latest = photos.reduce((a, b) => (b.takenAt > a.takenAt ? b : a));
+    setSession((prev) => (latest.session !== prev ? latest.session : prev));
+  }, [photos]);
+  const handleSessionChange = (s: PhotoSession) => {
+    userPickedSession.current = true;
+    setSession(s);
+  };
 
   return (
     <ThemedView style={styles.container}>
@@ -37,7 +50,7 @@ export function PhotosScreen() {
           showsVerticalScrollIndicator={false}>
           <ProgressPhotos
             session={session}
-            onSessionChange={setSession}
+            onSessionChange={handleSessionChange}
             captureRef={captureRef}
           />
           <Insights />

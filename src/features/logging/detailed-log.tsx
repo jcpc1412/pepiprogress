@@ -61,7 +61,7 @@ const TEXT_FIELDS: TextField[] = ['skin_notes', 'measurements', 'note'];
 export function DetailedLog({ onDismiss }: { onDismiss?: () => void } = {}) {
   const { t, i18n } = useTranslation();
   const theme = useTheme();
-  const { profile, entries, protocolItems, doseEvents, metricReadings, upsertCheckin, setProfile } =
+  const { profile, entries, photos, protocolItems, doseEvents, metricReadings, upsertCheckin, setProfile } =
     useStore();
 
   const today = localDateKey();
@@ -69,8 +69,19 @@ export function DetailedLog({ onDismiss }: { onDismiss?: () => void } = {}) {
   const [showCustomize, setShowCustomize] = useState(false);
   const [weightError, setWeightError] = useState<string | undefined>(undefined);
   const [nutritionError, setNutritionError] = useState<Partial<Record<NutritionField, string>>>({});
+  const [measurementError, setMeasurementError] = useState<Partial<Record<'waist' | 'hips' | 'extra', string>>>({});
   const isToday = date === today;
   const entry = entries[date];
+
+  // Measurements are entered during a body-photo capture; surface them here so
+  // they can be reviewed/corrected afterward (bug: previously edit-only at capture).
+  const measurementUnit = profile.units === 'imperial' ? t('measurements.unitIn') : t('measurements.unitCm');
+  const hasBodyPhotos = photos.some((p) => p.session === 'body');
+  const showMeasurements =
+    hasBodyPhotos ||
+    entry?.waist !== undefined ||
+    entry?.hips !== undefined ||
+    entry?.extraMeasurementValue !== undefined;
 
   const [savedPulse, setSavedPulse] = useState(false);
   const seenUpdatedAt = useRef<string | null>(null);
@@ -311,6 +322,64 @@ export function DetailedLog({ onDismiss }: { onDismiss?: () => void } = {}) {
               </View>
             );
           })}
+        </Card>
+      )}
+
+      {showMeasurements && (
+        <Card style={styles.section}>
+          <EngravedLabel>{t('fields.measurements')}</EngravedLabel>
+          {(['waist', 'hips'] as const).map((field) => (
+            <View key={`${date}-${field}`} style={styles.weightInput}>
+              <LabeledInput
+                key={`${date}-${field}-${num(field) ?? ''}`}
+                label={`${t(`measurements.${field}`)} (${measurementUnit})`}
+                keyboardType="decimal-pad"
+                defaultValue={num(field) !== undefined ? String(num(field)) : ''}
+                error={measurementError[field]}
+                onEndEditing={(e) => {
+                  const raw = e.nativeEvent.text.trim().replace(',', '.');
+                  if (raw === '') {
+                    setMeasurementError((p) => ({ ...p, [field]: undefined }));
+                    upsertCheckin(date, { [field]: undefined });
+                    return;
+                  }
+                  const v = parseFloat(raw);
+                  if (!Number.isFinite(v) || v <= 0 || v > 500) {
+                    setMeasurementError((p) => ({ ...p, [field]: t('checkin.weightInvalid') }));
+                    return;
+                  }
+                  setMeasurementError((p) => ({ ...p, [field]: undefined }));
+                  upsertCheckin(date, { [field]: v });
+                }}
+              />
+            </View>
+          ))}
+          {entry?.extraMeasurementKey && (
+            <View style={styles.weightInput}>
+              <LabeledInput
+                key={`${date}-extra-${entry.extraMeasurementValue ?? ''}`}
+                label={`${t(`measurements.${entry.extraMeasurementKey}`)} (${measurementUnit})`}
+                keyboardType="decimal-pad"
+                defaultValue={entry.extraMeasurementValue !== undefined ? String(entry.extraMeasurementValue) : ''}
+                error={measurementError.extra}
+                onEndEditing={(e) => {
+                  const raw = e.nativeEvent.text.trim().replace(',', '.');
+                  if (raw === '') {
+                    setMeasurementError((p) => ({ ...p, extra: undefined }));
+                    upsertCheckin(date, { extraMeasurementValue: undefined });
+                    return;
+                  }
+                  const v = parseFloat(raw);
+                  if (!Number.isFinite(v) || v <= 0 || v > 500) {
+                    setMeasurementError((p) => ({ ...p, extra: t('checkin.weightInvalid') }));
+                    return;
+                  }
+                  setMeasurementError((p) => ({ ...p, extra: undefined }));
+                  upsertCheckin(date, { extraMeasurementValue: v });
+                }}
+              />
+            </View>
+          )}
         </Card>
       )}
 

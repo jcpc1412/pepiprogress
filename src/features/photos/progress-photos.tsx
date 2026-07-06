@@ -356,6 +356,7 @@ export function ProgressPhotos({
         measurementDelta,
         symptomContext: symptomCtx,
         cycleWeek,
+        units: profile.units,
       });
       updatePhoto(latest.id, {
         driftScore: res.driftScore,
@@ -407,6 +408,7 @@ export function ProgressPhotos({
         recentLogs,
         cycleContext: cycleCtx,
         locale: i18n.language,
+        units: profile.units,
       });
       setEncouragementNote(res.message);
       const encKey = sessionEncouragementKey(session);
