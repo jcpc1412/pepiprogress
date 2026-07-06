@@ -19,6 +19,7 @@ import {
   type PhotoAnalysis,
 } from '@/lib/ai';
 import { bodyFatNavy, inferBodyComposition } from '@/lib/body-composition';
+import { quickReadout, type QuickReadout } from '@/lib/photo-readout';
 import { useAuth } from '@/lib/auth';
 import {
   getCadence,
@@ -221,6 +222,8 @@ export function ProgressPhotos({
   const { photos, entries, symptomEvents, protocolItems, profile, addPhoto, updatePhoto, setProfile } = useStore();
   const [capturing, setCapturing] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
+  // Instant, deterministic quick readout shown while the deep analysis loads (§4A).
+  const [quickNote, setQuickNote] = useState<{ id: string; readout: QuickReadout } | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [lastNote, setLastNote] = useState<{ id: string; analysis: PhotoAnalysis } | null>(null);
   const [encouragementNote, setEncouragementNote] = useState<string | null>(null);
@@ -310,6 +313,7 @@ export function ProgressPhotos({
     setAnalyzing(true);
     setEncouragementNote(null);
     setAiError(null);
+    setQuickNote(null);
     setLastAiAction('scientific');
     try {
       let cycleCtx: 'luteal' | undefined;
@@ -340,6 +344,12 @@ export function ProgressPhotos({
         }
         if (Object.keys(d).length > 0) measurementDelta = d;
       }
+
+      // Two-stage analysis: render an instant, local readout while the deep
+      // vision call runs (§4A). Comparability from the tilt delta between shots.
+      const tiltDelta =
+        latest.tilt != null && baseline.tilt != null ? Math.abs(latest.tilt - baseline.tilt) : undefined;
+      setQuickNote({ id: latest.id, readout: quickReadout({ tiltDelta, measurementDelta }) });
 
       const symptomCtx = symptomEvents
         .filter((s) => isVisualSymptom(s.type))
@@ -468,6 +478,7 @@ export function ProgressPhotos({
 
   // ── Derived display ───────────────────────────────────────────────────────
   const note = lastNote && selected && lastNote.id === selected.id ? lastNote.analysis : null;
+  const munit = profile.units === 'imperial' ? t('measurements.unitIn') : t('measurements.unitCm');
   const showWipe = !!selected && !!baseline && selected.id !== baseline.id;
   const lightingBad = showWipe && selected.lighting !== undefined && selected.lighting !== 'ok';
   const selectedBadge =
@@ -594,7 +605,26 @@ export function ProgressPhotos({
         </View>
       )}
 
-      {analyzing && <Skeleton lines={3} />}
+      {analyzing &&
+        (lastAiAction === 'scientific' && quickNote ? (
+          <Card style={styles.quickCard}>
+            <EngravedLabel>{t('photos.quickReadTitle')}</EngravedLabel>
+            <ThemedText type="small" themeColor="text">
+              {t(`photos.comparability_${quickNote.readout.comparability}` as 'photos.comparability_comparable')}
+            </ThemedText>
+            {quickNote.readout.changes.map((c) => (
+              <ThemedText key={c.metricKey} type="mono" themeColor="textSecondary">
+                {`${t(c.metricKey as 'measurements.waist')} ${c.delta > 0 ? '+' : ''}${Math.round(c.delta * 10) / 10}${munit}`}
+              </ThemedText>
+            ))}
+            <ThemedText type="monoSm" themeColor="textMuted">
+              {t('photos.deepLoading')}
+            </ThemedText>
+            <Skeleton lines={2} />
+          </Card>
+        ) : (
+          <Skeleton lines={3} />
+        ))}
       {aiError && (
         <View style={styles.aiErrorRow}>
           <ThemedText type="small" themeColor="textSecondary" style={styles.aiErrorText}>
@@ -694,6 +724,7 @@ const styles = StyleSheet.create({
   thumbPressed: { opacity: 0.7 },
   thumbImg: { flex: 1 },
   milestoneSection: { gap: Spacing.two },
+  quickCard: { gap: Spacing.two },
   milestoneRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.two },
   aiErrorRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.two },
   aiErrorText: { flex: 1 },

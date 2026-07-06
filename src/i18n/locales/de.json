@@ -248,7 +248,12 @@
     "bodyFatHedge": "Bereich {{low}}–{{high}} %",
     "bodyFatNeed": "Taille + Hals angeben für eine Körperfett-Schätzung",
     "viewFront": "Vorne",
-    "viewSide": "Seite"
+    "viewSide": "Seite",
+    "quickReadTitle": "Schnelle Auswertung",
+    "deepLoading": "Tiefer Vergleich lädt…",
+    "comparability_comparable": "Vergleichbar mit der Basislinie.",
+    "comparability_partial": "Teilweise vergleichbar.",
+    "comparability_low": "Geringe Vergleichbarkeit, der Bildausschnitt weicht ab."
   },
   "markers": {
     "hematocrit": "Hämatokrit",

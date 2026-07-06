@@ -248,7 +248,12 @@
     "bodyFatHedge": "диапазон {{low}}–{{high}}%",
     "bodyFatNeed": "Укажите талию и шею для оценки жира",
     "viewFront": "Спереди",
-    "viewSide": "Сбоку"
+    "viewSide": "Сбоку",
+    "quickReadTitle": "Быстрая сводка",
+    "deepLoading": "Идёт глубокое сравнение…",
+    "comparability_comparable": "Сопоставимо с исходным.",
+    "comparability_partial": "Частично сопоставимо.",
+    "comparability_low": "Низкая сопоставимость, кадрирование отличается."
   },
   "markers": {
     "hematocrit": "Гематокрит",

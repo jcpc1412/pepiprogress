@@ -248,7 +248,12 @@
     "bodyFatHedge": "rango {{low}}–{{high}}%",
     "bodyFatNeed": "Añade cintura + cuello para estimar la grasa corporal",
     "viewFront": "Frente",
-    "viewSide": "Perfil"
+    "viewSide": "Perfil",
+    "quickReadTitle": "Lectura rápida",
+    "deepLoading": "Cargando comparación profunda…",
+    "comparability_comparable": "Comparable con la base.",
+    "comparability_partial": "Parcialmente comparable.",
+    "comparability_low": "Baja comparabilidad, el encuadre difiere."
   },
   "markers": {
     "hematocrit": "Hematocrito",

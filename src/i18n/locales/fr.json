@@ -248,7 +248,12 @@
     "bodyFatHedge": "plage {{low}}–{{high}} %",
     "bodyFatNeed": "Ajoutez tour de taille + cou pour estimer la masse grasse",
     "viewFront": "Face",
-    "viewSide": "Profil"
+    "viewSide": "Profil",
+    "quickReadTitle": "Lecture rapide",
+    "deepLoading": "Comparaison approfondie en cours…",
+    "comparability_comparable": "Comparable à la référence.",
+    "comparability_partial": "Partiellement comparable.",
+    "comparability_low": "Faible comparabilité, le cadrage diffère."
   },
   "markers": {
     "hematocrit": "Hématocrite",

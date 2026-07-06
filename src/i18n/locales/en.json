@@ -248,7 +248,12 @@
     "bodyFatHedge": "range {{low}}–{{high}}%",
     "bodyFatNeed": "Add waist + neck for a body-fat estimate",
     "viewFront": "Front",
-    "viewSide": "Side"
+    "viewSide": "Side",
+    "quickReadTitle": "Quick read",
+    "deepLoading": "Deep comparison loading…",
+    "comparability_comparable": "Comparable to baseline.",
+    "comparability_partial": "Partly comparable.",
+    "comparability_low": "Low comparability, framing differs."
   },
   "markers": {
     "hematocrit": "Hematocrit",
