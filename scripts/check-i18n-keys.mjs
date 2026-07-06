@@ -52,7 +52,7 @@ const IDENTICAL_OK = new Set([
   'protocol.dose', 'protocol.nominal',
   'protocol.vialCount_one', 'report.date',
   'routes.im', 'routes.nasal', 'routes.oral',
-  'settings.footer', 'sex.ftm', 'sex.mtf', 'symptoms.minutesShort', 'tabs.photos',
+  'settings.footer', 'sex.ftm', 'sex.mtf', 'symptoms.minutesShort', 'tabs.pepi', 'tabs.photos',
   'units.g', 'units.imperial', 'units.kcal', 'units.kg', 'units.lb',
   'verdict.unitScale', 'verdict.type.body_comp', 'verdict.role.neutral',
 ]);

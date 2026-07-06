@@ -4,7 +4,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { LabeledInput, PrimaryButton, TextButton } from '@/components/form';
-import { ChevronRightIcon, GearIcon } from '@/components/icons';
+import { BackIcon, ChevronRightIcon, GearIcon } from '@/components/icons';
 import { Divider, EngravedLabel, StatusPill } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -28,7 +28,7 @@ function name(slug: string | undefined): string {
  * the two bottom buttons. Inventory editing moved to compound detail; recent
  * doses moved to Today.
  */
-export function ProtocolScreen() {
+export function ProtocolScreen({ onClose }: { onClose?: () => void } = {}) {
   const { t } = useTranslation();
   const { openSettings, openAddCompound, openCompoundDetail, openLogging } = useOverlay();
   const { protocolItems, doseEvents, inventory } = useStore();
@@ -62,7 +62,17 @@ export function ProtocolScreen() {
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safe} edges={['top']}>
         <View style={styles.header}>
-          <View>
+          {onClose ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('common.back')}
+              onPress={onClose}
+              hitSlop={8}
+              style={styles.back}>
+              <BackIcon />
+            </Pressable>
+          ) : null}
+          <View style={styles.headerText}>
             <EngravedLabel>{t('protocol.title')}</EngravedLabel>
             <ThemedText type="display">
               {t('protocol.compoundCount', { count: protocolItems.length })}
@@ -73,13 +83,15 @@ export function ProtocolScreen() {
               </ThemedText>
             )}
           </View>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={t('settings.title')}
-            onPress={openSettings}
-            hitSlop={8}>
-            <GearIcon />
-          </Pressable>
+          {onClose ? null : (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('settings.title')}
+              onPress={openSettings}
+              hitSlop={8}>
+              <GearIcon />
+            </Pressable>
+          )}
         </View>
 
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
@@ -278,7 +290,9 @@ const styles = StyleSheet.create({
     maxWidth: MaxContentWidth,
     alignSelf: 'center',
   },
-  header: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' },
+  header: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: Spacing.three },
+  headerText: { flex: 1 },
+  back: { paddingTop: Spacing.half },
   flagged: { textTransform: 'uppercase' },
   scroll: { gap: Spacing.four, paddingTop: Spacing.three, paddingBottom: Spacing.six },
   rowDivider: { marginVertical: 0 },

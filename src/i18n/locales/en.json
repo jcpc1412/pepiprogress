@@ -31,7 +31,8 @@
     "protocol": "Protocol",
     "today": "Today",
     "photos": "Photos",
-    "insights": "Insights"
+    "insights": "Insights",
+    "pepi": "Pepi"
   },
   "units": {
     "metric": "Metric",
@@ -817,5 +818,8 @@
       "wellness": "WELLNESS",
       "skin": "SKIN"
     }
+  },
+  "pepi": {
+    "subtitle": "Log anything, or ask about your data."
   }
 }

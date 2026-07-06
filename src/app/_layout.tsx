@@ -69,6 +69,7 @@ function RootContent() {
               with the native back gesture (settings → me → …). */}
           <Stack.Screen name="settings" />
           <Stack.Screen name="reasoning" />
+          <Stack.Screen name="protocol" />
           <Stack.Screen name="me" />
           <Stack.Screen name="notifications-settings" />
           <Stack.Screen name="privacy" />

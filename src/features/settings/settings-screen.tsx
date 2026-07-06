@@ -39,6 +39,8 @@ export function SettingsScreen({ onClose }: { onClose: () => void }) {
 
           {/* Nested navigation rows (R3-B). */}
           <View style={styles.rows}>
+            {/* Protocol config lives here now (redesign §4.5), not a tab. */}
+            <SettingsRow label={t('tabs.protocol')} onPress={() => router.push('/protocol')} />
             <SettingsRow label={t('me.title')} sublabel={meSub} onPress={() => router.push('/me')} />
             <SettingsRow label={t('notify.section')} onPress={() => router.push('/notifications-settings')} />
             <SettingsRow label={t('privacy.pageTitle')} onPress={() => router.push('/privacy')} />

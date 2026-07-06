@@ -90,6 +90,22 @@ export function ProtocolIcon({ size = 22, color }: IconProps) {
   );
 }
 
+export function ChatIcon({ size = 22, color }: IconProps) {
+  const stroke = useStroke(color);
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M4 5.5A1.5 1.5 0 0 1 5.5 4h13A1.5 1.5 0 0 1 20 5.5v9A1.5 1.5 0 0 1 18.5 16H9l-4 4v-4H5.5A1.5 1.5 0 0 1 4 14.5z"
+        stroke={stroke}
+        strokeWidth={1.5}
+        strokeLinejoin="round"
+      />
+      <Line x1={8} y1={9} x2={16} y2={9} stroke={stroke} strokeWidth={1.5} strokeLinecap="round" />
+      <Line x1={8} y1={12} x2={13} y2={12} stroke={stroke} strokeWidth={1.5} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
 export function CameraIcon({ size = 22, color }: IconProps) {
   const stroke = useStroke(color);
   return (

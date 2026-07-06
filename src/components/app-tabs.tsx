@@ -10,7 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { CameraIcon, HomeIcon, InsightsIcon, ProtocolIcon } from '@/components/icons';
+import { CameraIcon, ChatIcon, HomeIcon, InsightsIcon } from '@/components/icons';
 import { ThemedText } from '@/components/themed-text';
 import { MaxContentWidth, Spacing, type ThemeColor } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -50,11 +50,13 @@ export default function AppTabs() {
           <TabTrigger name="photos" href="/photos" asChild>
             <TabButton icon={CameraIcon} label={t('tabs.photos')} />
           </TabTrigger>
+          <TabTrigger name="pepi" href="/pepi" asChild>
+            <TabButton icon={ChatIcon} label={t('tabs.pepi')} />
+          </TabTrigger>
+          {/* Insights kept for now (owner: do not demote yet). Protocol config
+              moved into Settings (redesign §4.5). */}
           <TabTrigger name="insights" href="/insights" asChild>
             <TabButton icon={InsightsIcon} label={t('tabs.insights')} />
-          </TabTrigger>
-          <TabTrigger name="explore" href="/explore" asChild>
-            <TabButton icon={ProtocolIcon} label={t('tabs.protocol')} />
           </TabTrigger>
         </View>
       </TabList>
