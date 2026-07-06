@@ -25,13 +25,22 @@ export type QualityCriteria = {
 };
 
 export type PhotoQuality = {
-  score: number; // 0–100
+  /** The true internal score (0–100), used for the retry decision. */
+  score: number;
+  /** The number shown to the user: `score − DISPLAY_OFFSET`, clamped (owner
+   *  2026-07-06). We prompt a retake a little stricter than the shown bar
+   *  suggests, so the displayed number still crosses 80 exactly at the trigger. */
+  displayScore: number;
   criteria: QualityCriteria;
-  /** True when the score is below the recommended bar (triggers the retry modal). */
+  /** True when the real score is below the retry bar (triggers the retry modal). */
   belowThreshold: boolean;
 };
 
-export const QUALITY_THRESHOLD = 80;
+/** Real-score bar for prompting a retake. Stricter than the displayed 80 so the
+ *  detector is "picky" (owner §4A): retry fires at real < 85, i.e. shown < 80. */
+export const RETRY_THRESHOLD = 85;
+/** Shown score is the real score minus this offset. */
+export const DISPLAY_OFFSET = 5;
 
 const STATE_VALUE: Record<CriterionState, number> = { good: 100, ok: 70, bad: 35, unknown: 70 };
 const WEIGHT: Record<keyof QualityCriteria, number> = { level: 0.3, framing: 0.4, light: 0.3 };
@@ -73,6 +82,7 @@ export function computeQuality(input: { tiltDeg?: number; fit?: FitLevel; luma?:
     weightSum += WEIGHT[k];
   });
   const score = weightSum > 0 ? Math.round(weighted / weightSum) : STATE_VALUE.unknown;
+  const displayScore = Math.min(100, Math.max(0, score - DISPLAY_OFFSET));
 
-  return { score, criteria, belowThreshold: score < QUALITY_THRESHOLD };
+  return { score, displayScore, criteria, belowThreshold: score < RETRY_THRESHOLD };
 }

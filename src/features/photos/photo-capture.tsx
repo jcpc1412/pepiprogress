@@ -211,8 +211,8 @@ export function PhotoCapture({
             {quality ? (
               <View style={styles.qualityRow}>
                 <StatusPill
-                  label={`${t('photos.qualityLabel')} ${quality.score}`}
-                  tone={quality.score >= 80 ? 'good' : quality.score >= 60 ? 'watch' : 'bad'}
+                  label={`${t('photos.qualityLabel')} ${quality.displayScore}`}
+                  tone={quality.displayScore >= 80 ? 'good' : quality.displayScore >= 60 ? 'watch' : 'bad'}
                 />
               </View>
             ) : null}
