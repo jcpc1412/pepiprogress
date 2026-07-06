@@ -61,7 +61,8 @@
     "eslint-config-expo": "^56.0.4",
     "eslint-plugin-i18next": "^6.1.4",
     "supabase": "^2.107.0",
-    "typescript": "~6.0.3"
+    "typescript": "~6.0.3",
+    "vitest": "^4.1.10"
   },
   "scripts": {
     "start": "expo start",
@@ -71,6 +72,7 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
     "i18n:check": "node scripts/check-i18n-keys.mjs",
     "gen:types": "supabase gen types typescript --project-id pjdbxnycrvibmebfumel > src/types/database.ts",
     "gen:types:local": "supabase gen types typescript --local > src/types/database.ts"
