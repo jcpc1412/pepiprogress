@@ -7,6 +7,8 @@ export type ThemedTextType =
   // CyberLife instrument scale
   | 'display' // screen H1 — "21 JUN 2026", "Set parameters"
   | 'label' // engraved panel label (uppercase mono, low-contrast)
+  | 'hero' // the engine-picked protagonist figure (verdict-first Home, redesign)
+  | 'heroUnit' // the small unit trailing a hero figure
   | 'metric' // large tabular numeral — the one big number per card
   | 'metricSm' // secondary numeral (delta, stat)
   | 'mono' // mono body (data rows)
@@ -28,11 +30,13 @@ export function ThemedText({ style, type = 'body', themeColor, ...rest }: Themed
   const defaultColor: ThemeColor =
     type === 'label'
       ? 'label'
-      : type === 'metric' || type === 'metricSm'
+      : type === 'metric' || type === 'metricSm' || type === 'hero'
         ? 'numeral'
-        : type === 'mono' || type === 'monoSm'
-          ? 'textSecondary'
-          : 'text';
+        : type === 'heroUnit'
+          ? 'textMuted'
+          : type === 'mono' || type === 'monoSm'
+            ? 'textSecondary'
+            : 'text';
 
   return (
     <Text
@@ -54,6 +58,8 @@ const styles = StyleSheet.create({
     letterSpacing: 1.3,
     textTransform: 'uppercase',
   },
+  hero: { fontFamily: Fonts.monoMedium, fontSize: 44, fontWeight: '500', lineHeight: 46, letterSpacing: -0.5 },
+  heroUnit: { fontFamily: Fonts.mono, fontSize: 18, fontWeight: '400', letterSpacing: 0.4 },
   metric: { fontFamily: Fonts.mono, fontSize: 42, fontWeight: '400', lineHeight: 42 },
   metricSm: { fontFamily: Fonts.monoMedium, fontSize: 22, fontWeight: '500', lineHeight: 24 },
   mono: { fontFamily: Fonts.mono, fontSize: 12, fontWeight: '400', letterSpacing: 0.4 },

@@ -103,10 +103,11 @@ export function SignalText({
   size = 'metricSm',
 }: {
   children: ReactNode;
-  tone?: 'good' | 'bad' | 'neutral';
+  tone?: 'good' | 'watch' | 'bad' | 'neutral';
   size?: 'metric' | 'metricSm' | 'mono';
 }) {
-  const color: ThemeColor = tone === 'good' ? 'signalGood' : tone === 'bad' ? 'signalBad' : 'numeral';
+  const color: ThemeColor =
+    tone === 'good' ? 'signalGood' : tone === 'watch' ? 'signalWatch' : tone === 'bad' ? 'signalBad' : 'numeral';
   return (
     <ThemedText type={size} themeColor={color}>
       {children}
@@ -115,10 +116,12 @@ export function SignalText({
 }
 
 /** A small chamfered status chip (LOW STOCK / NOMINAL / EXPIRING). */
-export function StatusPill({ label, tone = 'neutral' }: { label: string; tone?: 'good' | 'bad' | 'neutral' }) {
+export function StatusPill({ label, tone = 'neutral' }: { label: string; tone?: 'good' | 'watch' | 'bad' | 'neutral' }) {
   const theme = useTheme();
-  const bg = tone === 'good' ? theme.signalGoodBg : tone === 'bad' ? theme.signalBadBg : theme.surfaceSunken;
-  const fg: ThemeColor = tone === 'good' ? 'signalGood' : tone === 'bad' ? 'signalBad' : 'textMuted';
+  const bg =
+    tone === 'good' ? theme.signalGoodBg : tone === 'watch' ? theme.signalWatchBg : tone === 'bad' ? theme.signalBadBg : theme.surfaceSunken;
+  const fg: ThemeColor =
+    tone === 'good' ? 'signalGood' : tone === 'watch' ? 'signalWatch' : tone === 'bad' ? 'signalBad' : 'textMuted';
   return (
     <ChamferBox chamfer={Chamfer.pill} fill={bg}>
       <View style={styles.pill}>

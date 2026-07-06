@@ -42,11 +42,15 @@ export const Colors = {
     accent: '#2A2825', // solid control / selected
     onAccent: '#FBFAF8',
     structure: 'rgba(26,25,24,0.05)', // faint diagonal lattice lines
+    lattice: '#6E8C7E', // breathing molecular-lattice stroke (applied at low opacity)
 
-    // signal — ONLY for data semantics (deltas, status)
+    // signal — ONLY for data semantics (deltas, status). Three-state certainty
+    // scale for the verdict: good / watch / bad (redesign).
     signalGood: '#2B6947',
+    signalWatch: '#8A6A2C',
     signalBad: '#7A2E2E',
     signalGoodBg: 'rgba(43,105,71,0.10)',
+    signalWatchBg: 'rgba(138,106,44,0.12)',
     signalBadBg: 'rgba(122,46,46,0.10)',
   },
   // ── AT NIGHT ──────────────────────────────────────────────────────────────
@@ -70,10 +74,13 @@ export const Colors = {
     accent: '#E8E5DF',
     onAccent: '#131210',
     structure: 'rgba(212,209,203,0.035)',
+    lattice: '#7CA993', // breathing molecular-lattice stroke (applied at low opacity)
 
     signalGood: '#3A8A58',
+    signalWatch: '#B5883C',
     signalBad: '#9A3535',
     signalGoodBg: 'rgba(58,138,88,0.12)',
+    signalWatchBg: 'rgba(181,136,60,0.14)',
     signalBadBg: 'rgba(154,53,53,0.16)',
   },
 } as const;
