@@ -253,7 +253,12 @@
     "deepLoading": "Tiefer Vergleich lädt…",
     "comparability_comparable": "Vergleichbar mit der Basislinie.",
     "comparability_partial": "Teilweise vergleichbar.",
-    "comparability_low": "Geringe Vergleichbarkeit, der Bildausschnitt weicht ab."
+    "comparability_low": "Geringe Vergleichbarkeit, der Bildausschnitt weicht ab.",
+    "partWhole": "Komplett",
+    "addPart": "+ Bereich",
+    "newPartTitle": "Neuer Bereich",
+    "partName": "Name",
+    "partNamePlaceholder": "z. B. Bauch, Kinnlinie"
   },
   "markers": {
     "hematocrit": "Hämatokrit",

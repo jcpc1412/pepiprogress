@@ -243,10 +243,13 @@ mono/uppercase, against the final palette.
 > **Two-stage analysis: done** — `photo-readout.ts` renders an instant, local,
 > no-fluff readout (comparability from the tilt delta + measurement deltas) the
 > moment a deep comparison starts, while the Sonnet vision call loads.
-> **Still deferred within §4A (native / larger):** native volume-button capture +
-> digital zoom + auto-crop (vision-camera path), live luma/blur metadata (needs a
-> frame processor), and custom "problem" body parts (a `PhotoSession` model +
-> ghost/cadence refactor).
+> **Custom "problem" body parts: done** — `PhotoEntry.part` sub-track within the
+> body session (own baseline/ghost/compare per part), a part selector + add-part
+> modal in the gallery, `profile.customPhotoParts`, threaded through capture +
+> cloud photo rows. Custom parts share the base body milestone cadence.
+> **Still deferred within §4A (native only):** native volume-button capture +
+> digital zoom + auto-crop (vision-camera path) and live luma/blur metadata (needs
+> a frame processor). These require an on-device build to implement + verify.
 
 
 The photo USP gets a dedicated upgrade. Current-app defects folded in (see §0 fix-now list).

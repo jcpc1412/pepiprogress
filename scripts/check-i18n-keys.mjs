@@ -48,7 +48,7 @@ const IDENTICAL_OK = new Set([
   'integrations.appleHealth', 'integrations.healthConnect', 'integrations.terra', 'inventory.kind',
   'inventory.label', 'inventory.ok', 'inventoryKinds.vial', 'lab.range', 'lab.vialResult',
   'markers.estradiol', 'markers.glucose', 'me.name', 'measurements.unitCm', 'measurements.unitIn',
-  'photos.comparable', 'photos.dayShort', 'photos.filterTitle', 'photos.heading', 'photos.tagWeek',
+  'photos.comparable', 'photos.dayShort', 'photos.filterTitle', 'photos.heading', 'photos.partName', 'photos.tagWeek',
   'protocol.dose', 'protocol.nominal',
   'protocol.vialCount_one', 'report.date',
   'routes.im', 'routes.nasal', 'routes.oral',

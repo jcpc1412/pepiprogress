@@ -115,6 +115,10 @@ export type PhotoSession = 'face' | 'body';
 export type PhotoEntry = {
   id: string;
   session: PhotoSession;
+  /** Custom "problem area" sub-track within a session (spec 04 §4A): e.g. belly,
+   *  thighs, jawline. Undefined = the whole face/body track. Photos of the same
+   *  (session, part) share a baseline/ghost chain. */
+  part?: string;
   view?: 'front' | 'side'; // capture angle (spec 04 §4A); defaults to front
   uri: string; // local file uri (persistent copy)
   cloudPath?: string; // Supabase Storage path after upload (progress-photos bucket)
@@ -224,6 +228,9 @@ export type LocalProfile = {
   cycleLength?: number; // default 28
   // Body type calibration passed to vision AI for accurate composition assessment.
   bodyType?: string;
+  /** User-defined custom "problem area" photo tracks within the body session
+   *  (spec 04 §4A), e.g. ["belly", "thighs"]. */
+  customPhotoParts?: string[];
   // M5 — local notification preferences (spec 06 reminders). Times are "HH:mm" 24h.
   notifyCheckinEnabled?: boolean;
   notifyCheckinTime?: string; // default "20:00"

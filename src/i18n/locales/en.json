@@ -253,7 +253,12 @@
     "deepLoading": "Deep comparison loading…",
     "comparability_comparable": "Comparable to baseline.",
     "comparability_partial": "Partly comparable.",
-    "comparability_low": "Low comparability, framing differs."
+    "comparability_low": "Low comparability, framing differs.",
+    "partWhole": "Full",
+    "addPart": "+ Add part",
+    "newPartTitle": "New body part",
+    "partName": "Name",
+    "partNamePlaceholder": "e.g. belly, jawline"
   },
   "markers": {
     "hematocrit": "Hematocrit",

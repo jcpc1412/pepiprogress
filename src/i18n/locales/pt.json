@@ -253,7 +253,12 @@
     "deepLoading": "Carregando comparação profunda…",
     "comparability_comparable": "Comparável com a base.",
     "comparability_partial": "Parcialmente comparável.",
-    "comparability_low": "Baixa comparabilidade, o enquadramento difere."
+    "comparability_low": "Baixa comparabilidade, o enquadramento difere.",
+    "partWhole": "Completo",
+    "addPart": "+ Adicionar área",
+    "newPartTitle": "Nova área",
+    "partName": "Nome",
+    "partNamePlaceholder": "ex. barriga, mandíbula"
   },
   "markers": {
     "hematocrit": "Hematócrito",

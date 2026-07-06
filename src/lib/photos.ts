@@ -61,6 +61,7 @@ export async function syncPhotoRow(
     captured_at: photo.takenAt,
     storage_path: storagePath,
     capture_meta: {
+      part: photo.part ?? null,
       view: photo.view ?? 'front',
       tilt: photo.tilt ?? null,
       luma: photo.luma ?? null,

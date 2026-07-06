@@ -3,9 +3,9 @@ import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { type MutableRefObject, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Animated, Dimensions, type LayoutChangeEvent, PanResponder, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Animated, Dimensions, type LayoutChangeEvent, Modal, PanResponder, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
-import { TextButton, SingleSelectChips } from '@/components/form';
+import { LabeledInput, PrimaryButton, TextButton, SingleSelectChips } from '@/components/form';
 import { Card, Divider, EngravedLabel, Placeholder, Skeleton, StatusPill } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
 import { Radii, Spacing } from '@/constants/theme';
@@ -229,6 +229,13 @@ export function ProgressPhotos({
   const [encouragementNote, setEncouragementNote] = useState<string | null>(null);
   const [aiError, setAiError] = useState<'network' | 'server' | null>(null);
   const [lastAiAction, setLastAiAction] = useState<'scientific' | 'encouragement' | null>(null);
+  // Custom "problem area" sub-track within the body session (§4A). Undefined =
+  // the whole face/body track. Face has no sub-parts.
+  const [part, setPart] = useState<string | undefined>(undefined);
+  const [addingPart, setAddingPart] = useState(false);
+  const [partDraft, setPartDraft] = useState('');
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => setPart(undefined), [session]);
 
   const thumbW = useThumbWidth();
   const thumbH = Math.floor(thumbW * (4 / 3));
@@ -241,8 +248,20 @@ export function ProgressPhotos({
     };
   }, [captureRef]);
 
-  // Newest-first; [0] = latest, last = baseline.
-  const sessionPhotos = photos.filter((p) => p.session === session);
+  // Newest-first; [0] = latest, last = baseline. Scoped to the active track
+  // (session + optional custom part), so each part has its own baseline/ghost.
+  const sessionPhotos = photos.filter((p) => p.session === session && (p.part ?? undefined) === part);
+  // Body sub-parts the user has created (from profile + any already-tagged photos).
+  const bodyParts = useMemo(
+    () =>
+      Array.from(
+        new Set([
+          ...(profile.customPhotoParts ?? []),
+          ...photos.filter((p) => p.session === 'body' && p.part).map((p) => p.part as string),
+        ]),
+      ),
+    [profile.customPhotoParts, photos],
+  );
   const latest = sessionPhotos[0];
   const resolvedUris = useResolvedUris(sessionPhotos);
   const baseline = sessionPhotos[sessionPhotos.length - 1];
@@ -269,6 +288,7 @@ export function ProgressPhotos({
   // ── Schedule milestones when the first photo for a session is saved ───────
   useEffect(() => {
     if (sessionPhotos.length === 0) return;
+    if (part) return; // custom parts share the base body cadence; no own schedule
     const encKey = sessionEncouragementKey(session);
     if (profile[encKey]) return;
     if (cadence.encouragementDays === 0) return;
@@ -473,8 +493,8 @@ export function ProgressPhotos({
     const parsed = exifDate ? new Date(exifDate.replace(/^(\d{4}):(\d{2}):(\d{2})/, '$1-$2-$3')) : null;
     const takenAt = parsed && Number.isFinite(parsed.getTime()) ? parsed.toISOString() : new Date().toISOString();
     const persistentUri = await copyPhotoToDocuments(asset.uri);
-    addPhoto({ session, uri: persistentUri, takenAt });
-  }, [session, addPhoto]);
+    addPhoto({ session, part, uri: persistentUri, takenAt });
+  }, [session, part, addPhoto]);
 
   // ── Derived display ───────────────────────────────────────────────────────
   const note = lastNote && selected && lastNote.id === selected.id ? lastNote.analysis : null;
@@ -505,6 +525,17 @@ export function ProgressPhotos({
         value={session}
         onChange={onSessionChange}
       />
+
+      {/* Body sub-parts (custom "problem areas") — only within the body session. */}
+      {session === 'body' && (
+        <View style={styles.partRow}>
+          <PartChip label={t('photos.partWhole')} active={part === undefined} onPress={() => setPart(undefined)} />
+          {bodyParts.map((p) => (
+            <PartChip key={p} label={p} active={part === p} onPress={() => setPart(p)} />
+          ))}
+          <PartChip label={t('photos.addPart')} active={false} onPress={() => setAddingPart(true)} dashed />
+        </View>
+      )}
 
       {/* Photo display */}
       {sessionPhotos.length === 0 ? (
@@ -699,12 +730,82 @@ export function ProgressPhotos({
       ) : (
         <PhotoCapture
           session={session}
+          part={part}
           ghostUri={latest ? resolvedUris[latest.id] ?? latest.uri : undefined}
           visible={capturing}
           onClose={() => setCapturing(false)}
         />
       )}
+
+      {/* Add a custom body part. */}
+      <Modal visible={addingPart} transparent animationType="fade" onRequestClose={() => setAddingPart(false)}>
+        <Pressable style={styles.partModalBackdrop} onPress={() => setAddingPart(false)}>
+          <View
+            style={[styles.partModalSheet, { backgroundColor: theme.surfaceRaised, borderColor: theme.border }]}
+            onStartShouldSetResponder={() => true}>
+            <EngravedLabel>{t('photos.newPartTitle')}</EngravedLabel>
+            <LabeledInput
+              label={t('photos.partName')}
+              placeholder={t('photos.partNamePlaceholder')}
+              value={partDraft}
+              onChangeText={setPartDraft}
+              autoFocus
+            />
+            <View style={styles.partModalActions}>
+              <TextButton label={t('common.cancel')} onPress={() => { setAddingPart(false); setPartDraft(''); }} />
+              <View style={styles.partModalSave}>
+                <PrimaryButton
+                  label={t('common.save')}
+                  disabled={!partDraft.trim()}
+                  onPress={() => {
+                    const name = partDraft.trim();
+                    if (!name) return;
+                    const existing = profile.customPhotoParts ?? [];
+                    if (!existing.includes(name)) setProfile({ customPhotoParts: [...existing, name] });
+                    setPart(name);
+                    setPartDraft('');
+                    setAddingPart(false);
+                  }}
+                />
+              </View>
+            </View>
+          </View>
+        </Pressable>
+      </Modal>
     </View>
+  );
+}
+
+/** A small selectable chip for a body sub-part (or the "+ Add part" affordance). */
+function PartChip({
+  label,
+  active,
+  onPress,
+  dashed,
+}: {
+  label: string;
+  active: boolean;
+  onPress: () => void;
+  dashed?: boolean;
+}) {
+  const theme = useTheme();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ selected: active }}
+      onPress={onPress}
+      style={[
+        styles.partChip,
+        {
+          backgroundColor: active ? theme.accent : 'transparent',
+          borderColor: active ? theme.accent : theme.border,
+          borderStyle: dashed ? 'dashed' : 'solid',
+        },
+      ]}>
+      <ThemedText type="monoSm" themeColor={active ? 'onAccent' : 'textSecondary'}>
+        {label}
+      </ThemedText>
+    </Pressable>
   );
 }
 
@@ -725,6 +826,23 @@ const styles = StyleSheet.create({
   thumbImg: { flex: 1 },
   milestoneSection: { gap: Spacing.two },
   quickCard: { gap: Spacing.two },
+  partRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
+  partChip: {
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.one,
+    borderRadius: 2,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  partModalBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', alignItems: 'center' },
+  partModalSheet: {
+    width: 280,
+    borderRadius: Radii.panel,
+    borderWidth: StyleSheet.hairlineWidth,
+    padding: Spacing.three,
+    gap: Spacing.three,
+  },
+  partModalActions: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.three },
+  partModalSave: { minWidth: 120 },
   milestoneRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.two },
   aiErrorRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.two },
   aiErrorText: { flex: 1 },

@@ -253,7 +253,12 @@
     "deepLoading": "Comparaison approfondie en cours…",
     "comparability_comparable": "Comparable à la référence.",
     "comparability_partial": "Partiellement comparable.",
-    "comparability_low": "Faible comparabilité, le cadrage diffère."
+    "comparability_low": "Faible comparabilité, le cadrage diffère.",
+    "partWhole": "Complet",
+    "addPart": "+ Ajouter zone",
+    "newPartTitle": "Nouvelle zone",
+    "partName": "Nom",
+    "partNamePlaceholder": "ex. ventre, mâchoire"
   },
   "markers": {
     "hematocrit": "Hématocrite",

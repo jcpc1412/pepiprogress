@@ -30,11 +30,13 @@ const GHOST_LEVELS = [0.2, 0.4, 0.6] as const;
  */
 export function PhotoCapture({
   session,
+  part,
   ghostUri,
   visible,
   onClose,
 }: {
   session: PhotoSession;
+  part?: string;
   ghostUri?: string;
   visible: boolean;
   onClose: () => void;
@@ -162,7 +164,7 @@ export function PhotoCapture({
     try {
       const now = new Date();
       const persistentUri = await copyPhotoToDocuments(shot);
-      addPhoto({ session, view, uri: persistentUri, takenAt: now.toISOString(), tilt: shotTilt });
+      addPhoto({ session, part, view, uri: persistentUri, takenAt: now.toISOString(), tilt: shotTilt });
       if (isBody) {
         const w = parseFloat(waist);
         const nk = parseFloat(neck);
