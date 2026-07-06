@@ -770,5 +770,52 @@
     "sugProteinAvg": "Ø Protein",
     "sugEnergyBest": "Beste Energie",
     "sugDoses": "Dosen diese Woche"
+  },
+  "verdict": {
+    "seeReasoning": "Begründung ansehen",
+    "reasoningTitle": "Begründung",
+    "reasoningHint": "Wie die heutige Auswertung entstand",
+    "unitScale": "/5",
+    "week": "WOCHE {{n}}",
+    "evidenceTitle": "Beleg",
+    "baselineCta": "Mach dein erstes Foto, um deine Basislinie zu starten",
+    "signalsEmpty": "Noch keine Signale",
+    "explained": "Erklärt",
+    "tapHeroHint": "Tippen für die Begründung",
+    "state": {
+      "building": "Basislinie wird erstellt",
+      "on_track": "Auf Kurs",
+      "watch": "Beobachten",
+      "off_track": "Vom Kurs ab"
+    },
+    "explanation": {
+      "building": "Basislinie wird noch erstellt. Protokolliere weiter, dann erscheint eine Auswertung.",
+      "on_track": "Dein {{metric}} entwickelt sich so, wie es dein Ziel braucht.",
+      "watch": "Die Signale sind gemischt. Ein paar Tage mehr bringen Klarheit.",
+      "off_track": "Dein {{metric}} entfernt sich von deinem Ziel."
+    },
+    "reconcile": {
+      "trainingLoad": "Dein {{metric}} spiegelt die jüngste Trainingsbelastung wider, keinen Rückschritt.",
+      "cycle": "Dein {{metric}} folgt deinem Zyklus, keiner Fettzunahme.",
+      "compound": "Dein {{metric}} ist ein erwarteter Effekt deines Protokolls."
+    },
+    "confidence": {
+      "low": "Geringe Zuversicht",
+      "medium": "Mittlere Zuversicht",
+      "high": "Hohe Zuversicht"
+    },
+    "role": {
+      "supports": "Stützt",
+      "drags": "Bremst",
+      "neutral": "Neutral"
+    },
+    "type": {
+      "weight_loss": "DEFIZIT",
+      "body_comp": "RECOMP",
+      "sleep": "SCHLAF",
+      "recovery": "ERHOLUNG",
+      "wellness": "WOHL",
+      "skin": "HAUT"
+    }
   }
 }

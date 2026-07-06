@@ -192,6 +192,10 @@ Verdict-first flow, replacing the carousel-of-equal-charts:
 - **Dose drawer (MyTherapy-style).** A bottom drawer for fast dose logging: scheduled doses for today,
   tap-to-confirm with time logging, and a visible **dose-change history**. This is the "log and leave"
   surface; it must open in one tap from Today and never route through Settings.
+  - **Phase 3 status:** the one-tap logging requirement is met today by the inline `TodayDoses`
+    checklist on Today (scheduled-due doses, tap-to-confirm, done pill). Promoting it into a
+    gesture-driven bottom sheet + a dose-change history view is a deferred follow-up; it does not
+    block the verdict work and logging is already never buried.
 
 ### 4.2 Decompose / reasoning screen (Phase 3) – new `src/features/home/verdict-reasoning.tsx`
 The signature interaction. Renders `verdict.signals` as the weighted stack (name, sparkline, weight,

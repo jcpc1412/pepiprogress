@@ -68,6 +68,7 @@ function RootContent() {
           {/* Settings + its nested pages — card presentation so they push/pop
               with the native back gesture (settings → me → …). */}
           <Stack.Screen name="settings" />
+          <Stack.Screen name="reasoning" />
           <Stack.Screen name="me" />
           <Stack.Screen name="notifications-settings" />
           <Stack.Screen name="privacy" />

@@ -770,5 +770,52 @@
     "sugProteinAvg": "Proteína media",
     "sugEnergyBest": "Mejor energía",
     "sugDoses": "Dosis esta semana"
+  },
+  "verdict": {
+    "seeReasoning": "Ver el razonamiento",
+    "reasoningTitle": "Razonamiento",
+    "reasoningHint": "Cómo se formó la lectura de hoy",
+    "unitScale": "/5",
+    "week": "SEMANA {{n}}",
+    "evidenceTitle": "Evidencia",
+    "baselineCta": "Haz tu primera foto para empezar tu base",
+    "signalsEmpty": "Aún no hay señales",
+    "explained": "Explicado",
+    "tapHeroHint": "Toca para ver el razonamiento",
+    "state": {
+      "building": "Creando tu base",
+      "on_track": "En marcha",
+      "watch": "Atención",
+      "off_track": "Desviado"
+    },
+    "explanation": {
+      "building": "Aún creando tu base. Sigue registrando y aparecerá una lectura.",
+      "on_track": "Tu {{metric}} evoluciona como tu objetivo necesita.",
+      "watch": "Las señales son mixtas. Unos días más lo aclararán.",
+      "off_track": "Tu {{metric}} se aleja de tu objetivo."
+    },
+    "reconcile": {
+      "trainingLoad": "Tu {{metric}} refleja la carga de entrenamiento reciente, no un retroceso.",
+      "cycle": "Tu {{metric}} sigue tu ciclo, no una recuperación de grasa.",
+      "compound": "Tu {{metric}} es un efecto esperado de tu protocolo."
+    },
+    "confidence": {
+      "low": "Confianza baja",
+      "medium": "Confianza media",
+      "high": "Confianza alta"
+    },
+    "role": {
+      "supports": "Apoya",
+      "drags": "Resta",
+      "neutral": "Neutral"
+    },
+    "type": {
+      "weight_loss": "DÉFICIT",
+      "body_comp": "RECOMP",
+      "sleep": "SUEÑO",
+      "recovery": "RECUP.",
+      "wellness": "BIENESTAR",
+      "skin": "PIEL"
+    }
   }
 }

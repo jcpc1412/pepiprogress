@@ -770,5 +770,52 @@
     "sugProteinAvg": "Avg protein",
     "sugEnergyBest": "Best energy",
     "sugDoses": "Doses this week"
+  },
+  "verdict": {
+    "seeReasoning": "See the reasoning",
+    "reasoningTitle": "Reasoning",
+    "reasoningHint": "How today's reading was formed",
+    "unitScale": "/5",
+    "week": "WEEK {{n}}",
+    "evidenceTitle": "Evidence",
+    "baselineCta": "Take your first photo to start your baseline",
+    "signalsEmpty": "No signals yet",
+    "explained": "Explained",
+    "tapHeroHint": "Tap for the reasoning",
+    "state": {
+      "building": "Building baseline",
+      "on_track": "On track",
+      "watch": "Watch",
+      "off_track": "Off track"
+    },
+    "explanation": {
+      "building": "Still building your baseline. Keep logging and a reading will appear.",
+      "on_track": "Your {{metric}} is moving the way your goal needs.",
+      "watch": "Signals are mixed. A few more days will settle it.",
+      "off_track": "Your {{metric}} is drifting from your goal."
+    },
+    "reconcile": {
+      "trainingLoad": "Your {{metric}} reflects recent training load, not a setback.",
+      "cycle": "Your {{metric}} tracks your cycle, not fat regain.",
+      "compound": "Your {{metric}} is an expected effect of your protocol."
+    },
+    "confidence": {
+      "low": "Low confidence",
+      "medium": "Medium confidence",
+      "high": "High confidence"
+    },
+    "role": {
+      "supports": "Supports",
+      "drags": "Drags",
+      "neutral": "Neutral"
+    },
+    "type": {
+      "weight_loss": "CUT",
+      "body_comp": "RECOMP",
+      "sleep": "SLEEP",
+      "recovery": "RECOVERY",
+      "wellness": "WELLNESS",
+      "skin": "SKIN"
+    }
   }
 }

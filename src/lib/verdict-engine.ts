@@ -66,7 +66,7 @@ export type VerdictHero =
       value: number;
       unit: HeroUnit;
       favour: Favour;
-      trend: Trend;
+      trend: 'up' | 'down'; // hero movement is always resolved to a direction
     }
   | { kind: 'photo'; photoId: string }
   | null;
@@ -131,6 +131,9 @@ const METRIC_UNIT: Record<string, HeroUnit> = {
   sleep_rem_pct: 'pct',
 };
 const unitFor = (metricId: string): HeroUnit => METRIC_UNIT[metricId] ?? 'scale5';
+
+/** Public: the display-unit token for a metric (used to format signal values). */
+export const metricHeroUnit = unitFor;
 
 /** Goal → per-metric base relevance. */
 const GOAL_METRIC_WEIGHTS: Record<Goal, Record<string, number>> = {

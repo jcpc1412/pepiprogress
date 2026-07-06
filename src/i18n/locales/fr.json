@@ -770,5 +770,52 @@
     "sugProteinAvg": "Protéines moy",
     "sugEnergyBest": "Meilleure énergie",
     "sugDoses": "Doses cette semaine"
+  },
+  "verdict": {
+    "seeReasoning": "Voir le raisonnement",
+    "reasoningTitle": "Raisonnement",
+    "reasoningHint": "Comment la lecture d'aujourd'hui s'est formée",
+    "unitScale": "/5",
+    "week": "SEMAINE {{n}}",
+    "evidenceTitle": "Preuve",
+    "baselineCta": "Prenez votre première photo pour établir votre base",
+    "signalsEmpty": "Pas encore de signaux",
+    "explained": "Expliqué",
+    "tapHeroHint": "Touchez pour voir le raisonnement",
+    "state": {
+      "building": "Construction de la base",
+      "on_track": "Sur la bonne voie",
+      "watch": "Vigilance",
+      "off_track": "Hors trajectoire"
+    },
+    "explanation": {
+      "building": "Base en cours de construction. Continuez à enregistrer et une lecture apparaîtra.",
+      "on_track": "Votre {{metric}} évolue comme votre objectif le demande.",
+      "watch": "Les signaux sont mitigés. Quelques jours de plus trancheront.",
+      "off_track": "Votre {{metric}} s'écarte de votre objectif."
+    },
+    "reconcile": {
+      "trainingLoad": "Votre {{metric}} reflète la charge d'entraînement récente, pas un recul.",
+      "cycle": "Votre {{metric}} suit votre cycle, pas une reprise de graisse.",
+      "compound": "Votre {{metric}} est un effet attendu de votre protocole."
+    },
+    "confidence": {
+      "low": "Confiance faible",
+      "medium": "Confiance moyenne",
+      "high": "Confiance élevée"
+    },
+    "role": {
+      "supports": "Soutient",
+      "drags": "Freine",
+      "neutral": "Neutre"
+    },
+    "type": {
+      "weight_loss": "SÈCHE",
+      "body_comp": "RECOMP",
+      "sleep": "SOMMEIL",
+      "recovery": "RÉCUP.",
+      "wellness": "BIEN-ÊTRE",
+      "skin": "PEAU"
+    }
   }
 }

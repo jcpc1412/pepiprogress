@@ -770,5 +770,52 @@
     "sugProteinAvg": "Proteína média",
     "sugEnergyBest": "Melhor energia",
     "sugDoses": "Doses esta semana"
+  },
+  "verdict": {
+    "seeReasoning": "Ver o raciocínio",
+    "reasoningTitle": "Raciocínio",
+    "reasoningHint": "Como a leitura de hoje foi formada",
+    "unitScale": "/5",
+    "week": "SEMANA {{n}}",
+    "evidenceTitle": "Evidência",
+    "baselineCta": "Tire sua primeira foto para começar sua base",
+    "signalsEmpty": "Ainda sem sinais",
+    "explained": "Explicado",
+    "tapHeroHint": "Toque para ver o raciocínio",
+    "state": {
+      "building": "Criando sua base",
+      "on_track": "No caminho",
+      "watch": "Atenção",
+      "off_track": "Fora do rumo"
+    },
+    "explanation": {
+      "building": "Ainda criando sua base. Continue registrando e uma leitura aparecerá.",
+      "on_track": "Seu {{metric}} evolui como seu objetivo precisa.",
+      "watch": "Os sinais estão mistos. Mais alguns dias vão esclarecer.",
+      "off_track": "Seu {{metric}} está se afastando do seu objetivo."
+    },
+    "reconcile": {
+      "trainingLoad": "Seu {{metric}} reflete a carga de treino recente, não um retrocesso.",
+      "cycle": "Seu {{metric}} acompanha seu ciclo, não um retorno de gordura.",
+      "compound": "Seu {{metric}} é um efeito esperado do seu protocolo."
+    },
+    "confidence": {
+      "low": "Confiança baixa",
+      "medium": "Confiança média",
+      "high": "Confiança alta"
+    },
+    "role": {
+      "supports": "Apoia",
+      "drags": "Freia",
+      "neutral": "Neutro"
+    },
+    "type": {
+      "weight_loss": "DÉFICIT",
+      "body_comp": "RECOMP",
+      "sleep": "SONO",
+      "recovery": "RECUP.",
+      "wellness": "BEM-ESTAR",
+      "skin": "PELE"
+    }
   }
 }
