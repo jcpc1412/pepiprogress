@@ -170,9 +170,11 @@ The phone app collapses to **three bottom tabs**; everything else is configurati
 - **Dose logging** (the daily action) does NOT go to Settings. It stays instant from Today via a
   **dose drawer** (see 4.1) so logging is never buried. Config lives in Settings; the *act* of logging
   lives on Today.
-- **Deep analytics / trends move to the web app.** Mobile keeps only the verdict + its decompose. Where a
-  user wants the full charts, the app points to web ("View full analytics on web"). The existing Insights
-  charts stay reachable but demoted; they are no longer a primary tab.
+- **Lean, editable trends on mobile; advanced analytics on web (owner).** Mobile keeps a *lean but editable*
+  trends view (correct/adjust logged values, pick which metrics show), not just the verdict. The heavy,
+  power-user analytics live on the web app, surfaced in-app as an **included subscription/trial perk**
+  ("Your plan includes a web dashboard for deeper analytics"). Insights is demoted from a primary tab but
+  the editable trends stay on device.
 - Rationale: the phone is the reassurance + logging loop; the web is the analysis surface. This keeps the
   app lean and stops it competing with the user's spreadsheets on small screens.
 
@@ -232,9 +234,13 @@ The photo USP gets a dedicated upgrade. Current-app defects folded in (see §0 f
 - **Darker ghost overlay** (raise contrast of the prior-photo guide).
 - **Auto-crop** a little toward the ghost framing so successive shots line up (image-manipulator + the
   face/body box).
-- **Stricter comparability / clothing:** push toward minimal clothing for accuracy. NOTE: this makes
-  **storage hardening a prerequisite, not deferred** (encrypted bucket, never trained on, ideally a
-  local-only option) before we nudge toward nude photos. Reaffirm the private-by-default, never-trained rule.
+- **Picky detection + clear communication (owner):** fewer / looser clothes = better accuracy. Compressive
+  or form-fitting garments (tight underwear, sports/"slimming" bras, even non-tight boxers) distort the
+  silhouette and inflate apparent size. The detector must be *picky*: detect likely-compressive or
+  form-fitting clothing and tell the user plainly that minimal, non-compressive clothing improves accuracy.
+  This is a **communication + detection** requirement, NOT gated behind storage work. Storage is already
+  encrypted at rest (Supabase default) + private bucket + RLS + signed URLs. Private-by-default stays
+  locked; the "never trained on" promise is **under owner review** (see section 9).
 - **Side photos** for both body and face (add a `view: front | side` axis to `PhotoEntry`).
 
 **Measurements + body composition:**
@@ -270,7 +276,7 @@ The photo USP gets a dedicated upgrade. Current-app defects folded in (see §0 f
 | 2 | Verdict engine (§3), pure + tests, no UI | med | engine tests green |
 | 3 | Today rebuild + decompose + dose drawer onto the engine (§4.1–4.2) | high | on-device verdict correct across states |
 | 4 | IA restructure: 3-tab model, Protocol into Settings, Chat tab, Insights demoted / analytics to web (§4.0, 4.3, 4.5–4.7) | med | green gate, nav works |
-| 5 | Photo Capture v2 (§4A): quality score, native controls, measurement overlay, BF% + inferred body comp, review/edit, two-stage analysis, side shots, custom parts | med–high | green gate; storage hardening landed before nude-clothing nudge |
+| 5 | Photo Capture v2 (§4A): quality score, native controls, measurement overlay, BF% + inferred body comp, picky clothing detection + accuracy comms, review/edit, two-stage analysis, side shots, custom parts | med–high | green gate |
 | 6 | Cold-Claude prompt rewrite for vision + verdict (§3.4) | low | qualitative review vs VOICE.md |
 | 7 | Polish: a11y (reduce-motion, contrast), both themes, i18n (6 locales), copy pass | low | full green gate |
 
@@ -292,8 +298,10 @@ Confirmed with owner on 2026-07-05:
 - **Full lean IA restructure** (§4.0): 3 tabs (Today / Photos / Chat), Protocol into Settings, deep
   analytics to web.
 - **AI tone: cold-Claude via prompt first** (§3.4); Gemini bake-off stays deferred.
-- **Body-fat % = hedged Navy-method estimate + app-inferred body composition** (§4A); minimal-clothing
-  accuracy nudge gated behind storage hardening.
+- **Body-fat % = hedged Navy-method estimate + app-inferred body composition** (§4A); accuracy improved by
+  **picky clothing detection + plain communication** (not gated behind storage work).
+- **Lean editable trends stay on mobile; advanced analytics on web**, surfaced as an included
+  subscription/trial perk (§4.0).
 
 Still defaults (flag if you disagree):
 - **Verdict register = descriptive only (rung 1).** Going further (predict/recommend) is a separate
@@ -305,8 +313,8 @@ Still defaults (flag if you disagree):
   but the goal is to *encourage logging*. Proposed default: `Log` present but **medium** weight (not the
   max-contrast slab), warmer copy (`Log today`). The dose drawer (§4.1) is the real logging workhorse.
 - **Hero is engine-picked and multi-compound-aware**, never weight-only.
-- **Insights not fully removed from mobile**, just demoted (reachable, not a tab). Confirm whether any
-  trend view stays on-device or it is web-only.
+- **Trends:** resolved — a lean *editable* trends page stays on mobile; advanced analytics live on web as
+  an included plan perk (§4.0).
 
 ---
 
@@ -317,3 +325,31 @@ Still defaults (flag if you disagree):
 - Full green gate: typecheck / lint / i18n parity (6, no em dashes) / web export; on-device verdict
   sanity-checked across building / on-track / watch / off-track.
 - `docs/spec/SPEC.md` updated so the redesign is the source of truth, not just this plan.
+
+---
+
+## 9. Out of scope / needs a separate decision (legal review required)
+
+Two owner questions raised on 2026-07-05 that this redesign does **not** silently absorb, because they
+conflict with a locked rule and carry real legal weight:
+
+- **Training on user photos.** Locked rule (spec 04/11, CLAUDE.md) is: photos are **never used to train
+  models**, and "stored, not trained on" is already shown to beta users in the consent UX. Reversing that
+  is not a design tweak. Key points to weigh before any decision:
+  - The app does **not currently train anything**. Analysis is *inference* via a foundation vision model
+    (Claude / optionally Gemini); BF% is a deterministic Navy-method formula. Good accuracy comes from the
+    formula + prompts + the foundation model, so a corpus of user pics is **not required** to make the
+    feature work. "The algo needs a ton of pics to learn" assumes a custom model we do not have.
+  - Faces and bodies are **biometric / special-category data** (GDPR Art. 9); nude images are extra
+    sensitive; minors are a hard line (age gate + CSAM exposure). Training on these needs explicit,
+    **separate, granular opt-in** consent, purpose limitation, a withdrawal path, and a DPIA.
+  - You **cannot retroactively** train on data collected under a "never trained" promise. Any future
+    program must be new, opt-in, and clearly scoped ("help improve Pepi"), never bundled or backdated.
+  - Recommendation: **keep the promise for beta.** It is a genuine trust/differentiation asset for this
+    exact paranoid audience. Revisit training only as a separate, consented, legally-reviewed workstream.
+- **Public / third-party photos for calibration or training.** "Publicly available" is not "licensed to
+  use." Photos carry the photographer's copyright and the subject's likeness/publicity rights; scraping to
+  train is actively litigated and usually violates site ToS. Not needed either (see the formula point
+  above). If a calibration/validation set is wanted, use **licensed or research body-composition datasets
+  collected with consent** (e.g. DEXA-labeled academic sets), or data from consenting testers — never
+  scraped web images. Claude's training data is not a redistributable image source for this.
