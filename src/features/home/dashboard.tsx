@@ -20,7 +20,6 @@ import { PrimaryButton, TextButton } from '@/components/form';
 import { GearIcon, PencilIcon } from '@/components/icons';
 import { LineChart, type ChartPoint } from '@/components/line-chart';
 import { Card, EngravedLabel, StatusPill } from '@/components/surface';
-import { SyncStatus } from '@/components/sync-status';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Chamfer, MaxContentWidth, Radii, Spacing } from '@/constants/theme';
@@ -190,7 +189,6 @@ export function Dashboard() {
             <GearIcon />
           </Pressable>
         </View>
-        <SyncStatus />
 
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           {/* Swipeable chart/photo carousel with pencil icon to edit which charts show */}
@@ -471,7 +469,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: Radii.panel,
   },
-  container: { flex: 1 },
+  // Transparent so the root breathing lattice (redesign §2.3) shows through.
+  container: { flex: 1, backgroundColor: 'transparent' },
   safe: {
     flex: 1,
     paddingHorizontal: Spacing.four,

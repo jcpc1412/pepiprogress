@@ -7,8 +7,11 @@ import { Inter_300Light, Inter_400Regular, Inter_600SemiBold } from '@expo-googl
 import { useFonts } from 'expo-font';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 
+import { StyleSheet, View } from 'react-native';
+
 import '@/i18n';
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
+import { InstrumentBackground } from '@/components/instrument-background';
 import { AuthProvider } from '@/lib/auth';
 import { CloudSync } from '@/lib/cloud-sync';
 import { IntegrationSync } from '@/lib/integration-sync';
@@ -17,6 +20,7 @@ import { NotificationManager } from '@/lib/notification-manager';
 import { QuickLogRunner } from '@/lib/quick-log-runner';
 import { StoreProvider } from '@/lib/store';
 import { AppThemeProvider, useResolvedScheme } from '@/lib/theme-provider';
+import { useTheme } from '@/hooks/use-theme';
 
 /**
  * Root content, mounted inside all providers so it can read the resolved
@@ -27,6 +31,7 @@ import { AppThemeProvider, useResolvedScheme } from '@/lib/theme-provider';
  */
 function RootContent() {
   const scheme = useResolvedScheme();
+  const theme = useTheme();
 
   return (
     <ThemeProvider value={scheme === 'dark' ? DarkTheme : DefaultTheme}>
@@ -42,9 +47,20 @@ function RootContent() {
       <QuickLogRunner />
       {/* Provides SyncStatus context + debounced cloud backup while signed in. */}
       <CloudSync>
+        {/* Base canvas + the continuous breathing lattice, mounted once behind
+            the whole navigator (redesign §2.3). Screens with a transparent
+            container reveal it; opaque legacy screens simply cover it until
+            they are rebuilt. */}
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.background }]} pointerEvents="none">
+          <InstrumentBackground />
+        </View>
         <Stack screenOptions={{ headerShown: false }}>
-          {/* Tab group — contains onboarding gate + custom tab bar. */}
-          <Stack.Screen name="(tabs)" options={{ animation: 'none' }} />
+          {/* Tab group — transparent so the root lattice shows through; modals
+              and settings keep their own opaque backgrounds. */}
+          <Stack.Screen
+            name="(tabs)"
+            options={{ animation: 'none', contentStyle: { backgroundColor: 'transparent' } }}
+          />
           {/* Action overlays — modal presentation (slide up, swipe-down to dismiss). */}
           <Stack.Screen name="logging" options={{ presentation: 'modal' }} />
           <Stack.Screen name="add-compound" options={{ presentation: 'modal' }} />

@@ -164,7 +164,9 @@ multi-compound, reconciliation, confidence tiers). Engine is not yet wired to an
 
 ### 4.0 New mobile IA (lean) – decided
 The phone app collapses to **three bottom tabs**; everything else is configuration or moves to the web.
-- **Today** (verdict Home) · **Photos** (capture + evidence) · **Chat** (conversational log + AI).
+- **Today** (verdict Home) · **Photos** (capture + evidence) · **Pepi** (conversational log + AI).
+  The third tab is labelled **Pepi** (owner decision 2026-07-06), not "Chat" or "AI" – it is the
+  assistant surface named after the product, reinforcing "AI is invisible infrastructure".
 - **Protocol configuration** (compounds, doses, routes, inventory, reconstitution) **moves into Settings**.
   It is set-and-forget config, not a daily destination.
 - **Dose logging** (the daily action) does NOT go to Settings. It stays instant from Today via a
@@ -196,7 +198,7 @@ The signature interaction. Renders `verdict.signals` as the weighted stack (name
 role: supports / drags / neutral) + the reconciliation footer. Reached from the Home ReasonButton and by
 tapping the hero figure itself, so the signature interaction stays discoverable even with a quiet button.
 
-### 4.3 Chat (new tab) – `src/features/chat/*`
+### 4.3 Pepi (new tab, was "Chat") – `src/features/chat/*`
 The conversational surface that absorbs "the fluff". Everything that is narrative rather than a glanceable
 verdict lives here: conversational quick-log (already built), the deep photo-analysis narrative, own-data
 Q&A (`ask-pepi`), and general education. **AI is invisible infrastructure** here: it reads as "Pepi
@@ -241,6 +243,12 @@ The photo USP gets a dedicated upgrade. Current-app defects folded in (see §0 f
   This is a **communication + detection** requirement, NOT gated behind storage work. Storage is already
   encrypted at rest (Supabase default) + private bucket + RLS + signed URLs. Private-by-default stays
   locked; the "never trained on" promise is **under owner review** (see section 9).
+  - **Low-score retry modal (owner decision 2026-07-06).** The clothing/accuracy nudge is NOT a persistent
+    hint on the capture screen. It surfaces only *after* a shot when the composite quality/confidence score
+    is **below 80**: pop a modal that (1) states the score is lower than recommended, (2) recommends less
+    tight / less baggy clothing for a better read, and (3) reassures "we don't use your photos to train our
+    algorithm" (reinforcing the locked promise). Two actions: **Retake photo** (primary) and **Ignore and
+    proceed** (secondary, keeps the shot). At or above 80, no modal. All copy via `t()`, no em dashes.
 - **Side photos** for both body and face (add a `view: front | side` axis to `PhotoEntry`).
 
 **Measurements + body composition:**

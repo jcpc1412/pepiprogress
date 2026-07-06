@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { OverlayHeader } from '@/components/overlay-header';
 import { SettingsRow } from '@/components/settings-page';
+import { SyncStatus } from '@/components/sync-status';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
@@ -31,6 +32,10 @@ export function SettingsScreen({ onClose }: { onClose: () => void }) {
         <OverlayHeader title={t('settings.title')} onClose={onClose} />
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           <AccountSection />
+          {/* Cloud-backup status lives here now (redesign §2.5): removed from the
+              top of screens, surfaced only in Settings. Renders nothing when
+              signed out / local-first. */}
+          <SyncStatus />
 
           {/* Nested navigation rows (R3-B). */}
           <View style={styles.rows}>
