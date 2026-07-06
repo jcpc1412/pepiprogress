@@ -258,7 +258,12 @@
     "addPart": "+ Añadir zona",
     "newPartTitle": "Nueva zona",
     "partName": "Nombre",
-    "partNamePlaceholder": "p. ej. abdomen, mandíbula"
+    "partNamePlaceholder": "p. ej. abdomen, mandíbula",
+    "timer": "Autodisparador",
+    "timerOff": "Temp.",
+    "timer3": "3s",
+    "timer10": "10s",
+    "pinchZoomHint": "Pellizca para acercar"
   },
   "markers": {
     "hematocrit": "Hematocrito",

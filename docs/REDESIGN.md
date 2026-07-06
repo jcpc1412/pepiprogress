@@ -247,9 +247,15 @@ mono/uppercase, against the final palette.
 > body session (own baseline/ghost/compare per part), a part selector + add-part
 > modal in the gallery, `profile.customPhotoParts`, threaded through capture +
 > cloud photo rows. Custom parts share the base body milestone cadence.
-> **Still deferred within §4A (native only):** native volume-button capture +
-> digital zoom + auto-crop (vision-camera path) and live luma/blur metadata (needs
-> a frame processor). These require an on-device build to implement + verify.
+> **Zoom + hands-free capture: done (device-verify).** Digital/pinch zoom already
+> works on the body camera via expo-camera (`isPinchToZoomEnabled`, iOS default),
+> hinted in the overlay. A **self-timer** (Off / 3s / 10s + countdown) was added as
+> a beta-safe hands-free shutter instead of a hardware-volume dep (front-camera
+> progress shots need a delay). Both are behind the native camera; verify on device.
+> **Still deferred within §4A (need a native dep / frame processor):** hardware
+> volume-button capture (unvetted native module, build risk), live luma/blur
+> metadata (vision-camera frame processor), and auto-crop toward the ghost (needs
+> subject/box detection). Best paired with an on-device spike, not done blind.
 
 
 The photo USP gets a dedicated upgrade. Current-app defects folded in (see §0 fix-now list).

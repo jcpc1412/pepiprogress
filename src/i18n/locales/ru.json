@@ -258,7 +258,12 @@
     "addPart": "+ Добавить зону",
     "newPartTitle": "Новая зона",
     "partName": "Название",
-    "partNamePlaceholder": "напр. живот, челюсть"
+    "partNamePlaceholder": "напр. живот, челюсть",
+    "timer": "Автоспуск",
+    "timerOff": "Таймер",
+    "timer3": "3с",
+    "timer10": "10с",
+    "pinchZoomHint": "Сведите пальцы для зума"
   },
   "markers": {
     "hematocrit": "Гематокрит",

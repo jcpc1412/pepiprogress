@@ -258,7 +258,12 @@
     "addPart": "+ Bereich",
     "newPartTitle": "Neuer Bereich",
     "partName": "Name",
-    "partNamePlaceholder": "z. B. Bauch, Kinnlinie"
+    "partNamePlaceholder": "z. B. Bauch, Kinnlinie",
+    "timer": "Selbstauslöser",
+    "timerOff": "Timer",
+    "timer3": "3s",
+    "timer10": "10s",
+    "pinchZoomHint": "Zum Zoomen ziehen"
   },
   "markers": {
     "hematocrit": "Hämatokrit",

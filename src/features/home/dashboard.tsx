@@ -15,7 +15,7 @@ import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { compoundBySlug } from '@/data/compound-catalog';
 import { TodayDoses } from '@/features/home/today-doses';
-import { formatHeroValue, resolveMsg, useVerdict } from '@/features/home/use-verdict';
+import { formatHeroValue, resolveMsg, useVerdict, type TFn } from '@/features/home/use-verdict';
 import { useTheme } from '@/hooks/use-theme';
 import { daysBetween } from '@/lib/dates';
 import { useOverlay } from '@/lib/nav-overlay';
@@ -37,6 +37,9 @@ export function Dashboard() {
   const { entries, photos, doseEvents, protocolItems, profile, upsertCheckin } = useStore();
 
   const verdict = useVerdict();
+  // Loose alias for the verdict presentation helpers (avoids the huge typed-key
+  // union tripping TS's instantiation-depth limit).
+  const tx = t as unknown as TFn;
   const hero = verdict.hero; // narrowed const so unions hold inside closures/JSX
   const [editingNote, setEditingNote] = useState(false);
   const [noteDraft, setNoteDraft] = useState('');
@@ -112,7 +115,7 @@ export function Dashboard() {
 
   const heroFmt =
     hero?.kind === 'metric'
-      ? formatHeroValue(hero.value, hero.unit, profile.units, t)
+      ? formatHeroValue(hero.value, hero.unit, profile.units, tx)
       : null;
 
   return (
@@ -146,7 +149,7 @@ export function Dashboard() {
             {hero?.kind === 'metric' && heroFmt ? (
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel={resolveMsg(t, verdict.explanation)}
+                accessibilityLabel={resolveMsg(tx, verdict.explanation)}
                 accessibilityHint={t('verdict.tapHeroHint')}
                 onPress={openReasoning}>
                 <HeroFigure
@@ -162,12 +165,12 @@ export function Dashboard() {
             ) : null}
 
             <ThemedText type="body" themeColor="textSecondary">
-              {resolveMsg(t, verdict.explanation)}
+              {resolveMsg(tx, verdict.explanation)}
             </ThemedText>
 
             {verdict.reconciliation ? (
               <ThemedText type="small" themeColor="textMuted" style={styles.reconcile}>
-                {resolveMsg(t, verdict.reconciliation)}
+                {resolveMsg(tx, verdict.reconciliation)}
               </ThemedText>
             ) : null}
 

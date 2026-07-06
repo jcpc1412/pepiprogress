@@ -258,7 +258,12 @@
     "addPart": "+ Ajouter zone",
     "newPartTitle": "Nouvelle zone",
     "partName": "Nom",
-    "partNamePlaceholder": "ex. ventre, mâchoire"
+    "partNamePlaceholder": "ex. ventre, mâchoire",
+    "timer": "Retardateur",
+    "timerOff": "Minut.",
+    "timer3": "3s",
+    "timer10": "10s",
+    "pinchZoomHint": "Pincez pour zoomer"
   },
   "markers": {
     "hematocrit": "Hématocrite",

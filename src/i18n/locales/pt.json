@@ -258,7 +258,12 @@
     "addPart": "+ Adicionar área",
     "newPartTitle": "Nova área",
     "partName": "Nome",
-    "partNamePlaceholder": "ex. barriga, mandíbula"
+    "partNamePlaceholder": "ex. barriga, mandíbula",
+    "timer": "Temporizador",
+    "timerOff": "Temp.",
+    "timer3": "3s",
+    "timer10": "10s",
+    "pinchZoomHint": "Belisque para ampliar"
   },
   "markers": {
     "hematocrit": "Hematócrito",

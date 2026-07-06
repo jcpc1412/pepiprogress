@@ -53,6 +53,11 @@ export function PhotoCapture({
   const [fitChecking, setFitChecking] = useState(false);
   const [facing, setFacing] = useState<'front' | 'back'>('front');
   const [view, setView] = useState<'front' | 'side'>('front');
+  // Self-timer for hands-free capture while posed (a beta-safe stand-in for a
+  // hardware volume shutter; front-camera progress shots need a delay).
+  const [timer, setTimer] = useState<0 | 3 | 10>(0);
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Quality score + low-score retry modal (redesign §4A, owner 2026-07-06).
   const [quality, setQuality] = useState<PhotoQuality | null>(null);
@@ -107,6 +112,15 @@ export function PhotoCapture({
 
   const level = Math.abs(roll) < 5 && Math.abs(pitch) < 5;
 
+  /** Stop any running self-timer countdown. */
+  const clearCountdown = () => {
+    if (countdownRef.current) clearInterval(countdownRef.current);
+    countdownRef.current = null;
+    setCountdown(null);
+  };
+  // Clean up the interval if the component unmounts mid-countdown.
+  useEffect(() => clearCountdown, []);
+
   /** Reset the captured shot back to the live camera (retake). */
   const resetShot = () => {
     setShot(null);
@@ -117,6 +131,7 @@ export function PhotoCapture({
   };
 
   const close = () => {
+    clearCountdown();
     resetShot();
     setShotTilt(undefined);
     setWaist('');
@@ -156,6 +171,27 @@ export function PhotoCapture({
     } finally {
       setBusy(false);
     }
+  };
+
+  /** Shutter press: fire now, or run the self-timer countdown then fire. */
+  const startCapture = () => {
+    if (busy || countdown !== null) return;
+    if (timer === 0) {
+      void capture();
+      return;
+    }
+    setCountdown(timer);
+    countdownRef.current = setInterval(() => {
+      setCountdown((c) => {
+        if (c === null) return null;
+        if (c <= 1) {
+          clearCountdown();
+          void capture();
+          return null;
+        }
+        return c - 1;
+      });
+    }, 1000);
   };
 
   const save = async () => {
@@ -378,8 +414,11 @@ export function PhotoCapture({
                   {t('photos.clothingHint')}
                 </ThemedText>
               )}
+              <ThemedText type="monoSm" style={styles.overlayDim}>
+                {t('photos.pinchZoomHint')}
+              </ThemedText>
             </SafeAreaView>
-            {/* Front / side capture angle (spec 04 §4A). */}
+            {/* Front / side capture angle (spec 04 §4A) + self-timer. */}
             <View style={styles.viewToggle} pointerEvents="box-none">
               {(['front', 'side'] as const).map((v) => (
                 <Pressable
@@ -393,7 +432,25 @@ export function PhotoCapture({
                   </ThemedText>
                 </Pressable>
               ))}
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t('photos.timer')}
+                onPress={() => setTimer((s) => (s === 0 ? 3 : s === 3 ? 10 : 0))}
+                style={[styles.viewChip, timer !== 0 && styles.viewChipActive]}>
+                <ThemedText type="monoSm" style={timer !== 0 ? styles.viewChipTextActive : styles.overlayDim}>
+                  {timer === 0 ? t('photos.timerOff') : timer === 3 ? t('photos.timer3') : t('photos.timer10')}
+                </ThemedText>
+              </Pressable>
             </View>
+
+            {/* Self-timer countdown. */}
+            {countdown !== null ? (
+              <View style={styles.countdownWrap} pointerEvents="none">
+                <ThemedText type="hero" style={styles.countdownText}>
+                  {String(countdown)}
+                </ThemedText>
+              </View>
+            ) : null}
             <View style={styles.levelWrap} pointerEvents="none">
               <View style={styles.levelRef} />
               <View
@@ -415,8 +472,8 @@ export function PhotoCapture({
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel={t('photos.capture')}
-                disabled={busy}
-                onPress={capture}
+                disabled={busy || countdown !== null}
+                onPress={startCapture}
                 style={({ pressed }) => [styles.shutter, pressed && styles.shutterPressed]}
               />
               <Pressable
@@ -509,6 +566,8 @@ const styles = StyleSheet.create({
   },
   viewChipActive: { backgroundColor: 'rgba(240,239,236,0.9)', borderColor: 'transparent' },
   viewChipTextActive: { color: '#1A1A18' },
+  countdownWrap: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' },
+  countdownText: { color: '#F0EFEC', fontSize: 96, lineHeight: 104 },
   // Low-score retry modal.
   retryOverlay: {
     position: 'absolute',

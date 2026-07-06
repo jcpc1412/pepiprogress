@@ -1,11 +1,12 @@
 import { useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
 
 import { localDateKey, useStore } from '@/lib/store';
 import { computeVerdict, type HeroUnit, type Verdict } from '@/lib/verdict-engine';
 
-/** The strongly-typed translate fn, shared by the verdict presentation helpers. */
-export type TFn = ReturnType<typeof useTranslation>['t'];
+/** Loose translate-fn signature for the verdict presentation helpers. Kept
+ *  structural (not the full typed-key union) so the large i18n key set doesn't
+ *  blow TS's instantiation-depth limit; callers pass the real `t`. */
+export type TFn = (key: string, options?: Record<string, string | number>) => string;
 
 /** Compute today's verdict from the live store (memoized on its inputs). Shared
  *  by the Today screen and the decompose/reasoning screen so they never drift. */

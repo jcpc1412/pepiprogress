@@ -258,7 +258,12 @@
     "addPart": "+ Add part",
     "newPartTitle": "New body part",
     "partName": "Name",
-    "partNamePlaceholder": "e.g. belly, jawline"
+    "partNamePlaceholder": "e.g. belly, jawline",
+    "timer": "Self-timer",
+    "timerOff": "Timer",
+    "timer3": "3s",
+    "timer10": "10s",
+    "pinchZoomHint": "Pinch to zoom"
   },
   "markers": {
     "hematocrit": "Hematocrit",

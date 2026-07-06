@@ -23,6 +23,8 @@ export function VerdictReasoning({ onClose }: { onClose: () => void }) {
   const { t } = useTranslation();
   const { profile } = useStore();
   const verdict = useVerdict();
+  // Loose alias so the large typed-key union doesn't trip TS's depth limit.
+  const tx = t as unknown as TFn;
 
   const stateTone =
     verdict.state === 'on_track'
@@ -35,7 +37,7 @@ export function VerdictReasoning({ onClose }: { onClose: () => void }) {
 
   const heroFmt =
     verdict.hero?.kind === 'metric'
-      ? formatHeroValue(verdict.hero.value, verdict.hero.unit, profile.units, t)
+      ? formatHeroValue(verdict.hero.value, verdict.hero.unit, profile.units, tx)
       : null;
 
   return (
@@ -66,11 +68,11 @@ export function VerdictReasoning({ onClose }: { onClose: () => void }) {
               />
             ) : null}
             <ThemedText type="body" themeColor="textSecondary">
-              {resolveMsg(t, verdict.explanation)}
+              {resolveMsg(tx, verdict.explanation)}
             </ThemedText>
             {verdict.reconciliation ? (
               <ThemedText type="small" themeColor="textMuted" style={styles.reconcile}>
-                {resolveMsg(t, verdict.reconciliation)}
+                {resolveMsg(tx, verdict.reconciliation)}
               </ThemedText>
             ) : null}
           </Card>
@@ -84,7 +86,7 @@ export function VerdictReasoning({ onClose }: { onClose: () => void }) {
               {verdict.signals.map((s, i) => (
                 <View key={s.metricId}>
                   {i > 0 ? <Divider style={styles.rowDivider} /> : null}
-                  <SignalRow signal={s} units={profile.units} t={t} />
+                  <SignalRow signal={s} units={profile.units} t={tx} />
                 </View>
               ))}
             </Card>
