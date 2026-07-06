@@ -240,10 +240,13 @@ mono/uppercase, against the final palette.
 > a **neck** measurement input driving the live BF% readout in review; and a
 > **front / side** capture-angle axis (`PhotoEntry.view`). All behind the camera,
 > so verify on a device build (expo-camera does not render on web).
-> **Deferred within §4A:** native volume-button capture + digital zoom + auto-crop
-> (vision-camera path), live luma/blur metadata, custom "problem" body parts, and
-> the fully split two-stage quick+deep analysis (Haiku encouragement + Sonnet
-> vision already run; the instant on-submit quick readout is the remaining piece).
+> **Two-stage analysis: done** — `photo-readout.ts` renders an instant, local,
+> no-fluff readout (comparability from the tilt delta + measurement deltas) the
+> moment a deep comparison starts, while the Sonnet vision call loads.
+> **Still deferred within §4A (native / larger):** native volume-button capture +
+> digital zoom + auto-crop (vision-camera path), live luma/blur metadata (needs a
+> frame processor), and custom "problem" body parts (a `PhotoSession` model +
+> ghost/cadence refactor).
 
 
 The photo USP gets a dedicated upgrade. Current-app defects folded in (see §0 fix-now list).
