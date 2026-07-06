@@ -353,3 +353,40 @@ conflict with a locked rule and carry real legal weight:
   above). If a calibration/validation set is wanted, use **licensed or research body-composition datasets
   collected with consent** (e.g. DEXA-labeled academic sets), or data from consenting testers – never
   scraped web images. Claude's training data is not a redistributable image source for this.
+
+---
+
+## 10. Data-use tiers + community aggregation V1 (decided)
+
+**Provider:** Claude-only for now (cost is a non-issue at beta scale: ~$0.06 per deep photo analysis, so
+even a heavy user at ~30/mo is ~$2). Keep the service model-pluggable via env, but do not add a second
+provider until volume justifies it. The two-stage analysis (cheap quick pass, deep pass only when needed)
+is the primary cost lever.
+
+**Three data tiers, kept distinct in code and consent:**
+- **(a) Raw photos** – storage (private bucket, signed URLs) + transient inference only. **Never trained
+  on** (locked). The `ai-service` edge function is stateless: it does not persist the image.
+- **(b) Per-user extracted details** (measurements, drift, BF%, observations) – power that user's own
+  trends / verdict. Their data, their benefit.
+- **(c) Anonymized, aggregated extracted details across users** – the community knowledge base + product
+  calibration. Numeric/text only, never images.
+
+**What tier (c) actually improves (set expectations):** NOT the vision model's perception (it is a fixed
+foundation model). It improves the *interpretation* layer: (1) calibrate the deterministic BF% formula +
+drift/comparability thresholds, (2) power community norms/comparisons, (3) inject relevant aggregates as
+context into the analysis prompt so the readout is grounded. "Learning from usage" happens here, and it
+never touches the photos-never-trained promise.
+
+**Consent (already modeled, needs finishing):** three separate toggles already exist –
+`consentPhotoStorage`, `consentPhotoAI`, `consentCommunity`. Keep them separate (granular,
+purpose-specific consent; do NOT fold community contribution into the AI-analysis toggle). Gap: the
+`consentCommunity` copy ("Community contribution") is too vague to be *informed* – rewrite it to state
+plainly: anonymized numeric details only, never photos, aggregated across users, used for community
+comparisons + app improvement.
+
+**Community Aggregation V1 (scaffold exists, currently unbuilt – marked "populated V2"):**
+1. On `consentCommunity` opt-in, write **anonymized numeric extracted metrics** (no photos, no
+   identifying free-text) to a contribution table.
+2. Materialize `community_aggregate` with a **k-anonymity floor** (never surface a bucket below N users).
+3. Inject relevant aggregates as analysis context and surface comparisons in the UI.
+This is the honest "improve from usage" path; sequence it after the core redesign (own its own phase).
