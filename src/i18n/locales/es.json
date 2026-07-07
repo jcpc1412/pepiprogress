@@ -767,7 +767,8 @@
     "bodySection": "CUERPO",
     "height": "Altura",
     "weight": "Peso",
-    "bodyFat": "Grasa corporal"
+    "bodyFat": "Grasa corporal",
+    "targetWeight": "Peso objetivo"
   },
   "ask": {
     "title": "PREGUNTA A PEPI",
@@ -843,6 +844,10 @@
       "recovery": "RECUP.",
       "wellness": "BIENESTAR",
       "skin": "PIEL"
+    },
+    "trendWindow": "TENDENCIA {{n}} DÍAS",
+    "forecast": {
+      "daysToTarget": "≈ {{n}} DÍAS AL OBJETIVO"
     }
   },
   "pepi": {

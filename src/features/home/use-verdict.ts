@@ -46,12 +46,17 @@ export function formatHeroValue(
   unit: HeroUnit,
   units: 'metric' | 'imperial',
   t: TFn,
+  opts?: { signed?: boolean },
 ): { value: string; unit: string } {
+  // Signed mode (the hero shows a movement/delta): explicit + / − prefix, using a
+  // real unicode minus (U+2212) so it reads as a sign, not a hyphen.
+  const sign = (n: number) => (opts?.signed ? (n > 0 ? '+' : n < 0 ? '−' : '') : n < 0 ? '−' : '');
+  const mag = Math.abs(value);
   if (unit === 'weight') {
-    const v = Number.isInteger(value) ? String(value) : value.toFixed(1);
-    return { value: v, unit: units === 'imperial' ? t('units.lb') : t('units.kg') };
+    const v = Number.isInteger(mag) ? String(mag) : mag.toFixed(1);
+    return { value: `${sign(value)}${v}`, unit: units === 'imperial' ? t('units.lb') : t('units.kg') };
   }
-  if (unit === 'pct') return { value: String(Math.round(value)), unit: '%' };
+  if (unit === 'pct') return { value: `${sign(value)}${Math.round(mag)}`, unit: '%' };
   // scale5 (1–5 subjective / derived)
-  return { value: value.toFixed(1), unit: t('verdict.unitScale') };
+  return { value: `${sign(value)}${mag.toFixed(1)}`, unit: t('verdict.unitScale') };
 }

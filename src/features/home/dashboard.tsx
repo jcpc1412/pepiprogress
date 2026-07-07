@@ -9,7 +9,7 @@ import { PrimaryButton, TextButton } from '@/components/form';
 import { HeroFigure, ReasonButton } from '@/components/hero-figure';
 import { GearIcon, PencilIcon } from '@/components/icons';
 import { LineChart, type ChartPoint } from '@/components/line-chart';
-import { Card, EngravedLabel, Placeholder, StatusPill } from '@/components/surface';
+import { Card, Divider, EngravedLabel, Placeholder, StatusPill } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
@@ -113,10 +113,21 @@ export function Dashboard() {
           ? 'watch'
           : 'neutral';
 
+  // The hero shows the movement over the trend window (signed delta), not the
+  // absolute value — the number IS the progress (redesign §4.1, mockup frame 1).
   const heroFmt =
     hero?.kind === 'metric'
-      ? formatHeroValue(hero.value, hero.unit, profile.units, tx)
+      ? formatHeroValue(hero.delta, hero.unit, profile.units, tx, { signed: true })
       : null;
+
+  // Mono subline under the hero: "N-DAY TREND" plus a hedged days-to-target
+  // projection when a goal weight is set. Punctuation join, like the eyebrow.
+  const heroSub =
+    hero?.kind === 'metric'
+      ? [t('verdict.trendWindow', { n: hero.windowDays }), verdict.forecast ? resolveMsg(tx, verdict.forecast) : null]
+          .filter(Boolean)
+          .join(' · ')
+      : '';
 
   return (
     <ThemedView style={styles.container}>
@@ -135,8 +146,8 @@ export function Dashboard() {
         </View>
 
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-          {/* ── The verdict (conclusion first) ── */}
-          <Card style={styles.verdict}>
+          {/* ── The verdict (conclusion first, on the canvas — no card, mockup §4.1) ── */}
+          <View style={styles.verdict}>
             <View style={styles.verdictHead}>
               <StatusPill label={t(`verdict.state.${verdict.state}` as 'verdict.state.on_track')} tone={stateTone} />
               {verdict.state !== 'building' ? (
@@ -149,7 +160,7 @@ export function Dashboard() {
             {hero?.kind === 'metric' && heroFmt ? (
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel={resolveMsg(tx, verdict.explanation)}
+                accessibilityLabel={`${heroFmt.value} ${heroFmt.unit}. ${resolveMsg(tx, verdict.explanation)}`}
                 accessibilityHint={t('verdict.tapHeroHint')}
                 onPress={openReasoning}>
                 <HeroFigure
@@ -158,9 +169,11 @@ export function Dashboard() {
                   trend={hero.trend}
                   favour={hero.favour}
                 />
-                <ThemedText type="monoSm" themeColor="textMuted">
-                  {t(hero.labelKey as 'fields.weight')}
-                </ThemedText>
+                {heroSub ? (
+                  <ThemedText type="monoSm" themeColor="textMuted" style={styles.heroSub}>
+                    {heroSub}
+                  </ThemedText>
+                ) : null}
               </Pressable>
             ) : null}
 
@@ -181,49 +194,50 @@ export function Dashboard() {
                 accessibilityHint={t('verdict.reasoningHint')}
               />
             ) : null}
-          </Card>
+          </View>
 
-          {/* ── Evidence (engine-picked) ── */}
+          <Divider style={styles.rule} />
+
+          {/* ── Evidence (engine-picked, on the canvas) ── */}
           {heroSignal ? (
-            <Card style={styles.evidence}>
+            <View style={styles.evidence}>
               <EngravedLabel>{t('verdict.evidenceTitle')}</EngravedLabel>
               <LineChart
                 data={heroSignal.series.map((p): ChartPoint => ({ label: p.dateKey.slice(5), value: p.value }))}
                 emptyLabel={t('common.noData')}
               />
-            </Card>
+            </View>
           ) : heroPhoto ? (
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={t('verdict.evidenceTitle')}
               accessibilityHint={t('photos.heading')}
-              onPress={() => router.push('/photos')}>
-              <Card style={styles.evidence}>
-                <EngravedLabel>{t('verdict.evidenceTitle')}</EngravedLabel>
-                <View style={styles.compareRow}>
-                  {heroPhotoBaseline && heroPhotoBaseline.id !== heroPhoto.id ? (
-                    <View style={styles.compareCol}>
-                      <Image source={{ uri: heroPhotoBaseline.uri }} style={styles.photo} contentFit="cover" />
-                      <ThemedText type="monoSm" themeColor="textMuted">
-                        {t('photos.baseline')}
-                      </ThemedText>
-                    </View>
-                  ) : null}
+              onPress={() => router.push('/photos')}
+              style={styles.evidence}>
+              <EngravedLabel>{t('verdict.evidenceTitle')}</EngravedLabel>
+              <View style={styles.compareRow}>
+                {heroPhotoBaseline && heroPhotoBaseline.id !== heroPhoto.id ? (
                   <View style={styles.compareCol}>
-                    <Image source={{ uri: heroPhoto.uri }} style={styles.photo} contentFit="cover" />
+                    <Image source={{ uri: heroPhotoBaseline.uri }} style={styles.photo} contentFit="cover" />
                     <ThemedText type="monoSm" themeColor="textMuted">
-                      {t('photos.latest')}
+                      {t('photos.baseline')}
                     </ThemedText>
                   </View>
+                ) : null}
+                <View style={styles.compareCol}>
+                  <Image source={{ uri: heroPhoto.uri }} style={styles.photo} contentFit="cover" />
+                  <ThemedText type="monoSm" themeColor="textMuted">
+                    {t('photos.latest')}
+                  </ThemedText>
                 </View>
-              </Card>
+              </View>
             </Pressable>
           ) : verdict.state === 'building' ? (
-            <Card style={styles.evidence}>
+            <View style={styles.evidence}>
               <EngravedLabel>{t('verdict.evidenceTitle')}</EngravedLabel>
               <Placeholder label={t('verdict.baselineCta')} height={96} />
               <TextButton label={t('tabs.photos')} onPress={() => router.push('/photos')} />
-            </Card>
+            </View>
           ) : null}
 
           {/* Log — medium-weight, encourages logging (§7 open item resolved). */}
@@ -320,6 +334,8 @@ const styles = StyleSheet.create({
   scroll: { gap: Spacing.four, paddingTop: Spacing.three, paddingBottom: Spacing.six },
   verdict: { gap: Spacing.two },
   verdictHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  heroSub: { marginTop: Spacing.one },
+  rule: { marginVertical: -Spacing.two },
   reconcile: { fontStyle: 'italic' },
   evidence: { gap: Spacing.two },
   compareRow: { flexDirection: 'row', gap: Spacing.two },

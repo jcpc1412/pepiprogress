@@ -767,7 +767,8 @@
     "bodySection": "ТЕЛО",
     "height": "Рост",
     "weight": "Вес",
-    "bodyFat": "Жир"
+    "bodyFat": "Жир",
+    "targetWeight": "Целевой вес"
   },
   "ask": {
     "title": "СПРОСИТЬ PEPI",
@@ -843,6 +844,10 @@
       "recovery": "ВОССТ.",
       "wellness": "ТОНУС",
       "skin": "КОЖА"
+    },
+    "trendWindow": "ТРЕНД ЗА {{n}} ДН.",
+    "forecast": {
+      "daysToTarget": "≈ {{n}} ДН. ДО ЦЕЛИ"
     }
   },
   "pepi": {

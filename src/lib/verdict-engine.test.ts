@@ -83,6 +83,39 @@ describe('computeVerdict — hero selection & intent', () => {
     }
   });
 
+  it('exposes the signed window delta on the metric hero (the figure Home shows)', () => {
+    const entries = entriesOf(6, (o) => ({ weight: 79 + o * 0.3 }));
+    const v = computeVerdict(makeInput({ entries, profile: { goals: ['weight_loss'], units: 'metric' } }));
+    if (v.hero?.kind === 'metric') {
+      expect(v.hero.delta).toBeLessThan(0); // today is lighter than the window baseline
+      expect(v.hero.windowDays).toBeGreaterThan(0);
+    } else {
+      throw new Error('expected a metric hero');
+    }
+  });
+
+  it('emits a hedged days-to-target forecast only when a goal weight is set', () => {
+    const entries = entriesOf(6, (o) => ({ weight: 79 + o * 0.3 })); // losing ~0.3/day toward a lower target
+    const withTarget = computeVerdict(
+      makeInput({ entries, profile: { goals: ['weight_loss'], units: 'metric', targetWeight: 75 } }),
+    );
+    const noTarget = computeVerdict(
+      makeInput({ entries, profile: { goals: ['weight_loss'], units: 'metric' } }),
+    );
+    expect(withTarget.forecast?.key).toBe('verdict.forecast.daysToTarget');
+    expect(typeof withTarget.forecast?.params?.n).toBe('number');
+    expect(noTarget.forecast).toBeUndefined();
+  });
+
+  it('does not project when the trend moves away from the target', () => {
+    // Gaining weight, but the target is below current → not moving toward it.
+    const entries = entriesOf(6, (o) => ({ weight: 82 - o * 0.3 }));
+    const v = computeVerdict(
+      makeInput({ entries, profile: { goals: ['body_comp'], units: 'metric', targetWeight: 75 } }),
+    );
+    expect(v.forecast).toBeUndefined();
+  });
+
   it('reads the same weight loss as NOT favourable when bulking (intent flips)', () => {
     const entries = entriesOf(6, (o) => ({ weight: 79 + o * 0.3 }));
     const cutting = computeVerdict(

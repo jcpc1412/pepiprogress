@@ -37,7 +37,7 @@ export function VerdictReasoning({ onClose }: { onClose: () => void }) {
 
   const heroFmt =
     verdict.hero?.kind === 'metric'
-      ? formatHeroValue(verdict.hero.value, verdict.hero.unit, profile.units, tx)
+      ? formatHeroValue(verdict.hero.delta, verdict.hero.unit, profile.units, tx, { signed: true })
       : null;
 
   return (

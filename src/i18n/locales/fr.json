@@ -767,7 +767,8 @@
     "bodySection": "CORPS",
     "height": "Taille",
     "weight": "Poids",
-    "bodyFat": "Masse grasse"
+    "bodyFat": "Masse grasse",
+    "targetWeight": "Poids cible"
   },
   "ask": {
     "title": "DEMANDER À PEPI",
@@ -843,6 +844,10 @@
       "recovery": "RÉCUP.",
       "wellness": "BIEN-ÊTRE",
       "skin": "PEAU"
+    },
+    "trendWindow": "TENDANCE {{n}} JOURS",
+    "forecast": {
+      "daysToTarget": "≈ {{n}} JOURS AVANT L’OBJECTIF"
     }
   },
   "pepi": {

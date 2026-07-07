@@ -195,6 +195,9 @@ export type LocalProfile = {
   height?: number;
   /** Baseline weight in the user's unit (kg or lb); prefilled from latest check-in. */
   weightBaseline?: number;
+  /** Goal weight in the user's unit; drives the Home hero's mild days-to-target
+   *  projection (verdict-first redesign). Optional — no projection until set. */
+  targetWeight?: number;
   /** Body-fat percentage (optional baseline). */
   bodyFatPct?: number;
   /** Metric keys the user pinned to the Today dashboard charts (H-01). */

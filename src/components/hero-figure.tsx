@@ -13,7 +13,7 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
-import { Spacing, type ThemeColor } from '@/constants/theme';
+import { Radii, Spacing, type ThemeColor } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 /** Whether the movement is favourable for the user's goal, decided upstream. */
@@ -96,11 +96,15 @@ export function ReasonButton({
       accessibilityHint={accessibilityHint}
       onPress={onPress}
       hitSlop={8}
-      style={({ pressed }) => [styles.reasonRow, pressed && styles.pressed]}>
-      <ThemedText type="mono" themeColor="textMuted">
+      style={({ pressed }) => [
+        styles.reasonChip,
+        { backgroundColor: theme.backgroundElement, borderColor: theme.border },
+        pressed && styles.pressed,
+      ]}>
+      <ThemedText type="label" themeColor="textSecondary">
         {label}
       </ThemedText>
-      <ThemedText type="mono" style={{ color: theme.textMuted }}>
+      <ThemedText type="label" style={{ color: theme.textMuted }}>
         {'→'}
       </ThemedText>
     </Pressable>
@@ -110,6 +114,16 @@ export function ReasonButton({
 const styles = StyleSheet.create({
   heroRow: { flexDirection: 'row', alignItems: 'flex-end', gap: Spacing.two },
   heroUnit: { marginBottom: 6 },
-  reasonRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two, paddingVertical: Spacing.two },
+  // Bordered panel chip (mockup .reasonBtn) — a quiet raised affordance, not a text link.
+  reasonChip: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+    paddingVertical: Spacing.two,
+    paddingHorizontal: Spacing.three,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: Radii.panel,
+  },
   pressed: { opacity: 0.6 },
 });

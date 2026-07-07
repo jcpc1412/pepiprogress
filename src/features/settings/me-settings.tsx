@@ -56,6 +56,7 @@ export function MeSettings() {
         : '',
   );
   const [bodyFat, setBodyFat] = useState(profile.bodyFatPct != null ? String(profile.bodyFatPct) : '');
+  const [target, setTarget] = useState(profile.targetWeight != null ? String(profile.targetWeight) : '');
 
   const imperial = profile.units === 'imperial';
   const heightUnit = imperial ? t('measurements.unitIn') : t('measurements.unitCm');
@@ -120,6 +121,19 @@ export function MeSettings() {
               onBlur={() => setProfile({ weightBaseline: num(weight) })}
             />
           </View>
+        </View>
+        <View style={styles.row}>
+          <View style={styles.rowField}>
+            <LabeledInput
+              label={`${t('me.targetWeight')} (${weightUnit})`}
+              placeholder="—"
+              keyboardType="decimal-pad"
+              value={target}
+              onChangeText={setTarget}
+              onBlur={() => setProfile({ targetWeight: num(target) })}
+            />
+          </View>
+          <View style={styles.rowField} />
         </View>
         <LabeledInput
           label={`${t('me.bodyFat')} (%)`}

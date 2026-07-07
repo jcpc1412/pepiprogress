@@ -767,7 +767,8 @@
     "bodySection": "KÖRPER",
     "height": "Größe",
     "weight": "Gewicht",
-    "bodyFat": "Körperfett"
+    "bodyFat": "Körperfett",
+    "targetWeight": "Zielgewicht"
   },
   "ask": {
     "title": "PEPI FRAGEN",
@@ -843,6 +844,10 @@
       "recovery": "ERHOLUNG",
       "wellness": "WOHL",
       "skin": "HAUT"
+    },
+    "trendWindow": "{{n}}-TAGE-TREND",
+    "forecast": {
+      "daysToTarget": "≈ {{n}} TAGE BIS ZUM ZIEL"
     }
   },
   "pepi": {

@@ -64,6 +64,10 @@ export type VerdictHero =
       metricId: string;
       labelKey: string;
       value: number;
+      /** Signed change over the trend window — the figure the Home hero shows. */
+      delta: number;
+      /** The trend window in days (for the "N-DAY TREND" subline). */
+      windowDays: number;
       unit: HeroUnit;
       favour: Favour;
       trend: 'up' | 'down'; // hero movement is always resolved to a direction
@@ -92,7 +96,14 @@ export type VerdictInput = {
   photos: PhotoEntry[];
   profile: Pick<
     LocalProfile,
-    'goals' | 'sex' | 'dobISO' | 'units' | 'estimatedMetricsMode' | 'lastPeriodDate' | 'cycleLength'
+    | 'goals'
+    | 'sex'
+    | 'dobISO'
+    | 'units'
+    | 'estimatedMetricsMode'
+    | 'lastPeriodDate'
+    | 'cycleLength'
+    | 'targetWeight'
   >;
   /** Reference "today" (YYYY-MM-DD) for a deterministic window. Defaults to now. */
   today?: string;
@@ -362,6 +373,8 @@ export function computeVerdict(input: VerdictInput): Verdict {
     metricId: heroRaw.metricId,
     labelKey: heroRaw.labelKey,
     value: heroRaw.latest,
+    delta: heroRaw.delta,
+    windowDays: WINDOW_DAYS,
     unit: unitFor(heroRaw.metricId),
     favour: heroRaw.favourSign > 0 ? 'good' : heroRaw.favourSign < 0 ? 'bad' : 'watch',
     trend: heroRaw.trend === 'flat' ? (heroRaw.delta >= 0 ? 'up' : 'down') : heroRaw.trend,
@@ -373,12 +386,47 @@ export function computeVerdict(input: VerdictInput): Verdict {
     hero,
     signals,
     reconciliation,
+    forecast: weightForecast(heroRaw, input),
     explanation: {
       key: `verdict.explanation.${state}`,
       params: { metric: heroRaw.labelKey },
     },
     explanationKey: 'template',
   };
+}
+
+/**
+ * A hedged, descriptive days-to-target projection for the weight hero (redesign
+ * §3.3 "mild goal-timeline"). Deliberately conservative and honest: only when
+ * the hero is weight, a target is set, and current velocity is actually moving
+ * toward it at a plausible rate. Reports an observed pace, never a promise or a
+ * prescription — stays inside the legal rung-1 gate.
+ */
+function weightForecast(heroRaw: Raw, input: VerdictInput): Localizable | undefined {
+  if (heroRaw.metricId !== 'weight') return undefined;
+  const target = input.profile.targetWeight;
+  if (typeof target !== 'number' || !Number.isFinite(target)) return undefined;
+
+  const pts = heroRaw.series;
+  if (pts.length < MIN_POINTS) return undefined;
+  const first = pts[0];
+  const last = pts[pts.length - 1];
+  const spanDays =
+    (new Date(`${last.dateKey}T00:00:00.000Z`).getTime() -
+      new Date(`${first.dateKey}T00:00:00.000Z`).getTime()) /
+    DAY_MS;
+  if (spanDays <= 0) return undefined;
+
+  const perDay = (last.value - first.value) / spanDays; // signed velocity
+  const remaining = target - last.value;
+  if (Math.abs(remaining) < 0.1) return undefined; // effectively there already
+  // Must be moving toward the target, not away from it.
+  if (Math.sign(perDay) !== Math.sign(remaining) || perDay === 0) return undefined;
+
+  const days = Math.round(Math.abs(remaining / perDay));
+  // Only project across an honest horizon — too far out is noise, not a reading.
+  if (days < 1 || days > 365) return undefined;
+  return { key: 'verdict.forecast.daysToTarget', params: { n: days } };
 }
 
 function buildingVerdict(input: VerdictInput): Verdict {
