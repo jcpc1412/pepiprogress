@@ -193,7 +193,11 @@ export function Dashboard() {
               />
             </Card>
           ) : heroPhoto ? (
-            <Pressable onPress={() => router.push('/photos')}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('verdict.evidenceTitle')}
+              accessibilityHint={t('photos.heading')}
+              onPress={() => router.push('/photos')}>
               <Card style={styles.evidence}>
                 <EngravedLabel>{t('verdict.evidenceTitle')}</EngravedLabel>
                 <View style={styles.compareRow}>

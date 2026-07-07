@@ -47,14 +47,21 @@ export function HeroFigure({
   unit,
   trend,
   favour = 'good',
+  accessibilityLabel,
 }: {
   value: string;
   unit?: string;
   trend?: 'up' | 'down';
   favour?: Favour;
+  /** Screen-reader label. Defaults to "value unit"; pass a richer sentence when
+   *  a labeled parent isn't already announcing the reading. */
+  accessibilityLabel?: string;
 }) {
+  // Collapse the row into a single a11y node so the ▲/▼ glyph isn't read out as
+  // "black up-pointing triangle" — the trend meaning is carried by the label/prose.
+  const label = accessibilityLabel ?? [value, unit].filter(Boolean).join(' ');
   return (
-    <View style={styles.heroRow}>
+    <View style={styles.heroRow} accessible accessibilityLabel={label}>
       {trend ? <TrendMarker trend={trend} favour={favour} /> : null}
       <ThemedText type="hero">{value}</ThemedText>
       {unit ? (

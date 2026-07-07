@@ -27,8 +27,8 @@ import { useTheme } from '@/hooks/use-theme';
 const TILE = 64; // px per lattice cell
 const NODE_R = 1.4;
 const PULSE_MS = 11000; // one full breath
-const OPACITY_LOW = 0.03;
-const OPACITY_HIGH = 0.07;
+const OPACITY_LOW = 0.05;
+const OPACITY_HIGH = 0.11;
 
 /** Flat-top hexagon points centred in a TILE box, as an SVG polyline string. */
 function hexPoints(): { x: number; y: number }[] {

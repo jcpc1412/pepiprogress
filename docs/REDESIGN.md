@@ -320,6 +320,18 @@ The photo USP gets a dedicated upgrade. Current-app defects folded in (see §0 f
 | 6 | Cold-Claude prompt rewrite for vision + verdict (§3.4) | low | qualitative review vs VOICE.md |
 | 7 | Polish: a11y (reduce-motion, contrast), both themes, i18n (6 locales), copy pass | low | full green gate |
 
+> **Phase 7 status (done, code-green + web-verified).** a11y: `HeroFigure` now collapses to a
+> single a11y node with a composed label so the ▲/▼ trend glyph is no longer read as "black
+> up-pointing triangle" (the direction meaning stays in the prose); evidence-photo tile on Today
+> got a button role + label/hint; verified the breathing lattice already renders static on OS
+> reduce-motion, and the tab bar already exposes role + selected state. Both themes: no hardcoded
+> colours in any redesign surface (all token-driven); light (daylight) + dark (at-night) both
+> render the instrument treatment cleanly with no console errors. Copy: verdict/reasoning + photo
+> retry strings reviewed against VOICE.md, no em dashes (guard enforced), retry copy avoids the
+> "tight/baggy" slash. Lattice opacity nudged 0.03/0.07 → 0.05/0.11 so the texture actually reads
+> without drawing attention. Phase 6 (cold-Claude prompt) stays deferred by owner. Full green
+> gate: typecheck / lint / i18n parity (6) / web export / vitest (35).
+
 Rationale: the visual language (Phase 1/4) is low-risk and independently shippable. The verdict engine
 (Phase 2/3) is the real bet and must prove itself in tests before Today depends on it. Phase 0.5 bugs can
 ship immediately, before any redesign work. Do not big-bang all of it at once.
