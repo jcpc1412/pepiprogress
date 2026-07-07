@@ -332,6 +332,17 @@ The photo USP gets a dedicated upgrade. Current-app defects folded in (see §0 f
 > without drawing attention. Phase 6 (cold-Claude prompt) stays deferred by owner. Full green
 > gate: typecheck / lint / i18n parity (6) / web export / vitest (35).
 
+> **Mockup-fidelity pass (post-Phase 7, on-device feedback "looks different from the mockup").**
+> Realigned Today to `.preview-mockup` frame 1: the verdict + evidence are now **card-less on the
+> canvas** (float on the lattice, one hairline rule between them) instead of stacked rounded panels;
+> the hero is the **signed trend delta** (e.g. −0.6 kg), not the absolute value — the number is the
+> progress; a mono subline shows **"N-DAY TREND · ≈ N DAYS TO TARGET"**, a hedged days-to-target
+> projection from a new `verdict-engine` `forecast` (weight hero only, only when `profile.targetWeight`
+> is set and the trend actually moves toward it, 1–365d horizon; rung-1 gate, test-guarded). "See the
+> reasoning" is the bordered chip. Added optional `profile.targetWeight` + a "Goal weight" field in Me
+> settings. Distillation + doses stay carded below the fold (owner: keep current). Verified both themes
+> on web against the mockup. Green: typecheck / lint / i18n (6) / web export / vitest (38).
+
 Rationale: the visual language (Phase 1/4) is low-risk and independently shippable. The verdict engine
 (Phase 2/3) is the real bet and must prove itself in tests before Today depends on it. Phase 0.5 bugs can
 ship immediately, before any redesign work. Do not big-bang all of it at once.
