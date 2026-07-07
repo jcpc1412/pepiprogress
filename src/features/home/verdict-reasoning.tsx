@@ -9,6 +9,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { HeroFigure } from '@/components/hero-figure';
+import { TodayLog } from '@/features/home/today-log';
 import { formatHeroValue, resolveMsg, useVerdict, type TFn } from '@/features/home/use-verdict';
 import { useStore } from '@/lib/store';
 import { metricHeroUnit, type SignalContribution } from '@/lib/verdict-engine';
@@ -91,6 +92,10 @@ export function VerdictReasoning({ onClose }: { onClose: () => void }) {
               ))}
             </Card>
           )}
+
+          {/* Today's log recap + note — the "what I logged" beside the "why".
+              The card carries its own engraved header (dashboard.distillation). */}
+          <TodayLog />
         </ScrollView>
       </SafeAreaView>
     </ThemedView>

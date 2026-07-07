@@ -1,25 +1,22 @@
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { PrimaryButton, TextButton } from '@/components/form';
 import { HeroFigure, ReasonButton } from '@/components/hero-figure';
-import { GearIcon, PencilIcon } from '@/components/icons';
+import { GearIcon } from '@/components/icons';
 import { LineChart, type ChartPoint } from '@/components/line-chart';
-import { Card, Divider, EngravedLabel, Placeholder, StatusPill } from '@/components/surface';
+import { Divider, EngravedLabel, Placeholder, StatusPill } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
-import { compoundBySlug } from '@/data/compound-catalog';
 import { TodayDoses } from '@/features/home/today-doses';
 import { formatHeroValue, resolveMsg, useVerdict, type TFn } from '@/features/home/use-verdict';
-import { useTheme } from '@/hooks/use-theme';
 import { daysBetween } from '@/lib/dates';
 import { useOverlay } from '@/lib/nav-overlay';
-import { useQuickLogActivity } from '@/lib/quick-log-runner';
 import { localDateKey, useStore } from '@/lib/store';
 
 /**
@@ -32,23 +29,16 @@ import { localDateKey, useStore } from '@/lib/store';
 export function Dashboard() {
   const { t, i18n } = useTranslation();
   const router = useRouter();
-  const theme = useTheme();
   const { openSettings, openLogging } = useOverlay();
-  const { entries, photos, doseEvents, protocolItems, profile, upsertCheckin } = useStore();
+  const { photos, protocolItems, profile } = useStore();
 
   const verdict = useVerdict();
   // Loose alias for the verdict presentation helpers (avoids the huge typed-key
   // union tripping TS's instantiation-depth limit).
   const tx = t as unknown as TFn;
   const hero = verdict.hero; // narrowed const so unions hold inside closures/JSX
-  const [editingNote, setEditingNote] = useState(false);
-  const [noteDraft, setNoteDraft] = useState('');
 
   const today = localDateKey();
-  const todayEntry = entries[today];
-  const loggedToday = !!todayEntry;
-  const quickLog = useQuickLogActivity();
-  const dosesToday = doseEvents.filter((d) => localDateKey(new Date(d.takenAt)) === today);
 
   // Condensed mono eyebrow: DD MMM · TYPE · WEEK N (redesign §2.5).
   const eyebrow = useMemo(() => {
@@ -64,31 +54,6 @@ export function Dashboard() {
     const week = started ? t('verdict.week', { n: Math.floor(daysBetween(started, today) / 7) + 1 }) : null;
     return [date, type, week].filter(Boolean).join(' · ');
   }, [i18n.language, profile.goals, protocolItems, today, t]);
-
-  const distillation = useMemo(() => {
-    const names = Array.from(
-      new Set(dosesToday.map((d) => (d.compoundSlug ? compoundBySlug(d.compoundSlug)?.canonicalName : null)).filter(Boolean)),
-    ).slice(0, 2) as string[];
-    const unit = profile.units === 'imperial' ? t('units.lb') : t('units.kg');
-    const munit = profile.units === 'imperial' ? t('measurements.unitIn') : t('measurements.unitCm');
-    const parts = [
-      names.length ? t('dashboard.compoundsLogged', { names: names.join(' + ') }) : null,
-      typeof todayEntry?.weight === 'number' ? `${todayEntry.weight} ${unit}` : null,
-      typeof todayEntry?.protein === 'number' ? `+${todayEntry.protein}${t('units.g')}` : null,
-      typeof todayEntry?.waist === 'number' ? `${t('measurements.waist')} ${todayEntry.waist}${munit}` : null,
-      typeof todayEntry?.hips === 'number' ? `${t('measurements.hips')} ${todayEntry.hips}${munit}` : null,
-    ].filter(Boolean);
-    return parts.join(' · ');
-  }, [dosesToday, todayEntry, profile.units, t]);
-
-  const startEditNote = () => {
-    setNoteDraft(todayEntry?.note ?? '');
-    setEditingNote(true);
-  };
-  const saveNote = () => {
-    upsertCheckin(today, { note: noteDraft.trim() || undefined });
-    setEditingNote(false);
-  };
 
   const openReasoning = () => router.push('/reasoning');
 
@@ -243,74 +208,8 @@ export function Dashboard() {
           {/* Log — medium-weight, encourages logging (§7 open item resolved). */}
           <PrimaryButton label={t('dashboard.log')} onPress={() => openLogging('quick')} />
 
-          {/* Distillation summary + editable note. */}
-          <Card style={styles.summary}>
-            <View style={styles.summaryHead}>
-              <EngravedLabel>{t('dashboard.distillation')}</EngravedLabel>
-              <View style={styles.summaryHeadRight}>
-                {quickLog.state === 'distilling' ? (
-                  <StatusPill label={t('dashboard.distillingPill')} tone="neutral" />
-                ) : quickLog.state === 'error' ? (
-                  <StatusPill label={t('dashboard.distillErrorPill')} tone="bad" />
-                ) : (
-                  <StatusPill
-                    label={loggedToday ? t('dashboard.onTrack') : t('dashboard.pending')}
-                    tone={loggedToday ? 'good' : 'neutral'}
-                  />
-                )}
-                {quickLog.state !== 'distilling' && !editingNote && (
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={t('dashboard.editNote')}
-                    onPress={startEditNote}
-                    hitSlop={8}>
-                    <PencilIcon size={16} color="textMuted" />
-                  </Pressable>
-                )}
-              </View>
-            </View>
-
-            {editingNote ? (
-              <View style={styles.noteEditor}>
-                <TextInput
-                  style={[styles.noteInput, { color: theme.text, borderColor: theme.border }]}
-                  value={noteDraft}
-                  onChangeText={setNoteDraft}
-                  placeholder={t('dashboard.notePlaceholder')}
-                  placeholderTextColor={theme.textMuted}
-                  multiline
-                  autoFocus
-                />
-                <View style={styles.noteActions}>
-                  <TextButton label={t('common.cancel')} onPress={() => setEditingNote(false)} />
-                  <Pressable accessibilityRole="button" onPress={saveNote} hitSlop={8}>
-                    <ThemedText type="smallBold" themeColor="accent">
-                      {t('common.save')}
-                    </ThemedText>
-                  </Pressable>
-                </View>
-              </View>
-            ) : (
-              <>
-                <ThemedText type="small" themeColor="textSecondary">
-                  {quickLog.state === 'distilling'
-                    ? t('dashboard.distilling')
-                    : quickLog.state === 'error'
-                      ? t('dashboard.distillError')
-                      : quickLog.state === 'done' && quickLog.summary
-                        ? quickLog.summary
-                        : distillation || t('dashboard.notLoggedToday')}
-                </ThemedText>
-                {todayEntry?.note ? (
-                  <ThemedText type="small" themeColor="text" style={styles.noteText}>
-                    {todayEntry.note}
-                  </ThemedText>
-                ) : null}
-              </>
-            )}
-          </Card>
-
-          {/* One-tap dose logging (the MyTherapy-style checklist). */}
+          {/* One-tap dose logging (the MyTherapy-style checklist). Today's log
+              recap + note moved to the reasoning screen (merged with the "why"). */}
           <TodayDoses />
         </ScrollView>
       </SafeAreaView>
@@ -341,18 +240,4 @@ const styles = StyleSheet.create({
   compareRow: { flexDirection: 'row', gap: Spacing.two },
   compareCol: { flex: 1, gap: Spacing.one, alignItems: 'center' },
   photo: { width: '100%', aspectRatio: 3 / 4, borderRadius: 2 },
-  summary: { gap: Spacing.two },
-  summaryHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.two },
-  summaryHeadRight: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
-  noteText: { fontStyle: 'italic' },
-  noteEditor: { gap: Spacing.two },
-  noteInput: {
-    minHeight: 60,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 2,
-    padding: Spacing.two,
-    textAlignVertical: 'top',
-    fontSize: 14,
-  },
-  noteActions: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
 });
