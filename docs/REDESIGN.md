@@ -1,8 +1,9 @@
 # Pepi Redesign – Instrument / Verdict-First (implementation plan)
 
-> Status: **proposal, not started.** Explored as a live HTML mock at `.preview-mockup/index.html`
-> (throwaway, gitignored). This document scopes turning that direction into the real app. Nothing
-> here is built yet. Owner has separate notes on the current mock to reconcile before sign-off.
+> Status: **built through Phase 7** (Phase 6 prompt work deferred by owner). Round 2, driven by
+> on-device beta feedback, is scoped separately in [REDESIGN-R2.md](REDESIGN-R2.md).
+> Originally explored as a live HTML mock at `.preview-mockup/index.html`
+> (throwaway, gitignored). Owner notes on the mock were reconciled before build.
 >
 > Cross-refs: extends the "CyberLife Instrument" tokens in [src/constants/theme.ts](../src/constants/theme.ts);
 > obeys the locked cross-cutting rules in [CLAUDE.md](../CLAUDE.md) and [docs/spec/SPEC.md](spec/SPEC.md);
