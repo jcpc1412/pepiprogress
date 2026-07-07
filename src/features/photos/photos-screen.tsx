@@ -71,7 +71,7 @@ export function PhotosScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: { flex: 1, backgroundColor: 'transparent' },
   safe: {
     flex: 1,
     paddingHorizontal: Spacing.four,

@@ -204,7 +204,7 @@ export function AuthScreen({
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: { flex: 1, backgroundColor: 'transparent' },
   inner: { flex: 1, padding: Spacing.four, gap: Spacing.four },
   header: { gap: Spacing.two, paddingTop: Spacing.four },
   form: { gap: Spacing.three },

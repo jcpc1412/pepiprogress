@@ -56,17 +56,18 @@ export const Colors = {
   // ── AT NIGHT ──────────────────────────────────────────────────────────────
   dark: {
     // legacy (mapped) — kept in sync with the semantic tokens below (D-01)
+    // R2-A: near-black canvas (mockup --bg #0A0B0C), panels carry the dark grey.
     text: '#E4E1DB', // more pop
-    background: '#121110',
-    backgroundElement: '#232220', // raised surface — lifts above bg
-    backgroundSelected: '#0C0B0A', // sunken well — recedes
+    background: '#0A0B0C', // near-black base (was warm #121110)
+    backgroundElement: '#14171A', // raised panel — dark grey, lifts above the black
+    backgroundSelected: '#070809', // sunken well — recedes below the base
     textSecondary: '#9C9892', // ~6.4:1
 
     // semantic (D-01 contrast pass)
     textMuted: '#837F79', // ~4.8:1 on background — AA body
     label: '#787470', // engraved panel labels — ~4:1
-    surfaceRaised: '#232220',
-    surfaceSunken: '#0C0B0A',
+    surfaceRaised: '#14171A',
+    surfaceSunken: '#070809',
     numeral: '#B0ACA6',
     border: 'rgba(255,255,255,0.10)', // deepened groove
     borderHighlight: 'rgba(0,0,0,0.50)',

@@ -27,8 +27,10 @@ import { useTheme } from '@/hooks/use-theme';
 const TILE = 64; // px per lattice cell
 const NODE_R = 1.4;
 const PULSE_MS = 11000; // one full breath
-const OPACITY_LOW = 0.05;
-const OPACITY_HIGH = 0.11;
+// R2-A: dropped 15% from the Phase-7 values (0.05 / 0.11) now that the lattice
+// rides on every page against the near-black canvas.
+const OPACITY_LOW = 0.0425;
+const OPACITY_HIGH = 0.0935;
 
 /** Flat-top hexagon points centred in a TILE box, as an SVG polyline string. */
 function hexPoints(): { x: number; y: number }[] {

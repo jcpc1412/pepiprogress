@@ -445,7 +445,7 @@ export function PhotoHistoryScreen({ onClose }: { onClose: () => void }) {
 const THUMB_SIZE = 108;
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: { flex: 1, backgroundColor: 'transparent' },
   safe: {
     flex: 1,
     paddingHorizontal: Spacing.four,

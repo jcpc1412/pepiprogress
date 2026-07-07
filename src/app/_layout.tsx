@@ -54,13 +54,11 @@ function RootContent() {
         <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.background }]} pointerEvents="none">
           <InstrumentBackground />
         </View>
-        <Stack screenOptions={{ headerShown: false }}>
-          {/* Tab group — transparent so the root lattice shows through; modals
-              and settings keep their own opaque backgrounds. */}
-          <Stack.Screen
-            name="(tabs)"
-            options={{ animation: 'none', contentStyle: { backgroundColor: 'transparent' } }}
-          />
+        {/* Transparent content everywhere so the root breathing lattice shows
+            through on every page (R2-A). True modals still paint their own
+            opaque ThemedView, so they cover it while presented. */}
+        <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: 'transparent' } }}>
+          <Stack.Screen name="(tabs)" options={{ animation: 'none' }} />
           {/* Action overlays — modal presentation (slide up, swipe-down to dismiss). */}
           <Stack.Screen name="logging" options={{ presentation: 'modal' }} />
           <Stack.Screen name="add-compound" options={{ presentation: 'modal' }} />
