@@ -2,17 +2,26 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { LineChart, type ChartPoint } from '@/components/line-chart';
 import { OverlayHeader } from '@/components/overlay-header';
-import { Card, Divider, EngravedLabel, Placeholder, SignalText, StatusPill } from '@/components/surface';
+import { Card, Divider, EngravedLabel, Placeholder, StatusPill } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { MaxContentWidth, Spacing, type ThemeColor } from '@/constants/theme';
 import { HeroFigure } from '@/components/hero-figure';
 import { TodayLog } from '@/features/home/today-log';
 import { formatHeroValue, resolveMsg, useVerdict, type TFn } from '@/features/home/use-verdict';
+import { useTheme } from '@/hooks/use-theme';
+import { sparkline } from '@/lib/sparkline';
 import { useStore } from '@/lib/store';
-import { metricHeroUnit, type SignalContribution } from '@/lib/verdict-engine';
+import { metricHeroUnit, type SignalContribution, type SignalTone } from '@/lib/verdict-engine';
+
+/** Contextual row tone → theme colour (R2-C C2). Neutral falls to muted ink. */
+const TONE_COLOR: Record<SignalTone, ThemeColor> = {
+  good: 'signalGood',
+  watch: 'signalWatch',
+  bad: 'signalBad',
+  neutral: 'textMuted',
+};
 
 /**
  * The decompose / reasoning screen (redesign §4.2) — the signature interaction.
@@ -40,6 +49,9 @@ export function VerdictReasoning({ onClose }: { onClose: () => void }) {
     verdict.hero?.kind === 'metric'
       ? formatHeroValue(verdict.hero.delta, verdict.hero.unit, profile.units, tx, { signed: true })
       : null;
+
+  // Contribution-weight dots are relative to the strongest signal in the stack.
+  const maxWeight = Math.max(...verdict.signals.map((s) => s.weight), 1e-6);
 
   return (
     <ThemedView style={styles.container}>
@@ -87,7 +99,7 @@ export function VerdictReasoning({ onClose }: { onClose: () => void }) {
               {verdict.signals.map((s, i) => (
                 <View key={s.metricId}>
                   {i > 0 ? <Divider style={styles.rowDivider} /> : null}
-                  <SignalRow signal={s} units={profile.units} t={tx} />
+                  <SignalRow signal={s} units={profile.units} t={tx} maxWeight={maxWeight} />
                 </View>
               ))}
             </Card>
@@ -102,39 +114,64 @@ export function VerdictReasoning({ onClose }: { onClose: () => void }) {
   );
 }
 
+/**
+ * Compact signal row (redesign R2-C, mockup frame 2): a favour/tone dot, the
+ * metric name, its role + current value, then a tone-coloured text sparkline and
+ * contribution-weight dots. Replaces the old full-width chart per signal.
+ */
 function SignalRow({
   signal,
   units,
   t,
+  maxWeight,
 }: {
   signal: SignalContribution;
   units: 'metric' | 'imperial';
   t: TFn;
+  maxWeight: number;
 }) {
+  const theme = useTheme();
   const fmt = formatHeroValue(signal.value, metricHeroUnit(signal.metricId), units, t);
-  const roleTone =
-    signal.role === 'supports' ? 'good' : signal.role === 'drags' ? (signal.explained ? 'watch' : 'bad') : 'neutral';
-  const deltaTone = signal.favour === 'good' ? 'good' : signal.favour === 'bad' ? 'bad' : 'watch';
-  const points: ChartPoint[] = signal.series.map((p) => ({ label: p.dateKey.slice(5), value: p.value }));
+  const valueStr = `${fmt.value}${fmt.unit === '%' ? '%' : ` ${fmt.unit}`}`;
+  const toneC = theme[TONE_COLOR[signal.tone]];
+  const spark = sparkline(signal.series.map((p) => p.value));
+  // 1–4 dots from the signal's share of the strongest contribution.
+  const dots = Math.max(1, Math.min(4, Math.round((signal.weight / maxWeight) * 4)));
+  const name = t(signal.labelKey as 'fields.weight');
 
   return (
-    <View style={styles.row}>
-      <View style={styles.rowHead}>
-        <View style={styles.rowLabel}>
-          <ThemedText type="smallBold">{t(signal.labelKey as 'fields.weight')}</ThemedText>
-          <StatusPill label={t(`verdict.role.${signal.role}` as 'verdict.role.supports')} tone={roleTone} />
-        </View>
-        <View style={styles.rowValue}>
-          <ThemedText type="mono">{`${fmt.value}${fmt.unit === '%' ? '%' : ` ${fmt.unit}`}`}</ThemedText>
-          <SignalText tone={deltaTone} size="mono">
-            {signal.trend === 'up' ? '▲' : signal.trend === 'down' ? '▼' : '·'}
-          </SignalText>
+    <View
+      style={styles.row}
+      accessible
+      accessibilityLabel={`${name}. ${t(`verdict.role.${signal.role}` as 'verdict.role.supports')}. ${valueStr}.`}>
+      <View style={styles.rowTop}>
+        <View style={[styles.dot, { backgroundColor: toneC }]} />
+        <ThemedText type="smallBold" style={styles.name} numberOfLines={1}>
+          {name}
+        </ThemedText>
+        <ThemedText type="monoSm" style={{ color: toneC }}>
+          {t(`verdict.role.${signal.role}` as 'verdict.role.supports')}
+        </ThemedText>
+        <ThemedText type="mono" themeColor="numeral" style={styles.value}>
+          {valueStr}
+        </ThemedText>
+      </View>
+      <View style={styles.rowBot}>
+        <ThemedText type="mono" style={[styles.spark, { color: toneC }]} numberOfLines={1}>
+          {spark}
+        </ThemedText>
+        <View style={styles.dots}>
+          {[0, 1, 2, 3].map((i) => (
+            <View
+              key={i}
+              style={[styles.wd, { backgroundColor: i < dots ? theme.textSecondary : theme.surfaceSunken }]}
+            />
+          ))}
         </View>
       </View>
-      <LineChart data={points} height={52} emptyLabel="" />
       {signal.explained ? (
-        <ThemedText type="monoSm" themeColor="textMuted">
-          {`${t('verdict.explained')}: ${resolveMsg(t, signal.explained)}`}
+        <ThemedText type="monoSm" themeColor="textMuted" style={styles.explained}>
+          {resolveMsg(t, signal.explained)}
         </ThemedText>
       ) : null}
     </View>
@@ -158,8 +195,14 @@ const styles = StyleSheet.create({
   reconcile: { fontStyle: 'italic' },
   stack: { gap: Spacing.two },
   rowDivider: { marginVertical: Spacing.one },
-  row: { gap: Spacing.two, paddingVertical: Spacing.one },
-  rowHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.two },
-  rowLabel: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two, flexShrink: 1 },
-  rowValue: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
+  row: { gap: Spacing.one, paddingVertical: Spacing.one },
+  rowTop: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
+  dot: { width: 8, height: 8, borderRadius: 4 },
+  name: { flex: 1 },
+  value: { minWidth: 56, textAlign: 'right' },
+  rowBot: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.two },
+  spark: { flex: 1, fontSize: 13, letterSpacing: 1 },
+  dots: { flexDirection: 'row', gap: 3 },
+  wd: { width: 5, height: 5, borderRadius: 2.5 },
+  explained: { fontStyle: 'italic' },
 });

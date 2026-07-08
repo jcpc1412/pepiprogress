@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { computeVerdict, type VerdictInput } from '@/lib/verdict-engine';
+import { computeSignalTone, computeVerdict, levelBand, type VerdictInput } from '@/lib/verdict-engine';
 import type { CheckinEntry, PhotoEntry, ProtocolItem } from '@/lib/store';
 
 const TODAY = '2026-07-06';
@@ -39,6 +39,39 @@ function makeInput(over: Partial<VerdictInput>): VerdictInput {
 }
 
 const protocol = (slug: string): ProtocolItem => ({ id: slug, compoundSlug: slug });
+
+describe('contextual signal tone (R2-C C2)', () => {
+  it('reads absolute level: up-good high vs down-good inverts', () => {
+    expect(levelBand('energy', 4.2, 'up_good')).toBe('high');
+    expect(levelBand('energy', 2.0, 'up_good')).toBe('low');
+    expect(levelBand('soreness', 4.2, 'down_good')).toBe('low'); // very sore = bad place
+    expect(levelBand('soreness', 1.5, 'down_good')).toBe('high');
+    expect(levelBand('weight', 80, 'down_good')).toBe('none'); // no absolute band
+  });
+
+  it('does NOT paint a high 4/5 metric red for a small dip (the reported bug)', () => {
+    const tone = computeSignalTone({ band: 'high', favourSign: -1, trend: 'down', normDev: 0.2, explained: false });
+    expect(tone).toBe('good');
+  });
+
+  it('escalates a material adverse move by band', () => {
+    expect(computeSignalTone({ band: 'high', favourSign: -1, trend: 'down', normDev: 0.8, explained: false })).toBe('watch');
+    expect(computeSignalTone({ band: 'mid', favourSign: -1, trend: 'down', normDev: 0.8, explained: false })).toBe('bad');
+    expect(computeSignalTone({ band: 'mid', favourSign: -1, trend: 'down', normDev: 0.8, explained: true })).toBe('watch');
+    expect(computeSignalTone({ band: 'low', favourSign: -1, trend: 'down', normDev: 0.8, explained: false })).toBe('bad');
+  });
+
+  it('favourable is always good, flat is neutral', () => {
+    expect(computeSignalTone({ band: 'low', favourSign: 1, trend: 'up', normDev: 0.9, explained: false })).toBe('good');
+    expect(computeSignalTone({ band: 'mid', favourSign: 0, trend: 'flat', normDev: 0, explained: false })).toBe('neutral');
+  });
+
+  it('attaches a tone to every signal', () => {
+    const entries = entriesOf(6, (o) => ({ weight: 79 + o * 0.3, energy: 4 }));
+    const v = computeVerdict(makeInput({ entries, profile: { goals: ['weight_loss'], units: 'metric' } }));
+    for (const s of v.signals) expect(['good', 'watch', 'bad', 'neutral']).toContain(s.tone);
+  });
+});
 
 describe('computeVerdict — cold start', () => {
   it('returns building with no hero when there is no data at all', () => {

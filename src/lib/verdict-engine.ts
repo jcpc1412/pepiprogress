@@ -34,6 +34,12 @@ export type Confidence = 'low' | 'medium' | 'high';
 export type Favour = 'good' | 'watch' | 'bad';
 export type Trend = 'up' | 'down' | 'flat';
 export type SignalRole = 'supports' | 'drags' | 'neutral';
+/** Row tone from the contextual matrix (level band + movement + explained), not
+ *  movement alone — so a high metric ticking down slightly no longer reads red. */
+export type SignalTone = 'good' | 'watch' | 'bad' | 'neutral';
+/** How favourable the current *level* of a metric is (not its movement). Only
+ *  subjective 1–5 metrics have a meaningful band; weight/length/pct are 'none'. */
+export type LevelBand = 'high' | 'mid' | 'low' | 'none';
 /** Canonical unit token; the UI maps it to a localized, unit-system-aware string. */
 export type HeroUnit = 'weight' | 'scale5' | 'pct' | 'length';
 
@@ -52,6 +58,8 @@ export type SignalContribution = {
   /** 0–1 relevance-scaled contribution weight (drives hero pick + ordering). */
   weight: number;
   role: SignalRole;
+  /** Contextual row tone (level band + movement + explained), for the signal row. */
+  tone: SignalTone;
   /** Chronological points for a sparkline. */
   series: DatedPoint[];
   /** Set when a drag is explained away (training load, cycle, known compound effect). */
@@ -155,6 +163,47 @@ const unitFor = (metricId: string): HeroUnit => METRIC_UNIT[metricId] ?? 'scale5
 
 /** Public: the display-unit token for a metric (used to format signal values). */
 export const metricHeroUnit = unitFor;
+
+/** How favourable the current *level* is (not its movement). Subjective 1–5
+ *  metrics only; the good-direction inverts the scale for down-good metrics so a
+ *  low soreness reads as a "high" (good) band. Weight/length/pct → 'none'. */
+export function levelBand(
+  metricId: string,
+  value: number,
+  goodDir: 'up_good' | 'down_good' | null,
+): LevelBand {
+  if (unitFor(metricId) !== 'scale5' || !goodDir) return 'none';
+  const fav = goodDir === 'down_good' ? 6 - value : value; // higher = better place to be
+  if (fav >= 3.8) return 'high';
+  if (fav <= 2.4) return 'low';
+  return 'mid';
+}
+
+/** Contextual row tone (redesign R2-C C2). Tone is a function of the level band,
+ *  the movement's favourability + magnitude, and whether an adverse move is
+ *  explained away — NOT movement alone. This is why a 4/5 metric ticking down a
+ *  little reads green, not red. */
+export function computeSignalTone(p: {
+  band: LevelBand;
+  favourSign: -1 | 0 | 1;
+  trend: Trend;
+  normDev: number;
+  explained: boolean;
+}): SignalTone {
+  if (p.trend === 'flat' || p.favourSign === 0) return 'neutral';
+  if (p.favourSign > 0) return 'good'; // favourable movement is always good
+  const material = p.normDev >= 0.5; // adverse move big enough to matter
+  switch (p.band) {
+    case 'high':
+      return material ? 'watch' : 'good'; // sitting high: a small dip is fine
+    case 'mid':
+      return !material ? 'watch' : p.explained ? 'watch' : 'bad';
+    case 'low':
+      return p.explained ? 'watch' : 'bad';
+    default: // 'none' — weight/length/pct, movement-only
+      return p.explained ? 'watch' : 'bad';
+  }
+}
 
 /** Goal → per-metric base relevance. */
 const GOAL_METRIC_WEIGHTS: Record<Goal, Record<string, number>> = {
@@ -406,6 +455,13 @@ export function computeVerdict(input: VerdictInput): Verdict {
       const explained =
         role === 'drags' ? explainDrag(r, { luteal, heavyTraining, input }) : undefined;
       const favour: Favour = r.favourSign > 0 ? 'good' : r.favourSign < 0 ? 'bad' : 'watch';
+      const tone = computeSignalTone({
+        band: levelBand(r.metricId, r.latest, r.goodDir),
+        favourSign: r.favourSign,
+        trend: r.trend,
+        normDev: r.normDev,
+        explained: !!explained,
+      });
       return {
         metricId: r.metricId,
         labelKey: r.labelKey,
@@ -415,6 +471,7 @@ export function computeVerdict(input: VerdictInput): Verdict {
         favour,
         weight: r.relevance * (0.4 + 0.6 * r.normDev),
         role,
+        tone,
         series: r.series,
         explained,
       };
