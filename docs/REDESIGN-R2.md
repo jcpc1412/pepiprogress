@@ -302,6 +302,13 @@ caption), `quicklog.template.*`, `checkin.section.*` (morning/evening/devices an
   legal-gate test extends to every new key namespace and the `signal_ledger` contract.
 - Plateau copy is descriptive, an observation about the read, never a prescription.
 
+## Polish notes (after the R2 implementation, not during)
+- **Rename the signal role "supports" to "progressing"** (owner, clearer across all languages).
+  Touches the `verdict.role.supports` value in all 6 locales (currently "Supports" / "Apoya" /
+  etc.) plus any role-tone mapping that keys off the word; the engine role id stays `supports`,
+  only the display copy changes. Do this as a copy pass once the R2-C rows are final so it is a
+  single sweep.
+
 ## Out of scope (unchanged owner decisions)
 - Lab parsing stays deferred; the three-option Log menu (Option B) is revisited when it ships.
 - Health/Health Connect native activation stays the existing device-build task.
