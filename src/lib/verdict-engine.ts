@@ -35,7 +35,7 @@ export type Favour = 'good' | 'watch' | 'bad';
 export type Trend = 'up' | 'down' | 'flat';
 export type SignalRole = 'supports' | 'drags' | 'neutral';
 /** Canonical unit token; the UI maps it to a localized, unit-system-aware string. */
-export type HeroUnit = 'weight' | 'scale5' | 'pct';
+export type HeroUnit = 'weight' | 'scale5' | 'pct' | 'length';
 
 /** A translatable message: a key plus params, resolved by the presentation layer. */
 export type Localizable = { key: string; params?: Record<string, string | number> };
@@ -104,6 +104,7 @@ export type VerdictInput = {
     | 'lastPeriodDate'
     | 'cycleLength'
     | 'targetWeight'
+    | 'height'
   >;
   /** Reference "today" (YYYY-MM-DD) for a deterministic window. Defaults to now. */
   today?: string;
@@ -124,6 +125,9 @@ type Direction = 'up_good' | 'down_good' | 'context';
 
 const METRIC_DIRECTION: Record<string, Direction> = {
   weight: 'context',
+  body_fat_pct: 'context',
+  waist: 'context',
+  hips: 'context',
   energy: 'up_good',
   sleep_quality: 'up_good',
   soreness: 'down_good',
@@ -138,9 +142,15 @@ const METRIC_DIRECTION: Record<string, Direction> = {
 
 const METRIC_UNIT: Record<string, HeroUnit> = {
   weight: 'weight',
+  body_fat_pct: 'pct',
+  waist: 'length',
+  hips: 'length',
   sleep_deep_pct: 'pct',
   sleep_rem_pct: 'pct',
 };
+
+/** Body-composition metric ids (the sex-aware fat cascade), for plateau + hero swap. */
+const BODY_COMP_METRICS = ['body_fat_pct', 'waist', 'hips'] as const;
 const unitFor = (metricId: string): HeroUnit => METRIC_UNIT[metricId] ?? 'scale5';
 
 /** Public: the display-unit token for a metric (used to format signal values). */
@@ -148,8 +158,8 @@ export const metricHeroUnit = unitFor;
 
 /** Goal → per-metric base relevance. */
 const GOAL_METRIC_WEIGHTS: Record<Goal, Record<string, number>> = {
-  weight_loss: { weight: 1.0, caloric_balance: 0.6, body_comp_velocity: 0.5, energy: 0.3 },
-  body_comp: { body_comp_velocity: 1.0, weight: 0.6, protein_adequacy: 0.6, caloric_balance: 0.4 },
+  weight_loss: { weight: 1.0, body_fat_pct: 1.0, waist: 0.8, hips: 0.5, caloric_balance: 0.6, body_comp_velocity: 0.5, energy: 0.3 },
+  body_comp: { body_comp_velocity: 1.0, body_fat_pct: 0.9, waist: 0.7, hips: 0.6, weight: 0.6, protein_adequacy: 0.6, caloric_balance: 0.4 },
   sleep: { sleep_quality: 1.0, sleep_deep_pct: 0.7, sleep_rem_pct: 0.6, energy: 0.4 },
   recovery: { soreness: 1.0, energy: 0.7, cv_strain: 0.5, sleep_quality: 0.4 },
   wellness: { energy: 0.8, sleep_quality: 0.6, inflammation: 0.4 },
@@ -158,7 +168,7 @@ const GOAL_METRIC_WEIGHTS: Record<Goal, Record<string, number>> = {
 
 /** Compound effect/monitoring tag → per-metric relevance. */
 const TAG_METRIC_WEIGHTS: Record<string, Record<string, number>> = {
-  fat_loss: { weight: 0.9, caloric_balance: 0.5, body_comp_velocity: 0.4 },
+  fat_loss: { weight: 0.9, body_fat_pct: 0.7, waist: 0.6, caloric_balance: 0.5, body_comp_velocity: 0.4 },
   muscle: { body_comp_velocity: 0.9, protein_adequacy: 0.6, weight: 0.4 },
   recovery: { soreness: 0.8, energy: 0.5 },
   healing: { soreness: 0.7, inflammation: 0.5 },
@@ -205,6 +215,12 @@ function contextDirection(
   metricId: string,
   intent: { cutting: boolean; bulking: boolean },
 ): 'up_good' | 'down_good' | null {
+  // Body-composition metrics: fat leaving the body is favourable whenever there is
+  // ANY body intent (cut or recomp/mass), and up is never "good" for these. A pure
+  // wellness/sleep user (no body intent) reads them as neutral.
+  if ((BODY_COMP_METRICS as readonly string[]).includes(metricId)) {
+    return intent.cutting || intent.bulking ? 'down_good' : null;
+  }
   const decisive = intent.cutting !== intent.bulking; // exactly one → clear intent
   if (!decisive) return null; // recomp / no intent → weight & balance are neutral
   if (metricId === 'weight') return intent.cutting ? 'down_good' : 'up_good';
@@ -212,7 +228,24 @@ function contextDirection(
   return null;
 }
 
-/** Sum of goal + compound-tag relevance for a metric, plus a small base. */
+/** Fat-distribution pattern, following hormones (mtf → female, ftm → male). Null
+ *  when sex is unknown → no sex weighting. */
+function fatPatternSex(sex: VerdictInput['profile']['sex']): 'male' | 'female' | null {
+  if (sex === 'female' || sex === 'mtf') return 'female';
+  if (sex === 'male' || sex === 'ftm') return 'male';
+  return null;
+}
+
+/** Sex multiplier on body-composition relevance (R2-B). Defaults to 1.0; only the
+ *  dimorphic tape metrics diverge, so goal-driven metrics (sleep, energy, …) are
+ *  never sex-weighted. body_fat_pct is sex-correct by construction (Navy), so 1.0. */
+const SEX_METRIC_MULTIPLIER: Record<'male' | 'female', Record<string, number>> = {
+  male: { waist: 1.0, hips: 0.25 },
+  female: { waist: 0.8, hips: 1.0 },
+};
+
+/** Sum of goal + compound-tag relevance for a metric, plus a small base, then a
+ *  sex multiplier on the body-composition metrics only. */
 function relevanceFor(metricId: string, input: VerdictInput): number {
   let w = BASE_RELEVANCE;
   for (const goal of input.profile.goals) w += GOAL_METRIC_WEIGHTS[goal]?.[metricId] ?? 0;
@@ -223,6 +256,8 @@ function relevanceFor(metricId: string, input: VerdictInput): number {
       w += TAG_METRIC_WEIGHTS[tag]?.[metricId] ?? 0;
     }
   }
+  const pattern = fatPatternSex(input.profile.sex);
+  if (pattern) w *= SEX_METRIC_MULTIPLIER[pattern][metricId] ?? 1;
   return w;
 }
 
@@ -268,6 +303,14 @@ export function computeVerdict(input: VerdictInput): Verdict {
       dobISO: input.profile.dobISO,
       sex: input.profile.sex as 'male' | 'female' | 'ftm' | 'mtf' | undefined,
       estimatedMetricsMode: input.profile.estimatedMetricsMode ?? 'fill',
+      units: input.profile.units,
+      // profile.height is in the user's units; body_fat_pct needs cm.
+      heightCm:
+        typeof input.profile.height === 'number'
+          ? input.profile.units === 'imperial'
+            ? input.profile.height * 2.54
+            : input.profile.height
+          : undefined,
     },
     windowStart,
     windowEnd: today,
@@ -331,10 +374,22 @@ export function computeVerdict(input: VerdictInput): Verdict {
   // Conservative: never claim a firm verdict on thin evidence.
   if (confidence === 'low' && state !== 'watch') state = 'watch';
 
+  // Plateau: weight has stalled over a meaningful span while logging continues and
+  // there is a body intent. The scale reads flat but tape/fat may still be moving.
+  const weightRaw = raws.find((r) => r.metricId === 'weight');
+  const plateau = !!weightRaw && (intent.cutting || intent.bulking) && isPlateau(weightRaw);
+
+  const heroScore = (r: Raw) => r.relevance * (0.4 + 0.6 * r.normDev);
   // Hero = the most decision-relevant signal today (relevance, boosted by anomaly).
-  const heroRaw = [...raws].sort(
-    (a, b) => b.relevance * (0.4 + 0.6 * b.normDev) - a.relevance * (0.4 + 0.6 * a.normDev),
-  )[0];
+  let heroRaw = [...raws].sort((a, b) => heroScore(b) - heroScore(a))[0];
+  // On a plateau, hand the read to the strongest body-composition signal that
+  // actually moved (body-fat % then waist, via the cascade) instead of flat weight.
+  if (plateau) {
+    const movedBodyComp = raws
+      .filter((r) => (BODY_COMP_METRICS as readonly string[]).includes(r.metricId) && r.trend !== 'flat')
+      .sort((a, b) => heroScore(b) - heroScore(a))[0];
+    if (movedBodyComp) heroRaw = movedBodyComp;
+  }
 
   const cday = cycleDay(input, today);
   const luteal = cday !== null && cday >= (input.profile.cycleLength ?? 28) / 2;
@@ -387,12 +442,23 @@ export function computeVerdict(input: VerdictInput): Verdict {
     signals,
     reconciliation,
     forecast: weightForecast(heroRaw, input),
-    explanation: {
-      key: `verdict.explanation.${state}`,
-      params: { metric: heroRaw.labelKey },
-    },
+    explanation: plateau
+      ? { key: 'verdict.explanation.plateau', params: { metric: heroRaw.labelKey } }
+      : { key: `verdict.explanation.${state}`, params: { metric: heroRaw.labelKey } },
     explanationKey: 'template',
   };
+}
+
+/** Weight has stalled: ≥5 points spanning ≥10 days with a flat trend. The signal's
+ *  own flat-band classification already accounts for its noise. */
+function isPlateau(weightRaw: Raw): boolean {
+  const pts = weightRaw.series;
+  if (pts.length < 5 || weightRaw.trend !== 'flat') return false;
+  const spanDays =
+    (new Date(`${pts[pts.length - 1].dateKey}T00:00:00.000Z`).getTime() -
+      new Date(`${pts[0].dateKey}T00:00:00.000Z`).getTime()) /
+    DAY_MS;
+  return spanDays >= 10;
 }
 
 /**

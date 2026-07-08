@@ -117,7 +117,8 @@
     "caloric_balance": "Balanço calórico",
     "body_comp_velocity": "Composição corporal",
     "cv_strain": "Estresse cardíaco",
-    "inflammation": "Inflamação"
+    "inflammation": "Inflamação",
+    "body_fat_pct": "Gordura corporal"
   },
   "checkin": {
     "title": "Check-in diário",
@@ -820,7 +821,8 @@
       "building": "Ainda criando sua base. Continue registrando e uma leitura aparecerá.",
       "on_track": "Seu {{metric}} evolui como seu objetivo precisa.",
       "watch": "Os sinais estão mistos. Mais alguns dias vão esclarecer.",
-      "off_track": "Seu {{metric}} está se afastando do seu objetivo."
+      "off_track": "Seu {{metric}} está se afastando do seu objetivo.",
+      "plateau": "Teu peso está estável. As medidas e as fotos conduzem a leitura agora."
     },
     "reconcile": {
       "trainingLoad": "Seu {{metric}} reflete a carga de treino recente, não um retrocesso.",

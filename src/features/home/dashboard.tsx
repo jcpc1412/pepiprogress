@@ -57,17 +57,25 @@ export function Dashboard() {
 
   const openReasoning = () => router.push('/reasoning');
 
-  // Evidence: the hero metric's own series (matching signal), or a photo compare.
+  // Evidence (R2-B B1): a recent photo compare wins when one exists — the mockup
+  // default — otherwise the hero metric's own chart. Photo pair = the most recent
+  // shot within 14 days plus the earliest shot of its own session+part (baseline).
+  const evidencePair = useMemo(() => {
+    if (!photos.length) return null;
+    const latest = [...photos].sort((a, b) => (a.takenAt < b.takenAt ? 1 : -1))[0];
+    // daysBetween is pure (deterministic in its args) — avoids Date.now() in render.
+    if (daysBetween(latest.takenAt.slice(0, 10), today) > 14) return null;
+    const baseline = photos
+      .filter((p) => p.session === latest.session && (p.part ?? undefined) === (latest.part ?? undefined))
+      .sort((a, b) => (a.takenAt < b.takenAt ? -1 : 1))[0];
+    if (!baseline || baseline.id === latest.id) return null;
+    return { latest, baseline };
+  }, [photos, today]);
+
   const heroSignal =
     hero?.kind === 'metric'
       ? verdict.signals.find((s) => s.metricId === hero?.metricId)
       : undefined;
-  const heroPhoto = hero?.kind === 'photo' ? photos.find((p) => p.id === hero?.photoId) : undefined;
-  const heroPhotoBaseline = heroPhoto
-    ? photos
-        .filter((p) => p.session === heroPhoto.session)
-        .sort((a, b) => (a.takenAt < b.takenAt ? -1 : 1))[0]
-    : undefined;
 
   const stateTone =
     verdict.state === 'on_track'
@@ -163,16 +171,8 @@ export function Dashboard() {
 
           <Divider style={styles.rule} />
 
-          {/* ── Evidence (engine-picked, on the canvas) ── */}
-          {heroSignal ? (
-            <View style={styles.evidence}>
-              <EngravedLabel>{t('verdict.evidenceTitle')}</EngravedLabel>
-              <LineChart
-                data={heroSignal.series.map((p): ChartPoint => ({ label: p.dateKey.slice(5), value: p.value }))}
-                emptyLabel={t('common.noData')}
-              />
-            </View>
-          ) : heroPhoto ? (
+          {/* ── Evidence — a recent photo compare wins, else the hero chart (R2-B B1) ── */}
+          {evidencePair ? (
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={t('verdict.evidenceTitle')}
@@ -181,22 +181,28 @@ export function Dashboard() {
               style={styles.evidence}>
               <EngravedLabel>{t('verdict.evidenceTitle')}</EngravedLabel>
               <View style={styles.compareRow}>
-                {heroPhotoBaseline && heroPhotoBaseline.id !== heroPhoto.id ? (
-                  <View style={styles.compareCol}>
-                    <Image source={{ uri: heroPhotoBaseline.uri }} style={styles.photo} contentFit="cover" />
-                    <ThemedText type="monoSm" themeColor="textMuted">
-                      {t('photos.baseline')}
-                    </ThemedText>
-                  </View>
-                ) : null}
                 <View style={styles.compareCol}>
-                  <Image source={{ uri: heroPhoto.uri }} style={styles.photo} contentFit="cover" />
+                  <Image source={{ uri: evidencePair.baseline.uri }} style={styles.photo} contentFit="cover" />
+                  <ThemedText type="monoSm" themeColor="textMuted">
+                    {t('photos.baseline')}
+                  </ThemedText>
+                </View>
+                <View style={styles.compareCol}>
+                  <Image source={{ uri: evidencePair.latest.uri }} style={styles.photo} contentFit="cover" />
                   <ThemedText type="monoSm" themeColor="textMuted">
                     {t('photos.latest')}
                   </ThemedText>
                 </View>
               </View>
             </Pressable>
+          ) : heroSignal ? (
+            <View style={styles.evidence}>
+              <EngravedLabel>{t('verdict.evidenceTitle')}</EngravedLabel>
+              <LineChart
+                data={heroSignal.series.map((p): ChartPoint => ({ label: p.dateKey.slice(5), value: p.value }))}
+                emptyLabel={t('common.noData')}
+              />
+            </View>
           ) : verdict.state === 'building' ? (
             <View style={styles.evidence}>
               <EngravedLabel>{t('verdict.evidenceTitle')}</EngravedLabel>

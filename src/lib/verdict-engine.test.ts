@@ -116,6 +116,66 @@ describe('computeVerdict — hero selection & intent', () => {
     expect(v.forecast).toBeUndefined();
   });
 
+  it('weights hips higher for a female pattern than a male one (sex layer)', () => {
+    // Weight flat, hips moving; only the sex multiplier should differ.
+    const entries = entriesOf(6, (o) => ({ weight: 80, hips: 100 + o * 0.4 }));
+    const female = computeVerdict(
+      makeInput({ entries, profile: { goals: ['weight_loss'], units: 'metric', sex: 'female' } }),
+    );
+    const male = computeVerdict(
+      makeInput({ entries, profile: { goals: ['weight_loss'], units: 'metric', sex: 'male' } }),
+    );
+    const fh = female.signals.find((s) => s.metricId === 'hips');
+    const mh = male.signals.find((s) => s.metricId === 'hips');
+    expect(fh && mh).toBeTruthy();
+    expect(fh!.weight).toBeGreaterThan(mh!.weight); // gluteofemoral fat matters more for women
+  });
+
+  it('does not sex-weight goal-driven metrics (recovery → sleep is identical)', () => {
+    const entries = entriesOf(6, (o) => ({ sleep_quality: 4 - o * 0.2, soreness: 3 }));
+    const female = computeVerdict(
+      makeInput({ entries, profile: { goals: ['recovery'], units: 'metric', sex: 'female' } }),
+    );
+    const male = computeVerdict(
+      makeInput({ entries, profile: { goals: ['recovery'], units: 'metric', sex: 'male' } }),
+    );
+    const fs = female.signals.find((s) => s.metricId === 'sleep_quality');
+    const ms = male.signals.find((s) => s.metricId === 'sleep_quality');
+    expect(fs!.weight).toBeCloseTo(ms!.weight, 10);
+  });
+
+  it('maps trans users by hormones: mtf → female pattern, ftm → male', () => {
+    const entries = entriesOf(6, (o) => ({ weight: 80, hips: 100 + o * 0.4 }));
+    const mtf = computeVerdict(makeInput({ entries, profile: { goals: ['weight_loss'], units: 'metric', sex: 'mtf' } }));
+    const ftm = computeVerdict(makeInput({ entries, profile: { goals: ['weight_loss'], units: 'metric', sex: 'ftm' } }));
+    const female = computeVerdict(makeInput({ entries, profile: { goals: ['weight_loss'], units: 'metric', sex: 'female' } }));
+    const male = computeVerdict(makeInput({ entries, profile: { goals: ['weight_loss'], units: 'metric', sex: 'male' } }));
+    const hips = (v: typeof mtf) => v.signals.find((s) => s.metricId === 'hips')!.weight;
+    expect(hips(mtf)).toBeCloseTo(hips(female), 10);
+    expect(hips(ftm)).toBeCloseTo(hips(male), 10);
+  });
+
+  it('computes body-fat % as a signal and reads a drop as favourable on a cut', () => {
+    // neck fixed, waist shrinking → Navy body-fat drops. Needs height for the formula.
+    const entries = entriesOf(6, (o) => ({ neck: 38, waist: 88 + o * 0.5 }));
+    const v = computeVerdict(
+      makeInput({ entries, profile: { goals: ['weight_loss'], units: 'metric', sex: 'male', height: 180 } }),
+    );
+    const bf = v.signals.find((s) => s.metricId === 'body_fat_pct');
+    expect(bf).toBeTruthy();
+    expect(bf!.favour).toBe('good');
+  });
+
+  it('flags a plateau and hands the hero to a moving tape signal', () => {
+    // Weight dead flat for 12 days (span 11) while waist keeps dropping.
+    const entries = entriesOf(12, (o) => ({ weight: 100, waist: 86 + o * 0.3 }));
+    const v = computeVerdict(
+      makeInput({ entries, profile: { goals: ['weight_loss'], units: 'metric', sex: 'male' } }),
+    );
+    expect(v.explanation.key).toBe('verdict.explanation.plateau');
+    expect(v.hero?.kind === 'metric' && v.hero.metricId).toBe('waist');
+  });
+
   it('reads the same weight loss as NOT favourable when bulking (intent flips)', () => {
     const entries = entriesOf(6, (o) => ({ weight: 79 + o * 0.3 }));
     const cutting = computeVerdict(

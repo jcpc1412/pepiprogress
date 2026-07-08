@@ -1,3 +1,4 @@
+import { bodyFatNavy } from '@/lib/body-composition';
 import { deriveMetrics, type DerivedMetricKey, type DerivedProfile } from '@/lib/derived-metrics';
 import type { CheckinEntry, MetricReading } from '@/lib/store';
 
@@ -22,12 +23,20 @@ export type ChartMetricConfig = {
   canonicalMetric?: string;
   /** Derived metric key (deriveMetrics output). */
   derivedKey?: DerivedMetricKey;
+  /** Computed-from-checkin metric (multiple fields + profile). Currently only the
+   *  sex-aware body-fat estimate (R2-B). */
+  computed?: 'body_fat_pct';
 };
 
 /** The full chart catalog. The first four are the core subjective/weight trends;
  *  the rest are opt-in wearable-only insight metrics (no manual entry). */
 export const CHART_METRICS: ChartMetricConfig[] = [
   { id: 'weight',        labelKey: 'fields.weight',        checkinKey: 'weight',        canonicalMetric: 'body.weight' },
+  // Body-composition signals (R2-B). body_fat_pct is the sex-aware primary; waist/hips are
+  // sex-weighted proxies. All three are sparse (only days with measurements logged).
+  { id: 'body_fat_pct',  labelKey: 'fields.body_fat_pct',  computed: 'body_fat_pct' },
+  { id: 'waist',         labelKey: 'measurements.waist',   checkinKey: 'waist' },
+  { id: 'hips',          labelKey: 'measurements.hips',    checkinKey: 'hips' },
   { id: 'energy',        labelKey: 'fields.energy',        checkinKey: 'energy',        derivedKey: 'energy' },
   { id: 'sleep_quality', labelKey: 'fields.sleep_quality', checkinKey: 'sleep_quality', derivedKey: 'sleep_quality' },
   { id: 'soreness',      labelKey: 'fields.soreness',      checkinKey: 'soreness',      derivedKey: 'soreness' },
@@ -56,6 +65,10 @@ export type MetricSeries = ChartMetricConfig & {
 
 export type ChartProfile = DerivedProfile & {
   estimatedMetricsMode?: 'off' | 'fill' | 'always';
+  /** Height in cm (already converted from the user's units), for body_fat_pct. */
+  heightCm?: number;
+  /** Unit system for interpreting measurement checkin fields (waist/neck/hips). */
+  units?: 'metric' | 'imperial';
 };
 
 /** Latest date-key across manual entries + integration readings (for anchoring a
@@ -111,6 +124,28 @@ export function buildMetricSeries(opts: {
   const entryDates = Object.keys(entries);
 
   return CHART_METRICS.filter((m) => selectedIds.includes(m.id)).map((m) => {
+    // Computed body-fat %: per-day sex-aware Navy estimate from that day's tape
+    // measurements + height. Sparse; the engine's MIN_POINTS gate hides it until
+    // enough days carry measurements. bodyFatNavy returns null for incomplete days.
+    if (m.computed === 'body_fat_pct') {
+      const primary: DatedPoint[] = [];
+      for (const d of entryDates) {
+        if (!inWindow(d)) continue;
+        const e = entries[d];
+        if (!e) continue;
+        const est = bodyFatNavy({
+          units: profile.units ?? 'metric',
+          heightCm: profile.heightCm,
+          waist: typeof e.waist === 'number' ? e.waist : undefined,
+          neck: typeof e.neck === 'number' ? e.neck : undefined,
+          hip: typeof e.hips === 'number' ? e.hips : undefined,
+        });
+        if (est) primary.push({ dateKey: d, value: est.pct });
+      }
+      primary.sort(byDateAsc);
+      return { ...m, primary, estimated: [], insightOnly: false };
+    }
+
     const derivedForMetric = m.derivedKey ? derived?.[m.derivedKey] : undefined;
     const insightOnly = !m.checkinKey && !!m.derivedKey;
     const byDate = m.canonicalMetric ? readingsByMetric.get(m.canonicalMetric) : undefined;

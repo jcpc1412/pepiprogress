@@ -56,6 +56,13 @@ export function formatHeroValue(
     const v = Number.isInteger(mag) ? String(mag) : mag.toFixed(1);
     return { value: `${sign(value)}${v}`, unit: units === 'imperial' ? t('units.lb') : t('units.kg') };
   }
+  if (unit === 'length') {
+    const v = Number.isInteger(mag) ? String(mag) : mag.toFixed(1);
+    return {
+      value: `${sign(value)}${v}`,
+      unit: units === 'imperial' ? t('measurements.unitIn') : t('measurements.unitCm'),
+    };
+  }
   if (unit === 'pct') return { value: `${sign(value)}${Math.round(mag)}`, unit: '%' };
   // scale5 (1–5 subjective / derived)
   return { value: `${sign(value)}${mag.toFixed(1)}`, unit: t('verdict.unitScale') };

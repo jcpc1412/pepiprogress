@@ -117,7 +117,8 @@
     "caloric_balance": "Balance calorique",
     "body_comp_velocity": "Composition corporelle",
     "cv_strain": "Stress cardiaque",
-    "inflammation": "Inflammation"
+    "inflammation": "Inflammation",
+    "body_fat_pct": "Masse grasse"
   },
   "checkin": {
     "title": "Suivi quotidien",
@@ -820,7 +821,8 @@
       "building": "Base en cours de construction. Continuez à enregistrer et une lecture apparaîtra.",
       "on_track": "Votre {{metric}} évolue comme votre objectif le demande.",
       "watch": "Les signaux sont mitigés. Quelques jours de plus trancheront.",
-      "off_track": "Votre {{metric}} s'écarte de votre objectif."
+      "off_track": "Votre {{metric}} s'écarte de votre objectif.",
+      "plateau": "Ton poids se stabilise. Les mensurations et les photos portent la lecture maintenant."
     },
     "reconcile": {
       "trainingLoad": "Votre {{metric}} reflète la charge d'entraînement récente, pas un recul.",

@@ -117,7 +117,8 @@
     "caloric_balance": "Kalorienbilanz",
     "body_comp_velocity": "Körperzusammensetzung",
     "cv_strain": "Kardiale Belastung",
-    "inflammation": "Entzündung"
+    "inflammation": "Entzündung",
+    "body_fat_pct": "Körperfett"
   },
   "checkin": {
     "title": "Täglicher Check-in",
@@ -820,7 +821,8 @@
       "building": "Basislinie wird noch erstellt. Protokolliere weiter, dann erscheint eine Auswertung.",
       "on_track": "Dein {{metric}} entwickelt sich so, wie es dein Ziel braucht.",
       "watch": "Die Signale sind gemischt. Ein paar Tage mehr bringen Klarheit.",
-      "off_track": "Dein {{metric}} entfernt sich von deinem Ziel."
+      "off_track": "Dein {{metric}} entfernt sich von deinem Ziel.",
+      "plateau": "Dein Gewicht hält. Maßband und Fotos tragen jetzt die Auswertung."
     },
     "reconcile": {
       "trainingLoad": "Dein {{metric}} spiegelt die jüngste Trainingsbelastung wider, keinen Rückschritt.",
