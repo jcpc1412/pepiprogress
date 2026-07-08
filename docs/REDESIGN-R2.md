@@ -34,6 +34,10 @@ Companion docs: [REDESIGN.md](REDESIGN.md) (round 1, the verdict-first foundatio
 8. **At-night canvas goes near-black** (mockup values); raised panels carry the dark grey.
 9. Quick-log suggestion chips become **fill-in templates**, not literal text inserts.
 10. **"Customize what I log" moves to Settings** ("What I log"), linked from the detailed log.
+11. **Body-composition signals are sex-aware and a cascade** (body-fat % → sex-weighted
+    waist/hips → weight), not blanket tape metrics. A sex-multiplier layer only touches body
+    metrics; goal-driven metrics (sleep for recovery, etc.) are never sex-weighted. See R2-B B2.
+12. **Fat-distribution pattern follows hormones:** mtf → female pattern, ftm → male pattern.
 
 Mechanism findings that motivated the plan (verified in code, not guesses):
 
@@ -80,23 +84,55 @@ Evidence picker (dashboard):
 2. Otherwise fall back to the hero signal chart (current behavior).
 3. Cold start keeps the placeholder + baseline CTA.
 
-### B2. Tape measurements become signals
-`src/lib/chart-series.ts` + `src/lib/verdict-engine.ts`:
-- Add `waist` and `hips` to `CHART_METRICS` (checkin keys exist already). New `HeroUnit`
-  `'length'`; `formatHeroValue` renders cm/in per unit system.
-- Direction: `waist` is a context metric like weight (cutting: down good; bulking/recomp:
-  neutral). `hips` context likewise.
-- Relevance: `weight_loss: { waist: 0.8 }`, `body_comp: { waist: 0.7, hips: 0.4 }`,
-  effect tag `fat_loss: { waist: 0.6 }`.
+### B2. Sex-aware body-composition signal cascade (owner call 2026-07-07)
+Fat distribution is sexually dimorphic, so tape metrics cannot be blanket signals. The read for
+any fat-loss / recomp goal follows a cascade, best signal first:
+1. **Body-fat %** — the real fat signal, sex-correct by construction (Navy method in
+   `body-composition.ts` already uses the women's formula when a hip is supplied). Surfaces only
+   when the inputs are logged (neck + waist, + hip for women); weight/waist cover the gaps.
+2. **Waist** (both) and **hips** — sex-weighted proxies.
+3. **Weight** — always-available fallback (unchanged).
+
+`src/lib/chart-series.ts`:
+- New derived metric `body_fat_pct`: per-day Navy estimate from that day's `neck`/`waist`
+  (+`hips`) checkin values + `profile.height`. Sparse by nature (only days with measurements);
+  the engine's `MIN_POINTS` gate already hides it until there is enough data.
+- Add `waist` and `hips` to `CHART_METRICS` (checkin keys exist). New `HeroUnit` `'length'`
+  (cm/in per unit system) and `'pct'` reused for body-fat.
+
+`src/lib/verdict-engine.ts`:
+- Direction: `body_fat_pct` and `waist` are context metrics like weight (cutting → down good;
+  bulking/recomp → neutral). `hips` context likewise.
+- Base relevance (goal/tag), before the sex layer:
+  `weight_loss: { body_fat_pct: 1.0, waist: 0.8, hips: 0.5 }`,
+  `body_comp: { body_fat_pct: 0.9, waist: 0.7, hips: 0.6 }`,
+  effect tag `fat_loss: { body_fat_pct: 0.7, waist: 0.6 }`.
+- **Sex multiplier layer** — applied *after* goal/tag relevance, `1.0` by default, only body
+  metrics diverge. Non-body metrics (sleep, energy, soreness, …) are never touched, so a
+  `recovery` goal weights sleep/soreness identically regardless of sex.
+
+  | metric | male pattern | female pattern |
+  |---|---|---|
+  | waist | 1.0 | 0.8 |
+  | hips | 0.25 | 1.0 |
+  | body_fat_pct | 1.0 | 1.0 |
+
+- **Fat pattern follows hormones** (owner call): resolve a `fatPatternSex` — `female` when
+  `profile.sex ∈ {female, mtf}`, else `male` — because HRT drives fat redistribution
+  (mtf on estrogen → gluteofemoral, ftm on testosterone → central). Undefined sex → no sex
+  weighting (all multipliers `1.0`).
+- Tests: sex-multiplier flips hips relevance male↔female; recovery-goal sleep relevance is
+  identical across sexes; body-fat% direction on a cut; mtf→female / ftm→male mapping.
 
 ### B3. Explicit plateau state
 In the engine, when the weight signal spans ≥10 days with ≥5 points and |delta| is inside the
 flat band while other logging continues:
 - Verdict explanation switches to a plateau template (`verdict.explanation.plateau`):
   descriptive, no shame, "weight is holding; tape and photos carry the read now".
-- Hero prefers `waist` when a waist series exists and moved; else keeps weight.
+- Hero prefers the highest-relevance body-composition signal that actually moved — body-fat %
+  then waist (via the cascade), else keeps weight.
 - Evidence picker prefers the photo compare (B1 covers it).
-- Tests: plateau detection boundaries, waist hero swap, photo-evidence preference,
+- Tests: plateau detection boundaries, body-comp hero swap, photo-evidence preference,
   plateau keys pass the legal-gate namespace test.
 
 **Gate:** engine tests green; on-web verdict sanity across normal / plateau / cold states.
