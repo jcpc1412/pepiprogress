@@ -223,8 +223,15 @@ Mechanics:
 ⚠️ Dependency flag: the AI path needs `ANTHROPIC_API_KEY` in Supabase edge-function secrets
 (still unset, carried over from M3). Until set, beta runs on the fallback.
 
-**Gate:** works offline via fallback; AI path verified once secrets exist; extraction +
-fallback unit tests green; green gate.
+**Build status:** the deterministic path is SHIPPED and is what beta runs (`src/lib/signal-ledger.ts`)
+(pure, tested), the `/signal/[metricId]` page (`signal-detail.tsx`: explainer, Manual source,
+chart, event ledger with hedged ≈ impacts, doses as context rows), and tappable signal rows. The
+`signal_ledger` edge action + `getSignalLedger` client wrapper are DEFERRED to the same secret +
+deploy step as every other AI action (the MCP can't deploy/verify them from here); when they land,
+`getSignalLedger` will prefer AI and fall back to this deterministic result silently.
+
+**Gate:** works offline via the deterministic path; AI action lands with the secret; extraction
+unit tests green; green gate.
 
 ---
 
@@ -303,15 +310,9 @@ caption), `quicklog.template.*`, `checkin.section.*` (morning/evening/devices an
 - Plateau copy is descriptive, an observation about the read, never a prescription.
 
 ## Polish notes (after the R2 implementation, not during)
-- **Round trend-chart values.** The Analysis trend charts (ChartsSection / LineChart value +
-  range labels, reused from Insights) render raw floats, e.g. "RECUPERACIÓN 3.3499999999999996".
-  Round to 1 decimal at the label layer. Pre-existing from the Insights screen, now more visible
-  on the Analysis tab.
-- **Rename the signal role "supports" to "progressing"** (owner, clearer across all languages).
-  Touches the `verdict.role.supports` value in all 6 locales (currently "Supports" / "Apoya" /
-  etc.) plus any role-tone mapping that keys off the word; the engine role id stays `supports`,
-  only the display copy changes. Do this as a copy pass once the R2-C rows are final so it is a
-  single sweep.
+- (done, R2-D) ~~Round trend-chart values~~: LineChart now rounds value + range labels.
+- (done, R2-D) ~~Rename the signal role "supports" to "progressing"~~: `verdict.role.supports`
+  display copy updated in all 6 locales; engine role id stays `supports`.
 
 ## Out of scope (unchanged owner decisions)
 - Lab parsing stays deferred; the three-option Log menu (Option B) is revisited when it ships.

@@ -836,7 +836,7 @@
       "high": "High confidence"
     },
     "role": {
-      "supports": "Supports",
+      "supports": "Progressing",
       "drags": "Drags",
       "neutral": "Neutral"
     },
@@ -858,5 +858,32 @@
   },
   "analysis": {
     "heading": "Analysis"
+  },
+  "signal": {
+    "explainLabel": "About this",
+    "sourcesLabel": "Data sources",
+    "ledgerLabel": "What moved it",
+    "estimated": "estimated",
+    "noEvents": "No logged events in this window yet",
+    "source": {
+      "manual": "Manual"
+    },
+    "event": {
+      "workout": "Hard workout",
+      "rest": "Rest day",
+      "poorSleep": "Poor sleep",
+      "symptom": "Symptom: {{name}}",
+      "dose": "Dose: {{compound}}"
+    },
+    "explain": {
+      "weight": "Your total body weight. It moves with fat, muscle, water, and food in your system, so daily swings are normal. The trend over weeks is what matters.",
+      "body_fat_pct": "An estimate of how much of your body is fat, from your measurements. It is the cleanest read of fat change, since weight alone mixes in water and muscle.",
+      "waist": "Waist circumference. For most people it is where fat is lost or gained first, so it often moves before the scale does.",
+      "hips": "Hip circumference. It reflects fat and muscle around the hips and glutes, and changes at a different pace than the waist.",
+      "energy": "Your subjective energy for the day. Sleep, training load, nutrition, and stress all push it up or down.",
+      "sleep_quality": "How rested you felt. Consistent sleep and timing raise it; late nights, alcohol, and stress lower it.",
+      "soreness": "Muscle soreness. Hard or new training raises it; rest days and lighter sessions bring it down.",
+      "default": "A tracked signal in your log. Its trend is read against your goal over the recent window."
+    }
   }
 }

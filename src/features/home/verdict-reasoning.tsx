@@ -1,5 +1,6 @@
+import { useRouter, type Href } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Card, Divider, EngravedLabel, Placeholder, StatusPill } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
@@ -127,6 +128,7 @@ function SignalRow({
   maxWeight: number;
 }) {
   const theme = useTheme();
+  const router = useRouter();
   const fmt = formatHeroValue(signal.value, metricHeroUnit(signal.metricId), units, t);
   const valueStr = `${fmt.value}${fmt.unit === '%' ? '%' : ` ${fmt.unit}`}`;
   const toneC = theme[TONE_COLOR[signal.tone]];
@@ -135,9 +137,11 @@ function SignalRow({
   const name = t(signal.labelKey as 'fields.weight');
 
   return (
-    <View
-      style={styles.row}
-      accessible
+    <Pressable
+      style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
+      accessibilityRole="button"
+      accessibilityHint={t('signal.explainLabel')}
+      onPress={() => router.push(`/signal/${signal.metricId}` as Href)}
       accessibilityLabel={`${name}. ${t(`verdict.role.${signal.role}` as 'verdict.role.supports')}. ${valueStr}.`}>
       <View style={styles.rowTop}>
         <View style={[styles.dot, { backgroundColor: toneC }]} />
@@ -169,7 +173,7 @@ function SignalRow({
           {resolveMsg(t, signal.explained)}
         </ThemedText>
       ) : null}
-    </View>
+    </Pressable>
   );
 }
 
@@ -181,6 +185,7 @@ const styles = StyleSheet.create({
   stack: { gap: Spacing.two },
   rowDivider: { marginVertical: Spacing.one },
   row: { gap: Spacing.one, paddingVertical: Spacing.one },
+  rowPressed: { opacity: 0.6 },
   rowTop: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
   dot: { width: 8, height: 8, borderRadius: 4 },
   name: { flex: 1 },

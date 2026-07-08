@@ -90,13 +90,15 @@ export function LineChart({
 
   // Header shows the most recent value we have (manual preferred, else estimated).
   const last = sortedData[sortedData.length - 1] ?? sortedEst[sortedEst.length - 1];
+  // Round for display so derived metrics don't leak float noise (e.g. 3.34999…).
+  const fmt = (v: number) => (Number.isInteger(v) ? String(v) : v.toFixed(1));
 
   return (
     <View style={styles.wrap}>
       <View style={styles.head}>
-        <ThemedText type="metricSm">{`${last.value}${unit ? ` ${unit}` : ''}`}</ThemedText>
+        <ThemedText type="metricSm">{`${fmt(last.value)}${unit ? ` ${unit}` : ''}`}</ThemedText>
         <ThemedText type="monoSm" themeColor="textMuted">
-          {`${min} – ${max}`}
+          {`${fmt(min)} – ${fmt(max)}`}
         </ThemedText>
       </View>
       <Svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`}>

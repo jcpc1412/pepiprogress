@@ -836,7 +836,7 @@
       "high": "Confianza alta"
     },
     "role": {
-      "supports": "Apoya",
+      "supports": "Progresando",
       "drags": "Resta",
       "neutral": "Neutral"
     },
@@ -858,5 +858,32 @@
   },
   "analysis": {
     "heading": "Análisis"
+  },
+  "signal": {
+    "explainLabel": "Acerca de esto",
+    "sourcesLabel": "Fuentes de datos",
+    "ledgerLabel": "Qué lo movió",
+    "estimated": "estimado",
+    "noEvents": "Aún no hay eventos registrados en este periodo",
+    "source": {
+      "manual": "Manual"
+    },
+    "event": {
+      "workout": "Entrenamiento intenso",
+      "rest": "Día de descanso",
+      "poorSleep": "Mal sueño",
+      "symptom": "Síntoma: {{name}}",
+      "dose": "Dosis: {{compound}}"
+    },
+    "explain": {
+      "weight": "Tu peso corporal total. Cambia con la grasa, el músculo, el agua y la comida, así que las variaciones diarias son normales. Lo que importa es la tendencia de semanas.",
+      "body_fat_pct": "Una estimación de cuánta grasa tiene tu cuerpo, a partir de tus medidas. Es la lectura más clara del cambio de grasa, porque el peso mezcla agua y músculo.",
+      "waist": "Circunferencia de la cintura. En la mayoría es donde primero se pierde o gana grasa, así que suele moverse antes que la báscula.",
+      "hips": "Circunferencia de la cadera. Refleja grasa y músculo en caderas y glúteos, y cambia a un ritmo distinto al de la cintura.",
+      "energy": "Tu energía subjetiva del día. El sueño, la carga de entrenamiento, la nutrición y el estrés la suben o bajan.",
+      "sleep_quality": "Qué tan descansado te sentiste. Un sueño constante y a buenas horas la sube; las noches tardías, el alcohol y el estrés la bajan.",
+      "soreness": "Dolor muscular. El entrenamiento intenso o nuevo lo aumenta; los días de descanso y las sesiones suaves lo bajan.",
+      "default": "Una señal registrada en tu diario. Su tendencia se interpreta según tu objetivo en el periodo reciente."
+    }
   }
 }

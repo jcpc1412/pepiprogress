@@ -71,6 +71,7 @@ function RootContent() {
           <Stack.Screen name="notifications-settings" />
           <Stack.Screen name="privacy" />
           <Stack.Screen name="photo-history" />
+          <Stack.Screen name="signal/[metricId]" />
         </Stack>
       </CloudSync>
     </ThemeProvider>

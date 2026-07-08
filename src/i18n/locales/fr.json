@@ -836,7 +836,7 @@
       "high": "Confiance élevée"
     },
     "role": {
-      "supports": "Soutient",
+      "supports": "En progrès",
       "drags": "Freine",
       "neutral": "Neutre"
     },
@@ -858,5 +858,32 @@
   },
   "analysis": {
     "heading": "Analyse"
+  },
+  "signal": {
+    "explainLabel": "À propos",
+    "sourcesLabel": "Sources de données",
+    "ledgerLabel": "Ce qui l'a influencé",
+    "estimated": "estimé",
+    "noEvents": "Aucun événement enregistré sur cette période",
+    "source": {
+      "manual": "Manuel"
+    },
+    "event": {
+      "workout": "Entraînement intense",
+      "rest": "Jour de repos",
+      "poorSleep": "Mauvais sommeil",
+      "symptom": "Symptôme : {{name}}",
+      "dose": "Dose : {{compound}}"
+    },
+    "explain": {
+      "weight": "Ton poids corporel total. Il varie avec la graisse, le muscle, l'eau et les aliments, donc les variations quotidiennes sont normales. C'est la tendance sur les semaines qui compte.",
+      "body_fat_pct": "Une estimation de ton taux de graisse, à partir de tes mensurations. C'est la lecture la plus nette du changement de graisse, car le poids mêle eau et muscle.",
+      "waist": "Tour de taille. Chez la plupart des gens, c'est là que la graisse se perd ou se prend en premier, il bouge souvent avant la balance.",
+      "hips": "Tour de hanches. Il reflète la graisse et le muscle des hanches et des fessiers, et évolue à un rythme différent de la taille.",
+      "energy": "Ton énergie ressentie du jour. Le sommeil, la charge d'entraînement, l'alimentation et le stress la font monter ou descendre.",
+      "sleep_quality": "À quel point tu te sentais reposé. Un sommeil régulier l'améliore ; les nuits tardives, l'alcool et le stress la réduisent.",
+      "soreness": "Courbatures musculaires. Un entraînement intense ou nouveau les augmente ; le repos et les séances légères les réduisent.",
+      "default": "Un signal suivi dans ton journal. Sa tendance est lue par rapport à ton objectif sur la période récente."
+    }
   }
 }

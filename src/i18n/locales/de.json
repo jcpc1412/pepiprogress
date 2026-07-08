@@ -836,7 +836,7 @@
       "high": "Hohe Zuversicht"
     },
     "role": {
-      "supports": "Stützt",
+      "supports": "Fortschritt",
       "drags": "Bremst",
       "neutral": "Neutral"
     },
@@ -858,5 +858,32 @@
   },
   "analysis": {
     "heading": "Analyse"
+  },
+  "signal": {
+    "explainLabel": "Dazu",
+    "sourcesLabel": "Datenquellen",
+    "ledgerLabel": "Was es bewegt hat",
+    "estimated": "geschätzt",
+    "noEvents": "Noch keine Ereignisse in diesem Zeitraum",
+    "source": {
+      "manual": "Manuell"
+    },
+    "event": {
+      "workout": "Hartes Training",
+      "rest": "Ruhetag",
+      "poorSleep": "Schlechter Schlaf",
+      "symptom": "Symptom: {{name}}",
+      "dose": "Dosis: {{compound}}"
+    },
+    "explain": {
+      "weight": "Dein Gesamtkörpergewicht. Es schwankt mit Fett, Muskeln, Wasser und Nahrung, tägliche Schwankungen sind normal. Entscheidend ist der Trend über Wochen.",
+      "body_fat_pct": "Eine Schätzung deines Körperfetts aus deinen Maßen. Es ist der klarste Messwert für Fettveränderung, da Gewicht Wasser und Muskeln vermischt.",
+      "waist": "Taillenumfang. Bei den meisten geht dort zuerst Fett verloren oder kommt hinzu, er bewegt sich oft vor der Waage.",
+      "hips": "Hüftumfang. Er spiegelt Fett und Muskeln an Hüfte und Gesäß wider und ändert sich in anderem Tempo als die Taille.",
+      "energy": "Deine gefühlte Energie des Tages. Schlaf, Trainingslast, Ernährung und Stress heben oder senken sie.",
+      "sleep_quality": "Wie erholt du dich gefühlt hast. Regelmäßiger Schlaf hebt sie; späte Nächte, Alkohol und Stress senken sie.",
+      "soreness": "Muskelkater. Hartes oder neues Training steigert ihn; Ruhetage und leichtere Einheiten senken ihn.",
+      "default": "Ein erfasstes Signal in deinem Log. Sein Trend wird über den jüngsten Zeitraum an deinem Ziel gemessen."
+    }
   }
 }
