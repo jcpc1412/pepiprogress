@@ -863,6 +863,7 @@
     "explainLabel": "About this",
     "sourcesLabel": "Data sources",
     "ledgerLabel": "What moved it",
+    "contextLabel": "In context",
     "estimated": "estimated",
     "noEvents": "No logged events in this window yet",
     "source": {

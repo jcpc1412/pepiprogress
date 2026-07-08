@@ -863,6 +863,7 @@
     "explainLabel": "À propos",
     "sourcesLabel": "Sources de données",
     "ledgerLabel": "Ce qui l'a influencé",
+    "contextLabel": "En contexte",
     "estimated": "estimé",
     "noEvents": "Aucun événement enregistré sur cette période",
     "source": {

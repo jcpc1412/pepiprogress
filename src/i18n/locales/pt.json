@@ -863,6 +863,7 @@
     "explainLabel": "Sobre isto",
     "sourcesLabel": "Fontes de dados",
     "ledgerLabel": "O que o moveu",
+    "contextLabel": "Em contexto",
     "estimated": "estimado",
     "noEvents": "Ainda não há eventos registados neste período",
     "source": {

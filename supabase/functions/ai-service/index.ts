@@ -1,23 +1,23 @@
-// PepiProgress — reusable AI edge service (spec 05/10). Claude, server-side; the
+// PepiProgress - reusable AI edge service (spec 05/10). Claude, server-side; the
 // API key never touches the client.
 //
 // Actions:
-//   parse_log       — Haiku; parses NL quick-log text into structured entities.
-//   analyze_photo   — Sonnet vision; drift score + hedged change note.
-//   check_fit       — Haiku vision; pre-capture fit check (position / angle / distance).
-//   simple_analysis — Haiku text-only; encouraging weekly check-in message.
-//   parse_lab       — Sonnet vision; extracts lab marker values from a photo.
-//   scan_vial       — Sonnet vision; extracts compound name + concentration from a vial label.
-//   insights        — Sonnet text; data-grounded trend / Q&A / correlation analysis (spec 05/13).
-//   terra           — Terra aggregator proxy (widget session + data pull); keeps Terra
+//   parse_log       - Haiku; parses NL quick-log text into structured entities.
+//   analyze_photo   - Sonnet vision; drift score + hedged change note.
+//   check_fit       - Haiku vision; pre-capture fit check (position / angle / distance).
+//   simple_analysis - Haiku text-only; encouraging weekly check-in message.
+//   parse_lab       - Sonnet vision; extracts lab marker values from a photo.
+//   scan_vial       - Sonnet vision; extracts compound name + concentration from a vial label.
+//   insights        - Sonnet text; data-grounded trend / Q&A / correlation analysis (spec 05/13).
+//   terra           - Terra aggregator proxy (widget session + data pull); keeps Terra
 //                     credentials server-side, like the Anthropic key (spec 06/10).
 //
 // Hard rules baked in (spec 04/05/11):
 //  - Parse path PARSES what the user said. Never suggests doses, schedules, or synergies.
 //  - Vision path is OBSERVATIONAL only. Never diagnoses or identifies the person.
 //  - Encouragement path is SUPPORTIVE only. Never gives medical or dosing advice.
-//  - Lab parse path extracts VALUES only — the document is never stored (spec 05).
-//  - Insights path is ANALYTICAL only — grounded in the user's own data, hedged, no advice.
+//  - Lab parse path extracts VALUES only - the document is never stored (spec 05).
+//  - Insights path is ANALYTICAL only - grounded in the user's own data, hedged, no advice.
 
 import Anthropic from 'npm:@anthropic-ai/sdk';
 
@@ -32,7 +32,7 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
-// ─── Request types ────────────────────────────────────────────────────────────
+// --- Request types ------------------------------------------------------------
 
 type CatalogEntry = {
   slug: string;
@@ -116,7 +116,7 @@ type InsightsRequest = {
 type CheckFitRequest = {
   action: 'check_fit';
   newImage: string; // base64 JPEG
-  baselineImage?: string; // base64 JPEG — if absent, returns good fit
+  baselineImage?: string; // base64 JPEG - if absent, returns good fit
 };
 
 type TerraRequest = {
@@ -127,7 +127,25 @@ type TerraRequest = {
   redirectUrl?: string; // for widget_session
 };
 
-// ─── JSON schemas ─────────────────────────────────────────────────────────────
+type SignalLedgerEvent = {
+  id: string;
+  kind: 'workout' | 'rest' | 'poor_sleep' | 'symptom' | 'dose';
+  label: string; // already-localized row label
+  date: string; // YYYY-MM-DD
+  impact?: number; // deterministic heuristic impact, if any (never for doses)
+};
+
+type SignalLedgerRequest = {
+  action: 'signal_ledger';
+  metric: string; // localized metric name
+  goal?: string; // user's headline goal, for context
+  trend?: 'up' | 'down' | 'flat';
+  windowDays?: number;
+  events: SignalLedgerEvent[];
+  locale?: string;
+};
+
+// --- JSON schemas -------------------------------------------------------------
 
 const LAB_SCHEMA = {
   type: 'object',
@@ -276,7 +294,37 @@ const INSIGHTS_SCHEMA = {
   required: ['answer', 'insufficientData'],
 };
 
-// ─── System prompts ───────────────────────────────────────────────────────────
+const LEDGER_SCHEMA = {
+  type: 'object',
+  additionalProperties: false,
+  properties: {
+    summary: {
+      type: 'string',
+      description:
+        'ONE short, hedged sentence naming which of the given events most plausibly moved this metric over the window. Grounded ONLY in the listed events. Empty string when the events are too sparse to say anything honest.',
+    },
+    notes: {
+      type: 'array',
+      description: 'Optional short context notes for a subset of events. Copy only - never a new impact number.',
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          id: { type: 'string', description: 'The id of the event this note annotates.' },
+          note: {
+            type: 'string',
+            description:
+              'Under 12 words, hedged, observational. For dose events: context only, never an efficacy or dosing claim.',
+          },
+        },
+        required: ['id', 'note'],
+      },
+    },
+  },
+  required: ['summary', 'notes'],
+};
+
+// --- System prompts -----------------------------------------------------------
 
 function parseSystemPrompt(catalog: CatalogEntry[], nowISO: string, locale: string): string {
   const catalogLines = catalog
@@ -381,7 +429,7 @@ function visionSystemPrompt(
 function labSystemPrompt(locale: string): string {
   return [
     'You extract lab test result values from a photo of a lab report.',
-    'Return ONLY the numeric values shown on the page — never a diagnosis, interpretation, or advice.',
+    'Return ONLY the numeric values shown on the page - never a diagnosis, interpretation, or advice.',
     'Map each result to a canonical marker slug (testosterone_total, estradiol, hematocrit, glucose,',
     'lipids, dhea_s, igf1, cortisol, thyroid_tsh, vitamin_d, ferritin, creatinine, or leave as-is if',
     'none of those match). Include the unit and reference range exactly as printed.',
@@ -400,7 +448,7 @@ function vialSystemPrompt(_locale: string): string {
     'If only total mg and volume are given, compute concentrationMgMl = totalMg / volumeMl.',
     '',
     'HARD RULES:',
-    '- Return only what is printed — never suggest a concentration that is not derivable from the label.',
+    '- Return only what is printed - never suggest a concentration that is not derivable from the label.',
     '- Never provide dosing advice, schedules, or recommendations.',
   ].join('\n');
 }
@@ -410,7 +458,7 @@ function insightsSystemPrompt(mode: string, locale: string): string {
     mode === 'trend'
       ? 'Focus: describe the notable TRENDS in the data over time (weight, wellness, energy, sleep, symptoms, integration metrics). What is moving, in which direction, how steadily.'
       : mode === 'correlation'
-        ? "Focus: look for TEMPORAL ASSOCIATIONS — did anything in the data shift around the time a compound's protocol started, or around symptom clusters? Describe co-occurrence in time; never claim causation."
+        ? "Focus: look for TEMPORAL ASSOCIATIONS - did anything in the data shift around the time a compound's protocol started, or around symptom clusters? Describe co-occurrence in time; never claim causation."
         : 'Focus: answer the user\'s question using ONLY their logged data.';
   return [
     "You are a careful analyst of a single user's own self-tracked health data.",
@@ -447,7 +495,31 @@ function simpleSystemPrompt(locale: string, units?: 'metric' | 'imperial'): stri
   ].join('\n');
 }
 
-// ─── Handler ──────────────────────────────────────────────────────────────────
+function ledgerSystemPrompt(locale: string): string {
+  return [
+    "You explain what plausibly moved ONE of a self-tracker's signals over a recent window.",
+    'You are given the metric name, its trend direction, and a list of REAL events the user',
+    'logged inside that window (workouts, rest days, poor-sleep nights, symptoms, and doses),',
+    'each with a deterministic heuristic impact estimate where one exists.',
+    '',
+    'Produce:',
+    '- summary: ONE hedged sentence naming which listed event(s) most plausibly moved the metric.',
+    '- notes: optional short context lines for individual events (copy only).',
+    '',
+    'HARD RULES (non-negotiable):',
+    '- Ground everything in the listed events ONLY. Never invent an event, value, or cause.',
+    '- Never claim causation. Use association language ("around", "coincided with", "may track with").',
+    '- Hedge everything ("appears", "may", "slightly"). Never definitive.',
+    '- NEVER give dosing or medical advice. Never suggest doses, schedules, changes, or synergies.',
+    '- DOSE events are CONTEXT ONLY: never attribute a quantified effect to a compound and never',
+    '  imply it helped or hurt. You may note it was taken; nothing more.',
+    '- Do not restate every event. Be concise; empty summary is fine when events are too sparse.',
+    '- Voice: precise and analytical, like a trusted instrument. No exclamation marks, no emoji, no hype.',
+    `- Write all text in this locale: ${locale}.`,
+  ].join('\n');
+}
+
+// --- Handler ------------------------------------------------------------------
 
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
@@ -461,9 +533,10 @@ Deno.serve(async (req: Request) => {
       | ParseLabRequest
       | ScanVialRequest
       | InsightsRequest
+      | SignalLedgerRequest
       | TerraRequest;
 
-    // ── terra ──────────────────────────────────────────────────────────────
+    // -- terra --------------------------------------------------------------
     // Aggregator proxy: keeps Terra credentials server-side. Does not need the
     // Anthropic key, so handle it before that guard.
     if (body.action === 'terra') {
@@ -474,7 +547,7 @@ Deno.serve(async (req: Request) => {
     if (!apiKey) return json({ error: 'ANTHROPIC_API_KEY not configured' }, 500);
     const client = new Anthropic({ apiKey });
 
-    // ── parse_log ────────────────────────────────────────────────────────────
+    // -- parse_log ------------------------------------------------------------
     if (body.action === 'parse_log') {
       if (!body.text?.trim()) return json({ error: 'text is required' }, 400);
       const nowISO = body.nowISO ?? new Date().toISOString();
@@ -489,7 +562,7 @@ Deno.serve(async (req: Request) => {
       return json(extractJson(message, { reply: '', items: [] }), 200);
     }
 
-    // ── analyze_photo ────────────────────────────────────────────────────────
+    // -- analyze_photo --------------------------------------------------------
     if (body.action === 'analyze_photo') {
       if (!body.newImage) return json({ error: 'newImage is required' }, 400);
       const locale = body.locale ?? 'en';
@@ -532,7 +605,7 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // ── simple_analysis ──────────────────────────────────────────────────────
+    // -- simple_analysis ------------------------------------------------------
     if (body.action === 'simple_analysis') {
       const locale = body.locale ?? 'en';
       const wUnit = body.units === 'imperial' ? 'lb' : 'kg';
@@ -551,7 +624,7 @@ Deno.serve(async (req: Request) => {
         : 'No photo comparison yet.';
 
       const cycleNote = body.cycleContext === 'luteal'
-        ? 'The user may be in their luteal phase — acknowledge that water retention this week is normal and expected.'
+        ? 'The user may be in their luteal phase - acknowledge that water retention this week is normal and expected.'
         : '';
 
       const userContext = [
@@ -575,7 +648,7 @@ Deno.serve(async (req: Request) => {
       return json(extractJson(message, { message: '' }), 200);
     }
 
-    // ── parse_lab ────────────────────────────────────────────────────────────
+    // -- parse_lab ------------------------------------------------------------
     if (body.action === 'parse_lab') {
       if (!body.image) return json({ error: 'image is required' }, 400);
       const locale = body.locale ?? 'en';
@@ -595,7 +668,7 @@ Deno.serve(async (req: Request) => {
       return json(extractJson(message, { values: [] }), 200);
     }
 
-    // ── scan_vial ────────────────────────────────────────────────────────────
+    // -- scan_vial ------------------------------------------------------------
     if (body.action === 'scan_vial') {
       if (!body.image) return json({ error: 'image is required' }, 400);
       const locale = body.locale ?? 'en';
@@ -615,7 +688,7 @@ Deno.serve(async (req: Request) => {
       return json(extractJson(message, { confidence: 0 }), 200);
     }
 
-    // ── insights ─────────────────────────────────────────────────────────────
+    // -- insights -------------------------------------------------------------
     if (body.action === 'insights') {
       const locale = body.locale ?? 'en';
       const mode = body.mode ?? 'trend';
@@ -643,7 +716,7 @@ Deno.serve(async (req: Request) => {
       return json(extractJson(message, { answer: '', insufficientData: true }), 200);
     }
 
-    // ── check_fit ─────────────────────────────────────────────────────────────
+    // -- check_fit -------------------------------------------------------------
     if (body.action === 'check_fit') {
       if (!body.baselineImage) return json({ fit: 'good', confidence: 1 }, 200);
       const message = await client.messages.create({
@@ -677,13 +750,47 @@ Deno.serve(async (req: Request) => {
       return json(extractJson(message, { fit: 'good', confidence: 1 }), 200);
     }
 
+    // -- signal_ledger ---------------------------------------------------------
+    // Contextual copy over the deterministic ledger (redesign R2-D). Impacts stay
+    // client-side + deterministic; the model only adds a hedged summary + notes.
+    if (body.action === 'signal_ledger') {
+      const locale = body.locale ?? 'en';
+      if (!body.events?.length) return json({ summary: '', notes: [] }, 200);
+      const eventLines = body.events
+        .map(
+          (e) =>
+            `- [${e.id}] ${e.date} ${e.kind}: ${e.label}${typeof e.impact === 'number' ? ` (est. impact ${e.impact > 0 ? '+' : ''}${e.impact})` : ''}`,
+        )
+        .join('\n');
+      const userContent = [
+        `Metric: ${body.metric}.`,
+        body.goal ? `User goal: ${body.goal}.` : '',
+        body.trend ? `Trend over the window: ${body.trend}.` : '',
+        body.windowDays ? `Window: last ${body.windowDays} days.` : '',
+        '',
+        'Logged events in the window (newest first):',
+        eventLines,
+      ]
+        .filter(Boolean)
+        .join('\n');
+
+      const message = await client.messages.create({
+        model: PARSE_MODEL,
+        max_tokens: 400,
+        system: ledgerSystemPrompt(locale),
+        ...structured(LEDGER_SCHEMA),
+        messages: [{ role: 'user', content: userContent }],
+      });
+      return json(extractJson(message, { summary: '', notes: [] }), 200);
+    }
+
     return json({ error: 'unsupported action' }, 400);
   } catch (err) {
     return json({ error: err instanceof Error ? err.message : 'request failed' }, 500);
   }
 });
 
-// ─── Terra aggregator proxy (spec 06) ──────────────────────────────────────────
+// --- Terra aggregator proxy (spec 06) ------------------------------------------
 // Credentials live in edge secrets (TERRA_DEV_ID, TERRA_API_KEY), never in the
 // client. The client provider calls this to (a) open a Connect widget and (b)
 // pull readings, which are mapped to the canonical metric model server-side.
@@ -790,7 +897,7 @@ function mapTerraRecord(type: string, r: any, out: ProviderReading[]) {
 
   if (type === 'activity') {
     push(out, 'activity.energy', r?.calories_data?.total_burned_calories, ts, 'kcal');
-    // Effort normalization: Whoop-style strain is 0..21 → map to a 0..100 effort score
+    // Effort normalization: Whoop-style strain is 0..21 -> map to a 0..100 effort score
     // so heterogeneous provider scores share one canonical scale (spec 06). Raw stays at source.
     const strain = r?.strain_data?.strain_level;
     if (typeof strain === 'number' && Number.isFinite(strain)) {

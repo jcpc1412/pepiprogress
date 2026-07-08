@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -9,8 +10,9 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing, type ThemeColor } from '@/constants/theme';
 import { compoundBySlug } from '@/data/compound-catalog';
+import { getSignalLedger, type SignalLedgerResult } from '@/lib/ai';
 import { formatHeroValue, useVerdict, type TFn } from '@/features/home/use-verdict';
-import { formatDateKey, shiftDateKey } from '@/lib/dates';
+import { daysBetween, formatDateKey, shiftDateKey } from '@/lib/dates';
 import { extractLedger, metricExplainerKey } from '@/lib/signal-ledger';
 import { localDateKey, useStore } from '@/lib/store';
 import { metricHeroUnit, type SignalTone } from '@/lib/verdict-engine';
@@ -58,6 +60,47 @@ export function SignalDetail({ metricId, onClose }: { metricId: string; onClose:
 
   const fmt = signal ? formatHeroValue(signal.value, metricHeroUnit(metricId), profile.units, tx) : null;
   const toneC = TONE_COLOR[signal?.tone ?? 'neutral'];
+
+  // Best-effort AI copy over the deterministic ledger (redesign R2-D). Falls back
+  // silently to the offline ledger when the service is unreachable or unconfigured.
+  // Tag each result with the event-set it was fetched for so stale copy from a
+  // previous signal is ignored at render (no synchronous reset needed).
+  const [fetched, setFetched] = useState<{ key: string; result: SignalLedgerResult | null }>();
+  const eventsKey = events.map((e) => e.id).join(',');
+  const trend: 'up' | 'down' | 'flat' | undefined = signal?.series.length
+    ? signal.series[signal.series.length - 1].value > signal.series[0].value
+      ? 'up'
+      : signal.series[signal.series.length - 1].value < signal.series[0].value
+        ? 'down'
+        : 'flat'
+    : undefined;
+  const lang = i18n.language;
+  useEffect(() => {
+    let cancelled = false;
+    if (events.length === 0) return;
+    const input = events.map((e) => ({
+      id: e.id,
+      kind: e.kind,
+      label: t(e.labelKey as 'signal.event.dose', e.labelParams),
+      date: e.ts.slice(0, 10),
+      impact: e.impact,
+    }));
+    getSignalLedger({
+      metric: name,
+      trend,
+      windowDays: daysBetween(windowStart, windowEnd),
+      events: input,
+      locale: lang,
+    }).then((r) => {
+      if (!cancelled) setFetched({ key: eventsKey, result: r });
+    });
+    return () => {
+      cancelled = true;
+    };
+    // Refetch only when the event set, metric, or language changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [eventsKey, metricId, lang]);
+  const ai = fetched?.key === eventsKey ? fetched.result : null;
 
   return (
     <ThemedView style={styles.container}>
@@ -107,6 +150,16 @@ export function SignalDetail({ metricId, onClose }: { metricId: string; onClose:
             </Card>
           ) : null}
 
+          {/* AI context over the ledger (hedged, grounded in the events below). */}
+          {ai?.summary ? (
+            <View style={styles.block}>
+              <EngravedLabel>{t('signal.contextLabel')}</EngravedLabel>
+              <ThemedText type="body" themeColor="textSecondary">
+                {ai.summary}
+              </ThemedText>
+            </View>
+          ) : null}
+
           {/* The ledger: real logged events that plausibly moved it. */}
           <View style={styles.block}>
             <EngravedLabel>{t('signal.ledgerLabel')}</EngravedLabel>
@@ -134,6 +187,15 @@ export function SignalDetail({ metricId, onClose }: { metricId: string; onClose:
                         </ThemedText>
                       )}
                     </View>
+                    {ai?.notes[e.id] ? (
+                      <ThemedText
+                        type="monoSm"
+                        themeColor="textMuted"
+                        style={styles.eventNote}
+                        numberOfLines={2}>
+                        {ai.notes[e.id]}
+                      </ThemedText>
+                    ) : null}
                   </View>
                 ))}
               </Card>
@@ -177,5 +239,6 @@ const styles = StyleSheet.create({
   eventRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two, paddingVertical: Spacing.one },
   eventDate: { width: 64 },
   eventLabel: { flex: 1 },
+  eventNote: { paddingLeft: 72, marginTop: 2, fontStyle: 'italic' },
   estimated: { fontStyle: 'italic' },
 });

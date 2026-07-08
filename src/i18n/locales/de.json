@@ -863,6 +863,7 @@
     "explainLabel": "Dazu",
     "sourcesLabel": "Datenquellen",
     "ledgerLabel": "Was es bewegt hat",
+    "contextLabel": "Im Kontext",
     "estimated": "geschätzt",
     "noEvents": "Noch keine Ereignisse in diesem Zeitraum",
     "source": {

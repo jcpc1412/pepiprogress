@@ -299,3 +299,50 @@ export async function runEncouragementAnalysis(opts: {
   if (!data) throw new Error('empty analysis');
   return data;
 }
+
+/** A compound-agnostic event handed to the ledger action for contextual copy. */
+export type SignalLedgerInput = {
+  id: string;
+  kind: 'workout' | 'rest' | 'poor_sleep' | 'symptom' | 'dose';
+  label: string;
+  date: string;
+  impact?: number;
+};
+
+export type SignalLedgerResult = {
+  /** One hedged sentence over the window; empty when events are too sparse. */
+  summary: string;
+  /** Optional per-event context notes, keyed by event id. */
+  notes: Record<string, string>;
+};
+
+/**
+ * Contextual copy over the deterministic signal ledger (redesign R2-D). The
+ * impacts stay client-side + deterministic; this only adds a hedged summary +
+ * per-event notes. Best-effort: returns null on any miss (not configured,
+ * offline, or server error) so the caller keeps the offline ledger unchanged.
+ */
+export async function getSignalLedger(opts: {
+  metric: string;
+  goal?: string;
+  trend?: 'up' | 'down' | 'flat';
+  windowDays?: number;
+  events: SignalLedgerInput[];
+  locale: string;
+}): Promise<SignalLedgerResult | null> {
+  if (!isSupabaseConfigured || opts.events.length === 0) return null;
+  try {
+    const { data, error } = await supabase.functions.invoke<{
+      summary?: string;
+      notes?: { id: string; note: string }[];
+    }>('ai-service', { body: { action: 'signal_ledger', ...opts } });
+    if (error || !data) return null;
+    const notes: Record<string, string> = {};
+    for (const n of data.notes ?? []) {
+      if (n?.id && n?.note) notes[n.id] = n.note;
+    }
+    return { summary: data.summary ?? '', notes };
+  } catch {
+    return null;
+  }
+}

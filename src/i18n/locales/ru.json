@@ -863,6 +863,7 @@
     "explainLabel": "Об этом",
     "sourcesLabel": "Источники данных",
     "ledgerLabel": "Что на это повлияло",
+    "contextLabel": "В контексте",
     "estimated": "оценка",
     "noEvents": "Пока нет событий за этот период",
     "source": {
