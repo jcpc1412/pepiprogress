@@ -55,7 +55,8 @@ export function Dashboard() {
     return [date, type, week].filter(Boolean).join(' · ');
   }, [i18n.language, profile.goals, protocolItems, today, t]);
 
-  const openReasoning = () => router.push('/reasoning');
+  // The decompose now lives on the Analysis tab (R2-C C4).
+  const openReasoning = () => router.navigate('/insights');
 
   // Evidence (R2-B B1): a recent photo compare wins when one exists — the mockup
   // default — otherwise the hero metric's own chart. Photo pair = the most recent

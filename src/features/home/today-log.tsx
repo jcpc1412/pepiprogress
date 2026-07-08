@@ -18,7 +18,7 @@ import { useQuickLogActivity } from '@/lib/quick-log-runner';
  * next to the "why" (the signal stack), so the two readouts share one surface
  * and Home stays a clean verdict → evidence → log flow.
  */
-export function TodayLog() {
+export function TodayLog({ bare = false }: { bare?: boolean }) {
   const { t } = useTranslation();
   const theme = useTheme();
   const { entries, doseEvents, profile, upsertCheckin } = useStore();
@@ -61,77 +61,94 @@ export function TodayLog() {
     setEditingNote(false);
   };
 
+  const head = (
+    <View style={styles.summaryHead}>
+      <EngravedLabel>{t('dashboard.distillation')}</EngravedLabel>
+      <View style={styles.summaryHeadRight}>
+        {quickLog.state === 'distilling' ? (
+          <StatusPill label={t('dashboard.distillingPill')} tone="neutral" />
+        ) : quickLog.state === 'error' ? (
+          <StatusPill label={t('dashboard.distillErrorPill')} tone="bad" />
+        ) : (
+          <StatusPill
+            label={loggedToday ? t('dashboard.onTrack') : t('dashboard.pending')}
+            tone={loggedToday ? 'good' : 'neutral'}
+          />
+        )}
+        {quickLog.state !== 'distilling' && !editingNote && (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t('dashboard.editNote')}
+            onPress={startEditNote}
+            hitSlop={8}>
+            <PencilIcon size={16} color="textMuted" />
+          </Pressable>
+        )}
+      </View>
+    </View>
+  );
+
+  const body = editingNote ? (
+    <View style={styles.noteEditor}>
+      <TextInput
+        style={[styles.noteInput, { color: theme.text, borderColor: theme.border }]}
+        value={noteDraft}
+        onChangeText={setNoteDraft}
+        placeholder={t('dashboard.notePlaceholder')}
+        placeholderTextColor={theme.textMuted}
+        multiline
+        autoFocus
+      />
+      <View style={styles.noteActions}>
+        <TextButton label={t('common.cancel')} onPress={() => setEditingNote(false)} />
+        <Pressable accessibilityRole="button" onPress={saveNote} hitSlop={8}>
+          <ThemedText type="smallBold" themeColor="accent">
+            {t('common.save')}
+          </ThemedText>
+        </Pressable>
+      </View>
+    </View>
+  ) : (
+    <>
+      <ThemedText type="small" themeColor="textSecondary">
+        {quickLog.state === 'distilling'
+          ? t('dashboard.distilling')
+          : quickLog.state === 'error'
+            ? t('dashboard.distillError')
+            : quickLog.state === 'done' && quickLog.summary
+              ? quickLog.summary
+              : distillation || t('dashboard.notLoggedToday')}
+      </ThemedText>
+      {todayEntry?.note ? (
+        <ThemedText type="small" themeColor="text" style={styles.noteText}>
+          {todayEntry.note}
+        </ThemedText>
+      ) : null}
+    </>
+  );
+
+  // Bare: no card — folds into the reasoning recap so today's facts + note read
+  // as part of the verdict prose above them (R2-C C3).
+  if (bare) {
+    return (
+      <View style={styles.bare}>
+        {head}
+        {body}
+      </View>
+    );
+  }
+
   return (
     <Card style={styles.summary}>
-      <View style={styles.summaryHead}>
-        <EngravedLabel>{t('dashboard.distillation')}</EngravedLabel>
-        <View style={styles.summaryHeadRight}>
-          {quickLog.state === 'distilling' ? (
-            <StatusPill label={t('dashboard.distillingPill')} tone="neutral" />
-          ) : quickLog.state === 'error' ? (
-            <StatusPill label={t('dashboard.distillErrorPill')} tone="bad" />
-          ) : (
-            <StatusPill
-              label={loggedToday ? t('dashboard.onTrack') : t('dashboard.pending')}
-              tone={loggedToday ? 'good' : 'neutral'}
-            />
-          )}
-          {quickLog.state !== 'distilling' && !editingNote && (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={t('dashboard.editNote')}
-              onPress={startEditNote}
-              hitSlop={8}>
-              <PencilIcon size={16} color="textMuted" />
-            </Pressable>
-          )}
-        </View>
-      </View>
-
-      {editingNote ? (
-        <View style={styles.noteEditor}>
-          <TextInput
-            style={[styles.noteInput, { color: theme.text, borderColor: theme.border }]}
-            value={noteDraft}
-            onChangeText={setNoteDraft}
-            placeholder={t('dashboard.notePlaceholder')}
-            placeholderTextColor={theme.textMuted}
-            multiline
-            autoFocus
-          />
-          <View style={styles.noteActions}>
-            <TextButton label={t('common.cancel')} onPress={() => setEditingNote(false)} />
-            <Pressable accessibilityRole="button" onPress={saveNote} hitSlop={8}>
-              <ThemedText type="smallBold" themeColor="accent">
-                {t('common.save')}
-              </ThemedText>
-            </Pressable>
-          </View>
-        </View>
-      ) : (
-        <>
-          <ThemedText type="small" themeColor="textSecondary">
-            {quickLog.state === 'distilling'
-              ? t('dashboard.distilling')
-              : quickLog.state === 'error'
-                ? t('dashboard.distillError')
-                : quickLog.state === 'done' && quickLog.summary
-                  ? quickLog.summary
-                  : distillation || t('dashboard.notLoggedToday')}
-          </ThemedText>
-          {todayEntry?.note ? (
-            <ThemedText type="small" themeColor="text" style={styles.noteText}>
-              {todayEntry.note}
-            </ThemedText>
-          ) : null}
-        </>
-      )}
+      {head}
+      {body}
     </Card>
   );
 }
 
 const styles = StyleSheet.create({
   summary: { gap: Spacing.two },
+  bare: { gap: Spacing.two, marginTop: Spacing.one },
   summaryHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.two },
   summaryHeadRight: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
   noteText: { fontStyle: 'italic' },

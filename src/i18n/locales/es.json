@@ -32,7 +32,8 @@
     "today": "Hoy",
     "photos": "Fotos",
     "insights": "Análisis",
-    "pepi": "Pepi"
+    "pepi": "Pepi",
+    "analysis": "Análisis"
   },
   "units": {
     "metric": "Métrico",
@@ -854,5 +855,8 @@
   },
   "pepi": {
     "subtitle": "Registra lo que sea, o pregunta sobre tus datos."
+  },
+  "analysis": {
+    "heading": "Análisis"
   }
 }

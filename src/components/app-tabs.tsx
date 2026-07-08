@@ -53,10 +53,10 @@ export default function AppTabs() {
           <TabTrigger name="pepi" href="/pepi" asChild>
             <TabButton icon={ChatIcon} label={t('tabs.pepi')} />
           </TabTrigger>
-          {/* Insights kept for now (owner: do not demote yet). Protocol config
-              moved into Settings (redesign §4.5). */}
+          {/* Analysis (R2-C C4) — replaces Insights: hosts the verdict decompose +
+              trends. Route id stays `insights` for stability. */}
           <TabTrigger name="insights" href="/insights" asChild>
-            <TabButton icon={InsightsIcon} label={t('tabs.insights')} />
+            <TabButton icon={InsightsIcon} label={t('tabs.analysis')} />
           </TabTrigger>
         </View>
       </TabList>

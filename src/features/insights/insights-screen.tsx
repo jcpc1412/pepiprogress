@@ -71,7 +71,7 @@ export function InsightsScreen() {
 }
 
 /** Local, always-on summary cards (no AI call). */
-function SummaryCards() {
+export function SummaryCards() {
   const { t } = useTranslation();
   const { entries, protocolItems, profile } = useStore();
 
@@ -148,7 +148,7 @@ function SummaryCards() {
  *  R2). Unlike the dashboard's 10-day glance, this shows the whole cycle from when
  *  the earliest compound started, and — like the dashboard — merges integration +
  *  wearable-derived data, not just manual check-ins. */
-function ChartsSection() {
+export function ChartsSection() {
   const { t } = useTranslation();
   const { entries, metricReadings, protocolItems, profile } = useStore();
 
@@ -215,7 +215,7 @@ function ChartsSection() {
 }
 
 /** Educational unlock state shown below the AI threshold. */
-function UnlockCard({ remaining }: { remaining: number }) {
+export function UnlockCard({ remaining }: { remaining: number }) {
   const { t } = useTranslation();
   return (
     <Card style={styles.unlock}>
