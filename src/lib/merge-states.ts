@@ -128,5 +128,8 @@ export function mergeStates(local: PersistedState, cloud: PersistedState): Persi
     customCompounds: cloud.customCompounds?.length ? cloud.customCompounds : local.customCompounds,
     // The quick-log queue is a device-local job list — never restored from cloud.
     quickLogJobs: local.quickLogJobs ?? [],
+    // Pepi chat is a light, session-scoped thread — keep whichever side has it,
+    // preferring local (the device the user is actively on).
+    pepiMessages: local.pepiMessages?.length ? local.pepiMessages : (cloud.pepiMessages ?? []),
   };
 }

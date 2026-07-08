@@ -277,7 +277,10 @@ The parser already understands labeled numbers. All template strings via i18n (6
   auto-apply and the confirmation message carries the undo affordance); otherwise the
   deterministic Ask pipeline answers; AI-unconfigured shows the existing hint as a message.
 - Suggestion chips above the composer: Weekly summary / What changed? / Log a dose + the E1
-  templates.
+  templates. Shipped as the E1 templates + "Log a dose" (log-insert chips) plus two
+  deterministic ask chips that stand in for the named ones: weight trend ("what changed?")
+  and doses this week ("weekly summary"). These run through the same deterministic Ask
+  pipeline, so every chip works in all six locales without an extra AI call.
 - No charts on Pepi: Analysis owns every chart. Thread state is session-scoped v1 (last N
   messages persisted lightly in the store so the tab doesn't feel amnesiac).
 - The Home Log button and logging overlay are unchanged; this merge touches only the tab.

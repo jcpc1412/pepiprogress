@@ -364,6 +364,7 @@ export async function pullFromCloud(userId: string): Promise<PersistedState | nu
     integrations: {},
     customCompounds: [],
     quickLogJobs: [],
+    pepiMessages: [],
   };
 }
 

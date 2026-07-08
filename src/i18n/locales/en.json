@@ -190,7 +190,8 @@
     "chipProgress": "Progress check",
     "tplMorning": "Slept: h\nSleep quality: /5\nWeight: ",
     "tplEvening": "Workout effort: /5\nCalories: \nProtein: ",
-    "tplProgress": "Weight: \nWaist: \nNeck: "
+    "tplProgress": "Weight: \nWaist: \nNeck: ",
+    "tplDose": "Dose: "
   },
   "photos": {
     "title": "Progress photos",
@@ -865,7 +866,21 @@
     }
   },
   "pepi": {
-    "subtitle": "Log anything, or ask about your data."
+    "subtitle": "Log anything, or ask about your data.",
+    "composerPlaceholder": "Log or ask anything",
+    "send": "Send",
+    "thinking": "Reading…",
+    "notUnderstood": "I could not read that as a log or a question. Try rephrasing.",
+    "error": "Something went wrong. Try again.",
+    "loggedCount": "Logged {{count}}.",
+    "emptyTitle": "Log or ask",
+    "emptyHint": "Tell Pepi what you did today, or ask about your own numbers.",
+    "undone": "Undone",
+    "clear": "Clear",
+    "chipLogDose": "Log a dose",
+    "ansValue": "{{metric}}, {{tf}}: {{value}} {{unit}} ({{agg}}, {{samples}})",
+    "ansCompare": "{{metric}}, {{tf}}: {{value}} {{unit}} ({{delta}} {{vsPrior}})",
+    "ansExtremum": "{{metric}}: {{value}} {{unit}} ({{dir}}, {{date}})"
   },
   "analysis": {
     "heading": "Analysis"

@@ -32,6 +32,7 @@ const state = (over: Partial<PersistedState> = {}): PersistedState => ({
   integrations: {},
   customCompounds: [],
   quickLogJobs: [],
+  pepiMessages: [],
   ...over,
 });
 

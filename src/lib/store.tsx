@@ -174,6 +174,17 @@ export type QuickLogJob = {
   skippedCount?: number;
 };
 
+/** One turn in the Pepi chat thread (redesign R2-F). Persisted lightly so the
+ *  tab is not amnesiac; the undo affordance for `log` replies is session-only. */
+export type PepiMessage = {
+  id: string;
+  role: 'user' | 'pepi';
+  ts: string; // ISO
+  text: string;
+  /** Pepi reply shape: a logged-data confirmation, a data answer, or a hint/error. */
+  variant?: 'log' | 'answer' | 'hint' | 'error';
+};
+
 export type ThemePreference = 'light' | 'dark' | 'auto';
 export type Sex = 'male' | 'female' | 'ftm' | 'mtf';
 
@@ -260,6 +271,8 @@ export type PersistedState = {
   customCompounds: CatalogCompound[];
   /** Background natural-language quick-log queue (spec 13). */
   quickLogJobs: QuickLogJob[];
+  /** Pepi chat thread, trimmed to the last N messages (redesign R2-F). */
+  pepiMessages: PepiMessage[];
 };
 
 /** Convert a dose to mg for inventory decrement. IU can't be converted → null. */
@@ -292,7 +305,11 @@ const EMPTY_STATE: PersistedState = {
   integrations: {},
   customCompounds: [],
   quickLogJobs: [],
+  pepiMessages: [],
 };
+
+/** How many Pepi chat turns to retain (redesign R2-F: last N, lightly persisted). */
+const PEPI_HISTORY_LIMIT = 40;
 
 /** Local date as YYYY-MM-DD (not UTC — the check-in is anchored to the user's day). */
 export function localDateKey(d: Date = new Date()): string {
@@ -321,10 +338,14 @@ type StoreContextValue = {
   integrations: Record<string, IntegrationState>;
   customCompounds: CatalogCompound[];
   quickLogJobs: QuickLogJob[];
+  pepiMessages: PepiMessage[];
   /** Queue a natural-language quick-log for background parsing; returns its id. */
   enqueueQuickLog: (text: string, locale: string) => string;
   updateQuickLogJob: (id: string, patch: Partial<QuickLogJob>) => void;
   removeQuickLogJob: (id: string) => void;
+  /** Append a Pepi chat turn (trimmed to the last N); returns its id (R2-F). */
+  addPepiMessage: (msg: Omit<PepiMessage, 'id' | 'ts'>) => string;
+  clearPepiMessages: () => void;
   setProfile: (patch: Partial<LocalProfile>) => void;
   completeOnboarding: () => void;
   /** Add a user-created compound (O-04). */
@@ -603,6 +624,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setState((s) => ({ ...s, quickLogJobs: s.quickLogJobs.filter((j) => j.id !== id) }));
   }, []);
 
+  const addPepiMessage = useCallback<StoreContextValue['addPepiMessage']>((msg) => {
+    const id = uid();
+    const full: PepiMessage = { ...msg, id, ts: new Date().toISOString() };
+    setState((s) => ({ ...s, pepiMessages: [...s.pepiMessages, full].slice(-PEPI_HISTORY_LIMIT) }));
+    return id;
+  }, []);
+
+  const clearPepiMessages = useCallback<StoreContextValue['clearPepiMessages']>(() => {
+    setState((s) => ({ ...s, pepiMessages: [] }));
+  }, []);
+
   const value = useMemo<StoreContextValue>(
     () => ({
       ready,
@@ -617,9 +649,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       integrations: state.integrations,
       customCompounds: state.customCompounds,
       quickLogJobs: state.quickLogJobs,
+      pepiMessages: state.pepiMessages,
       enqueueQuickLog,
       updateQuickLogJob,
       removeQuickLogJob,
+      addPepiMessage,
+      clearPepiMessages,
       setProfile,
       completeOnboarding,
       addCustomCompound,
@@ -649,6 +684,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       enqueueQuickLog,
       updateQuickLogJob,
       removeQuickLogJob,
+      addPepiMessage,
+      clearPepiMessages,
       setProfile,
       completeOnboarding,
       addCustomCompound,

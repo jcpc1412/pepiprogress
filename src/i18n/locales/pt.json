@@ -190,7 +190,8 @@
     "chipProgress": "Registo de progresso",
     "tplMorning": "Dormi: h\nQualidade do sono: /5\nPeso: ",
     "tplEvening": "Esforço do treino: /5\nCalorias: \nProteína: ",
-    "tplProgress": "Peso: \nCintura: \nPescoço: "
+    "tplProgress": "Peso: \nCintura: \nPescoço: ",
+    "tplDose": "Dose: "
   },
   "photos": {
     "title": "Fotos de progresso",
@@ -865,7 +866,21 @@
     }
   },
   "pepi": {
-    "subtitle": "Registre qualquer coisa, ou pergunte sobre seus dados."
+    "subtitle": "Registre qualquer coisa, ou pergunte sobre seus dados.",
+    "composerPlaceholder": "Registe ou pergunte qualquer coisa",
+    "send": "Enviar",
+    "thinking": "A ler…",
+    "notUnderstood": "Não consegui interpretar isso como registo ou pergunta. Tente reformular.",
+    "error": "Algo correu mal. Tente novamente.",
+    "loggedCount": "Registado {{count}}.",
+    "emptyTitle": "Registar ou perguntar",
+    "emptyHint": "Diga ao Pepi o que fez hoje, ou pergunte sobre os seus próprios dados.",
+    "undone": "Desfeito",
+    "clear": "Limpar",
+    "chipLogDose": "Registar dose",
+    "ansValue": "{{metric}}, {{tf}}: {{value}} {{unit}} ({{agg}}, {{samples}})",
+    "ansCompare": "{{metric}}, {{tf}}: {{value}} {{unit}} ({{delta}} {{vsPrior}})",
+    "ansExtremum": "{{metric}}: {{value}} {{unit}} ({{dir}}, {{date}})"
   },
   "analysis": {
     "heading": "Análise"

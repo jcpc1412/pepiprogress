@@ -190,7 +190,8 @@
     "chipProgress": "Fortschritts-Check",
     "tplMorning": "Geschlafen: h\nSchlafqualität: /5\nGewicht: ",
     "tplEvening": "Trainingsintensität: /5\nKalorien: \nProtein: ",
-    "tplProgress": "Gewicht: \nTaille: \nHals: "
+    "tplProgress": "Gewicht: \nTaille: \nHals: ",
+    "tplDose": "Dosis: "
   },
   "photos": {
     "title": "Fortschrittsfotos",
@@ -865,7 +866,21 @@
     }
   },
   "pepi": {
-    "subtitle": "Protokolliere alles, oder frage nach deinen Daten."
+    "subtitle": "Protokolliere alles, oder frage nach deinen Daten.",
+    "composerPlaceholder": "Protokollieren oder fragen",
+    "send": "Senden",
+    "thinking": "Lese…",
+    "notUnderstood": "Ich konnte das weder als Eintrag noch als Frage lesen. Formuliere es neu.",
+    "error": "Etwas ist schiefgelaufen. Versuche es erneut.",
+    "loggedCount": "{{count}} protokolliert.",
+    "emptyTitle": "Protokollieren oder fragen",
+    "emptyHint": "Erzähl Pepi, was du heute gemacht hast, oder frag nach deinen eigenen Daten.",
+    "undone": "Rückgängig gemacht",
+    "clear": "Leeren",
+    "chipLogDose": "Dosis protokollieren",
+    "ansValue": "{{metric}}, {{tf}}: {{value}} {{unit}} ({{agg}}, {{samples}})",
+    "ansCompare": "{{metric}}, {{tf}}: {{value}} {{unit}} ({{delta}} {{vsPrior}})",
+    "ansExtremum": "{{metric}}: {{value}} {{unit}} ({{dir}}, {{date}})"
   },
   "analysis": {
     "heading": "Analyse"

@@ -190,7 +190,8 @@
     "chipProgress": "Запись прогресса",
     "tplMorning": "Сон: ч\nКачество сна: /5\nВес: ",
     "tplEvening": "Нагрузка тренировки: /5\nКалории: \nБелок: ",
-    "tplProgress": "Вес: \nТалия: \nШея: "
+    "tplProgress": "Вес: \nТалия: \nШея: ",
+    "tplDose": "Доза: "
   },
   "photos": {
     "title": "Фото прогресса",
@@ -865,7 +866,21 @@
     }
   },
   "pepi": {
-    "subtitle": "Записывайте что угодно или спрашивайте о своих данных."
+    "subtitle": "Записывайте что угодно или спрашивайте о своих данных.",
+    "composerPlaceholder": "Запишите или спросите что угодно",
+    "send": "Отправить",
+    "thinking": "Читаю…",
+    "notUnderstood": "Не удалось распознать это как запись или вопрос. Переформулируйте.",
+    "error": "Что-то пошло не так. Попробуйте снова.",
+    "loggedCount": "Записано: {{count}}.",
+    "emptyTitle": "Записать или спросить",
+    "emptyHint": "Расскажите Pepi, что вы делали сегодня, или спросите о своих данных.",
+    "undone": "Отменено",
+    "clear": "Очистить",
+    "chipLogDose": "Записать дозу",
+    "ansValue": "{{metric}}, {{tf}}: {{value}} {{unit}} ({{agg}}, {{samples}})",
+    "ansCompare": "{{metric}}, {{tf}}: {{value}} {{unit}} ({{delta}} {{vsPrior}})",
+    "ansExtremum": "{{metric}}: {{value}} {{unit}} ({{dir}}, {{date}})"
   },
   "analysis": {
     "heading": "Анализ"
