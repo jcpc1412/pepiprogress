@@ -303,6 +303,10 @@ caption), `quicklog.template.*`, `checkin.section.*` (morning/evening/devices an
 - Plateau copy is descriptive, an observation about the read, never a prescription.
 
 ## Polish notes (after the R2 implementation, not during)
+- **Round trend-chart values.** The Analysis trend charts (ChartsSection / LineChart value +
+  range labels, reused from Insights) render raw floats, e.g. "RECUPERACIÓN 3.3499999999999996".
+  Round to 1 decimal at the label layer. Pre-existing from the Insights screen, now more visible
+  on the Analysis tab.
 - **Rename the signal role "supports" to "progressing"** (owner, clearer across all languages).
   Touches the `verdict.role.supports` value in all 6 locales (currently "Supports" / "Apoya" /
   etc.) plus any role-tone mapping that keys off the word; the engine role id stays `supports`,
