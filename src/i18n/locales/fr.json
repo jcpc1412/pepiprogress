@@ -145,7 +145,11 @@
     "nutrition": "Nutrition",
     "autofillProtein": "Utiliser les protéines synchronisées : {{value}} g",
     "autofillCalories": "Utiliser les calories synchronisées : {{value}} kcal",
-    "saveLog": "Enregistrer"
+    "saveLog": "Enregistrer",
+    "customizeLink": "Personnaliser ce que je note",
+    "showEveningFields": "Afficher les champs du soir",
+    "showMorningFields": "Afficher les champs du matin",
+    "hideFields": "Masquer"
   },
   "quicklog": {
     "title": "Journal rapide",
@@ -179,7 +183,14 @@
     "skipItem": "Ignorer",
     "unclearSkipped": "Ignore",
     "distilling": "Distillation…",
-    "backgroundHint": "Notez et continuez. Nous le distillerons en arrière-plan."
+    "backgroundHint": "Notez et continuez. Nous le distillerons en arrière-plan.",
+    "templatesLabel": "Modèles",
+    "chipMorning": "Bilan du matin",
+    "chipEvening": "Bilan du soir",
+    "chipProgress": "Bilan de progression",
+    "tplMorning": "Dormi : h\nQualité du sommeil : /5\nPoids : ",
+    "tplEvening": "Effort d’entraînement : /5\nCalories : \nProtéines : ",
+    "tplProgress": "Poids : \nTour de taille : \nCou : "
   },
   "photos": {
     "title": "Photos de progression",
@@ -886,5 +897,9 @@
       "soreness": "Courbatures musculaires. Un entraînement intense ou nouveau les augmente ; le repos et les séances légères les réduisent.",
       "default": "Un signal suivi dans ton journal. Sa tendance est lue par rapport à ton objectif sur la période récente."
     }
+  },
+  "whatILog": {
+    "title": "Ce que je note",
+    "hint": "Ajoutez ou retirez des champs de votre suivi quotidien. Les valeurs par défaut suivent vos objectifs et vos composés."
   }
 }

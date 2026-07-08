@@ -1,22 +1,18 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useRouter, type Href } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
-import { LabeledInput, OptionChip, PrimaryButton, ScaleSelector } from '@/components/form';
+import { LabeledInput, PrimaryButton, ScaleSelector } from '@/components/form';
 import { Card, Divider, EngravedLabel, SignalText, Sunken } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
 import { Fonts, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { LabImport } from '@/features/lab/lab-import';
 import { SymptomEvents } from '@/features/symptoms/symptom-events';
-import { formatDateKey, shiftDateKey } from '@/lib/dates';
+import { formatDateKey, localHour, shiftDateKey } from '@/lib/dates';
 import { metricForDate, weightInUnits } from '@/lib/integrations/autofill';
-import {
-  applyFieldCustomization,
-  CUSTOMIZABLE_FIELDS,
-  surfaceFields,
-  type CheckinField,
-} from '@/lib/field-surfacing';
+import { applyFieldCustomization, partitionByTime, surfaceFields } from '@/lib/field-surfacing';
 import { localDateKey, useStore, type CheckinEntry } from '@/lib/store';
 
 type DeltaTone = 'good' | 'bad' | 'neutral';
@@ -61,12 +57,13 @@ const TEXT_FIELDS: TextField[] = ['skin_notes', 'measurements', 'note'];
 export function DetailedLog({ onDismiss }: { onDismiss?: () => void } = {}) {
   const { t, i18n } = useTranslation();
   const theme = useTheme();
-  const { profile, entries, photos, protocolItems, doseEvents, metricReadings, upsertCheckin, setProfile } =
+  const router = useRouter();
+  const { profile, entries, photos, protocolItems, doseEvents, metricReadings, upsertCheckin } =
     useStore();
 
   const today = localDateKey();
   const [date, setDate] = useState(today);
-  const [showCustomize, setShowCustomize] = useState(false);
+  const [showDeferred, setShowDeferred] = useState(false);
   const [weightError, setWeightError] = useState<string | undefined>(undefined);
   const [nutritionError, setNutritionError] = useState<Partial<Record<NutritionField, string>>>({});
   const [measurementError, setMeasurementError] = useState<Partial<Record<'waist' | 'hips' | 'extra', string>>>({});
@@ -126,7 +123,6 @@ export function DetailedLog({ onDismiss }: { onDismiss?: () => void } = {}) {
     () => applyFieldCustomization(baseFields, profile.addedFields, profile.removedFields),
     [baseFields, profile.addedFields, profile.removedFields],
   );
-  const shown = useMemo(() => new Set(fields), [fields]);
 
   // Nutrition surfaces when a goal/effect-tag asks for it OR a health source has
   // supplied a reading for the day — so passively-synced calories/macros always
@@ -184,22 +180,31 @@ export function DetailedLog({ onDismiss }: { onDismiss?: () => void } = {}) {
     return { text, tone };
   }, [entries, date, entry?.weight, profile.goals]);
 
-  const toggleField = (field: CheckinField, makeVisible: boolean) => {
-    const added = makeVisible
-      ? Array.from(new Set([...profile.addedFields, field]))
-      : profile.addedFields.filter((f) => f !== field);
-    const removed = makeVisible
-      ? profile.removedFields.filter((f) => f !== field)
-      : Array.from(new Set([...profile.removedFields, field]));
-    setProfile({ addedFields: added, removedFields: removed });
-  };
-
   const num = (key: keyof CheckinEntry) =>
     typeof entry?.[key] === 'number' ? (entry[key] as number) : undefined;
   const str = (key: keyof CheckinEntry) =>
     typeof entry?.[key] === 'string' ? (entry[key] as string) : '';
 
   const scaleFields = SCALE_FIELDS.filter((f) => fields.includes(f));
+  // Time-aware ordering (R2-E): morning scales lead in the morning, evening ones
+  // after ~15:00; the off-time set folds behind a "Show …" anchor.
+  const { primary: primaryScales, deferred: deferredScales, deferredIsEvening } = partitionByTime(
+    scaleFields,
+    localHour(),
+  );
+
+  const scaleRow = (f: ScaleField, i: number) => (
+    <View key={f}>
+      {i > 0 && <Divider style={styles.rowDivider} />}
+      <View style={styles.scaleField}>
+        <ThemedText type="mono">{t(`fields.${f}` as const)}</ThemedText>
+        <ScaleSelector
+          value={num(f as keyof CheckinEntry)}
+          onChange={(v) => upsertCheckin(date, { [f]: v })}
+        />
+      </View>
+    </View>
+  );
 
   return (
     <View style={styles.wrap}>
@@ -386,18 +391,26 @@ export function DetailedLog({ onDismiss }: { onDismiss?: () => void } = {}) {
       {scaleFields.length > 0 && (
         <View>
           <EngravedLabel style={styles.sectionLabel}>{t('checkin.telemetry')}</EngravedLabel>
-          {scaleFields.map((f, i) => (
-            <View key={f}>
-              {i > 0 && <Divider style={styles.rowDivider} />}
-              <View style={styles.scaleField}>
-                <ThemedText type="mono">{t(`fields.${f}` as const)}</ThemedText>
-                <ScaleSelector
-                  value={num(f as keyof CheckinEntry)}
-                  onChange={(v) => upsertCheckin(date, { [f]: v })}
-                />
-              </View>
-            </View>
-          ))}
+          {(primaryScales as ScaleField[]).map(scaleRow)}
+          {deferredScales.length > 0 && (
+            <>
+              <Pressable
+                accessibilityRole="button"
+                style={styles.deferredToggle}
+                onPress={() => setShowDeferred((v) => !v)}>
+                <ThemedText type="monoSm" themeColor="textSecondary" style={styles.autofill}>
+                  {t(
+                    showDeferred
+                      ? 'checkin.hideFields'
+                      : deferredIsEvening
+                        ? 'checkin.showEveningFields'
+                        : 'checkin.showMorningFields',
+                  )}
+                </ThemedText>
+              </Pressable>
+              {showDeferred && (deferredScales as ScaleField[]).map(scaleRow)}
+            </>
+          )}
         </View>
       )}
 
@@ -430,22 +443,13 @@ export function DetailedLog({ onDismiss }: { onDismiss?: () => void } = {}) {
         <LabImport />
       </Card>
 
+      {/* Customization moved to Settings (R2-E, E3); the log just links to it. */}
       <View style={styles.section}>
-        <Pressable accessibilityRole="button" onPress={() => setShowCustomize((v) => !v)}>
-          <EngravedLabel>{t('checkin.customize')}</EngravedLabel>
+        <Pressable accessibilityRole="button" onPress={() => router.push('/whatilog' as Href)}>
+          <ThemedText type="mono" themeColor="textSecondary" style={styles.autofill}>
+            {t('checkin.customizeLink')}
+          </ThemedText>
         </Pressable>
-        {showCustomize && (
-          <View style={styles.chips}>
-            {CUSTOMIZABLE_FIELDS.map((f) => (
-              <OptionChip
-                key={f}
-                label={t(`fields.${f}` as const)}
-                selected={shown.has(f)}
-                onPress={() => toggleField(f, !shown.has(f))}
-              />
-            ))}
-          </View>
-        )}
       </View>
 
       <View style={styles.section}>
@@ -484,5 +488,5 @@ const styles = StyleSheet.create({
   rowDivider: { marginVertical: 0 },
   notes: { gap: Spacing.two },
   section: { gap: Spacing.two },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
+  deferredToggle: { paddingVertical: Spacing.two },
 });

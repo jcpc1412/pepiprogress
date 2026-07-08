@@ -145,7 +145,11 @@
     "nutrition": "Nutrition",
     "autofillProtein": "Use synced protein: {{value}} g",
     "autofillCalories": "Use synced calories: {{value}} kcal",
-    "saveLog": "Save log"
+    "saveLog": "Save log",
+    "customizeLink": "Customize what I log",
+    "showEveningFields": "Show evening fields",
+    "showMorningFields": "Show morning fields",
+    "hideFields": "Hide"
   },
   "quicklog": {
     "title": "Quick log",
@@ -179,7 +183,14 @@
     "skipItem": "Skip",
     "unclearSkipped": "Skipped",
     "distilling": "Distilling…",
-    "backgroundHint": "Log it and go. We’ll distill it in the background."
+    "backgroundHint": "Log it and go. We’ll distill it in the background.",
+    "templatesLabel": "Templates",
+    "chipMorning": "Morning check",
+    "chipEvening": "Evening check",
+    "chipProgress": "Progress check",
+    "tplMorning": "Slept: h\nSleep quality: /5\nWeight: ",
+    "tplEvening": "Workout effort: /5\nCalories: \nProtein: ",
+    "tplProgress": "Weight: \nWaist: \nNeck: "
   },
   "photos": {
     "title": "Progress photos",
@@ -886,5 +897,9 @@
       "soreness": "Muscle soreness. Hard or new training raises it; rest days and lighter sessions bring it down.",
       "default": "A tracked signal in your log. Its trend is read against your goal over the recent window."
     }
+  },
+  "whatILog": {
+    "title": "What I log",
+    "hint": "Add or remove fields from your daily check-in. Defaults follow your goals and compounds."
   }
 }

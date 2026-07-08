@@ -26,6 +26,7 @@ export function QuickLog({
   const { i18n } = useTranslation();
   const { enqueueQuickLog } = useStore();
   const [text, setText] = useState('');
+  const [selection, setSelection] = useState<{ start: number; end: number } | undefined>(undefined);
   const [submitted, setSubmitted] = useState(false);
 
   const placeholder = seedPrompt === 'macros' ? t('quicklog.macroSeed') : t('quicklog.placeholder');
@@ -40,8 +41,23 @@ export function QuickLog({
     setTimeout(() => onDismiss?.(), CONFIRM_MS);
   };
 
-  const appendSuggestion = (label: string) =>
+  // Append a simple phrase (dose / symptom) inline with the rest of the entry.
+  const appendSuggestion = (label: string) => {
+    setSelection(undefined);
     setText((cur) => (cur.trim() ? `${cur.trim()}, ${label}` : label));
+  };
+
+  // Insert a fill-in template (R2-E). The parser already understands labeled
+  // numbers, so a scaffold like "Weight: \nWaist: " lets the user type only the
+  // values. Cursor lands on the first blank (just after the first "label: ").
+  const insertTemplate = (template: string) => {
+    const base = text.trim() ? `${text.replace(/\s+$/, '')}\n` : '';
+    const full = base + template;
+    const blank = template.indexOf(': ');
+    const pos = base.length + (blank >= 0 ? blank + 2 : template.length);
+    setText(full);
+    setSelection({ start: pos, end: pos });
+  };
 
   return (
     <View style={styles.container}>
@@ -49,7 +65,11 @@ export function QuickLog({
         label={t('quicklog.title')}
         placeholder={placeholder}
         value={text}
-        onChangeText={setText}
+        onChangeText={(v) => {
+          if (selection) setSelection(undefined);
+          setText(v);
+        }}
+        selection={selection}
         multiline
         style={styles.inputWell}
         onSubmitEditing={submit}
@@ -58,24 +78,21 @@ export function QuickLog({
         {t('quicklog.voiceHint')}
       </ThemedText>
 
-      {/* Quick-add suggestion chips — append to the input */}
-      <EngravedLabel>{t('quicklog.suggestionsLabel')}</EngravedLabel>
+      {/* Template chips (R2-E): "check" chips insert a labeled fill-in scaffold;
+          dose/symptom stay simple inline phrases. */}
+      <EngravedLabel>{t('quicklog.templatesLabel')}</EngravedLabel>
       <View style={styles.suggestions}>
         {(
           [
-            'quicklog.sugSleep',
-            'quicklog.sugWeight',
-            'quicklog.sugEnergy',
-            'quicklog.sugDose',
-            'quicklog.sugSymptom',
+            ['quicklog.chipMorning', 'quicklog.tplMorning'],
+            ['quicklog.chipEvening', 'quicklog.tplEvening'],
+            ['quicklog.chipProgress', 'quicklog.tplProgress'],
           ] as const
-        ).map((key) => (
-          <OptionChip
-            key={key}
-            label={t(key)}
-            selected={false}
-            onPress={() => appendSuggestion(t(key))}
-          />
+        ).map(([chip, tpl]) => (
+          <OptionChip key={chip} label={t(chip)} selected={false} onPress={() => insertTemplate(t(tpl))} />
+        ))}
+        {(['quicklog.sugDose', 'quicklog.sugSymptom'] as const).map((key) => (
+          <OptionChip key={key} label={t(key)} selected={false} onPress={() => appendSuggestion(t(key))} />
         ))}
       </View>
 

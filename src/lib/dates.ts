@@ -1,5 +1,10 @@
 /** Date-key helpers. A "date key" is a local YYYY-MM-DD string (see localDateKey). */
 
+/** The current local hour (0-23). Wrapped so callers stay pure at the call site. */
+export function localHour(): number {
+  return new Date().getHours();
+}
+
 /** Shift a YYYY-MM-DD key by N days (local, DST-safe via the Date constructor). */
 export function shiftDateKey(key: string, days: number): string {
   const [y, m, d] = key.split('-').map(Number);

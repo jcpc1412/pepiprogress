@@ -1,5 +1,5 @@
 import Constants from 'expo-constants';
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -42,6 +42,7 @@ export function SettingsScreen({ onClose }: { onClose: () => void }) {
             {/* Protocol config lives here now (redesign §4.5), not a tab. */}
             <SettingsRow label={t('tabs.protocol')} onPress={() => router.push('/protocol')} />
             <SettingsRow label={t('me.title')} sublabel={meSub} onPress={() => router.push('/me')} />
+            <SettingsRow label={t('whatILog.title')} onPress={() => router.push('/whatilog' as Href)} />
             <SettingsRow label={t('notify.section')} onPress={() => router.push('/notifications-settings')} />
             <SettingsRow label={t('privacy.pageTitle')} onPress={() => router.push('/privacy')} />
           </View>

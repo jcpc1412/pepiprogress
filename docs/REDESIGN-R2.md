@@ -252,6 +252,10 @@ The parser already understands labeled numbers. All template strings via i18n (6
 - Fields already covered by an integration reading for the date keep the existing autofill
   link and group under a "From your devices" section (pattern exists for weight/nutrition;
   becomes generic). This is where passive capture lands when the Health device build ships.
+  Status: the per-field autofill links ship now (weight + nutrition); the generic "From your
+  devices" grouping is deferred to the Health native read (Phase 2 of the integrations plan),
+  since no passive readings exist until then. Time-aware ordering ships on the subjective scale
+  telemetry, where morning vs evening actually differ.
 
 ### E3. Customize moves to Settings
 - New Settings card "What I log": the existing `CUSTOMIZABLE_FIELDS` toggle UI

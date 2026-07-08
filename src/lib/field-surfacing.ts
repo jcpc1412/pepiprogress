@@ -159,6 +159,60 @@ export function surfaceFields(
   };
 }
 
+/**
+ * Time-of-day affinity for a field (redesign R2-E, Option A). Fields that read as
+ * a morning ritual (overnight sleep, first weigh-in) surface first in the morning;
+ * fields tallied through the day (training, calories) surface first in the evening.
+ * `any` fields show in both primary sets.
+ */
+export type FieldTime = 'morning' | 'evening' | 'any';
+
+const FIELD_TIME: Record<CheckinField, FieldTime> = {
+  weight: 'morning',
+  sleep_quality: 'morning',
+  measurements: 'morning',
+  wellness: 'any',
+  energy: 'any',
+  appetite: 'any',
+  libido: 'any',
+  skin_notes: 'any',
+  face_photo: 'any',
+  body_photo: 'any',
+  note: 'any',
+  soreness: 'evening',
+  workout_effort: 'evening',
+  protein: 'evening',
+  calories: 'evening',
+};
+
+export function fieldTime(field: CheckinField): FieldTime {
+  return FIELD_TIME[field] ?? 'any';
+}
+
+/** The local hour at/after which the log flips to evening ordering (Option A). */
+export const EVENING_HOUR = 15;
+
+/**
+ * Split surfaced fields into a time-relevant primary set and a deferred set for
+ * the other part of the day (redesign R2-E). Before {@link EVENING_HOUR}: morning
+ * + any first, evening deferred. After: evening + any first, morning deferred.
+ * `deferredIsEvening` tells the UI which "Show …" label to use.
+ */
+export function partitionByTime(
+  fields: CheckinField[],
+  hour: number,
+): { primary: CheckinField[]; deferred: CheckinField[]; deferredIsEvening: boolean } {
+  const morning = hour < EVENING_HOUR;
+  const primaryTime: FieldTime = morning ? 'morning' : 'evening';
+  const deferredTime: FieldTime = morning ? 'evening' : 'morning';
+  const primary = fields.filter((f) => {
+    const ft = fieldTime(f);
+    return ft === primaryTime || ft === 'any';
+  });
+  const deferred = fields.filter((f) => fieldTime(f) === deferredTime);
+  return { primary, deferred, deferredIsEvening: morning };
+}
+
 /** Fields a user can manually toggle in "customize what I log" (spec 02).
  * Excludes photos (M4 capture) and the always-on note. */
 export type CustomizableField = Exclude<CheckinField, 'face_photo' | 'body_photo' | 'note'>;

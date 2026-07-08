@@ -145,7 +145,11 @@
     "nutrition": "Nutrição",
     "autofillProtein": "Usar proteína sincronizada: {{value}} g",
     "autofillCalories": "Usar calorias sincronizadas: {{value}} kcal",
-    "saveLog": "Salvar registro"
+    "saveLog": "Salvar registro",
+    "customizeLink": "Personalizar o que registo",
+    "showEveningFields": "Mostrar campos da noite",
+    "showMorningFields": "Mostrar campos da manhã",
+    "hideFields": "Ocultar"
   },
   "quicklog": {
     "title": "Registro rápido",
@@ -179,7 +183,14 @@
     "skipItem": "Pular",
     "unclearSkipped": "Pulado",
     "distilling": "Destilando…",
-    "backgroundHint": "Registre e siga. Destilaremos em segundo plano."
+    "backgroundHint": "Registre e siga. Destilaremos em segundo plano.",
+    "templatesLabel": "Modelos",
+    "chipMorning": "Registo matinal",
+    "chipEvening": "Registo noturno",
+    "chipProgress": "Registo de progresso",
+    "tplMorning": "Dormi: h\nQualidade do sono: /5\nPeso: ",
+    "tplEvening": "Esforço do treino: /5\nCalorias: \nProteína: ",
+    "tplProgress": "Peso: \nCintura: \nPescoço: "
   },
   "photos": {
     "title": "Fotos de progresso",
@@ -886,5 +897,9 @@
       "soreness": "Dores musculares. Treino intenso ou novo aumenta-as; dias de descanso e sessões leves reduzem-nas.",
       "default": "Um sinal registado no teu diário. A sua tendência é lida face ao teu objetivo no período recente."
     }
+  },
+  "whatILog": {
+    "title": "O que registo",
+    "hint": "Adicione ou remova campos do seu registo diário. Os padrões seguem os seus objetivos e compostos."
   }
 }

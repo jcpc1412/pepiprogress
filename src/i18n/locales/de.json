@@ -145,7 +145,11 @@
     "nutrition": "Ernährung",
     "autofillProtein": "Synchronisiertes Protein verwenden: {{value}} g",
     "autofillCalories": "Synchronisierte Kalorien verwenden: {{value}} kcal",
-    "saveLog": "Eintrag speichern"
+    "saveLog": "Eintrag speichern",
+    "customizeLink": "Anpassen, was ich protokolliere",
+    "showEveningFields": "Abendfelder anzeigen",
+    "showMorningFields": "Morgenfelder anzeigen",
+    "hideFields": "Ausblenden"
   },
   "quicklog": {
     "title": "Schnell-Log",
@@ -179,7 +183,14 @@
     "skipItem": "Uberspringen",
     "unclearSkipped": "Ubersprungen",
     "distilling": "Wird destilliert…",
-    "backgroundHint": "Eintragen und weiter. Wir destillieren es im Hintergrund."
+    "backgroundHint": "Eintragen und weiter. Wir destillieren es im Hintergrund.",
+    "templatesLabel": "Vorlagen",
+    "chipMorning": "Morgen-Check",
+    "chipEvening": "Abend-Check",
+    "chipProgress": "Fortschritts-Check",
+    "tplMorning": "Geschlafen: h\nSchlafqualität: /5\nGewicht: ",
+    "tplEvening": "Trainingsintensität: /5\nKalorien: \nProtein: ",
+    "tplProgress": "Gewicht: \nTaille: \nHals: "
   },
   "photos": {
     "title": "Fortschrittsfotos",
@@ -886,5 +897,9 @@
       "soreness": "Muskelkater. Hartes oder neues Training steigert ihn; Ruhetage und leichtere Einheiten senken ihn.",
       "default": "Ein erfasstes Signal in deinem Log. Sein Trend wird über den jüngsten Zeitraum an deinem Ziel gemessen."
     }
+  },
+  "whatILog": {
+    "title": "Was ich protokolliere",
+    "hint": "Felder zu deinem täglichen Check-in hinzufügen oder entfernen. Die Standardwerte richten sich nach deinen Zielen und Wirkstoffen."
   }
 }
