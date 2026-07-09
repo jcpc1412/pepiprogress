@@ -782,7 +782,9 @@
     "height": "Height",
     "weight": "Weight",
     "bodyFat": "Body fat",
-    "targetWeight": "Goal weight"
+    "targetWeight": "Goal weight",
+    "goalsSection": "Goals",
+    "goalsHint": "What you are tracking toward. This sets which fields your daily log surfaces."
   },
   "ask": {
     "title": "ASK PEPI",

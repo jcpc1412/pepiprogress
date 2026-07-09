@@ -15,6 +15,7 @@
  *    confidence is capped at `watch`; too little data yields `building`.
  */
 
+import { usesFemaleFormula } from '@/lib/body-composition';
 import { buildMetricSeries, CHART_METRICS, type DatedPoint } from '@/lib/chart-series';
 import type { Goal } from '@/lib/field-surfacing';
 import { compoundBySlug } from '@/data/compound-catalog';
@@ -353,6 +354,7 @@ export function computeVerdict(input: VerdictInput): Verdict {
       sex: input.profile.sex as 'male' | 'female' | 'ftm' | 'mtf' | undefined,
       estimatedMetricsMode: input.profile.estimatedMetricsMode ?? 'fill',
       units: input.profile.units,
+      female: usesFemaleFormula(input.profile.sex),
       // profile.height is in the user's units; body_fat_pct needs cm.
       heightCm:
         typeof input.profile.height === 'number'

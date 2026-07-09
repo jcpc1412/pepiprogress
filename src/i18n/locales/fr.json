@@ -782,7 +782,9 @@
     "height": "Taille",
     "weight": "Poids",
     "bodyFat": "Masse grasse",
-    "targetWeight": "Poids cible"
+    "targetWeight": "Poids cible",
+    "goalsSection": "Objectifs",
+    "goalsHint": "Ce que vous visez. Cela détermine les champs affichés dans votre suivi quotidien."
   },
   "ask": {
     "title": "DEMANDER À PEPI",

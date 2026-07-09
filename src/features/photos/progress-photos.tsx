@@ -18,7 +18,7 @@ import {
   runEncouragementAnalysis,
   type PhotoAnalysis,
 } from '@/lib/ai';
-import { bodyFatNavy, inferBodyComposition } from '@/lib/body-composition';
+import { bodyFatNavy, inferBodyComposition, usesFemaleFormula } from '@/lib/body-composition';
 import { quickReadout, type QuickReadout } from '@/lib/photo-readout';
 import { useAuth } from '@/lib/auth';
 import {
@@ -393,14 +393,16 @@ export function ProgressPhotos({
       const latestMeas = withMeasurements[0];
       if (latestMeas && profile.height) {
         const heightCm = profile.units === 'imperial' ? profile.height * 2.54 : profile.height;
+        const female = usesFemaleFormula(profile.sex);
         const bf = bodyFatNavy({
           units: profile.units,
           heightCm,
           waist: latestMeas.waist,
           neck: latestMeas.neck,
           hip: latestMeas.hips,
+          female,
         });
-        if (bf) bodyCalibration = inferBodyComposition(bf.pct, profile.sex === 'female');
+        if (bf) bodyCalibration = inferBodyComposition(bf.pct, female);
       }
 
       const res = await analyzePhoto({

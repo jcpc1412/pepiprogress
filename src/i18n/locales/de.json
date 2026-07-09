@@ -782,7 +782,9 @@
     "height": "Größe",
     "weight": "Gewicht",
     "bodyFat": "Körperfett",
-    "targetWeight": "Zielgewicht"
+    "targetWeight": "Zielgewicht",
+    "goalsSection": "Ziele",
+    "goalsHint": "Worauf du hinarbeitest. Das bestimmt, welche Felder dein Tagesprotokoll zeigt."
   },
   "ask": {
     "title": "PEPI FRAGEN",

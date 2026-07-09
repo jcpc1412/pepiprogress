@@ -2,15 +2,21 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
-import { LabeledInput, SingleSelectChips } from '@/components/form';
+import { LabeledInput, OptionChip, SingleSelectChips } from '@/components/form';
 import { Card, Divider, EngravedLabel } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { CycleSettings } from '@/features/settings/cycle-settings';
 import { SUPPORTED_LANGUAGES } from '@/i18n';
+import type { Goal } from '@/lib/field-surfacing';
 import { useStore, type Sex } from '@/lib/store';
+import { Constants } from '@/types/database';
 
 const SEXES: Sex[] = ['male', 'female', 'ftm', 'mtf'];
+const GOALS = Constants.public.Enums.goal as unknown as Goal[];
+
+const toggleGoal = (list: Goal[], g: Goal): Goal[] =>
+  list.includes(g) ? list.filter((x) => x !== g) : [...list, g];
 const BODY_TYPES = ['slim', 'average', 'athletic', 'heavyset'] as const;
 type BodyType = (typeof BODY_TYPES)[number];
 
@@ -97,6 +103,24 @@ export function MeSettings() {
         </View>
       </Card>
 
+      {/* Goals — editable after onboarding (drives what surfaces in the log). */}
+      <Card style={styles.section}>
+        <EngravedLabel>{t('me.goalsSection')}</EngravedLabel>
+        <ThemedText type="small" themeColor="textSecondary">
+          {t('me.goalsHint')}
+        </ThemedText>
+        <View style={styles.chips}>
+          {GOALS.map((g) => (
+            <OptionChip
+              key={g}
+              label={t(`goals.${g}` as 'goals.weight_loss')}
+              selected={profile.goals.includes(g)}
+              onPress={() => setProfile({ goals: toggleGoal(profile.goals, g) })}
+            />
+          ))}
+        </View>
+      </Card>
+
       {/* Body baselines */}
       <Card style={styles.section}>
         <EngravedLabel>{t('me.bodySection')}</EngravedLabel>
@@ -167,4 +191,5 @@ const styles = StyleSheet.create({
   field: { gap: Spacing.one },
   row: { flexDirection: 'row', gap: Spacing.three },
   rowField: { flex: 1 },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
 });

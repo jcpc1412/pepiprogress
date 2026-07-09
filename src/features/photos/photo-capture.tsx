@@ -12,7 +12,7 @@ import { StatusPill } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { checkFit, type FitCheck } from '@/lib/ai';
-import { bodyFatNavy } from '@/lib/body-composition';
+import { bodyFatNavy, usesFemaleFormula } from '@/lib/body-composition';
 import { copyPhotoToDocuments } from '@/lib/photos';
 import { computeQuality, type PhotoQuality } from '@/lib/photo-quality';
 import { useStore, type PhotoSession } from '@/lib/store';
@@ -86,6 +86,7 @@ export function PhotoCapture({
         waist: parseFloat(waist) || undefined,
         neck: parseFloat(neck) || undefined,
         hip: parseFloat(hips) || undefined,
+        female: usesFemaleFormula(profile?.sex),
       })
     : null;
 

@@ -782,7 +782,9 @@
     "height": "Altura",
     "weight": "Peso",
     "bodyFat": "Grasa corporal",
-    "targetWeight": "Peso objetivo"
+    "targetWeight": "Peso objetivo",
+    "goalsSection": "Objetivos",
+    "goalsHint": "Hacia qué estás avanzando. Esto define qué campos muestra tu registro diario."
   },
   "ask": {
     "title": "PREGUNTA A PEPI",

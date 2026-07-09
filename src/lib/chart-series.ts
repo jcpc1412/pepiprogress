@@ -69,6 +69,8 @@ export type ChartProfile = DerivedProfile & {
   heightCm?: number;
   /** Unit system for interpreting measurement checkin fields (waist/neck/hips). */
   units?: 'metric' | 'imperial';
+  /** Selects the Navy body-fat formula by sex (see usesFemaleFormula). */
+  female?: boolean;
 };
 
 /** Latest date-key across manual entries + integration readings (for anchoring a
@@ -139,6 +141,7 @@ export function buildMetricSeries(opts: {
           waist: typeof e.waist === 'number' ? e.waist : undefined,
           neck: typeof e.neck === 'number' ? e.neck : undefined,
           hip: typeof e.hips === 'number' ? e.hips : undefined,
+          female: profile.female,
         });
         if (est) primary.push({ dateKey: d, value: est.pct });
       }

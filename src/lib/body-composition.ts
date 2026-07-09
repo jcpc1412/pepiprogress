@@ -11,9 +11,12 @@
  *   men:   %BF = 495 / (1.0324 − 0.19077·log10(waist − neck) + 0.15456·log10(height)) − 450
  *   women: %BF = 495 / (1.29579 − 0.35004·log10(waist + hip − neck) + 0.22100·log10(height)) − 450
  *
- * We select the women's formula whenever a hip circumference is supplied (it is
- * required there and omitted in the men's), which sidesteps encoding identity and
- * keys purely off the measurement the user actually took.
+ * The two formulas are calibrated to different populations and are NOT
+ * interchangeable, so the choice is keyed to the user's sex (via {@link
+ * usesFemaleFormula}), never to whether a hip was typed. The men's formula never
+ * uses hip; the women's requires it (returns null when it's missing). This fixes
+ * the earlier bug where a man who logged his hips got the women's formula and a
+ * wildly inflated number.
  */
 
 /** Navy method standard error of the estimate (absolute % body fat). */
@@ -24,6 +27,14 @@ const toCm = (v: number, units: 'metric' | 'imperial') => (units === 'imperial' 
 const clampPct = (v: number) => Math.min(60, Math.max(3, v));
 
 export type BodyFatEstimate = { pct: number; low: number; high: number };
+
+/** Which Navy formula a user's sex selects. Fat distribution follows hormones, so
+ *  MTF reads with the female formula and FTM with the male one (matches the
+ *  verdict engine's `fatPatternSex`). Unknown sex falls back to the male formula,
+ *  which needs no hip and never over-inflates. */
+export function usesFemaleFormula(sex: string | undefined): boolean {
+  return sex === 'female' || sex === 'mtf';
+}
 
 /**
  * Estimate body-fat %. Measurements are in the user's `units` (cm or in) and
@@ -37,6 +48,8 @@ export function bodyFatNavy(opts: {
   waist?: number;
   neck?: number;
   hip?: number;
+  /** Selects the formula. From the caller via {@link usesFemaleFormula}. */
+  female?: boolean;
 }): BodyFatEstimate | null {
   const { units } = opts;
   const height = opts.heightCm;
@@ -48,11 +61,14 @@ export function bodyFatNavy(opts: {
   const hip = opts.hip != null ? toCm(opts.hip, units) : undefined;
 
   let raw: number;
-  if (hip != null && hip > 0) {
+  if (opts.female) {
+    // Women's formula requires hip; without it there is no honest estimate.
+    if (hip == null || hip <= 0) return null;
     const inner = waist + hip - neck;
     if (inner <= 0) return null;
     raw = 495 / (1.29579 - 0.35004 * Math.log10(inner) + 0.221 * Math.log10(height)) - 450;
   } else {
+    // Men's formula never uses hip (a logged hip is ignored here).
     const inner = waist - neck;
     if (inner <= 0) return null; // neck must be smaller than waist
     raw = 495 / (1.0324 - 0.19077 * Math.log10(inner) + 0.15456 * Math.log10(height)) - 450;

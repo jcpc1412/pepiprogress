@@ -782,7 +782,9 @@
     "height": "Altura",
     "weight": "Peso",
     "bodyFat": "Gordura corporal",
-    "targetWeight": "Peso alvo"
+    "targetWeight": "Peso alvo",
+    "goalsSection": "Objetivos",
+    "goalsHint": "Para onde está a progredir. Isto define que campos o seu registo diário mostra."
   },
   "ask": {
     "title": "PERGUNTE À PEPI",
