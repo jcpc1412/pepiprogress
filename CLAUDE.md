@@ -7,12 +7,12 @@ A daily peptide-tracking journal that turns subjective check-ins + consistent ph
 > ⚠️ See `AGENTS.md` (imported above): **Expo SDK 56 is bleeding-edge — read the versioned docs at https://docs.expo.dev/versions/v56.0.0/ before writing Expo code.** APIs differ from training data.
 
 ## Read these first (source of truth)
-- **[docs/spec/SPEC.md](docs/spec/SPEC.md)** — the index to 14 fully-specced areas. Every product/architecture decision is locked there. Read it before touching anything.
+- **[docs/spec/SPEC.md](docs/spec/SPEC.md)** — the index to 15 fully-specced areas. Every product/architecture decision is locked there. Read it before touching anything.
 - **[docs/ROADMAP.md](docs/ROADMAP.md)** — full implementation sequence (M0→M5→Polish→V2→V3), locked product/legal decisions, cost model, and M4 test checklist.
 - **[docs/VOICE.md](docs/VOICE.md)** — brand voice & tone ("The Instrument"). Match it for every user-facing string + AI-generated copy (quick-log replies, insights, encouragement). Don't invent a new register per feature.
 
 ## Status
-- **Scoping complete.** All 14 spec areas written, reconciled, decided — no open parking lots (except the deliberately-deferred dosing-card questions in area 05).
+- **Scoping complete.** All 15 spec areas written (15 = typical-day baselines, added from beta feedback 2026-07-08, Polish tier), reconciled, decided — no open parking lots (except the deliberately-deferred dosing-card questions in area 05).
 - **M0 complete** — Expo app (SDK 56, expo-router, `src/`), i18n (6 locales, device detection), no-hardcoded-string lint (verified it bites) + i18n key-parity CI, Supabase scaffold, type-gen script. All green: typecheck / lint / web export.
 - **M1 in progress** — schema applied + client typed:
   - `supabase/migrations/` (6 files): enums + catalog (compound/compound_fact, RLS read-only), full user-scoped schema + owner-only RLS, community_aggregate + auto-create-profile-on-signup trigger, function hardening (pinned `search_path`, revoked RPC EXECUTE on trigger-only fns), schema gaps + compound_slug, and `user_state` snapshot table (owner-only RLS). **Applied** to `pjdbxnycrvibmebfumel`; `get_advisors` security = clean. File names match the recorded migration versions.

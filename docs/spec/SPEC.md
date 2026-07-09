@@ -32,6 +32,7 @@ Each area is its own file and can be specced deeper independently.
 | 12 | Monetization | [12-monetization.md](12-monetization.md) | Freemium + trial; sponsorship; acquisition/data thesis (no affiliate) |
 | 13 | Conversational / Quick-Log | [13-conversational-logging.md](13-conversational-logging.md) | NL logging + assistant; text/voice/photo; reuses 05/03 |
 | 14 | Community & Sharing | [14-community-sharing.md](14-community-sharing.md) | Protocol sharing, copy-protocol, before/after photos, moderation (post-MVP) |
+| 15 | Typical-Day Baselines | [15-typical-day-baselines.md](15-typical-day-baselines.md) | One-time "typical day" setup + usual/less/more deviation chips for sparse repetitive metrics (nutrition, sleep); estimated-priority data |
 
 ## Roadmap
 
