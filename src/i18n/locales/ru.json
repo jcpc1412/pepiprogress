@@ -277,7 +277,9 @@
     "timerOff": "Таймер",
     "timer3": "3с",
     "timer10": "10с",
-    "pinchZoomHint": "Сведите пальцы для зума"
+    "pinchZoomHint": "Сведите пальцы для зума",
+    "angleLabel": "Ракурс",
+    "timerLabel": "Таймер"
   },
   "markers": {
     "hematocrit": "Гематокрит",

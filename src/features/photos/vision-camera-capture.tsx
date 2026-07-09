@@ -28,7 +28,7 @@ import {
   usePhotoOutput,
 } from 'react-native-vision-camera';
 import { useFaceDetectorOutput } from 'react-native-vision-camera-face-detector';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 import { PrimaryButton } from '@/components/form';
 import { FlipCameraIcon } from '@/components/icons';
@@ -195,7 +195,10 @@ export function VisionCameraCapture({
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={close}>
-      <View style={styles.fill}>
+      {/* Fresh provider so SafeAreaView reports real insets inside the Modal's
+          separate native view tree (otherwise overlays slide under the notch). */}
+      <SafeAreaProvider>
+        <View style={styles.fill}>
         {!hasPermission ? (
           <SafeAreaView style={styles.center}>
             <ThemedText type="body" style={styles.permText}>
@@ -324,7 +327,8 @@ export function VisionCameraCapture({
             </Pressable>
           </SafeAreaView>
         )}
-      </View>
+        </View>
+      </SafeAreaProvider>
     </Modal>
   );
 }

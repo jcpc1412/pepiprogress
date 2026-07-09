@@ -234,6 +234,10 @@ export function ProgressPhotos({
   const [part, setPart] = useState<string | undefined>(undefined);
   const [addingPart, setAddingPart] = useState(false);
   const [partDraft, setPartDraft] = useState('');
+  // Capture settings moved out of the camera (beta feedback): the angle + self-
+  // timer are chosen here and handed to PhotoCapture, keeping the camera clean.
+  const [view, setView] = useState<'front' | 'side'>('front');
+  const [timer, setTimer] = useState<0 | 3 | 10>(0);
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => setPart(undefined), [session]);
 
@@ -539,6 +543,35 @@ export function ProgressPhotos({
         </View>
       )}
 
+      {/* Capture settings (angle + self-timer) — chosen here, applied in-camera. */}
+      {session === 'body' && (
+        <View style={styles.captureSettings}>
+          <View style={styles.settingCol}>
+            <EngravedLabel>{t('photos.angleLabel')}</EngravedLabel>
+            <SingleSelectChips
+              options={[
+                { value: 'front', label: t('photos.viewFront') },
+                { value: 'side', label: t('photos.viewSide') },
+              ]}
+              value={view}
+              onChange={setView}
+            />
+          </View>
+          <View style={styles.settingCol}>
+            <EngravedLabel>{t('photos.timerLabel')}</EngravedLabel>
+            <SingleSelectChips
+              options={[
+                { value: '0', label: t('photos.timerOff') },
+                { value: '3', label: t('photos.timer3') },
+                { value: '10', label: t('photos.timer10') },
+              ]}
+              value={String(timer)}
+              onChange={(v) => setTimer(Number(v) as 0 | 3 | 10)}
+            />
+          </View>
+        </View>
+      )}
+
       {/* Photo display */}
       {sessionPhotos.length === 0 ? (
         <View style={styles.emptyBlock}>
@@ -733,6 +766,8 @@ export function ProgressPhotos({
         <PhotoCapture
           session={session}
           part={part}
+          view={view}
+          timer={timer}
           ghostUri={latest ? resolvedUris[latest.id] ?? latest.uri : undefined}
           visible={capturing}
           onClose={() => setCapturing(false)}
@@ -829,6 +864,8 @@ const styles = StyleSheet.create({
   milestoneSection: { gap: Spacing.two },
   quickCard: { gap: Spacing.two },
   partRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
+  captureSettings: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.four },
+  settingCol: { gap: Spacing.one },
   partChip: {
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.one,

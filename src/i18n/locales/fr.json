@@ -277,7 +277,9 @@
     "timerOff": "Minut.",
     "timer3": "3s",
     "timer10": "10s",
-    "pinchZoomHint": "Pincez pour zoomer"
+    "pinchZoomHint": "Pincez pour zoomer",
+    "angleLabel": "Angle",
+    "timerLabel": "Retardateur"
   },
   "markers": {
     "hematocrit": "Hématocrite",

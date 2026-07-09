@@ -4,7 +4,7 @@ import { Accelerometer } from 'expo-sensors';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 import { LabeledInput, PrimaryButton, SingleSelectChips } from '@/components/form';
 import { FlipCameraIcon } from '@/components/icons';
@@ -34,12 +34,17 @@ export function PhotoCapture({
   ghostUri,
   visible,
   onClose,
+  view = 'front',
+  timer = 0,
 }: {
   session: PhotoSession;
   part?: string;
   ghostUri?: string;
   visible: boolean;
   onClose: () => void;
+  /** Capture angle + self-timer are chosen in the Photos tab now, not in-camera. */
+  view?: 'front' | 'side';
+  timer?: 0 | 3 | 10;
 }) {
   const { t } = useTranslation();
   const { addPhoto, upsertCheckin, profile } = useStore();
@@ -52,10 +57,6 @@ export function PhotoCapture({
   const [fitResult, setFitResult] = useState<FitCheck | null>(null);
   const [fitChecking, setFitChecking] = useState(false);
   const [facing, setFacing] = useState<'front' | 'back'>('front');
-  const [view, setView] = useState<'front' | 'side'>('front');
-  // Self-timer for hands-free capture while posed (a beta-safe stand-in for a
-  // hardware volume shutter; front-camera progress shots need a delay).
-  const [timer, setTimer] = useState<0 | 3 | 10>(0);
   const [countdown, setCountdown] = useState<number | null>(null);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -140,7 +141,6 @@ export function PhotoCapture({
     setHips('');
     setExtraKey(undefined);
     setExtraVal('');
-    setView('front');
     onClose();
   };
 
@@ -229,7 +229,11 @@ export function PhotoCapture({
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={close}>
-      <View style={styles.fill}>
+      {/* A Modal renders in its own native view tree, so react-native-safe-area-
+          context needs a fresh provider inside it or every SafeAreaView reports
+          zero insets (content slides under the status bar / Dynamic Island). */}
+      <SafeAreaProvider>
+        <View style={styles.fill}>
         {!permission ? null : !permission.granted ? (
           <SafeAreaView style={styles.center}>
             <ThemedText type="body" style={styles.permText}>
@@ -419,31 +423,6 @@ export function PhotoCapture({
                 {t('photos.pinchZoomHint')}
               </ThemedText>
             </SafeAreaView>
-            {/* Front / side capture angle (spec 04 §4A) + self-timer. */}
-            <View style={styles.viewToggle} pointerEvents="box-none">
-              {(['front', 'side'] as const).map((v) => (
-                <Pressable
-                  key={v}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: view === v }}
-                  onPress={() => setView(v)}
-                  style={[styles.viewChip, view === v && styles.viewChipActive]}>
-                  <ThemedText type="monoSm" style={view === v ? styles.viewChipTextActive : styles.overlayDim}>
-                    {t(v === 'front' ? 'photos.viewFront' : 'photos.viewSide')}
-                  </ThemedText>
-                </Pressable>
-              ))}
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={t('photos.timer')}
-                onPress={() => setTimer((s) => (s === 0 ? 3 : s === 3 ? 10 : 0))}
-                style={[styles.viewChip, timer !== 0 && styles.viewChipActive]}>
-                <ThemedText type="monoSm" style={timer !== 0 ? styles.viewChipTextActive : styles.overlayDim}>
-                  {timer === 0 ? t('photos.timerOff') : timer === 3 ? t('photos.timer3') : t('photos.timer10')}
-                </ThemedText>
-              </Pressable>
-            </View>
-
             {/* Self-timer countdown. */}
             {countdown !== null ? (
               <View style={styles.countdownWrap} pointerEvents="none">
@@ -487,7 +466,8 @@ export function PhotoCapture({
             </SafeAreaView>
           </View>
         )}
-      </View>
+        </View>
+      </SafeAreaProvider>
     </Modal>
   );
 }
@@ -556,17 +536,6 @@ const styles = StyleSheet.create({
   bfLabel: { color: '#5A5752' },
   bfValue: { color: '#1A1A18' },
   bfHint: { color: '#5A5752' },
-  // Front / side capture-angle toggle.
-  viewToggle: { position: 'absolute', top: 72, left: 0, right: 0, flexDirection: 'row', justifyContent: 'center', gap: Spacing.two },
-  viewChip: {
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.one,
-    borderRadius: 2,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(240,239,236,0.4)',
-  },
-  viewChipActive: { backgroundColor: 'rgba(240,239,236,0.9)', borderColor: 'transparent' },
-  viewChipTextActive: { color: '#1A1A18' },
   countdownWrap: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' },
   countdownText: { color: '#F0EFEC', fontSize: 96, lineHeight: 104 },
   // Low-score retry modal.
