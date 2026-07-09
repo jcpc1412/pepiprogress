@@ -12,6 +12,21 @@ import {
 
 import { registerCustomCompounds, type CatalogCompound } from '@/data/compound-catalog';
 import type { CheckinField, Goal } from '@/lib/field-surfacing';
+import {
+  baselineFor,
+  buildTypicalReadings,
+  groupHasValueForDate,
+  TYPICAL_GROUP_ORDER,
+  TYPICAL_SILENT_CONFIDENCE,
+  TYPICAL_TAP_CONFIDENCE,
+  withoutTypicalForDate,
+  withoutTypicalForGroup,
+  withoutTypicalMetric,
+  type TypicalBaseline,
+  type TypicalGroup,
+  type TypicalLevel,
+  type TypicalPromptStatus,
+} from '@/lib/typical-day';
 import type { Enums } from '@/types/database';
 
 export type UnitsSystem = Enums<'units_system'>;
@@ -254,6 +269,11 @@ export type LocalProfile = {
   notifyPhotosEnabled?: boolean;
   /** Last day (YYYY-MM-DD) an inventory-attention notification fired — dedupes the foreground check. */
   inventoryNotifiedOn?: string;
+  // Typical-day baselines (spec 15): one-time "normal day" values per repetitive
+  // metric group, so the log can collapse to usual/less/more chips.
+  typicalBaselines?: TypicalBaseline[];
+  /** Per-group prompt lifecycle so the one-time nudge is asked at most once. */
+  typicalPromptState?: Partial<Record<TypicalGroup, TypicalPromptStatus>>;
 };
 
 export type PersistedState = {
@@ -273,6 +293,12 @@ export type PersistedState = {
   quickLogJobs: QuickLogJob[];
   /** Pepi chat thread, trimmed to the last N messages (redesign R2-F). */
   pepiMessages: PepiMessage[];
+};
+
+/** Manual check-in nutrition field → its canonical metric (for precedence cleanup). */
+const CHECKIN_FIELD_TO_METRIC: Record<'calories' | 'protein', string> = {
+  calories: 'nutrition.energy',
+  protein: 'nutrition.protein',
 };
 
 /** Convert a dose to mg for inventory decrement. IU can't be converted → null. */
@@ -370,6 +396,20 @@ type StoreContextValue = {
   deletePhoto: (id: string) => void;
   /** Bulk-ingest canonical readings from an integration; dedupes by provider+metric+ts (spec 06). */
   addMetricReadings: (readings: Omit<MetricReading, 'id'>[]) => void;
+  // ── Typical-day baselines (spec 15) ──
+  /** Create/replace the baseline for a group (enables it). */
+  setTypicalBaseline: (baseline: TypicalBaseline) => void;
+  /** Patch a group's baseline (e.g. toggle enabled, edit values). No-op if absent. */
+  updateTypicalBaseline: (group: TypicalGroup, patch: Partial<TypicalBaseline>) => void;
+  /** Record the daily deviation chip for a group on a date; replaces prior typical
+   *  readings for that date and honors precedence (manual/synced win). */
+  recordTypicalDeviation: (group: TypicalGroup, date: string, level: TypicalLevel) => void;
+  /** Silent "usual" fill for any enabled group with no value on a date (conf 0.3). */
+  silentFillTypical: (date: string) => void;
+  /** Delete all estimated (typical) readings for a group. */
+  clearTypicalHistory: (group: TypicalGroup) => void;
+  /** Set a group's one-time prompt status (notified/asked/declined/active). */
+  setTypicalPromptState: (group: TypicalGroup, status: TypicalPromptStatus) => void;
   /** Patch a provider's connection state (connect/disconnect/last-sync). */
   setIntegration: (provider: string, patch: Partial<IntegrationState>) => void;
   /** GDPR erasure: wipes all local data and resets to the empty state (spec 11). */
@@ -459,7 +499,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         date,
         updatedAt: new Date().toISOString(),
       };
-      return { ...s, entries: { ...s.entries, [date]: next } };
+      // Precedence (spec 15, decision 8): a manual nutrition number supersedes any
+      // typical estimate for that metric/day: drop the estimate so it can't double-
+      // count on the charts/verdict.
+      let metricReadings = s.metricReadings;
+      for (const field of ['calories', 'protein'] as const) {
+        if (field in patch && typeof patch[field] === 'number') {
+          metricReadings = withoutTypicalMetric(metricReadings, CHECKIN_FIELD_TO_METRIC[field], date);
+        }
+      }
+      return { ...s, entries: { ...s.entries, [date]: next }, metricReadings };
     });
   }, []);
 
@@ -583,6 +632,103 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  // ── Typical-day baselines (spec 15) ──────────────────────────────────────────
+  const setTypicalBaseline = useCallback<StoreContextValue['setTypicalBaseline']>((baseline) => {
+    setState((s) => {
+      const others = (s.profile.typicalBaselines ?? []).filter((b) => b.group !== baseline.group);
+      return {
+        ...s,
+        profile: {
+          ...s.profile,
+          typicalBaselines: [...others, baseline],
+          typicalPromptState: { ...s.profile.typicalPromptState, [baseline.group]: 'active' },
+        },
+      };
+    });
+  }, []);
+
+  const updateTypicalBaseline = useCallback<StoreContextValue['updateTypicalBaseline']>(
+    (group, patch) => {
+      setState((s) => {
+        const list = s.profile.typicalBaselines ?? [];
+        if (!list.some((b) => b.group === group)) return s;
+        return {
+          ...s,
+          profile: {
+            ...s.profile,
+            typicalBaselines: list.map((b) => (b.group === group ? { ...b, ...patch } : b)),
+          },
+        };
+      });
+    },
+    [],
+  );
+
+  const recordTypicalDeviation = useCallback<StoreContextValue['recordTypicalDeviation']>(
+    (group, date, level) => {
+      setState((s) => {
+        const baseline = baselineFor(s.profile.typicalBaselines, group);
+        if (!baseline) return s;
+        const entry = s.entries[date];
+        const cleared = withoutTypicalForDate(s.metricReadings, group, date);
+        const added = buildTypicalReadings({
+          baseline,
+          dateKey: date,
+          level,
+          confidence: TYPICAL_TAP_CONFIDENCE,
+          readings: cleared,
+          checkinValues: { calories: entry?.calories, protein: entry?.protein },
+        }).map((r) => ({ ...r, id: uid() }));
+        return { ...s, metricReadings: [...added, ...cleared] };
+      });
+    },
+    [],
+  );
+
+  const silentFillTypical = useCallback<StoreContextValue['silentFillTypical']>((date) => {
+    setState((s) => {
+      let readings = s.metricReadings;
+      let changed = false;
+      const entry = s.entries[date];
+      const checkinValues = { calories: entry?.calories, protein: entry?.protein };
+      for (const group of TYPICAL_GROUP_ORDER) {
+        const baseline = baselineFor(s.profile.typicalBaselines, group);
+        if (!baseline) continue;
+        if (groupHasValueForDate({ group, dateKey: date, readings, checkinValues })) continue;
+        const added = buildTypicalReadings({
+          baseline,
+          dateKey: date,
+          level: 'usual',
+          confidence: TYPICAL_SILENT_CONFIDENCE,
+          readings,
+          checkinValues,
+        }).map((r) => ({ ...r, id: uid() }));
+        if (added.length) {
+          readings = [...added, ...readings];
+          changed = true;
+        }
+      }
+      return changed ? { ...s, metricReadings: readings } : s;
+    });
+  }, []);
+
+  const clearTypicalHistory = useCallback<StoreContextValue['clearTypicalHistory']>((group) => {
+    setState((s) => ({ ...s, metricReadings: withoutTypicalForGroup(s.metricReadings, group) }));
+  }, []);
+
+  const setTypicalPromptState = useCallback<StoreContextValue['setTypicalPromptState']>(
+    (group, status) => {
+      setState((s) => ({
+        ...s,
+        profile: {
+          ...s.profile,
+          typicalPromptState: { ...s.profile.typicalPromptState, [group]: status },
+        },
+      }));
+    },
+    [],
+  );
+
   const setIntegration = useCallback<StoreContextValue['setIntegration']>((provider, patch) => {
     setState((s) => ({
       ...s,
@@ -673,6 +819,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       updatePhoto,
       deletePhoto,
       addMetricReadings,
+      setTypicalBaseline,
+      updateTypicalBaseline,
+      recordTypicalDeviation,
+      silentFillTypical,
+      clearTypicalHistory,
+      setTypicalPromptState,
       setIntegration,
       resetStore,
       exportState,
@@ -704,6 +856,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       updatePhoto,
       deletePhoto,
       addMetricReadings,
+      setTypicalBaseline,
+      updateTypicalBaseline,
+      recordTypicalDeviation,
+      silentFillTypical,
+      clearTypicalHistory,
+      setTypicalPromptState,
       setIntegration,
       resetStore,
       exportState,

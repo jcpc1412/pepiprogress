@@ -3,7 +3,7 @@ import { useRouter, type Href } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
-import { LabeledInput, PrimaryButton, ScaleSelector } from '@/components/form';
+import { LabeledInput, PrimaryButton, ScaleSelector, SingleSelectChips } from '@/components/form';
 import { Card, Divider, EngravedLabel, SignalText, Sunken } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
 import { Fonts, Spacing } from '@/constants/theme';
@@ -14,6 +14,11 @@ import { formatDateKey, localHour, shiftDateKey } from '@/lib/dates';
 import { metricForDate, weightInUnits } from '@/lib/integrations/autofill';
 import { applyFieldCustomization, partitionByTime, surfaceFields } from '@/lib/field-surfacing';
 import { localDateKey, useStore, type CheckinEntry } from '@/lib/store';
+import {
+  baselineFor,
+  currentTypicalLevel,
+  type TypicalLevel,
+} from '@/lib/typical-day';
 
 type DeltaTone = 'good' | 'bad' | 'neutral';
 type ScaleField =
@@ -58,12 +63,22 @@ export function DetailedLog({ onDismiss }: { onDismiss?: () => void } = {}) {
   const { t, i18n } = useTranslation();
   const theme = useTheme();
   const router = useRouter();
-  const { profile, entries, photos, protocolItems, doseEvents, metricReadings, upsertCheckin } =
-    useStore();
+  const {
+    profile,
+    entries,
+    photos,
+    protocolItems,
+    doseEvents,
+    metricReadings,
+    upsertCheckin,
+    recordTypicalDeviation,
+    silentFillTypical,
+  } = useStore();
 
   const today = localDateKey();
   const [date, setDate] = useState(today);
   const [showDeferred, setShowDeferred] = useState(false);
+  const [showExactNutrition, setShowExactNutrition] = useState(false);
   const [weightError, setWeightError] = useState<string | undefined>(undefined);
   const [nutritionError, setNutritionError] = useState<Partial<Record<NutritionField, string>>>({});
   const [measurementError, setMeasurementError] = useState<Partial<Record<'waist' | 'hips' | 'extra', string>>>({});
@@ -135,6 +150,22 @@ export function DetailedLog({ onDismiss }: { onDismiss?: () => void } = {}) {
     [fields, metricReadings, date],
   );
 
+  // Typical-day nutrition (spec 15): when an enabled baseline exists the nutrition
+  // section collapses to usual/less/more chips (with an "enter exact" escape hatch).
+  const nutritionBaseline = useMemo(
+    () => baselineFor(profile.typicalBaselines, 'nutrition'),
+    [profile.typicalBaselines],
+  );
+  const nutritionLevel = useMemo<TypicalLevel | null>(
+    () => (nutritionBaseline ? currentTypicalLevel(metricReadings, nutritionBaseline, date) : null),
+    [nutritionBaseline, metricReadings, date],
+  );
+  const typicalLevelOptions: { value: TypicalLevel; label: string }[] = [
+    { value: 'usual', label: t('typical.usual') },
+    { value: 'less', label: t('typical.less') },
+    { value: 'more', label: t('typical.more') },
+  ];
+
   // Passive fill: when a synced nutrition reading exists and the field is still
   // empty, write it once (per date/field, per session) so the value is "filled
   // up by the integration". A conflicting user-typed value is never overwritten
@@ -192,6 +223,44 @@ export function DetailedLog({ onDismiss }: { onDismiss?: () => void } = {}) {
     scaleFields,
     localHour(),
   );
+
+  const nutritionRow = (n: (typeof NUTRITION_FIELDS)[number]) => {
+    const reading = metricForDate(metricReadings, n.metric, date);
+    const synced = reading ? Math.round(reading.value) : undefined;
+    return (
+      <View key={`${date}-${n.field}`} style={styles.weightInput}>
+        <LabeledInput
+          key={`${date}-${n.field}-${num(n.field) ?? ''}`}
+          label={`${t(`fields.${n.field}` as const)} (${t(n.unitKey)})`}
+          keyboardType="decimal-pad"
+          defaultValue={num(n.field) !== undefined ? String(num(n.field)) : ''}
+          error={nutritionError[n.field]}
+          onEndEditing={(e) => {
+            const raw = e.nativeEvent.text.trim().replace(',', '.');
+            if (raw === '') {
+              setNutritionError((p) => ({ ...p, [n.field]: undefined }));
+              upsertCheckin(date, { [n.field]: undefined });
+              return;
+            }
+            const v = parseFloat(raw);
+            if (!Number.isFinite(v) || v < 0 || v > n.max) {
+              setNutritionError((p) => ({ ...p, [n.field]: t('checkin.weightInvalid') }));
+              return;
+            }
+            setNutritionError((p) => ({ ...p, [n.field]: undefined }));
+            upsertCheckin(date, { [n.field]: v });
+          }}
+        />
+        {synced !== undefined && num(n.field) !== synced && (
+          <Pressable accessibilityRole="button" onPress={() => upsertCheckin(date, { [n.field]: synced })}>
+            <ThemedText type="monoSm" themeColor="textSecondary" style={styles.autofill}>
+              {t(n.autofillKey, { value: synced })}
+            </ThemedText>
+          </Pressable>
+        )}
+      </View>
+    );
+  };
 
   const scaleRow = (f: ScaleField, i: number) => (
     <View key={f}>
@@ -287,48 +356,42 @@ export function DetailedLog({ onDismiss }: { onDismiss?: () => void } = {}) {
         </View>
       )}
 
-      {nutritionActive.length > 0 && (
+      {nutritionBaseline ? (
         <Card style={styles.section}>
           <EngravedLabel>{t('checkin.nutrition')}</EngravedLabel>
-          {nutritionActive.map((n) => {
-            const reading = metricForDate(metricReadings, n.metric, date);
-            const synced = reading ? Math.round(reading.value) : undefined;
-            return (
-              <View key={`${date}-${n.field}`} style={styles.weightInput}>
-                <LabeledInput
-                  key={`${date}-${n.field}-${num(n.field) ?? ''}`}
-                  label={`${t(`fields.${n.field}` as const)} (${t(n.unitKey)})`}
-                  keyboardType="decimal-pad"
-                  defaultValue={num(n.field) !== undefined ? String(num(n.field)) : ''}
-                  error={nutritionError[n.field]}
-                  onEndEditing={(e) => {
-                    const raw = e.nativeEvent.text.trim().replace(',', '.');
-                    if (raw === '') {
-                      setNutritionError((p) => ({ ...p, [n.field]: undefined }));
-                      upsertCheckin(date, { [n.field]: undefined });
-                      return;
-                    }
-                    const v = parseFloat(raw);
-                    if (!Number.isFinite(v) || v < 0 || v > n.max) {
-                      setNutritionError((p) => ({ ...p, [n.field]: t('checkin.weightInvalid') }));
-                      return;
-                    }
-                    setNutritionError((p) => ({ ...p, [n.field]: undefined }));
-                    upsertCheckin(date, { [n.field]: v });
-                  }}
-                />
-                {synced !== undefined && num(n.field) !== synced && (
-                  <Pressable accessibilityRole="button" onPress={() => upsertCheckin(date, { [n.field]: synced })}>
-                    <ThemedText type="monoSm" themeColor="textSecondary" style={styles.autofill}>
-                      {t(n.autofillKey, { value: synced })}
-                    </ThemedText>
-                  </Pressable>
-                )}
-              </View>
-            );
-          })}
+          {showExactNutrition ? (
+            <>
+              {NUTRITION_FIELDS.map(nutritionRow)}
+              <Pressable accessibilityRole="button" onPress={() => setShowExactNutrition(false)}>
+                <ThemedText type="monoSm" themeColor="textSecondary" style={styles.autofill}>
+                  {t('typical.useChips')}
+                </ThemedText>
+              </Pressable>
+            </>
+          ) : (
+            <>
+              <ThemedText type="small" themeColor="textSecondary">
+                {t('typical.chipHint')}
+              </ThemedText>
+              <SingleSelectChips
+                options={typicalLevelOptions}
+                value={nutritionLevel ?? undefined}
+                onChange={(lvl) => recordTypicalDeviation('nutrition', date, lvl)}
+              />
+              <Pressable accessibilityRole="button" onPress={() => setShowExactNutrition(true)}>
+                <ThemedText type="monoSm" themeColor="textSecondary" style={styles.autofill}>
+                  {t('typical.enterExact')}
+                </ThemedText>
+              </Pressable>
+            </>
+          )}
         </Card>
-      )}
+      ) : nutritionActive.length > 0 ? (
+        <Card style={styles.section}>
+          <EngravedLabel>{t('checkin.nutrition')}</EngravedLabel>
+          {nutritionActive.map(nutritionRow)}
+        </Card>
+      ) : null}
 
       {showMeasurements && (
         <Card style={styles.section}>
@@ -469,8 +532,18 @@ export function DetailedLog({ onDismiss }: { onDismiss?: () => void } = {}) {
         )}
       </View>
 
-      {/* Fields persist on blur; SAVE LOG confirms + closes the overlay (mockup). */}
-      {onDismiss && <PrimaryButton label={t('checkin.saveLog')} onPress={onDismiss} />}
+      {/* Fields persist on blur; SAVE LOG confirms + closes the overlay (mockup).
+          Saving is a check-in interaction, so silently fill "usual" for any enabled
+          typical group left untouched that day (spec 15 §UX.3). */}
+      {onDismiss && (
+        <PrimaryButton
+          label={t('checkin.saveLog')}
+          onPress={() => {
+            silentFillTypical(date);
+            onDismiss();
+          }}
+        />
+      )}
     </View>
   );
 }

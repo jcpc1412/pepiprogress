@@ -41,7 +41,8 @@
     "kg": "kg",
     "lb": "lb",
     "g": "g",
-    "kcal": "kcal"
+    "kcal": "kcal",
+    "hours": "heures"
   },
   "goals": {
     "weight_loss": "Perte de poids",
@@ -532,7 +533,10 @@
     "photoBody": "Une nouvelle comparaison de progression est prête à capturer.",
     "macros": "Macros de fin de journée",
     "macroTitle": "Enregistrez vos macros",
-    "macroBody": "Combien de protéines et de calories avez-vous consommées aujourd'hui ?"
+    "macroBody": "Combien de protéines et de calories avez-vous consommées aujourd'hui ?",
+    "typicalTitle": "Petite question",
+    "typicalBodyNutrition": "Mangez-vous à peu près pareil la plupart des jours ? Un geste pourrait remplir votre nutrition.",
+    "typicalBodySleep": "Dormez-vous à peu près pareil la plupart des nuits ? Un geste pourrait remplir votre sommeil."
   },
   "cycle": {
     "section": "SUIVI DU CYCLE",
@@ -920,5 +924,52 @@
   "whatILog": {
     "title": "Ce que je note",
     "hint": "Ajoutez ou retirez des champs de votre suivi quotidien. Les valeurs par défaut suivent vos objectifs et vos composés."
+  },
+  "typical": {
+    "usual": "Comme d'habitude",
+    "less": "Mangé moins",
+    "more": "Mangé plus",
+    "chipHint": "Comment était aujourd'hui par rapport à un jour normal ?",
+    "enterExact": "Saisir les chiffres exacts",
+    "useChips": "Revenir aux boutons rapides",
+    "settingsTitle": "Journée type",
+    "settingsHint": "Définissez une journée normale une fois, puis enregistrez d'un geste. Ces valeurs sont traitées comme des estimations.",
+    "group": {
+      "nutrition": "Nutrition",
+      "sleep": "Sommeil"
+    },
+    "invalid": "Saisissez une valeur entre {{min}} et {{max}}.",
+    "saveEdit": "Enregistrer",
+    "startSetup": "Configurer",
+    "enabledLabel": "Remplir mes journées",
+    "on": "Activé",
+    "off": "Désactivé",
+    "clearHistory": "Effacer l'historique estimé",
+    "ask": {
+      "nutrition": "Mangez-vous à peu près pareil la plupart des jours ?",
+      "sleep": "Dormez-vous à peu près pareil la plupart des nuits ?"
+    },
+    "yes": "Oui, à peu près",
+    "no": "Pas vraiment",
+    "baselineAsk": {
+      "nutrition": "Environ combien de calories et de protéines un jour normal ? Une estimation suffit.",
+      "sleep": "Environ combien d'heures dormez-vous une nuit normale ? Une estimation suffit."
+    },
+    "declineAck": "Pas de souci. Vous pouvez configurer cela à tout moment depuis les Réglages.",
+    "confirmNutrition": "Compris : environ {{calories}} kcal et {{protein}} g de protéines un jour normal. Je traiterai les jours où vous faites le point comme à peu près cela, marqué comme estimé, sauf indication contraire.",
+    "confirmSleep": "Compris : environ {{hours}} heures une nuit normale. Je traiterai les jours où vous faites le point comme à peu près cela, marqué comme estimé, sauf indication contraire.",
+    "baselineRetry": {
+      "nutrition": "Je n'ai pas saisi les deux chiffres. Essayez par exemple : 2600 cal, 150 g de protéines.",
+      "sleep": "Je n'ai pas saisi cela. Essayez par exemple : 7.5 heures."
+    },
+    "logged": {
+      "more": "Enregistré plus que d'habitude, marqué comme estimé.",
+      "less": "Enregistré moins que d'habitude, marqué comme estimé."
+    },
+    "opener": {
+      "nutrition": "Vous mangez à peu près pareil chaque jour ?",
+      "sleep": "Vous dormez à peu près pareil ?"
+    },
+    "sleepDuration": "Durée du sommeil"
   }
 }

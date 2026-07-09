@@ -41,7 +41,8 @@
     "kg": "kg",
     "lb": "lb",
     "g": "g",
-    "kcal": "kcal"
+    "kcal": "kcal",
+    "hours": "hours"
   },
   "goals": {
     "weight_loss": "Weight loss",
@@ -532,7 +533,10 @@
     "photoBody": "A new progress comparison is ready to capture.",
     "macros": "End-of-day macros",
     "macroTitle": "Log your macros",
-    "macroBody": "How much protein and calories did you have today?"
+    "macroBody": "How much protein and calories did you have today?",
+    "typicalTitle": "Quick question",
+    "typicalBodyNutrition": "Do you eat about the same most days? One tap could fill in your nutrition.",
+    "typicalBodySleep": "Do you sleep about the same most nights? One tap could fill in your sleep."
   },
   "cycle": {
     "section": "CYCLE TRACKING",
@@ -920,5 +924,52 @@
   "whatILog": {
     "title": "What I log",
     "hint": "Add or remove fields from your daily check-in. Defaults follow your goals and compounds."
+  },
+  "typical": {
+    "usual": "The usual",
+    "less": "Ate less",
+    "more": "Ate more",
+    "chipHint": "How did today compare to a normal day?",
+    "enterExact": "Enter exact numbers",
+    "useChips": "Back to quick chips",
+    "settingsTitle": "Typical day",
+    "settingsHint": "Set a normal day once, then log with a tap. These values are treated as estimates.",
+    "group": {
+      "nutrition": "Nutrition",
+      "sleep": "Sleep"
+    },
+    "invalid": "Enter a value between {{min}} and {{max}}.",
+    "saveEdit": "Save",
+    "startSetup": "Set up",
+    "enabledLabel": "Fill in my days",
+    "on": "On",
+    "off": "Off",
+    "clearHistory": "Clear estimated history",
+    "ask": {
+      "nutrition": "Do you eat about the same most days?",
+      "sleep": "Do you sleep about the same most nights?"
+    },
+    "yes": "Yes, roughly",
+    "no": "Not really",
+    "baselineAsk": {
+      "nutrition": "About how many calories and how much protein on a normal day? Rough is fine.",
+      "sleep": "About how many hours do you sleep on a normal night? Rough is fine."
+    },
+    "declineAck": "No problem. You can set this up any time from Settings.",
+    "confirmNutrition": "Got it: about {{calories}} kcal and {{protein}} g protein on a normal day. I will treat days you check in as roughly this, marked as estimated, unless you tell me otherwise.",
+    "confirmSleep": "Got it: about {{hours}} hours on a normal night. I will treat days you check in as roughly this, marked as estimated, unless you tell me otherwise.",
+    "baselineRetry": {
+      "nutrition": "I did not catch both numbers. Try something like: 2600 cal, 150 g protein.",
+      "sleep": "I did not catch that. Try something like: 7.5 hours."
+    },
+    "logged": {
+      "more": "Logged more than usual, marked as estimated.",
+      "less": "Logged less than usual, marked as estimated."
+    },
+    "opener": {
+      "nutrition": "Eat about the same daily?",
+      "sleep": "Sleep about the same?"
+    },
+    "sleepDuration": "Sleep duration"
   }
 }

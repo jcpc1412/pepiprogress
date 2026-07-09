@@ -5,9 +5,13 @@ import {
   configureNotifications,
   ensureNotificationPermission,
   maybeNotifyInventory,
+  notifyTypicalPrompt,
   rescheduleReminders,
 } from '@/lib/notifications';
-import { useStore } from '@/lib/store';
+import { surfaceFields } from '@/lib/field-surfacing';
+import { daysBetween, shiftDateKey } from '@/lib/dates';
+import { localDateKey, useStore } from '@/lib/store';
+import { firstEligibleTypicalGroup } from '@/lib/typical-day';
 
 /**
  * Drives local reminders (spec 06): daily check-in, daily "log your doses", and
@@ -17,7 +21,8 @@ import { useStore } from '@/lib/store';
  * All scheduling is a no-op on web (see notifications.ts).
  */
 export function NotificationManager() {
-  const { ready, profile, protocolItems, inventory, setProfile } = useStore();
+  const { ready, profile, protocolItems, inventory, entries, metricReadings, setProfile, setTypicalPromptState } =
+    useStore();
 
   // Configure the handler + Android channel once.
   useEffect(() => {
@@ -72,27 +77,48 @@ export function NotificationManager() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, anyEnabled, scheduleKey]);
 
-  // Low-stock / expiry check on launch + every foreground. Refs keep the latest
-  // values available to the AppState listener without re-subscribing.
+  // Low-stock / expiry + typical-day prompt on launch + every foreground. Refs keep
+  // the latest values available to the AppState listener without re-subscribing.
   const inventoryRef = useRef(inventory);
   const profileRef = useRef(profile);
+  const entriesRef = useRef(entries);
+  const readingsRef = useRef(metricReadings);
   useEffect(() => {
     inventoryRef.current = inventory;
     profileRef.current = profile;
+    entriesRef.current = entries;
+    readingsRef.current = metricReadings;
   });
 
   useEffect(() => {
     if (!ready) return;
     const run = async () => {
-      const day = await maybeNotifyInventory(profileRef.current, inventoryRef.current);
+      const p = profileRef.current;
+      const day = await maybeNotifyInventory(p, inventoryRef.current);
       if (day) setProfile({ inventoryNotifiedOn: day });
+
+      // One-time "typical day" nudge for a freshly-eligible group (spec 15).
+      const today = localDateKey();
+      const firstEntry = Object.keys(entriesRef.current).sort()[0];
+      const group = firstEligibleTypicalGroup({
+        goals: p.goals,
+        surfacedFields: surfaceFields(p.goals, p.compoundSlugs).fields,
+        promptState: p.typicalPromptState,
+        entries: entriesRef.current,
+        readings: readingsRef.current,
+        windowStart: shiftDateKey(today, -13),
+        windowEnd: today,
+        daysSinceFirstEntry: firstEntry ? daysBetween(firstEntry, today) : 0,
+        allowNotified: false,
+      });
+      if (group && (await notifyTypicalPrompt(group))) setTypicalPromptState(group, 'notified');
     };
     void run();
     const sub = AppState.addEventListener('change', (next) => {
       if (next === 'active') void run();
     });
     return () => sub.remove();
-  }, [ready, setProfile]);
+  }, [ready, setProfile, setTypicalPromptState]);
 
   return null;
 }

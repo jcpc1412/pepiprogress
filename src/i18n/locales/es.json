@@ -41,7 +41,8 @@
     "kg": "kg",
     "lb": "lb",
     "g": "g",
-    "kcal": "kcal"
+    "kcal": "kcal",
+    "hours": "horas"
   },
   "goals": {
     "weight_loss": "Pérdida de peso",
@@ -532,7 +533,10 @@
     "photoBody": "Una nueva comparación de progreso está lista para capturar.",
     "macros": "Macros de fin de día",
     "macroTitle": "Registra tus macros",
-    "macroBody": "¿Cuánta proteína y calorías consumiste hoy?"
+    "macroBody": "¿Cuánta proteína y calorías consumiste hoy?",
+    "typicalTitle": "Pregunta rápida",
+    "typicalBodyNutrition": "¿Comes más o menos lo mismo casi todos los días? Un toque podría rellenar tu nutrición.",
+    "typicalBodySleep": "¿Duermes más o menos lo mismo casi todas las noches? Un toque podría rellenar tu sueño."
   },
   "cycle": {
     "section": "CICLO MENSTRUAL",
@@ -920,5 +924,52 @@
   "whatILog": {
     "title": "Qué registro",
     "hint": "Añade o quita campos de tu registro diario. Los valores predeterminados siguen tus objetivos y compuestos."
+  },
+  "typical": {
+    "usual": "Lo de siempre",
+    "less": "Comí menos",
+    "more": "Comí más",
+    "chipHint": "¿Cómo fue hoy comparado con un día normal?",
+    "enterExact": "Introducir números exactos",
+    "useChips": "Volver a los botones rápidos",
+    "settingsTitle": "Día típico",
+    "settingsHint": "Configura un día normal una vez y registra con un toque. Estos valores se tratan como estimaciones.",
+    "group": {
+      "nutrition": "Nutrición",
+      "sleep": "Sueño"
+    },
+    "invalid": "Introduce un valor entre {{min}} y {{max}}.",
+    "saveEdit": "Guardar",
+    "startSetup": "Configurar",
+    "enabledLabel": "Rellenar mis días",
+    "on": "Activado",
+    "off": "Desactivado",
+    "clearHistory": "Borrar historial estimado",
+    "ask": {
+      "nutrition": "¿Comes más o menos lo mismo casi todos los días?",
+      "sleep": "¿Duermes más o menos lo mismo casi todas las noches?"
+    },
+    "yes": "Sí, más o menos",
+    "no": "La verdad que no",
+    "baselineAsk": {
+      "nutrition": "¿Cuántas calorías y cuánta proteína en un día normal? Un cálculo aproximado vale.",
+      "sleep": "¿Cuántas horas duermes en una noche normal? Un cálculo aproximado vale."
+    },
+    "declineAck": "Sin problema. Puedes configurarlo cuando quieras desde Ajustes.",
+    "confirmNutrition": "Entendido: unas {{calories}} kcal y {{protein}} g de proteína en un día normal. Trataré los días que registres como aproximadamente esto, marcado como estimado, salvo que me digas otra cosa.",
+    "confirmSleep": "Entendido: unas {{hours}} horas en una noche normal. Trataré los días que registres como aproximadamente esto, marcado como estimado, salvo que me digas otra cosa.",
+    "baselineRetry": {
+      "nutrition": "No capté los dos números. Prueba algo como: 2600 cal, 150 g de proteína.",
+      "sleep": "No capté eso. Prueba algo como: 7.5 horas."
+    },
+    "logged": {
+      "more": "Registrado más de lo habitual, marcado como estimado.",
+      "less": "Registrado menos de lo habitual, marcado como estimado."
+    },
+    "opener": {
+      "nutrition": "¿Comes casi lo mismo a diario?",
+      "sleep": "¿Duermes casi lo mismo?"
+    },
+    "sleepDuration": "Duración del sueño"
   }
 }

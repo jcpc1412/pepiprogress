@@ -100,6 +100,10 @@ export function mergeStates(local: PersistedState, cloud: PersistedState): Persi
     notifyInventoryEnabled: local.profile.notifyInventoryEnabled,
     notifyPhotosEnabled: local.profile.notifyPhotosEnabled,
     inventoryNotifiedOn: local.profile.inventoryNotifiedOn,
+    // Typical-day baselines (spec 15) ride the snapshot; prefer whichever side has
+    // them so a normalized-reconstruction merge never wipes a local baseline.
+    typicalBaselines: cloud.profile.typicalBaselines ?? local.profile.typicalBaselines,
+    typicalPromptState: cloud.profile.typicalPromptState ?? local.profile.typicalPromptState,
     // Field customizations: prefer cloud when non-empty (it's synced); fall back to local
     addedFields: (cloud.profile.addedFields?.length
       ? cloud.profile.addedFields

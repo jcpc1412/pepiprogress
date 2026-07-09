@@ -43,6 +43,7 @@ export function SettingsScreen({ onClose }: { onClose: () => void }) {
             <SettingsRow label={t('tabs.protocol')} onPress={() => router.push('/protocol')} />
             <SettingsRow label={t('me.title')} sublabel={meSub} onPress={() => router.push('/me')} />
             <SettingsRow label={t('whatILog.title')} onPress={() => router.push('/whatilog' as Href)} />
+            <SettingsRow label={t('typical.settingsTitle')} onPress={() => router.push('/typical-day' as Href)} />
             <SettingsRow label={t('notify.section')} onPress={() => router.push('/notifications-settings')} />
             <SettingsRow label={t('privacy.pageTitle')} onPress={() => router.push('/privacy')} />
           </View>

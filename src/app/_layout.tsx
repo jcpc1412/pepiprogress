@@ -72,6 +72,7 @@ function RootContent() {
           <Stack.Screen name="privacy" />
           <Stack.Screen name="photo-history" />
           <Stack.Screen name="whatilog" />
+          <Stack.Screen name="typical-day" />
           <Stack.Screen name="signal/[metricId]" />
         </Stack>
       </CloudSync>

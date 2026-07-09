@@ -41,7 +41,8 @@
     "kg": "kg",
     "lb": "lb",
     "g": "g",
-    "kcal": "kcal"
+    "kcal": "kcal",
+    "hours": "Stunden"
   },
   "goals": {
     "weight_loss": "Gewichtsverlust",
@@ -532,7 +533,10 @@
     "photoBody": "Ein neuer Fortschrittsvergleich kann aufgenommen werden.",
     "macros": "Makros am Tagesende",
     "macroTitle": "Erfasse deine Makros",
-    "macroBody": "Wie viel Protein und Kalorien hattest du heute?"
+    "macroBody": "Wie viel Protein und Kalorien hattest du heute?",
+    "typicalTitle": "Kurze Frage",
+    "typicalBodyNutrition": "Isst du an den meisten Tagen ungefähr gleich? Ein Tippen könnte deine Ernährung ausfüllen.",
+    "typicalBodySleep": "Schläfst du in den meisten Nächten ungefähr gleich? Ein Tippen könnte deinen Schlaf ausfüllen."
   },
   "cycle": {
     "section": "ZYKLUS-TRACKING",
@@ -920,5 +924,52 @@
   "whatILog": {
     "title": "Was ich protokolliere",
     "hint": "Felder zu deinem täglichen Check-in hinzufügen oder entfernen. Die Standardwerte richten sich nach deinen Zielen und Wirkstoffen."
+  },
+  "typical": {
+    "usual": "Wie üblich",
+    "less": "Weniger gegessen",
+    "more": "Mehr gegessen",
+    "chipHint": "Wie war heute im Vergleich zu einem normalen Tag?",
+    "enterExact": "Genaue Zahlen eingeben",
+    "useChips": "Zurück zu den Schnellchips",
+    "settingsTitle": "Typischer Tag",
+    "settingsHint": "Lege einmal einen normalen Tag fest und protokolliere dann mit einem Tippen. Diese Werte gelten als Schätzungen.",
+    "group": {
+      "nutrition": "Ernährung",
+      "sleep": "Schlaf"
+    },
+    "invalid": "Gib einen Wert zwischen {{min}} und {{max}} ein.",
+    "saveEdit": "Speichern",
+    "startSetup": "Einrichten",
+    "enabledLabel": "Meine Tage ausfüllen",
+    "on": "An",
+    "off": "Aus",
+    "clearHistory": "Geschätzten Verlauf löschen",
+    "ask": {
+      "nutrition": "Isst du an den meisten Tagen ungefähr gleich?",
+      "sleep": "Schläfst du in den meisten Nächten ungefähr gleich?"
+    },
+    "yes": "Ja, ungefähr",
+    "no": "Eher nicht",
+    "baselineAsk": {
+      "nutrition": "Etwa wie viele Kalorien und wie viel Protein an einem normalen Tag? Eine grobe Schätzung reicht.",
+      "sleep": "Etwa wie viele Stunden schläfst du in einer normalen Nacht? Eine grobe Schätzung reicht."
+    },
+    "declineAck": "Kein Problem. Du kannst das jederzeit in den Einstellungen einrichten.",
+    "confirmNutrition": "Verstanden: etwa {{calories}} kcal und {{protein}} g Protein an einem normalen Tag. Ich behandle Tage, an denen du eincheckst, ungefähr so, als Schätzung markiert, sofern du nichts anderes sagst.",
+    "confirmSleep": "Verstanden: etwa {{hours}} Stunden in einer normalen Nacht. Ich behandle Tage, an denen du eincheckst, ungefähr so, als Schätzung markiert, sofern du nichts anderes sagst.",
+    "baselineRetry": {
+      "nutrition": "Ich habe nicht beide Zahlen erfasst. Versuche etwa: 2600 kcal, 150 g Protein.",
+      "sleep": "Ich habe das nicht erfasst. Versuche etwa: 7.5 Stunden."
+    },
+    "logged": {
+      "more": "Mehr als üblich erfasst, als Schätzung markiert.",
+      "less": "Weniger als üblich erfasst, als Schätzung markiert."
+    },
+    "opener": {
+      "nutrition": "Isst du täglich ungefähr gleich?",
+      "sleep": "Schläfst du ungefähr gleich?"
+    },
+    "sleepDuration": "Schlafdauer"
   }
 }

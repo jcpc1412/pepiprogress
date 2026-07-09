@@ -120,6 +120,25 @@ export async function rescheduleReminders(profile: LocalProfile, hasScheduledDos
 }
 
 /**
+ * Fire the one-time "typical day" prompt for a group (spec 15). A question, never
+ * advice; deep-links to Pepi where the setup runs. Deduped by the caller via the
+ * profile's `typicalPromptState` (only fired when a group is freshly eligible).
+ * No-op on web. Returns whether it was scheduled.
+ */
+export async function notifyTypicalPrompt(group: string): Promise<boolean> {
+  if (isWeb) return false;
+  await Notifications.scheduleNotificationAsync({
+    content: {
+      title: t('notify.typicalTitle'),
+      body: group === 'sleep' ? t('notify.typicalBodySleep') : t('notify.typicalBodyNutrition'),
+      data: { kind: 'typical', group },
+    },
+    trigger: null, // immediate; once-ever per group by design
+  });
+  return true;
+}
+
+/**
  * Fire an immediate low-stock/expiry reminder if anything needs attention and we
  * haven't already notified today. Returns the day-key to persist as
  * `inventoryNotifiedOn` (or null when nothing fired). No-op on web.
