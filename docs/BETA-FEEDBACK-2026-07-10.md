@@ -14,7 +14,7 @@ Each item below carries the feedback, what the code does today, a proposed direc
 
 **Proposed:** add a third routing tier: when the parse finds nothing to log and `matchQuery` misses, send the question to the `insights` `qa` action with the assembled history (same data facade as A-4). Deterministic stays first (free, instant); AI catches the long tail like partial-week comparisons.
 
-**To discuss:** cost gate. Every miss becomes a capable-model call. Cap per day? Haiku first with Sonnet escalation? Or just ship it and watch spend?
+**DECISION (locked):** ship the AI fallback on **Haiku**, no per-day cap. Push as much as possible into deterministic intents first (e.g. "have I exercised less lately?" = a week-over-week `workout_effort` comparison the `matchQuery` layer should handle without an AI call); AI only catches what deterministic genuinely cannot. The `qa` action uses `AI_PARSE_MODEL` (Haiku), not the vision/capable model.
 
 ### P-2. Rich metric answers (explanation + chart + projection)
 **Feedback:** "For 'how's my weight loss going' I would expect a fancy explanation and maybe a chart with a smart projection."
@@ -23,7 +23,7 @@ Each item below carries the feedback, what the code does today, a proposed direc
 
 **Proposed:** a `chart` message variant in the Pepi thread: sparkline (reuse `LineChart`/`sparkline.ts` + `buildMetricSeries`), the verdict explanation line, and the existing forecast when available. Projection stays the engine's hedged observed-pace math (legal rung 1), never an AI-invented number.
 
-**To discuss:** this reverses the R2-F "no charts in chat" decision. Confirm the reversal, and whether the chart taps through to the Analysis signal detail.
+**DECISION (locked):** go with the proposed approach. This reverses the R2-F "Analysis owns every chart" rule for the chat surface: a metric question yields a sparkline + the engine's explanation + the hedged projection, and the chart taps through to the Analysis signal detail for the full view. Update the R2-F note in CLAUDE.md when this lands.
 
 ### P-3. Pepi can see photo results
 **Feedback:** "It needs access to photo results. Right now it's blind to them."
@@ -32,7 +32,7 @@ Each item below carries the feedback, what the code does today, a proposed direc
 
 **Proposed:** add a compact photo digest (per session/part: last capture date, comparability, latest hedged change note) to `InsightHistory` and to the P-1 Q&A context; add a deterministic intent for "when was my last photo" style questions.
 
-**To discuss:** does the change note text go to the AI as-is (it is already hedged and identity-free), or only numeric metadata?
+**DECISION (locked):** pass the hedged change-note text **as-is**. (Difference for the record: "as-is" gives the AI the full sentence Pepi already generated, e.g. "slightly more definition around the jawline, low confidence" — richer, and already hedged + identity-free so it carries no new risk. "Metadata only" would give just `driftScore`/`comparable`/`lighting` numbers, forcing the AI to re-describe from scratch with less to go on. As-is is strictly better here.)
 
 ### P-4. Keyboard handling
 **Feedback:** "If I open the keyboard, it goes over everything. It should move the text box up, auto scroll down the conversation, and hide the template cards."
@@ -42,9 +42,24 @@ Each item below carries the feedback, what the code does today, a proposed direc
 **Proposed:** wrap in `KeyboardAvoidingView` (padding behavior, iOS offset), auto `scrollToEnd` on keyboard-show, hide the chips row while the keyboard is up. Pure UI fix, no discussion blocker beyond confirming chips should be fully hidden vs collapsed to one row.
 
 ### P-5. Interface cleanup
-**Feedback:** "The interface needs a clean up."
+**Feedback:** "The interface needs a clean up." Owner screenshot (light theme) + specifics:
+- **Input box padding** is too tight; the composer needs breathing room (padding around the field + send button, and bottom safe-area spacing above the tab bar).
+- **No animations.** Messages pop in with no transition; add tasteful enter animations for new bubbles (respecting reduce-motion) and a send-button press state.
+- **Remove the hero description** line ("Log anything, or ask about your data.").
+- **Turn the header into a real hero header** (the "PEPI" label promoted to a proper hero treatment, not a small engraved label + subtitle).
+- **The Clear button is confusing.** Owner asks: can we auto-clear on session close instead of a manual button?
 
-**To discuss:** need specifics from the owner (screenshot or a list). Candidates: chips crowding, bubble density, header. Parked until the walkthrough.
+**DECISION (locked):**
+- Composer padding + safe-area spacing, message enter animations (reduce-motion aware), send-button press state: yes, all in.
+- Remove the subtitle/description line.
+- Promote the header to a hero treatment (final visual TBD during build, instrument voice).
+- **Auto-clear:** replace the manual Clear button with session-close auto-clear. See open question OQ-1 below on what "session close" means technically, since it changes the persistence model (`pepiMessages` is currently persisted for 40 turns).
+
+**OQ-1 (needs owner confirm during build):** "session close" options, in order of my preference:
+  1. **App backgrounded / tab left for N minutes** then re-entered fresh (keeps history within an active session, clears on real disengagement). *My recommendation.*
+  2. Clear on every tab switch away from Pepi (aggressive; loses history if you glance at Today).
+  3. Clear on app cold start only (history survives all day; barely different from today).
+Leaning option 1. Will confirm the exact trigger when P-5 is built, not blocking the rest.
 
 ---
 
@@ -61,6 +76,8 @@ Each item below carries the feedback, what the code does today, a proposed direc
 **Today:** the `watch` explanation is a generic template. The engine already computes `role: 'drags'` per signal plus `explained` annotations; the strongest drag is only used for the reconciliation line.
 
 **Proposed:** when state is `watch`/mixed, name the top dragging signal(s) in the explanation ("mixed: soreness and sleep quality are pulling against an otherwise good week"), reusing the existing drag/explained machinery. Template-driven, no AI needed.
+
+**DECISION (locked):** name the dragging signals as proposed (that part is "just enough"). Separately, the **embellishment** the owner wants is specifically for **neutral / generic** verdict states, which currently read flat: exaggerate the interpretation a little so a neutral read still says something with character rather than a canned line. This is a copy/prompt job (ties into A-5) and deliberately feeds the **prompt cache** (stable, reusable phrasing across sessions lowers AI cost). Keep it inside VOICE.md, just less clinical.
 
 ---
 
