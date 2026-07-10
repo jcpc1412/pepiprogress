@@ -32,7 +32,7 @@ Each item below carries the feedback, what the code does today, a proposed direc
 
 **Proposed:** add a compact photo digest (per session/part: last capture date, comparability, latest hedged change note) to `InsightHistory` and to the P-1 Q&A context; add a deterministic intent for "when was my last photo" style questions.
 
-**DECISION (locked):** pass the hedged change-note text **as-is**. (Difference for the record: "as-is" gives the AI the full sentence Pepi already generated, e.g. "slightly more definition around the jawline, low confidence" — richer, and already hedged + identity-free so it carries no new risk. "Metadata only" would give just `driftScore`/`comparable`/`lighting` numbers, forcing the AI to re-describe from scratch with less to go on. As-is is strictly better here.)
+**DECISION (locked):** pass the hedged change-note text **as-is**. Difference for the record: "as-is" gives the AI the full sentence Pepi already generated (e.g. "slightly more definition around the jawline, low confidence"), which is richer and already hedged plus identity-free, so it carries no new risk. "Metadata only" would give just `driftScore`/`comparable`/`lighting` numbers, forcing the AI to re-describe from scratch with less to go on. As-is is strictly better here.
 
 ### P-4. Keyboard handling
 **Feedback:** "If I open the keyboard, it goes over everything. It should move the text box up, auto scroll down the conversation, and hide the template cards."
