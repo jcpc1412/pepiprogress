@@ -132,7 +132,11 @@ Leaning option 1. Will confirm the exact trigger when P-5 is built, not blocking
 - When a new capture beats the current reference's quality score, promote it to the ghost/compare reference ("new quality highscore" moment, celebratory but instrument-toned). Minimal coverage always outranks clothed at equal quality; once a minimal-coverage reference exists, clothed captures never displace it (the soft lock).
 - Copy must stay tasteful and opt-in in spirit: we explain *why* (accuracy), never demand.
 
-**To discuss:** (a) confirm the vision service should classify clothing coverage (privacy posture is unchanged: private bucket, never trained on, analysis is opt-in consent already collected); (b) does the *baseline* photo swap too, or only the comparison default? Swapping the ghost reference changes what users align against mid-cycle.
+**DECISION (locked):**
+- **(a) Classify coverage: yes.** Add a `coverage` field (`clothed` / `partial` / `minimal`) to the `analyze_photo` vision action. Privacy posture unchanged (private bucket, opt-in AI consent already collected, never trained on). This powers both the quality score and the skin-priority soft lock.
+- **(b) Baseline swap, keep original as anchor.** When a new capture beats the current quality score, promote it to the working reference for the ghost overlay + comparison default, BUT keep the very first photo permanently stored as the immutable "true start" so before/after against day one is never lost. Minimal coverage outranks clothed at equal quality; once a minimal-coverage reference exists, clothed captures never displace it (the soft lock). The "new quality highscore" moment fires on promotion, celebratory but instrument-toned.
+
+Implementation notes: `PhotoEntry` gains `coverage` + a computed `qualityScore`; the (session, part) chain needs a `referenceId` (promotable) distinct from the original baseline (immutable). Vision service redeploy required for the `coverage` field.
 
 ### PH-2. Instant post-capture feedback
 **Feedback:** "We need feedback after the photo logging is done. Anything that confirms things are working, not only confetti but maybe an initial analysis right out of the gate without having to click for it."
@@ -141,7 +145,7 @@ Leaning option 1. Will confirm the exact trigger when P-5 is built, not blocking
 
 **Proposed:** on save, auto-fire a first-pass read and show it inline as a result card: comparability badge, one hedged sentence, retake hint if quality is off. Options ordered by cost: (a) reuse the already-computed capture metadata + `checkFit` (Haiku, cheap, instant), (b) full `analyze_photo` (Sonnet) auto-run per save.
 
-**To discuss:** which tier auto-runs. Sonnet per capture is the best experience but the highest recurring cost; Haiku quick-read with a "full read" button may be the right default.
+**DECISION (locked): Haiku always + Sonnet on milestones.** Every save auto-fires a cheap Haiku quick-read inline (comparability badge + one hedged sentence + retake hint if quality is off), so there is always instant confirmation. The full Sonnet `analyze_photo` auto-runs only on scheduled milestone days (reuse the existing `photo-cadence.ts` next-scientific dates); otherwise it stays behind a "full read" button. Confetti/celebration on save is unconditional; the Haiku read is the "it's working" proof. Balances cost against depth.
 
 ---
 
