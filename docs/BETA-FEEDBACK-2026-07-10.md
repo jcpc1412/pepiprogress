@@ -151,6 +151,13 @@ Implementation notes: `PhotoEntry` gains `coverage` + a computed `qualityScore`;
 
 ## Implementation status
 
+### P-1 smart off-card answers + A-1 AI fix (shipped, edge deployed v14)
+- **Deterministic first (no AI call):** `intent.ts` now recognizes exercise synonyms (gym / worked out / training / lifted) and `dosing`, and treats trend phrasing ("lately", "recently", "less/more lately", "trending", "dropping") as a recent-week-vs-prior comparison, even on a partial week. The screenshot's "have I exercised less lately?" now returns a week-over-week workout comparison with zero AI cost. Tests in `intent.test.ts`.
+- **Haiku Q&A fallback:** anything the deterministic layers still miss routes to the insights `qa` action grounded in the facade history (`buildInsightHistory`), on the cheap model via a new `tier: 'quick'` flag. No per-day cap (owner decision). Replaces the old "not understood" dead-end.
+- **Edge (deployed v14):** the `insights` action honors `tier` ('quick' -> Haiku, else the capable model), and its system prompt now respects the goal-direction hints the facade annotates onto metric labels. That closes the proper A-1 AI fix: the model is told, inline and structurally, never to frame a goal-adverse move (a male cutter's rising hips) as good.
+- Green: typecheck / lint / i18n (6) / vitest (98) / web export. Deployed edge verified byte-for-byte against local source.
+
+
 ### A-4 data facade + A-3 + A-1 (partially shipped)
 `src/lib/data-facade.ts` (pure, + `data-facade.test.ts`, 8 tests) is the single selector layer: `selectVerdict`, `selectChartSeries`, `selectMetricDirections`, `selectProtocolContext`, `selectPhotoDigest`, `buildInsightHistory`. Migrated the verdict hook (`use-verdict.ts`) and the Analysis charts (`insights-screen.tsx`) onto it (behavior-preserving), and rebuilt the insights AI history through it.
 - **A-3 (fixed, no redeploy):** the insights AI now receives the SAME derived + integration + body-composition trend series the charts render (energy, recovery, caloric balance, waist/hips, body-fat %), flattened into `history.metrics`, which the deployed function already renders. Previously it only sent raw readings + a handful of manual check-in fields, so it was blind to derived/integration trends.

@@ -9,7 +9,8 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Radii, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { aiErrorKind, parseQuickLog, type ParsedItem } from '@/lib/ai';
+import { aiErrorKind, parseQuickLog, runInsights, type ParsedItem } from '@/lib/ai';
+import { buildInsightHistory } from '@/lib/data-facade';
 import { executeQuery } from '@/lib/ask/execute';
 import { matchQuery, SUGGESTED_QUERIES } from '@/lib/ask/intent';
 import type { Aggregation, PepiAnswer, PepiQuery, QueryMetric, Timeframe, UnitTag } from '@/lib/ask/types';
@@ -71,6 +72,8 @@ export function PepiChat() {
     entries,
     doseEvents,
     metricReadings,
+    symptomEvents,
+    protocolItems,
     profile,
     upsertCheckin,
     addSymptomEvent,
@@ -367,6 +370,30 @@ export function PepiChat() {
         if (q) {
           addPepiMessage({ role: 'pepi', text: formatAnswer(executeQuery(q, snapshot, localDateKey())), variant: 'answer' });
           handled = true;
+        }
+      }
+
+      // AI Q&A fallback (P-1): anything the deterministic layers can't answer goes
+      // to the cheap insights Q&A (Haiku, tier 'quick'), grounded in the same facade
+      // history the charts + Analysis use. No cap, by design (owner decision).
+      if (!handled && isSupabaseConfigured) {
+        try {
+          const res = await runInsights({
+            mode: 'qa',
+            question: input,
+            history: buildInsightHistory(
+              { entries, metricReadings, protocolItems, doseEvents, symptomEvents, profile },
+              today,
+            ),
+            locale: lang,
+            tier: 'quick',
+          });
+          if (res.answer.trim()) {
+            addPepiMessage({ role: 'pepi', text: res.answer.trim(), variant: 'answer' });
+            handled = true;
+          }
+        } catch (err) {
+          aiError = err;
         }
       }
 

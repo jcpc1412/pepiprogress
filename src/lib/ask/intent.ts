@@ -16,11 +16,14 @@ const METRIC_KEYWORDS: { re: RegExp; metric: QueryMetric }[] = [
   { re: /\b(wellness|wellbeing|well-being|mood)\b/, metric: { kind: 'checkin', field: 'wellness' } },
   { re: /\b(appetite|hunger)\b/, metric: { kind: 'checkin', field: 'appetite' } },
   { re: /\b(soreness|sore)\b/, metric: { kind: 'checkin', field: 'soreness' } },
-  { re: /\b(workout|training|effort|session)\b/, metric: { kind: 'checkin', field: 'workout_effort' } },
+  {
+    re: /\b(workout|working out|worked out|work out|train|trained|training|exercise|exercised|exercising|gym|effort|session|lift(ed|ing)?)\b/,
+    metric: { kind: 'checkin', field: 'workout_effort' },
+  },
   { re: /\b(libido|sex\s?drive)\b/, metric: { kind: 'checkin', field: 'libido' } },
   { re: /\bprotein\b/, metric: { kind: 'checkin', field: 'protein' } },
   { re: /\b(calories|calorie|kcal|cals)\b/, metric: { kind: 'checkin', field: 'calories' } },
-  { re: /\b(dose|doses|inject|injection|injections|shot|shots)\b/, metric: { kind: 'dose' } },
+  { re: /\b(dose|doses|dosing|dosed|inject|injection|injections|shot|shots)\b/, metric: { kind: 'dose' } },
 ];
 
 function detectTimeframe(text: string): Timeframe | undefined {
@@ -45,6 +48,11 @@ function detectAgg(text: string): Aggregation | undefined {
 
 const COMPARE_RE = /\b(vs|versus|compared? to|compare)\b/;
 
+/** "Have I been X-ing less lately?" style trend questions map to a recent-vs-prior
+ *  week comparison, even on a partial week (the executor averages what exists). */
+const TREND_RE =
+  /\b(lately|recently|these days|nowadays|last few days|past few days|trending|going up|going down|on the rise|declining|dropping|increasing|decreasing|slacking|slipping)\b/;
+
 export function matchQuery(input: string): PepiQuery | null {
   const text = input.toLowerCase().trim();
   if (!text) return null;
@@ -53,10 +61,15 @@ export function matchQuery(input: string): PepiQuery | null {
   if (!hit) return null;
   const metric = hit.metric;
 
-  // Comparison: "X this week vs last week" (or any explicit compare phrasing).
-  const wantsCompare = COMPARE_RE.test(text) || (/\bthis week\b/.test(text) && /\blast week\b/.test(text));
+  // Comparison: explicit ("X this week vs last week") or an implicit trend question
+  // ("have I exercised less lately?") → recent week vs the one before.
+  const wantsCompare =
+    COMPARE_RE.test(text) ||
+    (/\bthis week\b/.test(text) && /\blast week\b/.test(text)) ||
+    TREND_RE.test(text);
   if (wantsCompare) {
-    return { metric, agg: 'average', timeframe: 'last_7', compareTo: 'prior_7', rawText: input };
+    const agg: Aggregation = metric.kind === 'dose' ? 'count' : 'average';
+    return { metric, agg, timeframe: 'last_7', compareTo: 'prior_7', rawText: input };
   }
 
   const explicitAgg = detectAgg(text);

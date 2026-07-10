@@ -111,6 +111,9 @@ type InsightsRequest = {
   question?: string;
   locale?: string;
   history: InsightHistory;
+  /** 'quick' runs the cheap parse model (Pepi chat Q&A fallback, spec P-1); 'deep'
+   *  or omitted uses the capable insights model (Analysis trends/correlations). */
+  tier?: 'quick' | 'deep';
 };
 
 type CheckFitRequest = {
@@ -466,6 +469,7 @@ function insightsSystemPrompt(mode: string, locale: string): string {
     '',
     'You are given a compact JSON history of their check-ins, logged doses, symptoms,',
     'integration metric readings, and protocol start dates. Analyze only what is present.',
+    'Metric labels may carry a goal-direction hint in parentheses, e.g. "hips (goal: lower is better)" - respect it: never frame a move against the user goal as good.',
     '',
     'HARD RULES (non-negotiable):',
     '- Ground every statement in the provided data. Reference specific dates and values.',
@@ -706,8 +710,11 @@ Deno.serve(async (req: Request) => {
         }),
       ].join('\n');
 
+      // Chat Q&A fallback runs the cheap model (Haiku); Analysis deep-dives keep
+      // the capable model (spec P-1: "Haiku is enough for now").
+      const insightsModel = body.tier === 'quick' ? PARSE_MODEL : INSIGHTS_MODEL;
       const message = await client.messages.create({
-        model: INSIGHTS_MODEL,
+        model: insightsModel,
         max_tokens: 900,
         system: insightsSystemPrompt(mode, locale),
         ...structured(INSIGHTS_SCHEMA),

@@ -265,6 +265,9 @@ export async function runInsights(opts: {
   question?: string;
   history: InsightHistory;
   locale: string;
+  /** 'quick' runs the cheap model (Pepi chat fallback); 'deep' / omitted = the
+   *  capable model (Analysis trends/correlations). */
+  tier?: 'quick' | 'deep';
 }): Promise<InsightResult> {
   if (!isSupabaseConfigured) throw new AiNotConfiguredError();
   const { data, error } = await supabase.functions.invoke<InsightResult>('ai-service', {
