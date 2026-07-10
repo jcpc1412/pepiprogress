@@ -248,16 +248,42 @@ function shiftDay(dateKey: string, delta: number): string {
 
 /** Protocol intent, read from goals + active-compound effect tags. Drives the
  *  favourable direction of "context" metrics (weight, caloric balance). */
-function resolveIntent(input: VerdictInput): { cutting: boolean; bulking: boolean } {
-  const goals = new Set(input.profile.goals);
+function resolveIntent(goals: Goal[], protocolItems: ProtocolItem[]): { cutting: boolean; bulking: boolean } {
+  const goalSet = new Set(goals);
   const tags = new Set<string>();
-  for (const item of input.protocolItems) {
+  for (const item of protocolItems) {
     const c = compoundBySlug(item.compoundSlug);
     if (c) for (const t of c.effectTags) tags.add(t);
   }
-  const cutting = goals.has('weight_loss') || tags.has('fat_loss');
-  const bulking = goals.has('body_comp') || tags.has('muscle');
+  const cutting = goalSet.has('weight_loss') || tags.has('fat_loss');
+  const bulking = goalSet.has('body_comp') || tags.has('muscle');
   return { cutting, bulking };
+}
+
+/** Resolved goal-direction for a metric: is UP favourable, DOWN favourable, or is
+ *  it neutral for this user? `neutral` covers context metrics with no decisive
+ *  intent (recomp / wellness-only). */
+export type MetricFavourDir = 'up_good' | 'down_good' | 'neutral';
+
+/**
+ * The single source of truth for "which way is good" per charted metric, given
+ * the user's goals + active compounds. Every surface that frames a movement as
+ * good/bad, INCLUDING AI prompts, must resolve direction through this so nothing
+ * ever contradicts the verdict engine (e.g. calling a male cutter's rising hips a
+ * good sign). Pure + deterministic.
+ */
+export function resolveMetricDirections(
+  goals: Goal[],
+  protocolItems: ProtocolItem[],
+): Record<string, MetricFavourDir> {
+  const intent = resolveIntent(goals, protocolItems);
+  const out: Record<string, MetricFavourDir> = {};
+  for (const metricId of Object.keys(METRIC_DIRECTION)) {
+    const dir = METRIC_DIRECTION[metricId];
+    const goodDir = dir === 'context' ? contextDirection(metricId, intent) : dir;
+    out[metricId] = goodDir ?? 'neutral';
+  }
+  return out;
 }
 
 /** Resolve a "context" metric to a concrete good-direction, or null if neutral. */
@@ -343,7 +369,7 @@ type Raw = {
 export function computeVerdict(input: VerdictInput): Verdict {
   const today = input.today ?? new Date().toISOString().slice(0, 10);
   const windowStart = shiftDay(today, -(WINDOW_DAYS - 1));
-  const intent = resolveIntent(input);
+  const intent = resolveIntent(input.profile.goals, input.protocolItems);
 
   const series = buildMetricSeries({
     selectedIds: CHART_METRICS.map((m) => m.id),

@@ -149,9 +149,19 @@ Implementation notes: `PhotoEntry` gains `coverage` + a computed `qualityScore`;
 
 ---
 
+## Implementation status
+
+### A-4 data facade + A-3 + A-1 (partially shipped)
+`src/lib/data-facade.ts` (pure, + `data-facade.test.ts`, 8 tests) is the single selector layer: `selectVerdict`, `selectChartSeries`, `selectMetricDirections`, `selectProtocolContext`, `selectPhotoDigest`, `buildInsightHistory`. Migrated the verdict hook (`use-verdict.ts`) and the Analysis charts (`insights-screen.tsx`) onto it (behavior-preserving), and rebuilt the insights AI history through it.
+- **A-3 (fixed, no redeploy):** the insights AI now receives the SAME derived + integration + body-composition trend series the charts render (energy, recovery, caloric balance, waist/hips, body-fat %), flattened into `history.metrics`, which the deployed function already renders. Previously it only sent raw readings + a handful of manual check-in fields, so it was blind to derived/integration trends.
+- **A-1 (deterministic confirmed correct; AI interim nudge shipped):** verified every deterministic surface (verdict, signal stack, signal detail, hero) already resolves hips/waist as `down_good` for a body-intent user via the engine, so "hips up" reads bad there. The mis-framing the owner saw can only come from AI copy. New exported `resolveMetricDirections` in the engine is the shared rule; `buildInsightHistory` now annotates every metric label with its goal direction (e.g. `hips (goal: lower is better)`), so the current model stops calling a goal-adverse move good. **Follow-up (redeploy-blocked):** a structured `directions` field consumed by an updated insights/ledger prompt is the proper fix and needs a `supabase functions deploy` (MCP not authed this session). The Supabase MCP needs re-auth before any edge-function work (P-1/P-2/P-3 AI-side, PH-1/PH-2 vision).
+- **P-3 groundwork:** `selectPhotoDigest` exists (per session/part: last capture, comparability, drift, lighting). Not yet wired into the AI payload (the hedged change-note text is not persisted, and threading photo context needs the redeploy) so it stays P-3.
+- Green: typecheck / lint / i18n (6) / vitest (93) / web export. Not self-previewed (owner reviews preview).
+- **What to look at in preview:** Analysis charts + the verdict are unchanged (behavior-preserving migration = nothing should regress). The visible change is AI **Insights** output: with any integration/derived data (incl. typical-day nutrition), "Trends" should now discuss derived/integration trends it previously ignored, and should not describe a goal-adverse body-comp move as positive.
+
 ## Proposed sequencing (once decisions land)
 
-1. **A-4 data facade** (enables everything; includes A-1 bug hunt + A-3 fix as proofs).
+1. ~~**A-4 data facade** (enables everything; includes A-1 bug hunt + A-3 fix as proofs).~~ **Shipped** (A-1 AI proper fix pending redeploy).
 2. **P-4 keyboard** + **H-1 footer** + **H-2 mixed-verdict copy** (small, independent).
 3. **P-1 AI fallback routing** then **P-3 photo context** then **P-2 chart messages** (chat brain, in dependency order).
 4. **PH-2 instant feedback** then **PH-1 quality highscore** (photos; PH-1 needs a vision-service redeploy).

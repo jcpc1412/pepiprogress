@@ -12,7 +12,8 @@ import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { compoundBySlug } from '@/data/compound-catalog';
 import { AskPepi } from '@/features/ask/ask-pepi';
 import { Insights } from '@/features/insights/insights';
-import { buildMetricSeries, CHART_METRICS, DEFAULT_CHART_METRIC_IDS } from '@/lib/chart-series';
+import { CHART_METRICS } from '@/lib/chart-series';
+import { selectChartSeries } from '@/lib/data-facade';
 import { daysBetween } from '@/lib/dates';
 import { useOverlay } from '@/lib/nav-overlay';
 import { localDateKey, useStore, type CheckinEntry } from '@/lib/store';
@@ -152,31 +153,12 @@ export function ChartsSection() {
   const { t } = useTranslation();
   const { entries, metricReadings, protocolItems, profile } = useStore();
 
-  const selected = useMemo(
-    () => (profile.dashboardMetrics?.length ? profile.dashboardMetrics : DEFAULT_CHART_METRIC_IDS),
-    [profile.dashboardMetrics],
+  // Single source of truth for the trend series (facade A-4): identical merge of
+  // manual + integration + derived + estimated that every other surface reads.
+  const { series, startKeys } = useMemo(
+    () => selectChartSeries({ entries, metricReadings, protocolItems, profile }, localDateKey()),
+    [entries, metricReadings, protocolItems, profile],
   );
-
-  const { series, startKeys } = useMemo(() => {
-    const starts = protocolItems
-      .map((p) => p.startedAt)
-      .filter((s): s is string => !!s)
-      .map((s) => s.slice(0, 10))
-      .sort();
-    // Anchor the window at the earliest protocol start (the "since X weeks" date).
-    const windowStart = starts[0];
-    const windowEnd = localDateKey();
-
-    const built = buildMetricSeries({
-      selectedIds: selected,
-      entries,
-      metricReadings,
-      profile,
-      windowStart,
-      windowEnd,
-    });
-    return { series: built, startKeys: starts };
-  }, [entries, metricReadings, protocolItems, selected, profile]);
 
   // Always render the chart frames — empty ones show a dashed placeholder axis.
   return (

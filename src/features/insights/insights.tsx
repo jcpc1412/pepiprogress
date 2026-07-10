@@ -6,9 +6,9 @@ import { LabeledInput, TextButton } from '@/components/form';
 import { Card, Divider, EngravedLabel, Skeleton } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
-import { compoundBySlug } from '@/data/compound-catalog';
-import { aiErrorKind, runInsights, type InsightHistory, type InsightMode } from '@/lib/ai';
-import { useStore } from '@/lib/store';
+import { buildInsightHistory } from '@/lib/data-facade';
+import { aiErrorKind, runInsights, type InsightMode } from '@/lib/ai';
+import { localDateKey, useStore } from '@/lib/store';
 
 /** Minimum logged check-ins before insights are worth offering. */
 const MIN_CHECKINS = 4;
@@ -20,7 +20,7 @@ const MIN_CHECKINS = 4;
  */
 export function Insights() {
   const { t, i18n } = useTranslation();
-  const { entries, doseEvents, symptomEvents, metricReadings, protocolItems } = useStore();
+  const { entries, doseEvents, symptomEvents, metricReadings, protocolItems, profile } = useStore();
 
   const [busy, setBusy] = useState(false);
   const [answer, setAnswer] = useState('');
@@ -36,40 +36,18 @@ export function Insights() {
     [entries],
   );
 
-  const history = useMemo<InsightHistory>(() => {
-    const name = (slug?: string) =>
-      (slug ? compoundBySlug(slug)?.canonicalName : undefined) ?? slug ?? 'unknown';
-    return {
-      checkins: checkinList.map((e) => ({
-        date: e.date,
-        weight: e.weight,
-        wellness: e.wellness,
-        energy: e.energy,
-        sleepQuality: e.sleep_quality,
-        soreness: e.soreness,
-      })),
-      doses: doseEvents.map((d) => ({
-        date: d.takenAt.slice(0, 10),
-        compound: name(d.compoundSlug),
-        dose: d.dose,
-        unit: d.doseUnit,
-      })),
-      symptoms: symptomEvents.map((s) => ({
-        date: s.onsetAt.slice(0, 10),
-        type: s.type,
-        severity: s.severity,
-      })),
-      metrics: metricReadings.map((m) => ({
-        date: m.ts.slice(0, 10),
-        metric: m.metric,
-        value: m.value,
-        unit: m.unit,
-      })),
-      protocolStarts: protocolItems
-        .filter((p) => p.startedAt)
-        .map((p) => ({ compound: name(p.compoundSlug), startedAt: p.startedAt as string })),
-    };
-  }, [checkinList, doseEvents, symptomEvents, metricReadings, protocolItems]);
+  // A-4 facade: the AI now reasons over the SAME derived + integration + body-comp
+  // trend series the charts render, each annotated with its goal direction (so it
+  // stops being blind to integration data and never frames a goal-adverse move as
+  // a good sign). Assembled by buildInsightHistory, not hand-rolled here.
+  const history = useMemo(
+    () =>
+      buildInsightHistory(
+        { entries, doseEvents, symptomEvents, metricReadings, protocolItems, profile },
+        localDateKey(),
+      ),
+    [entries, doseEvents, symptomEvents, metricReadings, protocolItems, profile],
+  );
 
   const ask = useCallback(
     async (mode: InsightMode, q?: string) => {
