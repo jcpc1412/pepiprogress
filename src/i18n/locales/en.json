@@ -736,7 +736,8 @@
     "notePlaceholder": "Add a note for today…",
     "doseLog": "Log",
     "dosesSetup": "Set up your protocol",
-    "stockFlag": "Supplies need attention"
+    "stockFlag": "Supplies need attention",
+    "dosesManage": "Manage protocol"
   },
   "addCompound": {
     "title": "Add compound",

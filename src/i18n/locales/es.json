@@ -736,7 +736,8 @@
     "notePlaceholder": "Añade una nota de hoy…",
     "doseLog": "Registrar",
     "dosesSetup": "Configura tu protocolo",
-    "stockFlag": "Los suministros requieren atención"
+    "stockFlag": "Los suministros requieren atención",
+    "dosesManage": "Gestionar protocolo"
   },
   "addCompound": {
     "title": "Añadir compuesto",

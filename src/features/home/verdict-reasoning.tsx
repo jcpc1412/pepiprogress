@@ -33,6 +33,7 @@ const TONE_COLOR: Record<SignalTone, ThemeColor> = {
  *  today's log + editable note woven in beneath the prose (C3). */
 export function ReasoningRecap() {
   const { t } = useTranslation();
+  const router = useRouter();
   const { profile } = useStore();
   const verdict = useVerdict();
   const tx = t as unknown as TFn;
@@ -50,6 +51,7 @@ export function ReasoningRecap() {
     verdict.hero?.kind === 'metric'
       ? formatHeroValue(verdict.hero.delta, verdict.hero.unit, profile.units, tx, { signed: true })
       : null;
+  const heroMetricId = verdict.hero?.kind === 'metric' ? verdict.hero.metricId : null;
 
   return (
     <Card style={styles.recap}>
@@ -63,12 +65,20 @@ export function ReasoningRecap() {
         </ThemedText>
       </View>
       {verdict.hero?.kind === 'metric' && heroFmt ? (
-        <HeroFigure
-          value={heroFmt.value}
-          unit={heroFmt.unit}
-          trend={verdict.hero.trend}
-          favour={verdict.hero.favour}
-        />
+        // The hero drills into that metric's signal ledger, same as the stack
+        // rows below (recap says "weight is the story" -> tap -> the weight ledger).
+        <Pressable
+          accessibilityRole="button"
+          accessibilityHint={t('signal.explainLabel')}
+          onPress={() => router.push(`/signal/${heroMetricId}` as Href)}
+          style={({ pressed }) => pressed && styles.rowPressed}>
+          <HeroFigure
+            value={heroFmt.value}
+            unit={heroFmt.unit}
+            trend={verdict.hero.trend}
+            favour={verdict.hero.favour}
+          />
+        </Pressable>
       ) : null}
       <ThemedText type="body" themeColor="textSecondary">
         {resolveMsg(tx, verdict.explanation)}

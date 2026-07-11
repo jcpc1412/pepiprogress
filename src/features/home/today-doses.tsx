@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
+import { GearIcon } from '@/components/icons';
 import { Card, Divider, EngravedLabel, Placeholder, StatusPill } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
 import { TextButton } from '@/components/form';
@@ -114,14 +115,15 @@ export function TodayDoses() {
   const header = (
     <View style={styles.headerRow}>
       <EngravedLabel>{t('dashboard.dosesTitle')}</EngravedLabel>
+      {/* Config gear -> Protocol. Protocol is set up once and rarely touched
+          (UX audit: not a tab), so its front door is a quiet gear on the card
+          the user actually looks at daily, not a header-level icon. */}
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={t('tabs.protocol')}
+        accessibilityLabel={t('dashboard.dosesManage')}
         onPress={() => router.push('/protocol')}
         hitSlop={8}>
-        <ThemedText type="monoSm" themeColor="accent" style={styles.protocolLink}>
-          {t('tabs.protocol').toUpperCase()}
-        </ThemedText>
+        <GearIcon size={18} color="textMuted" />
       </Pressable>
     </View>
   );
@@ -233,7 +235,6 @@ function DoseRow({
 const styles = StyleSheet.create({
   card: { gap: Spacing.two },
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  protocolLink: { letterSpacing: 1 },
   flagged: { textTransform: 'uppercase' },
   rowDivider: { marginVertical: 0 },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.two, paddingVertical: Spacing.two },

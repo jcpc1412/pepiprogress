@@ -736,7 +736,8 @@
     "notePlaceholder": "Notiz für heute hinzufügen…",
     "doseLog": "Erfassen",
     "dosesSetup": "Protokoll einrichten",
-    "stockFlag": "Vorräte brauchen Aufmerksamkeit"
+    "stockFlag": "Vorräte brauchen Aufmerksamkeit",
+    "dosesManage": "Protokoll verwalten"
   },
   "addCompound": {
     "title": "Wirkstoff hinzufügen",

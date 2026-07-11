@@ -17,23 +17,15 @@ import { ChamferBox } from '@/components/chamfer';
 import { ThemedText } from '@/components/themed-text';
 import { Chamfer, Radii, Spacing, type ThemeColor } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { useResolvedScheme } from '@/lib/theme-provider';
 
-/** A raised, chamfered panel — the default card. Sits lighter than the
- *  background with a soft elevation so it lifts (CyberLife instrument). */
+/** A raised, chamfered panel — the default card. It reads as raised purely
+ *  through tonal layering (surfaceRaised sits lighter than the background,
+ *  surfaceSunken below it) plus the carved hairline border. No drop shadow:
+ *  DESIGN.md's Carved-Not-Floated rule — nothing floats above the panel. */
 export function Card({ style, children, ...rest }: ViewProps) {
   const theme = useTheme();
-  const scheme = useResolvedScheme();
-  const elevation =
-    scheme === 'dark'
-      ? { color: '#000', opacity: 0.4, radius: 12, offsetY: 2 }
-      : { color: '#000', opacity: 0.07, radius: 8, offsetY: 2 };
   return (
-    <ChamferBox
-      chamfer={Chamfer.card}
-      fill={theme.surfaceRaised}
-      borderColor={theme.border}
-      elevation={elevation}>
+    <ChamferBox chamfer={Chamfer.card} fill={theme.surfaceRaised} borderColor={theme.border}>
       <View style={[styles.panelPad, style]} {...rest}>
         {children}
       </View>
