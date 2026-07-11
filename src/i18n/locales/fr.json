@@ -842,8 +842,8 @@
       "off_track": "Hors trajectoire"
     },
     "explanation": {
-      "building": "Base en cours de construction. Continuez à enregistrer et une lecture apparaîtra.",
-      "on_track": "Votre {{metric}} évolue comme votre objectif le demande.",
+      "building": "Ta base se construit encore. Quelques suivis de plus et la première vraie lecture apparaîtra.",
+      "on_track": "Ton {{metric}} évolue comme ton objectif l’exige. Sans bruit, voilà à quoi ressemble le progrès.",
       "watch": "Les signaux sont mitigés. Quelques jours de plus trancheront.",
       "off_track": "Votre {{metric}} s'écarte de votre objectif.",
       "plateau": "Ton poids se stabilise. Les mensurations et les photos portent la lecture maintenant.",
@@ -897,7 +897,9 @@
     "ansExtremum": "{{metric}}: {{value}} {{unit}} ({{dir}}, {{date}})",
     "photoStatus": "Dernière photo de progression : {{date}}.",
     "photoNone": "Pas encore de photos de progression. Prenez-en une dans l'onglet Photos.",
-    "viewTrend": "Voir dans Analyse"
+    "viewTrend": "Voir dans Analyse",
+    "chipMovedTogether": "Qu’est-ce qui a bougé ensemble ?",
+    "movedNone": "Pas encore assez de données pour voir ce qui bouge ensemble."
   },
   "analysis": {
     "heading": "Analyse"

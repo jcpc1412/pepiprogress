@@ -842,8 +842,8 @@
       "off_track": "Vom Kurs ab"
     },
     "explanation": {
-      "building": "Basislinie wird noch erstellt. Protokolliere weiter, dann erscheint eine Auswertung.",
-      "on_track": "Dein {{metric}} entwickelt sich so, wie es dein Ziel braucht.",
+      "building": "Deine Basislinie entsteht noch. Ein paar Einträge mehr und die erste echte Auswertung nimmt Form an.",
+      "on_track": "Dein {{metric}} bewegt sich so, wie es dein Ziel braucht. Leise, genau so sieht Fortschritt aus.",
       "watch": "Die Signale sind gemischt. Ein paar Tage mehr bringen Klarheit.",
       "off_track": "Dein {{metric}} entfernt sich von deinem Ziel.",
       "plateau": "Dein Gewicht hält. Maßband und Fotos tragen jetzt die Auswertung.",
@@ -897,7 +897,9 @@
     "ansExtremum": "{{metric}}: {{value}} {{unit}} ({{dir}}, {{date}})",
     "photoStatus": "Letztes Fortschrittsfoto: {{date}}.",
     "photoNone": "Noch keine Fortschrittsfotos. Mach eins im Fotos-Tab.",
-    "viewTrend": "In Analyse ansehen"
+    "viewTrend": "In Analyse ansehen",
+    "chipMovedTogether": "Was bewegte sich zusammen?",
+    "movedNone": "Noch nicht genug erfasst, um zu sehen, was sich zusammen bewegt."
   },
   "analysis": {
     "heading": "Analyse"

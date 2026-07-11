@@ -842,8 +842,8 @@
       "off_track": "Off track"
     },
     "explanation": {
-      "building": "Still building your baseline. Keep logging and a reading will appear.",
-      "on_track": "Your {{metric}} is moving the way your goal needs.",
+      "building": "Still finding your baseline. A few more logs and the first real reading takes shape.",
+      "on_track": "Your {{metric}} is moving the way your goal needs. Quietly, this is what progress looks like.",
       "watch": "Signals are mixed. A few more days will settle it.",
       "off_track": "Your {{metric}} is drifting from your goal.",
       "plateau": "Your weight is holding. Tape and photos carry the read now.",
@@ -897,7 +897,9 @@
     "ansExtremum": "{{metric}}: {{value}} {{unit}} ({{dir}}, {{date}})",
     "photoStatus": "Last progress photo: {{date}}.",
     "photoNone": "No progress photos yet. Take one from the Photos tab.",
-    "viewTrend": "View in Analysis"
+    "viewTrend": "View in Analysis",
+    "chipMovedTogether": "What moved together?",
+    "movedNone": "Not enough logged yet to see what moves together."
   },
   "analysis": {
     "heading": "Analysis"

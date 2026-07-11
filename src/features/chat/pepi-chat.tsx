@@ -1,6 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  AccessibilityInfo,
+  Animated,
+  AppState,
   Keyboard,
   KeyboardAvoidingView,
   Platform,
@@ -12,11 +15,11 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { useRouter, type Href } from 'expo-router';
+import { useFocusEffect, useRouter, type Href } from 'expo-router';
 
 import { OptionChip } from '@/components/form';
 import { LineChart, type ChartPoint } from '@/components/line-chart';
-import { EngravedLabel, Sunken } from '@/components/surface';
+import { Sunken } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Radii, Spacing } from '@/constants/theme';
@@ -70,6 +73,11 @@ const ASK_CHIPS = [SUGGESTED_QUERIES[1], SUGGESTED_QUERIES[4]];
 
 /** Deterministic photo-status question (P-3): answered locally from the digest. */
 const PHOTO_RE = /\b(photo|photos|picture|pictures|pic|pics|selfie|how do i look)\b/;
+
+/** Session-close auto-clear window (P-5 / OQ-1 option 1): away this long, then the
+ *  thread resets on return. 15 min keeps an active session intact, clears on real
+ *  disengagement. */
+const AUTO_CLEAR_MS = 15 * 60 * 1000;
 
 /** Charted metric ids (P-2): a metric answer for one of these gets a sparkline. */
 const CHARTED_IDS = new Set(CHART_METRICS.map((m) => m.id));
@@ -142,6 +150,45 @@ export function PepiChat() {
   // would otherwise be shoved over the composer) and keep the thread pinned to the
   // latest message so the composer never covers what you just sent.
   const [keyboardUp, setKeyboardUp] = useState(false);
+  // Enter-animation gate (P-5): disabled under reduce-motion.
+  const [reduceMotion, setReduceMotion] = useState(false);
+  // Session-close auto-clear (P-5 / OQ-1 option 1): the thread clears when the user
+  // has been away (app backgrounded or tab left) for AUTO_CLEAR_MS, then returns.
+  const awayAtRef = useRef(0);
+
+  useEffect(() => {
+    let mounted = true;
+    AccessibilityInfo.isReduceMotionEnabled().then((v) => mounted && setReduceMotion(v));
+    const sub = AccessibilityInfo.addEventListener('reduceMotionChanged', setReduceMotion);
+    return () => {
+      mounted = false;
+      sub.remove();
+    };
+  }, []);
+
+  // Clear on return if we were away long enough (app background/foreground).
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (s) => {
+      if (s === 'active') {
+        if (awayAtRef.current && Date.now() - awayAtRef.current > AUTO_CLEAR_MS) clearPepiMessages();
+        awayAtRef.current = 0;
+      } else {
+        awayAtRef.current = Date.now();
+      }
+    });
+    return () => sub.remove();
+  }, [clearPepiMessages]);
+
+  // Same rule when leaving/returning the Pepi tab.
+  useFocusEffect(
+    useCallback(() => {
+      if (awayAtRef.current && Date.now() - awayAtRef.current > AUTO_CLEAR_MS) clearPepiMessages();
+      awayAtRef.current = 0;
+      return () => {
+        awayAtRef.current = Date.now();
+      };
+    }, [clearPepiMessages]),
+  );
 
   useEffect(() => {
     const id = setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 50);
@@ -509,6 +556,44 @@ export function PepiChat() {
     postAnswer(executeQuery(query, { entries, doseEvents }, localDateKey()));
   };
 
+  // A-2: "what moved together" surfaces the insights correlation path right in the
+  // chat (previously buried in Analysis). Cheap tier (Haiku), same facade history.
+  const runCorrelation = async () => {
+    if (pending) return;
+    addPepiMessage({ role: 'user', text: t('pepi.chipMovedTogether') });
+    if (!isSupabaseConfigured) {
+      addPepiMessage({ role: 'pepi', text: t('quicklog.notConfigured'), variant: 'hint' });
+      return;
+    }
+    setPending(true);
+    try {
+      const res = await runInsights({
+        mode: 'correlation',
+        history: buildInsightHistory(
+          { entries, metricReadings, protocolItems, doseEvents, symptomEvents, profile, photos },
+          today,
+        ),
+        locale: lang,
+        tier: 'quick',
+      });
+      const answer = res.answer.trim();
+      addPepiMessage({
+        role: 'pepi',
+        text: answer && !res.insufficientData ? answer : t('pepi.movedNone'),
+        variant: 'answer',
+      });
+    } catch (err) {
+      const notConfigured = aiErrorKind(err) === 'notConfigured';
+      addPepiMessage({
+        role: 'pepi',
+        text: notConfigured ? t('quicklog.notConfigured') : t('pepi.error'),
+        variant: notConfigured ? 'hint' : 'error',
+      });
+    } finally {
+      setPending(false);
+    }
+  };
+
   const insertTemplate = (template: string) => {
     const base = text.trim() ? `${text.replace(/\s+$/, '')}\n` : '';
     const full = base + template;
@@ -533,19 +618,9 @@ export function PepiChat() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <SafeAreaView style={styles.safe} edges={['top']}>
         <View style={styles.header}>
-          <View style={styles.headerText}>
-            <EngravedLabel>{t('tabs.pepi')}</EngravedLabel>
-            <ThemedText type="small" themeColor="textSecondary">
-              {t('pepi.subtitle')}
-            </ThemedText>
-          </View>
-          {pepiMessages.length > 0 ? (
-            <Pressable accessibilityRole="button" onPress={clearPepiMessages}>
-              <ThemedText type="monoSm" themeColor="textMuted">
-                {t('pepi.clear')}
-              </ThemedText>
-            </Pressable>
-          ) : null}
+          <ThemedText type="display" style={styles.hero}>
+            {t('tabs.pepi')}
+          </ThemedText>
         </View>
 
         <ScrollView
@@ -568,6 +643,7 @@ export function PepiChat() {
               <Bubble
                 key={m.id}
                 message={m}
+                reduceMotion={reduceMotion}
                 showUndo={undoableIds.has(m.id)}
                 undone={undoneIds.has(m.id)}
                 onUndo={() => onUndo(m.id)}
@@ -611,36 +687,45 @@ export function PepiChat() {
               {ASK_CHIPS.map((s) => (
                 <OptionChip key={s.labelKey} label={t(s.labelKey as 'ask.sugDoses')} selected={false} onPress={() => runQuery(s.labelKey, s.query)} />
               ))}
+              {isSupabaseConfigured ? (
+                <OptionChip label={t('pepi.chipMovedTogether')} selected={false} onPress={runCorrelation} />
+              ) : null}
             </>
           )}
         </View>
         )}
 
-        <Sunken style={styles.composer}>
-          <TextInput
-            style={[styles.input, { color: theme.text }]}
-            value={text}
-            onChangeText={(v) => {
-              if (selection) setSelection(undefined);
-              setText(v);
-            }}
-            selection={selection}
-            placeholder={t('pepi.composerPlaceholder')}
-            placeholderTextColor={theme.textMuted}
-            multiline
-            onSubmitEditing={() => send(text)}
-          />
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={t('pepi.send')}
-            disabled={pending || !text.trim()}
-            onPress={() => send(text)}
-            style={[styles.sendBtn, { backgroundColor: theme.accent, opacity: pending || !text.trim() ? 0.4 : 1 }]}>
-            <ThemedText type="monoSm" themeColor="background">
-              {t('pepi.send')}
-            </ThemedText>
-          </Pressable>
-        </Sunken>
+        <SafeAreaView edges={['bottom']} style={styles.composerWrap}>
+          <Sunken style={styles.composer}>
+            <TextInput
+              style={[styles.input, { color: theme.text }]}
+              value={text}
+              onChangeText={(v) => {
+                if (selection) setSelection(undefined);
+                setText(v);
+              }}
+              selection={selection}
+              placeholder={t('pepi.composerPlaceholder')}
+              placeholderTextColor={theme.textMuted}
+              multiline
+              onSubmitEditing={() => send(text)}
+            />
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('pepi.send')}
+              disabled={pending || !text.trim()}
+              onPress={() => send(text)}
+              style={({ pressed }) => [
+                styles.sendBtn,
+                { backgroundColor: theme.accent, opacity: pending || !text.trim() ? 0.4 : 1 },
+                pressed && styles.sendBtnPressed,
+              ]}>
+              <ThemedText type="monoSm" themeColor="background">
+                {t('pepi.send')}
+              </ThemedText>
+            </Pressable>
+          </Sunken>
+        </SafeAreaView>
         </SafeAreaView>
       </KeyboardAvoidingView>
     </ThemedView>
@@ -649,6 +734,7 @@ export function PepiChat() {
 
 function Bubble({
   message,
+  reduceMotion,
   showUndo,
   undone,
   onUndo,
@@ -660,6 +746,7 @@ function Bubble({
   noDataLabel,
 }: {
   message: PepiMessage;
+  reduceMotion: boolean;
   showUndo: boolean;
   undone: boolean;
   onUndo: () => void;
@@ -679,7 +766,23 @@ function Bubble({
   const estimated: ChartPoint[] = (series?.estimated ?? []).map((p) => ({ label: p.dateKey.slice(5), value: p.value }));
   const hasChart = !!series && (points.length > 0 || estimated.length > 0);
 
+  // Gentle enter animation (P-5): each new bubble fades + rises in on mount.
+  // Reduce-motion pins it to the resting state.
+  const [enter] = useState(() => new Animated.Value(reduceMotion ? 1 : 0));
+  useEffect(() => {
+    if (reduceMotion) {
+      enter.setValue(1);
+      return;
+    }
+    Animated.timing(enter, { toValue: 1, duration: 220, useNativeDriver: true }).start();
+  }, [enter, reduceMotion]);
+
   return (
+    <Animated.View
+      style={{
+        opacity: enter,
+        transform: [{ translateY: enter.interpolate({ inputRange: [0, 1], outputRange: [8, 0] }) }],
+      }}>
     <View style={[styles.row, isUser ? styles.rowUser : styles.rowPepi]}>
       <View
         style={[
@@ -714,6 +817,7 @@ function Bubble({
         ) : null}
       </View>
     </View>
+    </Animated.View>
   );
 }
 
@@ -729,8 +833,8 @@ const styles = StyleSheet.create({
     maxWidth: MaxContentWidth,
     alignSelf: 'center',
   },
-  header: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' },
-  headerText: { gap: 2, flex: 1 },
+  header: { flexDirection: 'row', alignItems: 'center' },
+  hero: { textTransform: 'uppercase', letterSpacing: 1 },
   thread: { flex: 1 },
   threadContent: { gap: Spacing.two, paddingVertical: Spacing.two },
   empty: { paddingVertical: Spacing.six, gap: Spacing.one, alignItems: 'center' },
@@ -743,7 +847,9 @@ const styles = StyleSheet.create({
   viewTrend: { textDecorationLine: 'underline' },
   undoRow: { marginTop: 2 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
-  composer: { flexDirection: 'row', alignItems: 'flex-end', gap: Spacing.two, paddingHorizontal: Spacing.two, paddingVertical: Spacing.one },
-  input: { flex: 1, fontSize: 15, paddingVertical: Spacing.two, maxHeight: 120 },
-  sendBtn: { paddingHorizontal: Spacing.three, paddingVertical: Spacing.two, borderRadius: Radii.panel },
+  composerWrap: { paddingBottom: Spacing.two },
+  composer: { flexDirection: 'row', alignItems: 'flex-end', gap: Spacing.two, paddingHorizontal: Spacing.three, paddingVertical: Spacing.two },
+  input: { flex: 1, fontSize: 15, paddingVertical: Spacing.two, paddingHorizontal: Spacing.one, maxHeight: 120 },
+  sendBtn: { paddingHorizontal: Spacing.four, paddingVertical: Spacing.two, borderRadius: Radii.panel },
+  sendBtnPressed: { transform: [{ scale: 0.94 }] },
 });

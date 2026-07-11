@@ -481,6 +481,8 @@ function insightsSystemPrompt(mode: string, locale: string): string {
     'Analyze only what is present.',
     'Metric labels may carry a goal-direction hint in parentheses, e.g. "hips (goal: lower is better)" - respect it: never frame a move against the user goal as good.',
     '',
+    'TONE (spec A-5): read like a trusted instrument that also understands why the number matters. For each notable trend, add ONE short interpretive sentence about what it means for the user\'s stated goal, not just the figure. Warmer than a lab printout, still hedged and precise. When a read is flat or neutral, give it a little character rather than a canned line. Never clinical-only, never hype.',
+    '',
     'HARD RULES (non-negotiable):',
     '- Ground every statement in the provided data. Reference specific dates and values.',
     '- NEVER give medical or dosing advice. Never suggest doses, schedules, changes, or synergies.',

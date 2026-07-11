@@ -842,8 +842,8 @@
       "off_track": "Desviado"
     },
     "explanation": {
-      "building": "Aún creando tu base. Sigue registrando y aparecerá una lectura.",
-      "on_track": "Tu {{metric}} evoluciona como tu objetivo necesita.",
+      "building": "Aún estableciendo tu base. Unos registros más y aparecerá la primera lectura real.",
+      "on_track": "Tu {{metric}} avanza como tu objetivo necesita. Sin ruido, así es el progreso.",
       "watch": "Las señales son mixtas. Unos días más lo aclararán.",
       "off_track": "Tu {{metric}} se aleja de tu objetivo.",
       "plateau": "Tu peso se mantiene. Las medidas y las fotos llevan la lectura ahora.",
@@ -897,7 +897,9 @@
     "ansExtremum": "{{metric}}: {{value}} {{unit}} ({{dir}}, {{date}})",
     "photoStatus": "Última foto de progreso: {{date}}.",
     "photoNone": "Aún no hay fotos de progreso. Toma una en la pestaña Fotos.",
-    "viewTrend": "Ver en Análisis"
+    "viewTrend": "Ver en Análisis",
+    "chipMovedTogether": "¿Qué cambió junto?",
+    "movedNone": "Aún no hay suficientes datos para ver qué se mueve junto."
   },
   "analysis": {
     "heading": "Análisis"
