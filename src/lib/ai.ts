@@ -84,6 +84,15 @@ export type InsightHistory = {
   symptoms: { date: string; type: string; severity?: number }[];
   metrics: { date: string; metric: string; value: number; unit?: string }[];
   protocolStarts: { compound: string; startedAt: string }[];
+  /** Photo-track digest (P-3) so the AI can see progress-photo results: latest
+   *  capture per track + comparability + the hedged change note. */
+  photos?: {
+    track: string;
+    date: string;
+    count: number;
+    comparable?: boolean;
+    note?: string;
+  }[];
 };
 
 export type InsightResult = {

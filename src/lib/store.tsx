@@ -146,6 +146,9 @@ export type PhotoEntry = {
   driftScore?: number; // 0–1, lower = more comparable to baseline
   comparable?: boolean;
   lighting?: 'ok' | 'too_dark' | 'too_bright' | 'different'; // from vision response
+  /** The vision service's hedged change note (spec 04). Persisted so Pepi can see
+   *  photo results (P-3) and the timeline can show the last read. */
+  changeNote?: string;
   // User-edited tags (overrides auto-derived compound+week tags in Photo History).
   customTags?: string[];
 };

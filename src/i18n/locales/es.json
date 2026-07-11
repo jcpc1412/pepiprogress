@@ -891,7 +891,9 @@
     "chipLogDose": "Registrar dosis",
     "ansValue": "{{metric}}, {{tf}}: {{value}} {{unit}} ({{agg}}, {{samples}})",
     "ansCompare": "{{metric}}, {{tf}}: {{value}} {{unit}} ({{delta}} {{vsPrior}})",
-    "ansExtremum": "{{metric}}: {{value}} {{unit}} ({{dir}}, {{date}})"
+    "ansExtremum": "{{metric}}: {{value}} {{unit}} ({{dir}}, {{date}})",
+    "photoStatus": "Última foto de progreso: {{date}}.",
+    "photoNone": "Aún no hay fotos de progreso. Toma una en la pestaña Fotos."
   },
   "analysis": {
     "heading": "Análisis"

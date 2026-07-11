@@ -19,7 +19,7 @@ import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Radii, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { aiErrorKind, parseQuickLog, runInsights, type ParsedItem } from '@/lib/ai';
-import { buildInsightHistory } from '@/lib/data-facade';
+import { buildInsightHistory, selectPhotoDigest } from '@/lib/data-facade';
 import { executeQuery } from '@/lib/ask/execute';
 import { matchQuery, SUGGESTED_QUERIES } from '@/lib/ask/intent';
 import type { Aggregation, PepiAnswer, PepiQuery, QueryMetric, Timeframe, UnitTag } from '@/lib/ask/types';
@@ -63,6 +63,9 @@ const TEMPLATE_CHIPS: { label: string; tpl: string }[] = [
 // "What changed?" (weight trend) + a weekly-ish doses summary — both deterministic.
 const ASK_CHIPS = [SUGGESTED_QUERIES[1], SUGGESTED_QUERIES[4]];
 
+/** Deterministic photo-status question (P-3): answered locally from the digest. */
+const PHOTO_RE = /\b(photo|photos|picture|pictures|pic|pics|selfie|how do i look)\b/;
+
 /**
  * Pepi as one chat (redesign R2-F, mockup frame 5). A single thread: the user
  * logs or asks in one composer, Pepi replies as messages. Routing per message is
@@ -83,6 +86,7 @@ export function PepiChat() {
     metricReadings,
     symptomEvents,
     protocolItems,
+    photos,
     profile,
     upsertCheckin,
     addSymptomEvent,
@@ -400,6 +404,28 @@ export function PepiChat() {
         }
       }
 
+      // Deterministic photo-status answer (P-3): "when was my last photo / how do I
+      // look" is answered instantly from the local digest, no AI call.
+      if (!handled && PHOTO_RE.test(input.toLowerCase())) {
+        const digest = selectPhotoDigest({ photos });
+        if (digest.length === 0) {
+          addPepiMessage({ role: 'pepi', text: t('pepi.photoNone'), variant: 'answer' });
+        } else {
+          const d = digest[0];
+          const extra = d.changeNote
+            ? ` ${d.changeNote}`
+            : d.comparable != null
+              ? ` ${t(d.comparable ? 'photos.comparable' : 'photos.notComparable')}`
+              : '';
+          addPepiMessage({
+            role: 'pepi',
+            text: t('pepi.photoStatus', { date: formatDateKey(d.lastCaptureDate, lang) }) + extra,
+            variant: 'answer',
+          });
+        }
+        handled = true;
+      }
+
       // AI Q&A fallback (P-1): anything the deterministic layers can't answer goes
       // to the cheap insights Q&A (Haiku, tier 'quick'), grounded in the same facade
       // history the charts + Analysis use. No cap, by design (owner decision).
@@ -409,7 +435,7 @@ export function PepiChat() {
             mode: 'qa',
             question: input,
             history: buildInsightHistory(
-              { entries, metricReadings, protocolItems, doseEvents, symptomEvents, profile },
+              { entries, metricReadings, protocolItems, doseEvents, symptomEvents, profile, photos },
               today,
             ),
             locale: lang,

@@ -151,6 +151,14 @@ Implementation notes: `PhotoEntry` gains `coverage` + a computed `qualityScore`;
 
 ## Implementation status
 
+### P-3 Pepi sees photo results (shipped, edge deployed v15)
+- `PhotoEntry` now persists the vision service's hedged `changeNote`; `progress-photos.tsx` saves it alongside drift/comparability on each analysis.
+- `selectPhotoDigest` (facade) carries the change note; `buildInsightHistory` adds a `photos` digest (per track: latest date, count, comparability, note) to the insights payload, so both the Analysis AI and the Pepi Q&A fallback can now discuss photo results.
+- **Deterministic photo answer:** "when was my last photo / how do I look" is answered instantly and offline from the digest (last capture date + comparability or the change note), no AI call.
+- **Edge (deployed v15, live-tested):** the `insights` action includes the photo digest in the payload + system prompt. A live curl confirmed the function references photos and respects goal direction on the Haiku tier.
+- Green: typecheck / lint / i18n (6) / vitest (100) / web export.
+
+
 ### P-4 keyboard + H-1 hero footer + H-2 mixed-verdict copy (shipped, client-only)
 - **P-4 (`pepi-chat.tsx`):** the chat is wrapped in a `KeyboardAvoidingView`; opening the keyboard now lifts the composer, auto-scrolls the thread to the latest message, and hides the template chips (they no longer cover the composer). iOS uses will-show/hide, Android did-show/hide.
 - **H-1 (`dashboard.tsx`):** the Today hero gains a small mono footer, "TRACKING weight - waist - energy", naming the top signals the verdict is watching so the number has visible context. Hidden while the verdict is still "building".

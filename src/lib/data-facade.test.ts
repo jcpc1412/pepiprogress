@@ -25,6 +25,7 @@ const baseInput = (over: Partial<Parameters<typeof buildInsightHistory>[0]> = {}
   protocolItems: [],
   doseEvents: [],
   symptomEvents: [],
+  photos: [] as PhotoEntry[],
   profile: profile(),
   ...over,
 });
@@ -133,5 +134,15 @@ describe('selectPhotoDigest', () => {
     expect(face.lastCaptureDate).toBe('2026-07-08');
     expect(face.comparable).toBe(true);
     expect(digest.find((d) => d.part === 'belly')?.count).toBe(1);
+  });
+
+  it('carries the hedged change note into the insights payload (P-3)', () => {
+    const photos: PhotoEntry[] = [
+      { id: '1', session: 'face', uri: 'a', takenAt: '2026-07-08T12:00:00.000Z', comparable: true, changeNote: 'jawline appears slightly sharper' },
+    ];
+    const h = buildInsightHistory(baseInput({ photos }), '2026-07-10');
+    expect(h.photos?.[0].track).toBe('face');
+    expect(h.photos?.[0].note).toBe('jawline appears slightly sharper');
+    expect(h.photos?.[0].comparable).toBe(true);
   });
 });

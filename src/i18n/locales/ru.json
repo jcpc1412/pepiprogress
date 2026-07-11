@@ -891,7 +891,9 @@
     "chipLogDose": "Записать дозу",
     "ansValue": "{{metric}}, {{tf}}: {{value}} {{unit}} ({{agg}}, {{samples}})",
     "ansCompare": "{{metric}}, {{tf}}: {{value}} {{unit}} ({{delta}} {{vsPrior}})",
-    "ansExtremum": "{{metric}}: {{value}} {{unit}} ({{dir}}, {{date}})"
+    "ansExtremum": "{{metric}}: {{value}} {{unit}} ({{dir}}, {{date}})",
+    "photoStatus": "Последнее фото прогресса: {{date}}.",
+    "photoNone": "Пока нет фото прогресса. Сделайте его на вкладке Фото."
   },
   "analysis": {
     "heading": "Анализ"

@@ -20,7 +20,7 @@ const MIN_CHECKINS = 4;
  */
 export function Insights() {
   const { t, i18n } = useTranslation();
-  const { entries, doseEvents, symptomEvents, metricReadings, protocolItems, profile } = useStore();
+  const { entries, doseEvents, symptomEvents, metricReadings, protocolItems, profile, photos } = useStore();
 
   const [busy, setBusy] = useState(false);
   const [answer, setAnswer] = useState('');
@@ -43,10 +43,10 @@ export function Insights() {
   const history = useMemo(
     () =>
       buildInsightHistory(
-        { entries, doseEvents, symptomEvents, metricReadings, protocolItems, profile },
+        { entries, doseEvents, symptomEvents, metricReadings, protocolItems, profile, photos },
         localDateKey(),
       ),
-    [entries, doseEvents, symptomEvents, metricReadings, protocolItems, profile],
+    [entries, doseEvents, symptomEvents, metricReadings, protocolItems, profile, photos],
   );
 
   const ask = useCallback(

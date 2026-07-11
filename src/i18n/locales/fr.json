@@ -891,7 +891,9 @@
     "chipLogDose": "Noter une dose",
     "ansValue": "{{metric}}, {{tf}}: {{value}} {{unit}} ({{agg}}, {{samples}})",
     "ansCompare": "{{metric}}, {{tf}}: {{value}} {{unit}} ({{delta}} {{vsPrior}})",
-    "ansExtremum": "{{metric}}: {{value}} {{unit}} ({{dir}}, {{date}})"
+    "ansExtremum": "{{metric}}: {{value}} {{unit}} ({{dir}}, {{date}})",
+    "photoStatus": "Dernière photo de progression : {{date}}.",
+    "photoNone": "Pas encore de photos de progression. Prenez-en une dans l'onglet Photos."
   },
   "analysis": {
     "heading": "Analyse"

@@ -157,9 +157,11 @@ export type PhotoDigestEntry = {
   comparable?: boolean;
   driftScore?: number;
   lighting?: PhotoEntry['lighting'];
+  /** The latest hedged change note from the vision service, if analyzed. */
+  changeNote?: string;
 };
 
-export function selectPhotoDigest(input: FacadeInput): PhotoDigestEntry[] {
+export function selectPhotoDigest(input: Pick<FacadeInput, 'photos'>): PhotoDigestEntry[] {
   const groups = new Map<string, PhotoEntry[]>();
   for (const p of input.photos) {
     const key = `${p.session}|${p.part ?? ''}`;
@@ -179,6 +181,7 @@ export function selectPhotoDigest(input: FacadeInput): PhotoDigestEntry[] {
       comparable: latest.comparable,
       driftScore: latest.driftScore,
       lighting: latest.lighting,
+      changeNote: latest.changeNote,
     });
   }
   return out.sort((a, b) => (a.lastCaptureDate < b.lastCaptureDate ? 1 : -1));
@@ -207,7 +210,7 @@ function directionSuffix(dir: MetricFavourDir): string {
 export function buildInsightHistory(
   input: Pick<
     FacadeInput,
-    'entries' | 'metricReadings' | 'protocolItems' | 'profile' | 'doseEvents' | 'symptomEvents'
+    'entries' | 'metricReadings' | 'protocolItems' | 'profile' | 'doseEvents' | 'symptomEvents' | 'photos'
   >,
   today: string,
 ): InsightHistory {
@@ -259,6 +262,13 @@ export function buildInsightHistory(
     protocolStarts: input.protocolItems
       .filter((p) => p.startedAt)
       .map((p) => ({ compound: name(p.compoundSlug), startedAt: p.startedAt as string })),
+    photos: selectPhotoDigest({ photos: input.photos ?? [] }).map((d) => ({
+      track: d.part ? `${d.session}/${d.part}` : d.session,
+      date: d.lastCaptureDate,
+      count: d.count,
+      comparable: d.comparable,
+      note: d.changeNote,
+    })),
   };
 }
 

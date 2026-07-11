@@ -425,6 +425,7 @@ export function ProgressPhotos({
         driftScore: res.driftScore,
         comparable: res.comparable,
         lighting: res.lighting,
+        changeNote: res.change || undefined,
       });
       setLastNote({ id: latest.id, analysis: res });
       const sciKey = sessionScientificKey(session);

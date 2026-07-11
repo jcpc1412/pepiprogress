@@ -103,6 +103,7 @@ type InsightHistory = {
   symptoms: { date: string; type: string; severity?: number }[];
   metrics: { date: string; metric: string; value: number; unit?: string }[];
   protocolStarts: { compound: string; startedAt: string }[];
+  photos?: { track: string; date: string; count: number; comparable?: boolean; note?: string }[];
 };
 
 type InsightsRequest = {
@@ -468,7 +469,9 @@ function insightsSystemPrompt(mode: string, locale: string): string {
     modeLine,
     '',
     'You are given a compact JSON history of their check-ins, logged doses, symptoms,',
-    'integration metric readings, and protocol start dates. Analyze only what is present.',
+    'integration metric readings, protocol start dates, and progress-photo results',
+    '(each photo track with its latest capture date, comparability, and a hedged change note).',
+    'Analyze only what is present.',
     'Metric labels may carry a goal-direction hint in parentheses, e.g. "hips (goal: lower is better)" - respect it: never frame a move against the user goal as good.',
     '',
     'HARD RULES (non-negotiable):',
@@ -707,6 +710,7 @@ Deno.serve(async (req: Request) => {
           symptoms: h.symptoms.slice(0, 100),
           metrics: h.metrics.slice(0, 300),
           protocolStarts: h.protocolStarts,
+          photos: (h.photos ?? []).slice(0, 40),
         }),
       ].join('\n');
 
