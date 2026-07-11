@@ -358,7 +358,8 @@
     "expiringSoon": "Vence em breve",
     "consumable": "Consumível",
     "summaryTitle": "Estoque",
-    "ok": "OK"
+    "ok": "OK",
+    "addConsumable": "+ Adicionar suprimento"
   },
   "inventoryKinds": {
     "vial": "Frasco",
@@ -643,7 +644,7 @@
     "webUnsupported": "O backup no Drive está disponível no app móvel."
   },
   "insights": {
-    "title": "Análises",
+    "title": "Pergunte aos seus dados",
     "description": "Análise de IA baseada nos seus próprios dados. Nunca conselhos médicos ou de dose.",
     "trends": "Tendências",
     "correlations": "O que mudou junto",
@@ -732,7 +733,10 @@
     "distillError": "Serviço indisponível. Tentaremos de novo automaticamente.",
     "distillErrorPill": "Na fila",
     "editNote": "Editar nota",
-    "notePlaceholder": "Adicione uma nota de hoje…"
+    "notePlaceholder": "Adicione uma nota de hoje…",
+    "doseLog": "Registrar",
+    "dosesSetup": "Configure seu protocolo",
+    "stockFlag": "Suprimentos precisam de atenção"
   },
   "addCompound": {
     "title": "Adicionar composto",

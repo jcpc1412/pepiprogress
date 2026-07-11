@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { LabeledInput, PrimaryButton, ScaleSelector } from '@/components/form';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 import { isVisualSymptom } from '@/lib/photo-cadence';
 import { useStore, type SymptomEvent } from '@/lib/store';
 
@@ -21,6 +22,7 @@ function formatWhen(iso: string, locale: string): string {
 /** Quick-add + recent list for discrete side-effect/symptom events (spec 03). */
 export function SymptomEvents() {
   const { t, i18n } = useTranslation();
+  const theme = useTheme();
   const { symptomEvents, addSymptomEvent, deleteSymptomEvent } = useStore();
 
   const [type, setType] = useState('');
@@ -90,7 +92,7 @@ export function SymptomEvents() {
       <PrimaryButton label={t('symptoms.log')} onPress={submit} disabled={!type.trim()} />
 
       {photoSuggestion && (
-        <View style={styles.suggestion}>
+        <View style={[styles.suggestion, { borderColor: theme.border, backgroundColor: theme.surfaceSunken }]}>
           <ThemedText type="small" themeColor="textSecondary" style={styles.suggestionText}>
             {t('symptoms.photoSuggestion')}
           </ThemedText>
@@ -142,15 +144,16 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   rowText: { flex: 1, gap: Spacing.half },
+  // Full hairline frame, not a side-stripe (design-law ban; UX audit 2026-07-11).
   suggestion: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: Spacing.two,
-    paddingVertical: Spacing.one,
+    paddingVertical: Spacing.two,
     paddingHorizontal: Spacing.two,
-    borderRadius: 4,
-    borderLeftWidth: 2,
+    borderRadius: 2,
+    borderWidth: StyleSheet.hairlineWidth,
   },
   suggestionText: { flex: 1 },
 });

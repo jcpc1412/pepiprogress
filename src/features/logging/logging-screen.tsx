@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { ScrollView, StyleSheet } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { SegmentedControl } from '@/components/form';
@@ -30,32 +30,39 @@ export function LoggingScreen({
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safe} edges={['top']}>
-        <OverlayHeader title={t('logging.title')} onClose={onClose} />
-        {!quickOnly && (
-          <SegmentedControl
-            options={[
-              { value: 'quick', label: t('logging.quick') },
-              { value: 'detailed', label: t('logging.detailed') },
-            ]}
-            value={mode}
-            onChange={(v) => setMode(v as LoggingMode)}
-          />
-        )}
-        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-          {mode === 'quick' ? (
-            <QuickLog seedPrompt={seedPrompt} onDismiss={onClose} />
-          ) : (
-            <DetailedLog onDismiss={onClose} />
+      {/* Keyboard handling (UX audit P1): without this the keyboard covered the
+          quick-log input and the lower detailed-form fields on iOS. */}
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <SafeAreaView style={styles.safe} edges={['top']}>
+          <OverlayHeader title={t('logging.title')} onClose={onClose} />
+          {!quickOnly && (
+            <SegmentedControl
+              options={[
+                { value: 'quick', label: t('logging.quick') },
+                { value: 'detailed', label: t('logging.detailed') },
+              ]}
+              value={mode}
+              onChange={(v) => setMode(v as LoggingMode)}
+            />
           )}
-        </ScrollView>
-      </SafeAreaView>
+          <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+            {mode === 'quick' ? (
+              <QuickLog seedPrompt={seedPrompt} onDismiss={onClose} />
+            ) : (
+              <DetailedLog onDismiss={onClose} />
+            )}
+          </ScrollView>
+        </SafeAreaView>
+      </KeyboardAvoidingView>
     </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  flex: { flex: 1 },
   safe: {
     flex: 1,
     paddingHorizontal: Spacing.four,

@@ -358,7 +358,8 @@
     "expiringSoon": "Expiring soon",
     "consumable": "Consumable",
     "summaryTitle": "Inventory",
-    "ok": "OK"
+    "ok": "OK",
+    "addConsumable": "+ Add supply"
   },
   "inventoryKinds": {
     "vial": "Vial",
@@ -643,7 +644,7 @@
     "webUnsupported": "Drive backup is available on the mobile app."
   },
   "insights": {
-    "title": "Insights",
+    "title": "Ask your data",
     "description": "AI analysis grounded in your own logged data. Never medical or dosing advice.",
     "trends": "Trends",
     "correlations": "What moved together",
@@ -732,7 +733,10 @@
     "distillError": "Couldn’t reach the service. We’ll retry automatically.",
     "distillErrorPill": "Queued",
     "editNote": "Edit note",
-    "notePlaceholder": "Add a note for today…"
+    "notePlaceholder": "Add a note for today…",
+    "doseLog": "Log",
+    "dosesSetup": "Set up your protocol",
+    "stockFlag": "Supplies need attention"
   },
   "addCompound": {
     "title": "Add compound",

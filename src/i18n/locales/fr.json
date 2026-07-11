@@ -358,7 +358,8 @@
     "expiringSoon": "Bientôt périmé",
     "consumable": "Consommable",
     "summaryTitle": "Inventaire",
-    "ok": "OK"
+    "ok": "OK",
+    "addConsumable": "+ Ajouter une fourniture"
   },
   "inventoryKinds": {
     "vial": "Flacon",
@@ -643,7 +644,7 @@
     "webUnsupported": "La sauvegarde Drive est disponible sur l'application mobile."
   },
   "insights": {
-    "title": "Analyses",
+    "title": "Interroge tes données",
     "description": "Analyse par IA fondée sur vos propres données. Jamais de conseils médicaux ni de dosage.",
     "trends": "Tendances",
     "correlations": "Ce qui a évolué ensemble",
@@ -732,7 +733,10 @@
     "distillError": "Service injoignable. Nouvelle tentative automatique.",
     "distillErrorPill": "En file",
     "editNote": "Modifier la note",
-    "notePlaceholder": "Ajouter une note pour aujourd’hui…"
+    "notePlaceholder": "Ajouter une note pour aujourd’hui…",
+    "doseLog": "Noter",
+    "dosesSetup": "Configure ton protocole",
+    "stockFlag": "Les fournitures demandent attention"
   },
   "addCompound": {
     "title": "Ajouter un composé",

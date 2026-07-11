@@ -1,15 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { PrimaryButton } from '@/components/form';
+import { GearIcon } from '@/components/icons';
 import { Divider, EngravedLabel } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
-import { Insights } from '@/features/insights/insights';
 import { ProgressPhotos } from '@/features/photos/progress-photos';
+import { useOverlay } from '@/lib/nav-overlay';
 import { useStore, type PhotoSession } from '@/lib/store';
 
 /**
@@ -20,6 +21,7 @@ import { useStore, type PhotoSession } from '@/lib/store';
  */
 export function PhotosScreen() {
   const { t } = useTranslation();
+  const { openSettings } = useOverlay();
   const { photos } = useStore();
   const [session, setSession] = useState<PhotoSession>('face');
   const captureRef = useRef<(() => void) | null>(null);
@@ -40,20 +42,31 @@ export function PhotosScreen() {
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safe} edges={['top']}>
         <View style={styles.headerBlock}>
-          <EngravedLabel>{t('photos.progressLabel')}</EngravedLabel>
-          <ThemedText type="display">{t('photos.heading')}</ThemedText>
+          <View>
+            <EngravedLabel>{t('photos.progressLabel')}</EngravedLabel>
+            <ThemedText type="display">{t('photos.heading')}</ThemedText>
+          </View>
+          {/* Gear on every tab header (UX audit: header consistency). */}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t('settings.title')}
+            onPress={openSettings}
+            hitSlop={8}>
+            <GearIcon />
+          </Pressable>
         </View>
         <Divider />
         <ScrollView
           contentContainerStyle={styles.scroll}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}>
+          {/* The generic AI Insights card moved off this tab (UX audit P2): it
+              analyzed check-in trends, not photos, and duplicated Analysis. */}
           <ProgressPhotos
             session={session}
             onSessionChange={handleSessionChange}
             captureRef={captureRef}
           />
-          <Insights />
         </ScrollView>
       </SafeAreaView>
 
@@ -81,7 +94,7 @@ const styles = StyleSheet.create({
     maxWidth: MaxContentWidth,
     alignSelf: 'center',
   },
-  headerBlock: {},
+  headerBlock: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' },
   scroll: { gap: Spacing.four, paddingBottom: Spacing.six + 64, paddingTop: Spacing.two },
   floatingWrapper: {
     position: 'absolute',

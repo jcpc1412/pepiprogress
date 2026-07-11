@@ -358,7 +358,8 @@
     "expiringSoon": "Caduca pronto",
     "consumable": "Consumible",
     "summaryTitle": "Inventario",
-    "ok": "OK"
+    "ok": "OK",
+    "addConsumable": "+ Añadir suministro"
   },
   "inventoryKinds": {
     "vial": "Vial",
@@ -643,7 +644,7 @@
     "webUnsupported": "La copia en Drive está disponible en la app móvil."
   },
   "insights": {
-    "title": "Análisis",
+    "title": "Pregunta a tus datos",
     "description": "Análisis con IA basado en tus propios datos. Nunca consejos médicos ni de dosis.",
     "trends": "Tendencias",
     "correlations": "Qué cambió a la vez",
@@ -732,7 +733,10 @@
     "distillError": "No se pudo conectar. Reintentaremos automáticamente.",
     "distillErrorPill": "En cola",
     "editNote": "Editar nota",
-    "notePlaceholder": "Añade una nota de hoy…"
+    "notePlaceholder": "Añade una nota de hoy…",
+    "doseLog": "Registrar",
+    "dosesSetup": "Configura tu protocolo",
+    "stockFlag": "Los suministros requieren atención"
   },
   "addCompound": {
     "title": "Añadir compuesto",

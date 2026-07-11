@@ -1,13 +1,18 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
+import { useRouter } from 'expo-router';
 
 import { Card, Divider, EngravedLabel, Placeholder, StatusPill } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
+import { TextButton } from '@/components/form';
 import { Spacing } from '@/constants/theme';
 import { compoundBySlug } from '@/data/compound-catalog';
 import { daysBetween } from '@/lib/dates';
+import { hapticTap } from '@/lib/haptics';
+import { itemNeedsAttention } from '@/lib/inventory';
 import { isDueOnDay } from '@/components/weekday-picker';
+import { useTheme } from '@/hooks/use-theme';
 import { localDateKey, useStore, type Frequency, type ProtocolItem } from '@/lib/store';
 
 /** Days that must pass since the last dose for a given frequency to be "due" again. */
@@ -23,13 +28,20 @@ function name(slug: string | undefined): string {
 
 /**
  * Today's doses (redesign R2) — the pending/done checklist at the bottom of the
- * dashboard, replacing the old Recent-doses list on Protocol. Shows protocol
- * items due today (per frequency); tap a pending one to log + mark done.
+ * dashboard. Tap the LOG chip on a pending row to log; a logged row offers an
+ * inline UNDO (UX audit P0: the one-tap log used to be irreversible). The card
+ * header links to Protocol (UX audit P1: it was buried behind Settings) and
+ * surfaces the low-stock flag where the user actually looks daily.
  */
 export function TodayDoses() {
   const { t } = useTranslation();
-  const { protocolItems, doseEvents, logDose } = useStore();
+  const router = useRouter();
+  const { protocolItems, doseEvents, inventory, logDose, deleteDose } = useStore();
   const today = localDateKey();
+
+  // Doses logged from this card in this session, so a fat-thumbed tap can be
+  // reversed in place. itemId -> the dose event id the tap created.
+  const [undoable, setUndoable] = useState<Record<string, string>>({});
 
   const rows = useMemo(() => {
     // Last dose date-key per protocol item (by item id, falling back to compound).
@@ -70,37 +82,105 @@ export function TodayDoses() {
       .filter((r) => r.show);
   }, [protocolItems, doseEvents, today]);
 
-  // Always show the section — an empty placeholder signals where doses appear.
+  // Low-stock/expiry flag, surfaced here because Protocol is a nested screen.
+  const flagged = useMemo(
+    () => inventory.some((i) => i.kind === 'vial' && itemNeedsAttention(i)),
+    [inventory],
+  );
+
+  const onLog = (item: ProtocolItem) => {
+    const id = logDose({
+      protocolItemId: item.id,
+      compoundSlug: item.compoundSlug,
+      takenAt: new Date().toISOString(),
+      dose: item.dose,
+      doseUnit: item.doseUnit,
+    });
+    setUndoable((m) => ({ ...m, [item.id]: id }));
+    hapticTap();
+  };
+
+  const onUndo = (itemId: string) => {
+    const doseId = undoable[itemId];
+    if (!doseId) return;
+    deleteDose(doseId);
+    setUndoable((m) => {
+      const next = { ...m };
+      delete next[itemId];
+      return next;
+    });
+  };
+
+  const header = (
+    <View style={styles.headerRow}>
+      <EngravedLabel>{t('dashboard.dosesTitle')}</EngravedLabel>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={t('tabs.protocol')}
+        onPress={() => router.push('/protocol')}
+        hitSlop={8}>
+        <ThemedText type="monoSm" themeColor="accent" style={styles.protocolLink}>
+          {t('tabs.protocol').toUpperCase()}
+        </ThemedText>
+      </Pressable>
+    </View>
+  );
+
+  // Always show the section — an empty state signals where doses appear and
+  // carries its own action (UX audit: empty states must act).
   if (rows.length === 0) {
     return (
       <Card style={styles.card}>
-        <EngravedLabel>{t('dashboard.dosesTitle')}</EngravedLabel>
+        {header}
         <Placeholder label={t('dashboard.dosesPlaceholder')} height={64} />
+        {protocolItems.length === 0 ? (
+          <TextButton label={t('dashboard.dosesSetup')} onPress={() => router.push('/protocol')} />
+        ) : null}
       </Card>
     );
   }
 
   return (
     <Card style={styles.card}>
-      <EngravedLabel>{t('dashboard.dosesTitle')}</EngravedLabel>
+      {header}
+      {flagged ? (
+        <Pressable accessibilityRole="button" onPress={() => router.push('/protocol')} hitSlop={4}>
+          <ThemedText type="monoSm" themeColor="signalBad" style={styles.flagged}>
+            {t('dashboard.stockFlag')}
+          </ThemedText>
+        </Pressable>
+      ) : null}
       {rows.map(({ item, done }, i) => (
         <View key={item.id}>
           {i > 0 && <Divider style={styles.rowDivider} />}
-          <DoseRow item={item} done={done} onLog={() => logDose({
-            protocolItemId: item.id,
-            compoundSlug: item.compoundSlug,
-            takenAt: new Date().toISOString(),
-            dose: item.dose,
-            doseUnit: item.doseUnit,
-          })} />
+          <DoseRow
+            item={item}
+            done={done}
+            canUndo={done && item.id in undoable}
+            onLog={() => onLog(item)}
+            onUndo={() => onUndo(item.id)}
+          />
         </View>
       ))}
     </Card>
   );
 }
 
-function DoseRow({ item, done, onLog }: { item: ProtocolItem; done: boolean; onLog: () => void }) {
+function DoseRow({
+  item,
+  done,
+  canUndo,
+  onLog,
+  onUndo,
+}: {
+  item: ProtocolItem;
+  done: boolean;
+  canUndo: boolean;
+  onLog: () => void;
+  onUndo: () => void;
+}) {
   const { t } = useTranslation();
+  const theme = useTheme();
   const detail = [
     item.dose != null ? `${item.dose}${item.doseUnit ?? ''}` : null,
     item.frequency ? t(`frequencies.${item.frequency}` as const) : null,
@@ -109,12 +189,7 @@ function DoseRow({ item, done, onLog }: { item: ProtocolItem; done: boolean; onL
     .join(' · ');
 
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityState={{ checked: done }}
-      disabled={done}
-      onPress={onLog}
-      style={({ pressed }) => [styles.row, pressed && !done && styles.rowPressed]}>
+    <View style={styles.row}>
       <View style={styles.rowText}>
         <ThemedText type="smallBold">{name(item.compoundSlug)}</ThemedText>
         {detail ? (
@@ -123,19 +198,49 @@ function DoseRow({ item, done, onLog }: { item: ProtocolItem; done: boolean; onL
           </ThemedText>
         ) : null}
       </View>
-      <StatusPill
-        label={done ? t('dashboard.doseDone') : t('dashboard.dosePending')}
-        tone={done ? 'good' : 'neutral'}
-      />
-    </Pressable>
+      {done ? (
+        <View style={styles.doneCol}>
+          <StatusPill label={t('dashboard.doseDone')} tone="good" />
+          {canUndo ? (
+            <Pressable accessibilityRole="button" onPress={onUndo} hitSlop={8}>
+              <ThemedText type="monoSm" themeColor="accent">
+                {t('quicklog.undo')}
+              </ThemedText>
+            </Pressable>
+          ) : null}
+        </View>
+      ) : (
+        // The explicit action chip (UX audit: "Pending" read as status, not a
+        // tap affordance). Filled instrument ink, same vocabulary as chips.
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`${t('dashboard.doseLog')} ${name(item.compoundSlug)}`}
+          onPress={onLog}
+          style={({ pressed }) => [
+            styles.logChip,
+            { backgroundColor: theme.accent },
+            pressed && styles.logChipPressed,
+          ]}>
+          <ThemedText type="monoSm" themeColor="onAccent" style={styles.logChipText}>
+            {t('dashboard.doseLog').toUpperCase()}
+          </ThemedText>
+        </Pressable>
+      )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   card: { gap: Spacing.two },
+  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  protocolLink: { letterSpacing: 1 },
+  flagged: { textTransform: 'uppercase' },
   rowDivider: { marginVertical: 0 },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.two, paddingVertical: Spacing.two },
-  rowPressed: { opacity: 0.6 },
   rowText: { flex: 1, gap: Spacing.half },
   detail: {},
+  doneCol: { alignItems: 'flex-end', gap: Spacing.half },
+  logChip: { paddingHorizontal: Spacing.three, paddingVertical: Spacing.one + 2, borderRadius: 2, minWidth: 56, alignItems: 'center' },
+  logChipPressed: { transform: [{ scale: 0.94 }] },
+  logChipText: { letterSpacing: 1.3 },
 });

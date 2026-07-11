@@ -66,14 +66,16 @@ export default function AppTabs() {
 
 const TabButton = forwardRef<View, TabTriggerSlotProps & { icon: IconCmp; label: string }>(
   function TabButton({ icon: Icon, label, isFocused, ...props }, ref) {
-    const color: ThemeColor = isFocused ? 'accent' : 'textSecondary';
+    // Inactive = full-opacity muted ink, not an opacity multiplier: 9px mono at
+    // 0.5 opacity fell below the 3:1 contrast floor (UX audit 2026-07-11).
+    const color: ThemeColor = isFocused ? 'accent' : 'textMuted';
     return (
       <Pressable
         ref={ref}
         {...props}
         accessibilityRole="button"
         accessibilityState={{ selected: !!isFocused }}
-        style={[styles.item, !isFocused && styles.itemInactive]}>
+        style={styles.item}>
         <Icon size={20} color={color} />
         <ThemedText type="label" themeColor={color} style={styles.label}>
           {label}
@@ -94,6 +96,5 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   item: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: Spacing.one },
-  itemInactive: { opacity: 0.5 },
-  label: { fontSize: 9 },
+  label: { fontSize: 10 },
 });

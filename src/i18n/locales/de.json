@@ -358,7 +358,8 @@
     "expiringSoon": "Läuft bald ab",
     "consumable": "Verbrauchsmaterial",
     "summaryTitle": "Bestand",
-    "ok": "OK"
+    "ok": "OK",
+    "addConsumable": "+ Verbrauchsmaterial hinzufügen"
   },
   "inventoryKinds": {
     "vial": "Fläschchen",
@@ -643,7 +644,7 @@
     "webUnsupported": "Drive-Backup ist in der mobilen App verfügbar."
   },
   "insights": {
-    "title": "Einblicke",
+    "title": "Frag deine Daten",
     "description": "KI-Analyse auf Basis deiner eigenen Daten. Niemals medizinische oder Dosierungsratschläge.",
     "trends": "Trends",
     "correlations": "Was sich gemeinsam veränderte",
@@ -732,7 +733,10 @@
     "distillError": "Dienst nicht erreichbar. Wir versuchen es automatisch erneut.",
     "distillErrorPill": "In Warteschlange",
     "editNote": "Notiz bearbeiten",
-    "notePlaceholder": "Notiz für heute hinzufügen…"
+    "notePlaceholder": "Notiz für heute hinzufügen…",
+    "doseLog": "Erfassen",
+    "dosesSetup": "Protokoll einrichten",
+    "stockFlag": "Vorräte brauchen Aufmerksamkeit"
   },
   "addCompound": {
     "title": "Wirkstoff hinzufügen",

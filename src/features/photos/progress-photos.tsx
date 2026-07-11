@@ -20,6 +20,7 @@ import {
   type PhotoAnalysis,
 } from '@/lib/ai';
 import { bodyFatNavy, inferBodyComposition, usesFemaleFormula } from '@/lib/body-composition';
+import { hapticSuccess } from '@/lib/haptics';
 import { quickReadout, type Comparability, type QuickReadout } from '@/lib/photo-readout';
 import { isNewHighscore, pickReference } from '@/lib/photo-reference';
 import { RETRY_THRESHOLD } from '@/lib/photo-quality';
@@ -531,6 +532,7 @@ export function ProgressPhotos({
   // Unconditional celebration pulse on save (the Haiku read is the "it's working"
   // proof; this is the affective confirmation). Reduce-motion → no animation.
   const triggerCelebration = useCallback(() => {
+    hapticSuccess();
     if (reduceMotion) {
       celebrate.setValue(1);
       return;
@@ -666,8 +668,10 @@ export function ProgressPhotos({
         </View>
       )}
 
-      {/* Capture settings (angle + self-timer) — chosen here, applied in-camera. */}
-      {session === 'body' && (
+      {/* Capture settings (angle + self-timer) — chosen here, applied in-camera.
+          Hidden until the track has a first photo (UX audit: four control rows
+          before a baseline exists was pre-capture overload). */}
+      {session === 'body' && sessionPhotos.length > 0 && (
         <View style={styles.captureSettings}>
           <View style={styles.settingCol}>
             <EngravedLabel>{t('photos.angleLabel')}</EngravedLabel>
@@ -704,6 +708,8 @@ export function ProgressPhotos({
           <ThemedText type="monoSm" themeColor="textMuted" style={styles.clothingGuidance}>
             {t('photos.clothingGuidance')}
           </ThemedText>
+          {/* The empty state carries its own action (UX audit). */}
+          <TextButton label={t('photos.open')} onPress={() => setCapturing(true)} />
         </View>
       ) : showWipe ? (
         <WipeCompare

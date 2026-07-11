@@ -215,6 +215,9 @@ function ConsumablesSection() {
   const theme = useTheme();
   const { inventory, addInventoryItem, removeInventoryItem } = useStore();
   const [open, setOpen] = useState(false);
+  // The 4-field add form collapses behind "+ Add" once any consumable exists
+  // (UX audit: a permanently expanded form dominated the section).
+  const [adding, setAdding] = useState(false);
   const [label, setLabel] = useState('');
   const [amount, setAmount] = useState('');
   const [unit, setUnit] = useState('');
@@ -251,30 +254,35 @@ function ConsumablesSection() {
           </Pressable>
         </View>
       ))}
-      <View style={[styles.addForm, { borderColor: theme.border }]}>
-        <LabeledInput label={t('inventory.label')} value={label} onChangeText={setLabel} />
-        <LabeledInput label={t('inventory.amount')} keyboardType="decimal-pad" value={amount} onChangeText={setAmount} />
-        <LabeledInput label={t('inventory.unit')} value={unit} onChangeText={setUnit} />
-        <LabeledInput label={t('inventory.lowThreshold')} keyboardType="decimal-pad" value={low} onChangeText={setLow} />
-        <PrimaryButton
-          label={t('inventory.add')}
-          disabled={!label.trim()}
-          onPress={() => {
-            addInventoryItem({
-              kind: 'consumable',
-              label: label.trim(),
-              amountRemaining: num(amount),
-              amountInitial: num(amount),
-              unit: unit.trim() || undefined,
-              lowThreshold: num(low),
-            });
-            setLabel('');
-            setAmount('');
-            setUnit('');
-            setLow('');
-          }}
-        />
-      </View>
+      {adding || consumables.length === 0 ? (
+        <View style={[styles.addForm, { borderColor: theme.border }]}>
+          <LabeledInput label={t('inventory.label')} value={label} onChangeText={setLabel} />
+          <LabeledInput label={t('inventory.amount')} keyboardType="decimal-pad" value={amount} onChangeText={setAmount} />
+          <LabeledInput label={t('inventory.unit')} value={unit} onChangeText={setUnit} />
+          <LabeledInput label={t('inventory.lowThreshold')} keyboardType="decimal-pad" value={low} onChangeText={setLow} />
+          <PrimaryButton
+            label={t('inventory.add')}
+            disabled={!label.trim()}
+            onPress={() => {
+              addInventoryItem({
+                kind: 'consumable',
+                label: label.trim(),
+                amountRemaining: num(amount),
+                amountInitial: num(amount),
+                unit: unit.trim() || undefined,
+                lowThreshold: num(low),
+              });
+              setLabel('');
+              setAmount('');
+              setUnit('');
+              setLow('');
+              setAdding(false);
+            }}
+          />
+        </View>
+      ) : (
+        <TextButton label={t('inventory.addConsumable')} onPress={() => setAdding(true)} />
+      )}
     </View>
   );
 }

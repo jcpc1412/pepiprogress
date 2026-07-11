@@ -18,6 +18,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
 
 import { OptionChip } from '@/components/form';
+import { GearIcon } from '@/components/icons';
 import { LineChart, type ChartPoint } from '@/components/line-chart';
 import { Sunken } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
@@ -621,6 +622,14 @@ export function PepiChat() {
           <ThemedText type="display" style={styles.hero}>
             {t('tabs.pepi')}
           </ThemedText>
+          {/* Gear on every tab header (UX audit: header consistency). */}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t('settings.title')}
+            onPress={() => router.push('/settings')}
+            hitSlop={8}>
+            <GearIcon />
+          </Pressable>
         </View>
 
         <ScrollView
@@ -833,7 +842,7 @@ const styles = StyleSheet.create({
     maxWidth: MaxContentWidth,
     alignSelf: 'center',
   },
-  header: { flexDirection: 'row', alignItems: 'center' },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   hero: { textTransform: 'uppercase', letterSpacing: 1 },
   thread: { flex: 1 },
   threadContent: { gap: Spacing.two, paddingVertical: Spacing.two },

@@ -1,75 +1,30 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { StyleSheet, View } from 'react-native';
 
-import { GearIcon } from '@/components/icons';
+import { OptionChip } from '@/components/form';
 import { LineChart, type ChartMarker, type ChartPoint } from '@/components/line-chart';
 import { Card, EngravedLabel, Metric, SignalText } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
 import { compoundBySlug } from '@/data/compound-catalog';
-import { AskPepi } from '@/features/ask/ask-pepi';
-import { Insights } from '@/features/insights/insights';
+import { useVerdict } from '@/features/home/use-verdict';
 import { CHART_METRICS } from '@/lib/chart-series';
 import { selectChartSeries } from '@/lib/data-facade';
 import { daysBetween } from '@/lib/dates';
-import { useOverlay } from '@/lib/nav-overlay';
 import { localDateKey, useStore, type CheckinEntry } from '@/lib/store';
 
 /** Min check-ins before the AI text features unlock (matches the Insights component). */
-const MIN_CHECKINS = 4;
+export const MIN_CHECKINS = 4;
 
 type DeltaTone = 'good' | 'bad' | 'neutral';
 
 /** Core subjective/weight metrics used by the summary "biggest change" card. */
 const CORE_METRICS = CHART_METRICS.filter((m) => m.checkinKey);
 
-/**
- * The Insights tab (redesign R2 #3) — local summary cards + trend charts (always
- * available from partial data) plus the AI analysis surface (gated at 4 check-ins
- * with an educational unlock state below the threshold).
- */
-export function InsightsScreen() {
-  const { t } = useTranslation();
-  const { openSettings } = useOverlay();
-  const { entries } = useStore();
-
-  const checkinCount = Object.keys(entries).length;
-  const unlocked = checkinCount >= MIN_CHECKINS;
-
-  return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safe} edges={['top']}>
-        <View style={styles.header}>
-          <View>
-            <EngravedLabel>{t('tabs.insights')}</EngravedLabel>
-            <ThemedText type="display">{t('insights.heading')}</ThemedText>
-          </View>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={t('settings.title')}
-            onPress={openSettings}
-            hitSlop={8}>
-            <GearIcon />
-          </Pressable>
-        </View>
-
-        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-          <AskPepi />
-          <SummaryCards />
-          <ChartsSection />
-          {!unlocked && (
-            <UnlockCard remaining={Math.max(1, MIN_CHECKINS - checkinCount)} />
-          )}
-          {/* AI analysis — self-gates at MIN_CHECKINS (renders null below). */}
-          <Insights />
-        </ScrollView>
-      </SafeAreaView>
-    </ThemedView>
-  );
-}
+// The old InsightsScreen shell was retired by the Analysis tab (R2-C C4); this
+// module now exports its reusable sections (SummaryCards / ChartsSection /
+// UnlockCard), which Analysis composes. (UX audit 2026-07-11: dead code removed.)
 
 /** Local, always-on summary cards (no AI call). */
 export function SummaryCards() {
@@ -148,22 +103,63 @@ export function SummaryCards() {
 /** Trend charts over the full protocol span, with protocol-start markers (redesign
  *  R2). Unlike the dashboard's 10-day glance, this shows the whole cycle from when
  *  the earliest compound started, and — like the dashboard — merges integration +
- *  wearable-derived data, not just manual check-ins. */
+ *  wearable-derived data, not just manual check-ins.
+ *
+ *  UX audit 2026-07-11: a metric chip-row filters which charts render. Default =
+ *  the verdict's top signals plus weight (the metrics the read actually rests on),
+ *  so the tab stops being a wall of every chart; any metric is one tap away. */
 export function ChartsSection() {
   const { t } = useTranslation();
   const { entries, metricReadings, protocolItems, profile } = useStore();
+  const verdict = useVerdict();
+
+  // Default focus: top-3 verdict signals + weight. Falls back to "all" while the
+  // verdict is still building (no signals to focus on yet).
+  const defaultIds = useMemo(() => {
+    const ids = new Set<string>(verdict.signals.slice(0, 3).map((s) => s.metricId));
+    ids.add('weight');
+    return ids;
+    // Signals shift rarely (goal/compound changes); keying on length is enough.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [verdict.signals.length]);
+  const [picked, setPicked] = useState<Set<string> | null>(null); // null = default focus
+  const active = picked ?? (verdict.signals.length > 0 ? defaultIds : null);
+
+  const toggle = (id: string) => {
+    const base = new Set(active ?? CHART_METRICS.map((m) => m.id));
+    if (base.has(id)) base.delete(id);
+    else base.add(id);
+    if (base.size === 0) return; // never allow zero charts
+    setPicked(base);
+  };
 
   // Single source of truth for the trend series (facade A-4): identical merge of
   // manual + integration + derived + estimated that every other surface reads.
   const { series, startKeys } = useMemo(
-    () => selectChartSeries({ entries, metricReadings, protocolItems, profile }, localDateKey()),
-    [entries, metricReadings, protocolItems, profile],
+    () =>
+      selectChartSeries({ entries, metricReadings, protocolItems, profile }, localDateKey(), {
+        selectedIds: active ? [...active] : undefined,
+      }),
+    [entries, metricReadings, protocolItems, profile, active],
   );
 
   // Always render the chart frames — empty ones show a dashed placeholder axis.
   return (
     <View style={styles.charts}>
       <EngravedLabel>{t('insights.trendsLabel')}</EngravedLabel>
+      <View style={styles.metricChips}>
+        {CHART_METRICS.map((m) => {
+          const on = !active || active.has(m.id);
+          return (
+            <OptionChip
+              key={m.id}
+              label={t(m.labelKey as 'fields.weight')}
+              selected={on}
+              onPress={() => toggle(m.id)}
+            />
+          );
+        })}
+      </View>
       {series.map((s) => {
         const points: ChartPoint[] = s.primary.map((p) => ({ label: p.dateKey.slice(5), value: p.value }));
         const estimated: ChartPoint[] = s.estimated.map((p) => ({ label: p.dateKey.slice(5), value: p.value }));
@@ -213,21 +209,10 @@ export function UnlockCard({ remaining }: { remaining: number }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: 'transparent' },
-  safe: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.three,
-    gap: Spacing.two,
-    width: '100%',
-    maxWidth: MaxContentWidth,
-    alignSelf: 'center',
-  },
-  header: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' },
-  scroll: { gap: Spacing.four, paddingTop: Spacing.three, paddingBottom: Spacing.six },
   cardRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
   summaryCard: { flexGrow: 1, minWidth: '45%', gap: Spacing.one },
   charts: { gap: Spacing.two },
+  metricChips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
   chartCard: { gap: Spacing.two },
   unlock: { gap: Spacing.two },
 });
