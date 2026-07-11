@@ -843,7 +843,9 @@
       "on_track": "Your {{metric}} is moving the way your goal needs.",
       "watch": "Signals are mixed. A few more days will settle it.",
       "off_track": "Your {{metric}} is drifting from your goal.",
-      "plateau": "Your weight is holding. Tape and photos carry the read now."
+      "plateau": "Your weight is holding. Tape and photos carry the read now.",
+      "watchMixed": "Signals are mixed: {{drag}} is pulling against an otherwise steady week.",
+      "watchMixed2": "Signals are mixed: {{drag}} and {{drag2}} are pulling against the rest."
     },
     "reconcile": {
       "trainingLoad": "Your {{metric}} reflects recent training load, not a setback.",
@@ -871,7 +873,8 @@
     "trendWindow": "{{n}}-DAY TREND",
     "forecast": {
       "daysToTarget": "≈ {{n}} DAYS TO TARGET"
-    }
+    },
+    "trackingFooter": "Tracking {{list}}"
   },
   "pepi": {
     "subtitle": "Log anything, or ask about your data.",

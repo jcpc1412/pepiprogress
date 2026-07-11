@@ -843,7 +843,9 @@
       "on_track": "Tu {{metric}} evoluciona como tu objetivo necesita.",
       "watch": "Las señales son mixtas. Unos días más lo aclararán.",
       "off_track": "Tu {{metric}} se aleja de tu objetivo.",
-      "plateau": "Tu peso se mantiene. Las medidas y las fotos llevan la lectura ahora."
+      "plateau": "Tu peso se mantiene. Las medidas y las fotos llevan la lectura ahora.",
+      "watchMixed": "Las señales son dispares: {{drag}} va en contra de una semana por lo demás estable.",
+      "watchMixed2": "Las señales son dispares: {{drag}} y {{drag2}} van en contra del resto."
     },
     "reconcile": {
       "trainingLoad": "Tu {{metric}} refleja la carga de entrenamiento reciente, no un retroceso.",
@@ -871,7 +873,8 @@
     "trendWindow": "TENDENCIA {{n}} DÍAS",
     "forecast": {
       "daysToTarget": "≈ {{n}} DÍAS AL OBJETIVO"
-    }
+    },
+    "trackingFooter": "Siguiendo {{list}}"
   },
   "pepi": {
     "subtitle": "Registra lo que sea, o pregunta sobre tus datos.",

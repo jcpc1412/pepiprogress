@@ -1,6 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import {
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { OptionChip } from '@/components/form';
@@ -97,11 +106,29 @@ export function PepiChat() {
   const [undoneIds, setUndoneIds] = useState<Set<string>>(new Set());
   const undoMap = useRef<Map<string, () => void>>(new Map());
   const scrollRef = useRef<ScrollView>(null);
+  // Keyboard state (P-4): when the keyboard is up we hide the template chips (they
+  // would otherwise be shoved over the composer) and keep the thread pinned to the
+  // latest message so the composer never covers what you just sent.
+  const [keyboardUp, setKeyboardUp] = useState(false);
 
   useEffect(() => {
     const id = setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 50);
     return () => clearTimeout(id);
   }, [pepiMessages, pending]);
+
+  useEffect(() => {
+    const showEvt = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvt = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+    const showSub = Keyboard.addListener(showEvt, () => {
+      setKeyboardUp(true);
+      setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 50);
+    });
+    const hideSub = Keyboard.addListener(hideEvt, () => setKeyboardUp(false));
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   // ── Answer formatting (mono data lines; no charts) ─────────────────────────
   const metricLabel = (m: QueryMetric): string =>
@@ -438,7 +465,10 @@ export function PepiChat() {
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safe} edges={['top']}>
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <SafeAreaView style={styles.safe} edges={['top']}>
         <View style={styles.header}>
           <View style={styles.headerText}>
             <EngravedLabel>{t('tabs.pepi')}</EngravedLabel>
@@ -492,6 +522,7 @@ export function PepiChat() {
           ) : null}
         </ScrollView>
 
+        {!keyboardUp && (
         <View style={styles.chips}>
           {typicalSetup?.step === 'confirm' ? (
             <>
@@ -516,6 +547,7 @@ export function PepiChat() {
             </>
           )}
         </View>
+        )}
 
         <Sunken style={styles.composer}>
           <TextInput
@@ -542,7 +574,8 @@ export function PepiChat() {
             </ThemedText>
           </Pressable>
         </Sunken>
-      </SafeAreaView>
+        </SafeAreaView>
+      </KeyboardAvoidingView>
     </ThemedView>
   );
 }
@@ -599,6 +632,7 @@ function Bubble({
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: 'transparent' },
+  flex: { flex: 1 },
   safe: {
     flex: 1,
     paddingHorizontal: Spacing.four,

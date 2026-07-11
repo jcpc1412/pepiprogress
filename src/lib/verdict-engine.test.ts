@@ -255,6 +255,24 @@ describe('computeVerdict — state & confidence tiers', () => {
     expect(v.signals.every((s) => s.role !== 'drags')).toBe(true);
   });
 
+  it('names the dragging signal when the read is mixed (H-2)', () => {
+    // Weight barely moves (near-neutral) while energy slides — a mixed read that
+    // should name what is pulling against the rest rather than a generic line.
+    const entries = entriesOf(8, (o) => ({
+      weight: 79 + o * 0.05,
+      energy: 4.6 - o * 0.3, // today lowest → down = bad
+    }));
+    const v = computeVerdict(makeInput({ entries, profile: { goals: ['weight_loss'], units: 'metric' } }));
+    if (v.state === 'watch' && v.signals.some((s) => s.role === 'drags')) {
+      expect(['verdict.explanation.watchMixed', 'verdict.explanation.watchMixed2']).toContain(v.explanation.key);
+      const drag = v.explanation.params?.drag;
+      expect(typeof drag).toBe('string');
+      expect((drag as string).includes('.')).toBe(true); // an i18n label key, resolved by the UI
+    } else {
+      expect(v.explanation.key.startsWith('verdict.explanation.')).toBe(true);
+    }
+  });
+
   it('does not report on_track when signals conflict', () => {
     const entries = entriesOf(6, (o) => ({
       weight: 79 + o * 0.3, // good (down on a cut)

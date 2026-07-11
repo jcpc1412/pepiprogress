@@ -843,7 +843,9 @@
       "on_track": "Dein {{metric}} entwickelt sich so, wie es dein Ziel braucht.",
       "watch": "Die Signale sind gemischt. Ein paar Tage mehr bringen Klarheit.",
       "off_track": "Dein {{metric}} entfernt sich von deinem Ziel.",
-      "plateau": "Dein Gewicht hält. Maßband und Fotos tragen jetzt die Auswertung."
+      "plateau": "Dein Gewicht hält. Maßband und Fotos tragen jetzt die Auswertung.",
+      "watchMixed": "Gemischte Signale: {{drag}} zieht gegen eine sonst stabile Woche.",
+      "watchMixed2": "Gemischte Signale: {{drag}} und {{drag2}} ziehen gegen den Rest."
     },
     "reconcile": {
       "trainingLoad": "Dein {{metric}} spiegelt die jüngste Trainingsbelastung wider, keinen Rückschritt.",
@@ -871,7 +873,8 @@
     "trendWindow": "{{n}}-TAGE-TREND",
     "forecast": {
       "daysToTarget": "≈ {{n}} TAGE BIS ZUM ZIEL"
-    }
+    },
+    "trackingFooter": "Verfolgt {{list}}"
   },
   "pepi": {
     "subtitle": "Protokolliere alles, oder frage nach deinen Daten.",

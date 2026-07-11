@@ -843,7 +843,9 @@
       "on_track": "Votre {{metric}} évolue comme votre objectif le demande.",
       "watch": "Les signaux sont mitigés. Quelques jours de plus trancheront.",
       "off_track": "Votre {{metric}} s'écarte de votre objectif.",
-      "plateau": "Ton poids se stabilise. Les mensurations et les photos portent la lecture maintenant."
+      "plateau": "Ton poids se stabilise. Les mensurations et les photos portent la lecture maintenant.",
+      "watchMixed": "Les signaux sont mitigés : {{drag}} tire à contre-courant d'une semaine par ailleurs stable.",
+      "watchMixed2": "Les signaux sont mitigés : {{drag}} et {{drag2}} tirent à contre-courant du reste."
     },
     "reconcile": {
       "trainingLoad": "Votre {{metric}} reflète la charge d'entraînement récente, pas un recul.",
@@ -871,7 +873,8 @@
     "trendWindow": "TENDANCE {{n}} JOURS",
     "forecast": {
       "daysToTarget": "≈ {{n}} JOURS AVANT L’OBJECTIF"
-    }
+    },
+    "trackingFooter": "Suivi de {{list}}"
   },
   "pepi": {
     "subtitle": "Enregistrez n'importe quoi, ou posez une question sur vos données.",

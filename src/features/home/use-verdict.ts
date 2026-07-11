@@ -26,8 +26,12 @@ export function resolveMsg(
   msg: { key: string; params?: Record<string, string | number> },
 ): string {
   const params = msg.params ? { ...msg.params } : undefined;
-  if (params && typeof params.metric === 'string') {
-    params.metric = t(params.metric as 'fields.weight');
+  // These params carry metric i18n keys (e.g. "fields.soreness"); translate them
+  // before interpolation so the sentence reads in the user's language.
+  if (params) {
+    for (const k of ['metric', 'drag', 'drag2'] as const) {
+      if (typeof params[k] === 'string') params[k] = t(params[k] as 'fields.weight');
+    }
   }
   return t(msg.key as 'verdict.explanation.on_track', params);
 }

@@ -103,6 +103,13 @@ export function Dashboard() {
           .join(' · ')
       : '';
 
+  // Hero footer (H-1): the signals the verdict is watching, so the number has
+  // visible context. Top few by contribution weight; already translated names.
+  const trackingList =
+    verdict.state !== 'building'
+      ? verdict.signals.slice(0, 3).map((s) => t(s.labelKey as 'fields.weight')).join(' · ')
+      : '';
+
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safe} edges={['top']}>
@@ -146,6 +153,11 @@ export function Dashboard() {
                 {heroSub ? (
                   <ThemedText type="monoSm" themeColor="textMuted" style={styles.heroSub}>
                     {heroSub}
+                  </ThemedText>
+                ) : null}
+                {trackingList ? (
+                  <ThemedText type="monoSm" themeColor="textMuted" style={styles.tracking}>
+                    {t('verdict.trackingFooter', { list: trackingList })}
                   </ThemedText>
                 ) : null}
               </Pressable>
@@ -241,6 +253,7 @@ const styles = StyleSheet.create({
   verdict: { gap: Spacing.two },
   verdictHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   heroSub: { marginTop: Spacing.one },
+  tracking: { marginTop: 2, textTransform: 'uppercase' },
   rule: { marginVertical: -Spacing.two },
   reconcile: { fontStyle: 'italic' },
   evidence: { gap: Spacing.two },

@@ -151,6 +151,13 @@ Implementation notes: `PhotoEntry` gains `coverage` + a computed `qualityScore`;
 
 ## Implementation status
 
+### P-4 keyboard + H-1 hero footer + H-2 mixed-verdict copy (shipped, client-only)
+- **P-4 (`pepi-chat.tsx`):** the chat is wrapped in a `KeyboardAvoidingView`; opening the keyboard now lifts the composer, auto-scrolls the thread to the latest message, and hides the template chips (they no longer cover the composer). iOS uses will-show/hide, Android did-show/hide.
+- **H-1 (`dashboard.tsx`):** the Today hero gains a small mono footer, "TRACKING weight - waist - energy", naming the top signals the verdict is watching so the number has visible context. Hidden while the verdict is still "building".
+- **H-2 (`verdict-engine.ts`):** a "watch" (mixed) read now names what is pulling against the rest ("Signals are mixed: soreness is pulling against an otherwise steady week", or the two-drag variant) instead of the generic "signals are mixed" line, reusing the engine's existing drag detection. Falls back to the generic template when nothing clearly drags. `resolveMsg` now translates the `drag`/`drag2` label params. Property test in `verdict-engine.test.ts`.
+- Green: typecheck / lint / i18n (6) / vitest (99) / web export.
+
+
 ### P-1 smart off-card answers + A-1 AI fix (shipped, edge deployed v14)
 - **Deterministic first (no AI call):** `intent.ts` now recognizes exercise synonyms (gym / worked out / training / lifted) and `dosing`, and treats trend phrasing ("lately", "recently", "less/more lately", "trending", "dropping") as a recent-week-vs-prior comparison, even on a partial week. The screenshot's "have I exercised less lately?" now returns a week-over-week workout comparison with zero AI cost. Tests in `intent.test.ts`.
 - **Haiku Q&A fallback:** anything the deterministic layers still miss routes to the insights `qa` action grounded in the facade history (`buildInsightHistory`), on the cheap model via a new `tier: 'quick'` flag. No per-day cap (owner decision). Replaces the old "not understood" dead-end.

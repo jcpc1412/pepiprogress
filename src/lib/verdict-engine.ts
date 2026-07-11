@@ -508,6 +508,22 @@ export function computeVerdict(input: VerdictInput): Verdict {
 
   const reconciliation = pickReconciliation(signals);
 
+  // Mixed-verdict copy (H-2): when the read is "watch", name the signal(s) pulling
+  // against the rest instead of a generic "signals are mixed" line. Falls back to
+  // the generic template when nothing is clearly dragging.
+  const drags = signals.filter((s) => s.role === 'drags').slice(0, 2);
+  let explanation: Localizable;
+  if (plateau) {
+    explanation = { key: 'verdict.explanation.plateau', params: { metric: heroRaw.labelKey } };
+  } else if (state === 'watch' && drags.length >= 1) {
+    explanation =
+      drags.length >= 2
+        ? { key: 'verdict.explanation.watchMixed2', params: { drag: drags[0].labelKey, drag2: drags[1].labelKey } }
+        : { key: 'verdict.explanation.watchMixed', params: { drag: drags[0].labelKey } };
+  } else {
+    explanation = { key: `verdict.explanation.${state}`, params: { metric: heroRaw.labelKey } };
+  }
+
   const hero: VerdictHero = {
     kind: 'metric',
     metricId: heroRaw.metricId,
@@ -527,9 +543,7 @@ export function computeVerdict(input: VerdictInput): Verdict {
     signals,
     reconciliation,
     forecast: weightForecast(heroRaw, input),
-    explanation: plateau
-      ? { key: 'verdict.explanation.plateau', params: { metric: heroRaw.labelKey } }
-      : { key: `verdict.explanation.${state}`, params: { metric: heroRaw.labelKey } },
+    explanation,
     explanationKey: 'template',
   };
 }
