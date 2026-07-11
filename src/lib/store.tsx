@@ -201,6 +201,9 @@ export type PepiMessage = {
   text: string;
   /** Pepi reply shape: a logged-data confirmation, a data answer, or a hint/error. */
   variant?: 'log' | 'answer' | 'hint' | 'error';
+  /** When set, the bubble renders a live sparkline for this charted metric id
+   *  (P-2). Stored light: the series is re-derived from the store at render. */
+  metricId?: string;
 };
 
 export type ThemePreference = 'light' | 'dark' | 'auto';

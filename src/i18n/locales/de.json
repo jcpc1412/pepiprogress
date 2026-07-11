@@ -893,7 +893,8 @@
     "ansCompare": "{{metric}}, {{tf}}: {{value}} {{unit}} ({{delta}} {{vsPrior}})",
     "ansExtremum": "{{metric}}: {{value}} {{unit}} ({{dir}}, {{date}})",
     "photoStatus": "Letztes Fortschrittsfoto: {{date}}.",
-    "photoNone": "Noch keine Fortschrittsfotos. Mach eins im Fotos-Tab."
+    "photoNone": "Noch keine Fortschrittsfotos. Mach eins im Fotos-Tab.",
+    "viewTrend": "In Analyse ansehen"
   },
   "analysis": {
     "heading": "Analyse"

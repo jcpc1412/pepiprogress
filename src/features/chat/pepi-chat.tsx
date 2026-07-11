@@ -12,14 +12,19 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { useRouter, type Href } from 'expo-router';
+
 import { OptionChip } from '@/components/form';
+import { LineChart, type ChartPoint } from '@/components/line-chart';
 import { EngravedLabel, Sunken } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Radii, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { aiErrorKind, parseQuickLog, runInsights, type ParsedItem } from '@/lib/ai';
-import { buildInsightHistory, selectPhotoDigest } from '@/lib/data-facade';
+import { buildInsightHistory, selectChartSeries, selectPhotoDigest } from '@/lib/data-facade';
+import { resolveMsg, useVerdict, type TFn } from '@/features/home/use-verdict';
+import { CHART_METRICS, type MetricSeries } from '@/lib/chart-series';
 import { executeQuery } from '@/lib/ask/execute';
 import { matchQuery, SUGGESTED_QUERIES } from '@/lib/ask/intent';
 import type { Aggregation, PepiAnswer, PepiQuery, QueryMetric, Timeframe, UnitTag } from '@/lib/ask/types';
@@ -66,6 +71,14 @@ const ASK_CHIPS = [SUGGESTED_QUERIES[1], SUGGESTED_QUERIES[4]];
 /** Deterministic photo-status question (P-3): answered locally from the digest. */
 const PHOTO_RE = /\b(photo|photos|picture|pictures|pic|pics|selfie|how do i look)\b/;
 
+/** Charted metric ids (P-2): a metric answer for one of these gets a sparkline. */
+const CHARTED_IDS = new Set(CHART_METRICS.map((m) => m.id));
+function chartMetricIdFor(a: PepiAnswer): string | undefined {
+  if (a.kind === 'insufficient') return undefined;
+  if (a.metric.kind !== 'checkin') return undefined;
+  return CHARTED_IDS.has(a.metric.field) ? a.metric.field : undefined;
+}
+
 /**
  * Pepi as one chat (redesign R2-F, mockup frame 5). A single thread: the user
  * logs or asks in one composer, Pepi replies as messages. Routing per message is
@@ -101,6 +114,21 @@ export function PepiChat() {
 
   const lang = i18n.language;
   const today = localDateKey();
+  const router = useRouter();
+  const verdict = useVerdict();
+  const tx = t as unknown as TFn;
+  // Live per-metric chart series (P-2): a metric answer renders a sparkline from
+  // the same facade series the charts use, re-derived at render (messages stay light).
+  const seriesMap = useMemo(() => {
+    const { series } = selectChartSeries(
+      { entries, metricReadings, protocolItems, profile },
+      today,
+      { selectedIds: CHART_METRICS.map((m) => m.id) },
+    );
+    const map: Record<string, MetricSeries> = {};
+    for (const s of series) map[s.id] = s;
+    return map;
+  }, [entries, metricReadings, protocolItems, profile, today]);
   const [text, setText] = useState('');
   const [selection, setSelection] = useState<{ start: number; end: number } | undefined>(undefined);
   const [pending, setPending] = useState(false);
@@ -188,6 +216,15 @@ export function PepiChat() {
       dir: t((a.dir === 'max' ? AGG_KEY.max : AGG_KEY.min) as 'ask.aggMax'),
       date: formatDateKey(a.dateKey, lang),
     });
+  };
+
+  // Post a data answer, attaching a live sparkline for charted metrics and, for
+  // weight, the verdict's hedged days-to-target projection (P-2).
+  const postAnswer = (a: PepiAnswer) => {
+    const metricId = chartMetricIdFor(a);
+    let answerText = formatAnswer(a);
+    if (metricId === 'weight' && verdict.forecast) answerText += ` · ${resolveMsg(tx, verdict.forecast)}`;
+    addPepiMessage({ role: 'pepi', text: answerText, variant: 'answer', metricId });
   };
 
   // ── Apply a confident parse, capturing a batch undo (session-only) ─────────
@@ -399,7 +436,7 @@ export function PepiChat() {
       if (!handled) {
         const q = matchQuery(input);
         if (q) {
-          addPepiMessage({ role: 'pepi', text: formatAnswer(executeQuery(q, snapshot, localDateKey())), variant: 'answer' });
+          postAnswer(executeQuery(q, snapshot, localDateKey()));
           handled = true;
         }
       }
@@ -469,7 +506,7 @@ export function PepiChat() {
   const runQuery = (labelKey: string, query: PepiQuery) => {
     if (pending) return;
     addPepiMessage({ role: 'user', text: t(labelKey as 'ask.sugDoses') });
-    addPepiMessage({ role: 'pepi', text: formatAnswer(executeQuery(query, { entries, doseEvents }, localDateKey())), variant: 'answer' });
+    postAnswer(executeQuery(query, { entries, doseEvents }, localDateKey()));
   };
 
   const insertTemplate = (template: string) => {
@@ -536,6 +573,10 @@ export function PepiChat() {
                 onUndo={() => onUndo(m.id)}
                 undoLabel={t('quicklog.undo')}
                 undoneLabel={t('pepi.undone')}
+                series={m.metricId ? seriesMap[m.metricId] : undefined}
+                onOpenTrend={m.metricId ? () => router.push(`/signal/${m.metricId}` as Href) : undefined}
+                viewLabel={t('pepi.viewTrend')}
+                noDataLabel={t('common.noData')}
               />
             ))
           )}
@@ -613,6 +654,10 @@ function Bubble({
   onUndo,
   undoLabel,
   undoneLabel,
+  series,
+  onOpenTrend,
+  viewLabel,
+  noDataLabel,
 }: {
   message: PepiMessage;
   showUndo: boolean;
@@ -620,11 +665,19 @@ function Bubble({
   onUndo: () => void;
   undoLabel: string;
   undoneLabel: string;
+  series?: MetricSeries;
+  onOpenTrend?: () => void;
+  viewLabel: string;
+  noDataLabel: string;
 }) {
   const theme = useTheme();
   const isUser = message.role === 'user';
   const tone =
     message.variant === 'error' ? 'signalBad' : message.variant === 'hint' ? 'textMuted' : 'text';
+
+  const points: ChartPoint[] = (series?.primary ?? []).map((p) => ({ label: p.dateKey.slice(5), value: p.value }));
+  const estimated: ChartPoint[] = (series?.estimated ?? []).map((p) => ({ label: p.dateKey.slice(5), value: p.value }));
+  const hasChart = !!series && (points.length > 0 || estimated.length > 0);
 
   return (
     <View style={[styles.row, isUser ? styles.rowUser : styles.rowPepi]}>
@@ -638,6 +691,14 @@ function Bubble({
         <ThemedText type={message.variant === 'log' ? 'mono' : 'body'} themeColor={tone}>
           {message.text}
         </ThemedText>
+        {hasChart ? (
+          <Pressable accessibilityRole="button" accessibilityHint={viewLabel} onPress={onOpenTrend} style={styles.chartBox}>
+            <LineChart data={points} estimated={estimated} emptyLabel={noDataLabel} />
+            <ThemedText type="monoSm" themeColor="accent" style={styles.viewTrend}>
+              {viewLabel}
+            </ThemedText>
+          </Pressable>
+        ) : null}
         {showUndo ? (
           undone ? (
             <ThemedText type="monoSm" themeColor="textMuted" style={styles.undoRow}>
@@ -678,6 +739,8 @@ const styles = StyleSheet.create({
   rowUser: { justifyContent: 'flex-end' },
   rowPepi: { justifyContent: 'flex-start' },
   bubble: { maxWidth: '85%', paddingVertical: Spacing.two, paddingHorizontal: Spacing.three, borderRadius: Radii.panel, gap: Spacing.one },
+  chartBox: { marginTop: Spacing.one, gap: 2, minWidth: 220 },
+  viewTrend: { textDecorationLine: 'underline' },
   undoRow: { marginTop: 2 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
   composer: { flexDirection: 'row', alignItems: 'flex-end', gap: Spacing.two, paddingHorizontal: Spacing.two, paddingVertical: Spacing.one },

@@ -151,6 +151,13 @@ Implementation notes: `PhotoEntry` gains `coverage` + a computed `qualityScore`;
 
 ## Implementation status
 
+### P-2 sparkline + projection in chat answers (shipped, client-only)
+- Metric questions in Pepi ("how's my weight loss going", the Weight-trend chip) now render a **live sparkline** under the answer, drawn from the same facade series the charts use (`selectChartSeries`), tappable through to the Analysis signal detail. `PepiMessage` stores only a light `metricId`; the series is re-derived at render so the snapshot stays small.
+- For weight answers, the verdict engine's hedged **days-to-target projection** is appended to the text (rung-1, observed pace only, never an AI-invented number).
+- This intentionally reverses the R2-F "Analysis owns every chart" rule for the chat surface (recorded in the P-2 decision above).
+- Green: typecheck / lint / i18n (6) / vitest (100) / web export.
+
+
 ### P-3 Pepi sees photo results (shipped, edge deployed v15)
 - `PhotoEntry` now persists the vision service's hedged `changeNote`; `progress-photos.tsx` saves it alongside drift/comparability on each analysis.
 - `selectPhotoDigest` (facade) carries the change note; `buildInsightHistory` adds a `photos` digest (per track: latest date, count, comparability, note) to the insights payload, so both the Analysis AI and the Pepi Q&A fallback can now discuss photo results.
