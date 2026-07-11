@@ -280,7 +280,10 @@
     "timer10": "10с",
     "pinchZoomHint": "Сведите пальцы для зума",
     "angleLabel": "Ракурс",
-    "timerLabel": "Таймер"
+    "timerLabel": "Таймер",
+    "savedTitle": "Снято",
+    "qualityHighscore": "Новый рекорд качества",
+    "savedBaselineBody": "Базовый снимок задан. Следующее фото сравнится с ним."
   },
   "markers": {
     "hematocrit": "Гематокрит",

@@ -280,7 +280,10 @@
     "timer10": "10s",
     "pinchZoomHint": "Pincez pour zoomer",
     "angleLabel": "Angle",
-    "timerLabel": "Retardateur"
+    "timerLabel": "Retardateur",
+    "savedTitle": "Capturée",
+    "qualityHighscore": "Nouveau record de qualité",
+    "savedBaselineBody": "Référence établie. Ta prochaine photo sera comparée à celle-ci."
   },
   "markers": {
     "hematocrit": "Hématocrite",

@@ -142,6 +142,13 @@ export type PhotoEntry = {
   tilt?: number; // device pitch/roll delta from baseline (deg)
   luma?: number; // average brightness proxy (0–1)
   boxRatio?: number; // subject bbox vs frame (distance proxy)
+  /** Composite capture-quality score (0–100) from photo-quality.ts, persisted at
+   *  save time. Drives the quality-highscore reference promotion (PH-1). */
+  qualityScore?: number;
+  /** Clothing coverage from the vision service (PH-1): skin priority. `minimal`
+   *  outranks `clothed` for the working reference, and once a minimal-coverage
+   *  reference exists clothed captures never displace it (the soft lock). */
+  coverage?: 'clothed' | 'partial' | 'minimal';
   // Layer-2 AI (spec 04) — filled on-demand by the vision service.
   driftScore?: number; // 0–1, lower = more comparable to baseline
   comparable?: boolean;

@@ -280,7 +280,10 @@
     "timer10": "10s",
     "pinchZoomHint": "Pinch to zoom",
     "angleLabel": "Angle",
-    "timerLabel": "Self-timer"
+    "timerLabel": "Self-timer",
+    "savedTitle": "Captured",
+    "qualityHighscore": "New quality best",
+    "savedBaselineBody": "Baseline set. Your next shot compares against this one."
   },
   "markers": {
     "hematocrit": "Hematocrit",

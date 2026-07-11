@@ -35,6 +35,7 @@ import { FlipCameraIcon } from '@/components/icons';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { copyPhotoToDocuments } from '@/lib/photos';
+import { computeQuality } from '@/lib/photo-quality';
 import { useStore, type PhotoEntry, type PhotoSession } from '@/lib/store';
 
 const GHOST_OPACITY = 0.35;
@@ -70,12 +71,16 @@ export function VisionCameraCapture({
   baseline,
   visible,
   onClose,
+  onSaved,
 }: {
   session: PhotoSession;
   ghostUri?: string;
   baseline?: PhotoEntry; // for distance comparison
   visible: boolean;
   onClose: () => void;
+  /** Fired after a shot is saved to the store (PH-2): the parent runs the instant
+   *  post-capture read + celebration. */
+  onSaved?: (photoId: string) => void;
 }) {
   const { t } = useTranslation();
   const { addPhoto } = useStore();
@@ -169,14 +174,16 @@ export function VisionCameraCapture({
     setBusy(true);
     try {
       const persistentUri = await copyPhotoToDocuments(shot);
-      addPhoto({
+      const newId = addPhoto({
         session,
         uri: persistentUri,
         takenAt: new Date().toISOString(),
         tilt: shotTilt,
         boxRatio: shotBoxRatio,
+        qualityScore: computeQuality({ tiltDeg: shotTilt }).score,
       });
       close();
+      onSaved?.(newId);
     } finally {
       setBusy(false);
     }

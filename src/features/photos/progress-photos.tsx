@@ -3,7 +3,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { type MutableRefObject, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Animated, Dimensions, type LayoutChangeEvent, Modal, PanResponder, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { AccessibilityInfo, Animated, Dimensions, type LayoutChangeEvent, Modal, PanResponder, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { LabeledInput, PrimaryButton, TextButton, SingleSelectChips } from '@/components/form';
 import { Card, Divider, EngravedLabel, Placeholder, Skeleton, StatusPill } from '@/components/surface';
@@ -15,11 +15,14 @@ import { useTheme } from '@/hooks/use-theme';
 import {
   aiErrorKind,
   analyzePhoto,
+  checkFit,
   runEncouragementAnalysis,
   type PhotoAnalysis,
 } from '@/lib/ai';
 import { bodyFatNavy, inferBodyComposition, usesFemaleFormula } from '@/lib/body-composition';
-import { quickReadout, type QuickReadout } from '@/lib/photo-readout';
+import { quickReadout, type Comparability, type QuickReadout } from '@/lib/photo-readout';
+import { isNewHighscore, pickReference } from '@/lib/photo-reference';
+import { RETRY_THRESHOLD } from '@/lib/photo-quality';
 import { useAuth } from '@/lib/auth';
 import {
   getCadence,
@@ -229,6 +232,21 @@ export function ProgressPhotos({
   const [encouragementNote, setEncouragementNote] = useState<string | null>(null);
   const [aiError, setAiError] = useState<'network' | 'server' | null>(null);
   const [lastAiAction, setLastAiAction] = useState<'scientific' | 'encouragement' | null>(null);
+  // ── PH-2 instant post-capture feedback ───────────────────────────────────
+  // A saved photo id waiting for its instant read (set by the capture onSaved).
+  const [pendingSaveId, setPendingSaveId] = useState<string | null>(null);
+  const processedSaves = useRef<Set<string>>(new Set());
+  const [instantRead, setInstantRead] = useState<{
+    id: string;
+    comparability: Comparability;
+    hint?: string;
+    retake: boolean;
+    highscore: boolean;
+    baseline: boolean; // true = the first shot of the track (nothing to compare yet)
+  } | null>(null);
+  // Celebration pulse on save (reduce-motion aware, mirrors instrument-background).
+  const [reduceMotion, setReduceMotion] = useState(false);
+  const [celebrate] = useState(() => new Animated.Value(0));
   // Custom "problem area" sub-track within the body session (§4A). Undefined =
   // the whole face/body track. Face has no sub-parts.
   const [part, setPart] = useState<string | undefined>(undefined);
@@ -240,6 +258,16 @@ export function ProgressPhotos({
   const [timer, setTimer] = useState<0 | 3 | 10>(0);
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => setPart(undefined), [session]);
+
+  useEffect(() => {
+    let mounted = true;
+    AccessibilityInfo.isReduceMotionEnabled().then((v) => mounted && setReduceMotion(v));
+    const sub = AccessibilityInfo.addEventListener('reduceMotionChanged', setReduceMotion);
+    return () => {
+      mounted = false;
+      sub.remove();
+    };
+  }, []);
 
   const thumbW = useThumbWidth();
   const thumbH = Math.floor(thumbW * (4 / 3));
@@ -271,6 +299,11 @@ export function ProgressPhotos({
   const baseline = sessionPhotos[sessionPhotos.length - 1];
   const selected = sessionPhotos.find((p) => p.id === selectedId) ?? latest;
   const canCompare = sessionPhotos.length >= 2;
+  // The promotable working reference (PH-1): best-quality, skin-priority. The
+  // ghost overlay anchors to it so the user matches their strongest shot, while
+  // `baseline` (the oldest) stays the immutable day-one compare anchor.
+  const reference = useMemo(() => pickReference(sessionPhotos), [sessionPhotos]);
+  const ghostUri = reference ? resolvedUris[reference.id] ?? reference.uri : undefined;
 
   // ── Compound group + cadence ─────────────────────────────────────────────
   const group = useMemo(() => getGroupForSlugs(profile.compoundSlugs), [profile.compoundSlugs]);
@@ -338,6 +371,7 @@ export function ProgressPhotos({
     setEncouragementNote(null);
     setAiError(null);
     setQuickNote(null);
+    setInstantRead(null);
     setLastAiAction('scientific');
     try {
       let cycleCtx: 'luteal' | undefined;
@@ -426,6 +460,7 @@ export function ProgressPhotos({
         comparable: res.comparable,
         lighting: res.lighting,
         changeNote: res.change || undefined,
+        coverage: res.coverage,
       });
       setLastNote({ id: latest.id, analysis: res });
       const sciKey = sessionScientificKey(session);
@@ -444,6 +479,7 @@ export function ProgressPhotos({
     setAnalyzing(true);
     setLastNote(null);
     setAiError(null);
+    setInstantRead(null);
     setLastAiAction('encouragement');
     try {
       const recentLogs = Object.values(entries)
@@ -484,6 +520,92 @@ export function ProgressPhotos({
       setAnalyzing(false);
     }
   }, [analyzing, entries, profile, group, lastNote, i18n.language, session, cadence, setProfile]);
+
+  // ── PH-2: instant post-capture read ──────────────────────────────────────
+  // Fired by the capture components after a shot lands in the store. Records the
+  // id; the effect below runs the read once the store reflects the new photo.
+  const onPhotoSaved = useCallback((photoId: string) => {
+    setPendingSaveId(photoId);
+  }, []);
+
+  // Unconditional celebration pulse on save (the Haiku read is the "it's working"
+  // proof; this is the affective confirmation). Reduce-motion → no animation.
+  const triggerCelebration = useCallback(() => {
+    if (reduceMotion) {
+      celebrate.setValue(1);
+      return;
+    }
+    celebrate.setValue(0);
+    Animated.sequence([
+      Animated.spring(celebrate, { toValue: 1, useNativeDriver: true, friction: 6, tension: 90 }),
+    ]).start();
+  }, [celebrate, reduceMotion]);
+
+  const runInstantRead = useCallback(
+    async (saved: PhotoEntry) => {
+      triggerCelebration();
+
+      // The track chain this shot belongs to (its own session + part).
+      const chain = photos.filter(
+        (p) => p.session === saved.session && (p.part ?? undefined) === (saved.part ?? undefined),
+      );
+      const others = chain.filter((p) => p.id !== saved.id);
+      // Compare against the prior working reference (best of the earlier shots).
+      const ref = pickReference(others);
+      const highscore = others.length > 0 && isNewHighscore(chain, saved.id);
+
+      if (!ref) {
+        // First shot of the track: celebrate + confirm the baseline is set.
+        setInstantRead({ id: saved.id, comparability: 'partial', retake: false, highscore: false, baseline: true });
+        return;
+      }
+
+      // Deterministic comparability from the tilt delta (offline, instant).
+      const tiltDelta =
+        saved.tilt != null && ref.tilt != null ? Math.abs(saved.tilt - ref.tilt) : undefined;
+      const readout = quickReadout({ tiltDelta });
+      const qualityOff = saved.qualityScore != null && saved.qualityScore < RETRY_THRESHOLD;
+      setInstantRead({
+        id: saved.id,
+        comparability: readout.comparability,
+        retake: qualityOff,
+        highscore,
+        baseline: false,
+      });
+
+      // Cheap Haiku fit sentence + retake nudge (fails open — never blocks the card).
+      const fit = await checkFit(resolvedUris[saved.id] ?? saved.uri, resolvedUris[ref.id] ?? ref.uri).catch(
+        () => null,
+      );
+      if (fit) {
+        setInstantRead((prev) =>
+          prev && prev.id === saved.id
+            ? { ...prev, hint: fit.hint, retake: prev.retake || fit.fit === 'poor' }
+            : prev,
+        );
+      }
+
+      // Full Sonnet read auto-runs ONLY on a scheduled milestone day (else it stays
+      // behind the "deep comparison" button). Balances depth against cost.
+      const sciISO = profile[sessionScientificKey(saved.session)];
+      if (sciISO && Date.now() >= new Date(sciISO).getTime() && chain.length >= 2) {
+        void runScientificAnalysis();
+      }
+    },
+    [photos, profile, resolvedUris, triggerCelebration, runScientificAnalysis],
+  );
+
+  // Run the instant read once the saved photo is reflected in the store.
+  useEffect(() => {
+    if (!pendingSaveId || processedSaves.current.has(pendingSaveId)) return;
+    const saved = photos.find((p) => p.id === pendingSaveId);
+    if (!saved) return; // wait for the store to reflect the new photo
+    processedSaves.current.add(pendingSaveId);
+    // The read is async (first state update lands after a microtask); firing it
+    // here is the intended "react to a saved photo" synchronization.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void runInstantRead(saved);
+  }, [pendingSaveId, photos, runInstantRead]);
 
   // ── Retroactive import ───────────────────────────────────────────────────
   const importFromLibrary = useCallback(async () => {
@@ -591,6 +713,54 @@ export function ProgressPhotos({
         />
       ) : (
         <PhotoFrame uri={resolvedUris[baseline.id] ?? baseline.uri} caption={t('photos.baseline')} />
+      )}
+
+      {/* PH-2: instant post-capture read — appears right after a save. */}
+      {instantRead && sessionPhotos.some((p) => p.id === instantRead.id) && (
+        <Animated.View
+          style={{
+            opacity: celebrate,
+            transform: [{ scale: celebrate.interpolate({ inputRange: [0, 1], outputRange: [0.97, 1] }) }],
+          }}>
+          <Card style={styles.instantCard}>
+            <View style={styles.instantHeader}>
+              <EngravedLabel>{t('photos.savedTitle')}</EngravedLabel>
+              {instantRead.highscore && <StatusPill label={t('photos.qualityHighscore')} tone="good" />}
+            </View>
+            {instantRead.baseline ? (
+              <ThemedText type="small" themeColor="textSecondary">
+                {t('photos.savedBaselineBody')}
+              </ThemedText>
+            ) : (
+              <>
+                <View style={styles.instantBadgeRow}>
+                  <StatusPill
+                    label={t(
+                      `photos.comparability_${instantRead.comparability}` as 'photos.comparability_comparable',
+                    )}
+                    tone={
+                      instantRead.comparability === 'comparable'
+                        ? 'good'
+                        : instantRead.comparability === 'partial'
+                          ? 'watch'
+                          : 'bad'
+                    }
+                  />
+                </View>
+                {instantRead.hint ? (
+                  <ThemedText type="mono" themeColor="textSecondary">
+                    {instantRead.hint}
+                  </ThemedText>
+                ) : null}
+                {instantRead.retake ? (
+                  <ThemedText type="monoSm" themeColor="signalBad">
+                    {t('photos.retakeHint')}
+                  </ThemedText>
+                ) : null}
+              </>
+            )}
+          </Card>
+        </Animated.View>
       )}
 
       {/* Timeline placeholder */}
@@ -758,10 +928,11 @@ export function ProgressPhotos({
       {session === 'face' ? (
         <VisionCameraCapture
           session={session}
-          ghostUri={latest ? resolvedUris[latest.id] ?? latest.uri : undefined}
-          baseline={baseline}
+          ghostUri={ghostUri}
+          baseline={reference ?? baseline}
           visible={capturing}
           onClose={() => setCapturing(false)}
+          onSaved={onPhotoSaved}
         />
       ) : (
         <PhotoCapture
@@ -769,9 +940,10 @@ export function ProgressPhotos({
           part={part}
           view={view}
           timer={timer}
-          ghostUri={latest ? resolvedUris[latest.id] ?? latest.uri : undefined}
+          ghostUri={ghostUri}
           visible={capturing}
           onClose={() => setCapturing(false)}
+          onSaved={onPhotoSaved}
         />
       )}
 
@@ -864,6 +1036,9 @@ const styles = StyleSheet.create({
   thumbImg: { flex: 1 },
   milestoneSection: { gap: Spacing.two },
   quickCard: { gap: Spacing.two },
+  instantCard: { gap: Spacing.two },
+  instantHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.two },
+  instantBadgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.one },
   partRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
   captureSettings: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.four },
   settingCol: { gap: Spacing.one },

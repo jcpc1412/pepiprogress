@@ -265,8 +265,14 @@ const ANALYZE_SCHEMA = {
         'ONE short, hedged, observational sentence about any visible difference between baseline and new. Empty string when there is no baseline. Never a medical claim or diagnosis.',
     },
     retake: { type: 'boolean', description: 'true if drift is high enough to recommend a retake.' },
+    coverage: {
+      type: 'string',
+      enum: ['clothed', 'partial', 'minimal'],
+      description:
+        'Clothing coverage of the NEW photo. "minimal" = skin-exposed for maximum comparability (e.g. shirtless / underwear / swimwear); "partial" = fitted or partial clothing; "clothed" = loose or full clothing that obscures the body. Judge coverage only, never identity.',
+    },
   },
-  required: ['driftScore', 'comparable', 'lighting', 'framing', 'change', 'retake'],
+  required: ['driftScore', 'comparable', 'lighting', 'framing', 'change', 'retake', 'coverage'],
 };
 
 const SIMPLE_SCHEMA = {
@@ -387,6 +393,7 @@ function visionSystemPrompt(
     '- comparable: true if similar enough for an honest before/after (false with no baseline).',
     '- lighting and framing: classify with the allowed enums.',
     '- retake: true when drift is high enough that the user should retake.',
+    '- coverage: classify the NEW photo as clothed / partial / minimal by how much clothing obscures the body. Judge coverage only, never identity or appearance beyond that.',
     hasBaseline
       ? '- change: ONE short, hedged, observational sentence about any visible difference.'
       : '- change: return an empty string (no baseline to compare).',
@@ -607,6 +614,7 @@ Deno.serve(async (req: Request) => {
           framing: 'off_angle',
           change: '',
           retake: true,
+          coverage: 'clothed',
         }),
         200,
       );

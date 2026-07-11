@@ -34,6 +34,7 @@ export function PhotoCapture({
   ghostUri,
   visible,
   onClose,
+  onSaved,
   view = 'front',
   timer = 0,
 }: {
@@ -42,6 +43,9 @@ export function PhotoCapture({
   ghostUri?: string;
   visible: boolean;
   onClose: () => void;
+  /** Fired after a shot is saved to the store (PH-2): the parent runs the instant
+   *  post-capture read + celebration. */
+  onSaved?: (photoId: string) => void;
   /** Capture angle + self-timer are chosen in the Photos tab now, not in-camera. */
   view?: 'front' | 'side';
   timer?: 0 | 3 | 10;
@@ -201,7 +205,15 @@ export function PhotoCapture({
     try {
       const now = new Date();
       const persistentUri = await copyPhotoToDocuments(shot);
-      addPhoto({ session, part, view, uri: persistentUri, takenAt: now.toISOString(), tilt: shotTilt });
+      const newId = addPhoto({
+        session,
+        part,
+        view,
+        uri: persistentUri,
+        takenAt: now.toISOString(),
+        tilt: shotTilt,
+        qualityScore: quality?.score,
+      });
       if (isBody) {
         const w = parseFloat(waist);
         const nk = parseFloat(neck);
@@ -220,6 +232,7 @@ export function PhotoCapture({
         }
       }
       close();
+      onSaved?.(newId);
     } finally {
       setBusy(false);
     }

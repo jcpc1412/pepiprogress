@@ -280,7 +280,10 @@
     "timer10": "10s",
     "pinchZoomHint": "Zum Zoomen ziehen",
     "angleLabel": "Winkel",
-    "timerLabel": "Selbstauslöser"
+    "timerLabel": "Selbstauslöser",
+    "savedTitle": "Aufgenommen",
+    "qualityHighscore": "Neue Qualitätsbestmarke",
+    "savedBaselineBody": "Ausgangsbild gesetzt. Dein nächstes Foto wird damit verglichen."
   },
   "markers": {
     "hematocrit": "Hämatokrit",

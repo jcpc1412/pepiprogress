@@ -35,6 +35,9 @@ export type PhotoAnalysis = {
   framing: 'ok' | 'closer' | 'farther' | 'off_angle';
   change?: string;
   retake: boolean;
+  /** Clothing coverage of the NEW photo (PH-1 skin priority). Drives the
+   *  quality-highscore reference promotion + the soft lock toward minimal cover. */
+  coverage?: 'clothed' | 'partial' | 'minimal';
 };
 
 export type FitCheck = {
