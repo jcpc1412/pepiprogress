@@ -38,6 +38,16 @@ export type CanonicalMetricKey = (typeof CanonicalMetric)[keyof typeof Canonical
 /** A reading produced by a provider, before the store assigns an id. */
 export type ProviderReading = Omit<MetricReading, 'id'>;
 
+/**
+ * The body metrics Pepi can write back to a health store (weight, the computed
+ * body-fat %, and waist — the only circumference HealthKit models). Values are
+ * canonical: weight in kg, `body.fat_pct` as a percentage number (18.5 = 18.5%),
+ * waist in cm. The provider converts to each store's native representation.
+ */
+export type HealthWriteMetric = 'body.weight' | 'body.fat_pct' | 'body.waist';
+export type HealthWriteSample = { metric: HealthWriteMetric; value: number; ts: string };
+export type HealthWriteResult = { ok: boolean; written: number; error?: string };
+
 export type ProviderId = 'apple_health' | 'health_connect' | 'terra';
 
 /**
@@ -72,6 +82,12 @@ export type IntegrationProvider = {
    * read/screenshot when a sync mysteriously returns nothing. Native-only.
    */
   diagnose?: () => Promise<string>;
+  /**
+   * Optional write-back: mirror Pepi's body metrics (weight, body-fat %, waist)
+   * into the health store. Only implemented where the store accepts writes
+   * (Apple Health). Absent = read-only provider.
+   */
+  push?: (samples: HealthWriteSample[]) => Promise<HealthWriteResult>;
 };
 
 export type AuthResult = { ok: boolean; patch?: Partial<IntegrationState>; error?: string };

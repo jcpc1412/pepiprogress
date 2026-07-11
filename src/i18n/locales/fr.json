@@ -504,6 +504,8 @@
     "imported": "{{count}} relevés importés",
     "diagnose": "Diagnostic",
     "diagnosing": "Vérification…",
+    "writeBack": "Écrire dans Santé",
+    "writeBackHint": "Reflète ton poids, l'estimation de masse grasse et ton tour de taille dans Santé au fur et à mesure. Les jours antérieurs à maintenant ne sont pas envoyés.",
     "lastSync": "Dernière synchro {{when}}",
     "never": "jamais",
     "comingSoon": "Nécessite la dernière version de l'app",

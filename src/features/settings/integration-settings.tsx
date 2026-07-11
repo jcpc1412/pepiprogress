@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, Pressable, StyleSheet, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, Switch, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { PrimaryButton, TextButton } from '@/components/form';
@@ -8,6 +8,7 @@ import { Card, Divider, EngravedLabel } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { buildBodySamples, hashSamples } from '@/lib/integrations/health-writeback';
 import { availableProviders } from '@/lib/integrations/registry';
 import type { IntegrationProvider, ProviderId } from '@/lib/integrations/types';
 import { useStore } from '@/lib/store';
@@ -56,7 +57,8 @@ const importStyles = StyleSheet.create({
 
 function ProviderRow({ provider }: { provider: IntegrationProvider }) {
   const { t } = useTranslation();
-  const { integrations, setIntegration, addMetricReadings } = useStore();
+  const { integrations, setIntegration, addMetricReadings, entries, profile } = useStore();
+  const theme = useTheme();
   const [busy, setBusy] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [connectError, setConnectError] = useState<string | null>(null);
@@ -125,7 +127,24 @@ function ProviderRow({ provider }: { provider: IntegrationProvider }) {
     }
   };
 
-  const disconnect = () => setIntegration(provider.id, { connectedAt: undefined, lastSyncAt: undefined });
+  const disconnect = () =>
+    setIntegration(provider.id, { connectedAt: undefined, lastSyncAt: undefined, writeEnabled: false });
+
+  // Toggle write-back. Enabling seeds per-day hashes from the CURRENT check-ins so
+  // only days logged/edited afterwards mirror to Health — existing data (which may
+  // have been imported *from* Health) is never echoed back as duplicates.
+  const setWriteEnabled = (on: boolean) => {
+    if (on) {
+      const writtenHashes: Record<string, string> = {};
+      for (const c of Object.values(entries)) {
+        const samples = buildBodySamples(c, profile);
+        if (samples.length) writtenHashes[c.date] = hashSamples(samples);
+      }
+      setIntegration(provider.id, { writeEnabled: true, writtenHashes });
+    } else {
+      setIntegration(provider.id, { writeEnabled: false });
+    }
+  };
 
   return (
     <>
@@ -177,6 +196,24 @@ function ProviderRow({ provider }: { provider: IntegrationProvider }) {
             <View style={styles.diagBox}>
               <ThemedText type="monoSm" themeColor="textMuted" selectable>
                 {diagReport}
+              </ThemedText>
+            </View>
+          )}
+          {/* Write-back: mirror weight / body-fat % / waist into the store. */}
+          {provider.push && (
+            <View style={styles.writeBack}>
+              <View style={styles.writeRow}>
+                <ThemedText type="mono" themeColor="textSecondary" style={styles.writeLabel}>
+                  {t('integrations.writeBack')}
+                </ThemedText>
+                <Switch
+                  value={!!conn?.writeEnabled}
+                  onValueChange={setWriteEnabled}
+                  trackColor={{ true: theme.signalGood, false: theme.border }}
+                />
+              </View>
+              <ThemedText type="monoSm" themeColor="textMuted">
+                {t('integrations.writeBackHint')}
               </ThemedText>
             </View>
           )}
@@ -237,4 +274,7 @@ const styles = StyleSheet.create({
   actionLinks: { flexDirection: 'row', gap: Spacing.four },
   link: { textDecorationLine: 'underline' },
   diagBox: { marginTop: Spacing.one, paddingVertical: Spacing.two },
+  writeBack: { marginTop: Spacing.two, gap: Spacing.half },
+  writeRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.two },
+  writeLabel: { flex: 1 },
 });

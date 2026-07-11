@@ -15,6 +15,7 @@ import { InstrumentBackground } from '@/components/instrument-background';
 import { AuthProvider } from '@/lib/auth';
 import { CloudSync } from '@/lib/cloud-sync';
 import { IntegrationSync } from '@/lib/integration-sync';
+import { HealthWriteBack } from '@/lib/health-writeback';
 import { LanguageSync } from '@/lib/language-sync';
 import { NotificationManager } from '@/lib/notification-manager';
 import { QuickLogRunner } from '@/lib/quick-log-runner';
@@ -43,6 +44,8 @@ function RootContent() {
       <LanguageSync />
       {/* Passively pulls connected health sources on foreground; renders nothing. */}
       <IntegrationSync />
+      {/* Mirrors weight / body-fat % / waist back to Health when enabled; renders nothing. */}
+      <HealthWriteBack />
       {/* Parses queued natural-language quick-logs in the background; renders nothing. */}
       <QuickLogRunner />
       {/* Provides SyncStatus context + debounced cloud backup while signed in. */}

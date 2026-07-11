@@ -504,6 +504,8 @@
     "imported": "{{count}} leituras importadas",
     "diagnose": "Diagnóstico",
     "diagnosing": "Verificando…",
+    "writeBack": "Gravar na Saúde",
+    "writeBackHint": "Espelha seu peso, estimativa de gordura corporal e cintura na Saúde conforme você registra. Dias anteriores a agora não são enviados.",
     "lastSync": "Última sincronização {{when}}",
     "never": "nunca",
     "comingSoon": "Requer a versão mais recente do app",

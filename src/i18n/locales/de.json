@@ -504,6 +504,8 @@
     "imported": "{{count}} Messwerte importiert",
     "diagnose": "Diagnose",
     "diagnosing": "Wird geprüft…",
+    "writeBack": "In Health schreiben",
+    "writeBackHint": "Spiegelt dein Gewicht, die Körperfettschätzung und den Taillenumfang in Health, sobald du sie erfasst. Tage vor jetzt werden nicht gesendet.",
     "lastSync": "Zuletzt synchronisiert {{when}}",
     "never": "nie",
     "comingSoon": "Erfordert die neueste App-Version",

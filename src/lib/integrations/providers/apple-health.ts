@@ -1,6 +1,12 @@
 import { Platform } from 'react-native';
 
-import { CanonicalMetric, type IntegrationProvider, type ProviderReading } from '@/lib/integrations/types';
+import {
+  CanonicalMetric,
+  type HealthWriteResult,
+  type HealthWriteSample,
+  type IntegrationProvider,
+  type ProviderReading,
+} from '@/lib/integrations/types';
 
 const PROVIDER_ID = 'apple_health';
 
@@ -25,12 +31,28 @@ const QUANTITY_MAP = [
   { id: 'HKQuantityTypeIdentifierDietaryFatTotal', metric: CanonicalMetric.nutritionFat, unit: 'g', sumPerDay: true },
 ] as const;
 
-// Writeable types we also request share access for. Read-only authorization is
-// deliberately opaque on iOS (`authorizationStatusFor` returns "denied" even when
-// a read is granted, and reads come back empty either way), so requesting *write*
-// for weight gives us one type whose status we can actually read back in the
-// diagnostic — and sets up writing the check-in weight back to Health later.
-const SHARE_MAP = ['HKQuantityTypeIdentifierBodyMass'] as const;
+// Writeable types we request share (write) access for. Read-only authorization
+// is deliberately opaque on iOS (`authorizationStatusFor` returns "denied" even
+// when a read is granted, and reads come back empty either way), so requesting
+// *write* for weight also gives us one type whose status we can read back in the
+// diagnostic. These are exactly the body metrics `push()` mirrors back to Health.
+const SHARE_MAP = [
+  'HKQuantityTypeIdentifierBodyMass',
+  'HKQuantityTypeIdentifierBodyFatPercentage',
+  'HKQuantityTypeIdentifierWaistCircumference',
+] as const;
+
+// Canonical write metric -> HealthKit identifier + unit + value transform.
+// Units are the SDK's writeable-unit strings; body-fat's percent unit is a
+// fraction (0.185 = 18.5%), so a percentage number is divided by 100.
+const WRITE_MAP: Record<
+  HealthWriteSample['metric'],
+  { id: string; unit: string; toNative: (v: number) => number }
+> = {
+  'body.weight': { id: 'HKQuantityTypeIdentifierBodyMass', unit: 'kg', toNative: (v) => v },
+  'body.fat_pct': { id: 'HKQuantityTypeIdentifierBodyFatPercentage', unit: '%', toNative: (v) => v / 100 },
+  'body.waist': { id: 'HKQuantityTypeIdentifierWaistCircumference', unit: 'cm', toNative: (v) => v },
+};
 
 // Loaded lazily so the module can be imported on web without bundling the native SDK.
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -288,6 +310,37 @@ async function readHealthKit(since?: string): Promise<ProviderReading[]> {
   return readings;
 }
 
+/**
+ * Mirror Pepi's body metrics into HealthKit. Each sample becomes an instantaneous
+ * quantity sample at its timestamp, tagged as user-entered + Pepi-sourced so it's
+ * distinguishable from device-measured data (and skippable on future reads). A
+ * per-sample try/catch keeps one unwritable type from sinking the batch.
+ */
+async function writeHealthKit(samples: HealthWriteSample[]): Promise<HealthWriteResult> {
+  const mod = hk();
+  if (typeof mod?.saveQuantitySample !== 'function') {
+    return { ok: false, written: 0, error: 'HealthKit native module not linked in this build' };
+  }
+  let written = 0;
+  let lastError: string | undefined;
+  for (const s of samples) {
+    const map = WRITE_MAP[s.metric];
+    if (!map || !Number.isFinite(s.value)) continue;
+    const d = toDate(s.ts);
+    if (!d) continue;
+    try {
+      await mod.saveQuantitySample(map.id as never, map.unit as never, map.toNative(s.value), d, d, {
+        HKWasUserEntered: true,
+        PepiSource: 'checkin',
+      } as never);
+      written += 1;
+    } catch (e) {
+      lastError = e instanceof Error ? e.message : String(e);
+    }
+  }
+  return { ok: written > 0 || samples.length === 0, written, error: lastError };
+}
+
 export const appleHealthProvider: IntegrationProvider = {
   id: PROVIDER_ID,
   nameKey: 'integrations.appleHealth',
@@ -321,4 +374,8 @@ export const appleHealthProvider: IntegrationProvider = {
   },
   pull: ({ since } = {}) => readHealthKit(since),
   diagnose: () => (Platform.OS === 'ios' ? diagnose() : Promise.resolve('Apple Health is iOS-only.')),
+  push: (samples) =>
+    Platform.OS === 'ios'
+      ? writeHealthKit(samples)
+      : Promise.resolve({ ok: false, written: 0, error: 'Apple Health is iOS-only.' }),
 };

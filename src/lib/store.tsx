@@ -179,6 +179,13 @@ export type IntegrationState = {
   connectedAt?: string; // ISO when the user connected
   lastSyncAt?: string; // ISO of the last successful pull
   terraUserId?: string; // Terra-issued user id, captured from the Connect widget redirect
+  /** Opt-in: mirror weight / body-fat % / waist back into this health store. */
+  writeEnabled?: boolean;
+  /** date (YYYY-MM-DD) -> hash of the body values last written back, so unchanged
+   *  days aren't re-written (which would create duplicate Health samples). Seeded
+   *  from existing check-ins when write-back is enabled, so only new/edited days
+   *  mirror going forward (never echoes data imported *from* the store). */
+  writtenHashes?: Record<string, string>;
 };
 
 /** A queued natural-language quick-log (spec 13). Submitted fire-and-forget so

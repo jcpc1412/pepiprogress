@@ -506,6 +506,8 @@
     "imported": "Imported {{count}} readings",
     "diagnose": "Diagnostics",
     "diagnosing": "Checking…",
+    "writeBack": "Write back to Health",
+    "writeBackHint": "Mirror your weight, body-fat estimate and waist to Health as you log them. Days recorded before now aren't sent.",
     "lastSync": "Last synced {{when}}",
     "never": "never",
     "comingSoon": "Needs the latest app build",
