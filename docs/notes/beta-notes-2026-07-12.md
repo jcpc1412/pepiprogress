@@ -7,6 +7,9 @@ here it is a recommendation, not a lock.
 
 Effort tags: [S] under a day, [M] days, [L] a week or more of focused work.
 
+**Decisions locked with the owner 2026-07-12** are marked `DECIDED` inline. Everything
+else remains a recommendation.
+
 ---
 
 ## 1. Photos
@@ -25,9 +28,10 @@ They also scope the reference photo, the ghost overlay, and the milestone cadenc
 - **Trap:** removing them before auto-classification (1.3) exists breaks capture routing
   and reference pairing. There would be no way to tell Pepi "this is a body shot" and the
   ghost overlay would compare across body parts.
-- **Recommendation:** keep them until the classifier lands, then remove them as part of
-  that rework. They are the manual stand-in for what the AI will do. If they feel loud in
-  the meantime, demote them visually (smaller, secondary ink) rather than delete.
+- **DECIDED:** remove the chips as part of the reel rework, shipping auto-classification
+  in the same release (the owner is fine shipping classification with the plan, so the
+  chips never need an interim demote). Until that release lands they stay, because they
+  are the manual stand-in for capture routing and reference pairing.
 
 ### 1.2 Auto-crop to torso [S/M]
 
@@ -44,8 +48,9 @@ Three ways to do it, from cheapest to heaviest:
 3. **On-device body detection [L].** A pose-detection native dep. We already decided
    against body-pose for capture once ("no body-pose gain"); nothing has changed the math.
 
-- **Rule regardless of option: never destructive.** Store the original, crop at display
-  and analysis time. A bad auto-crop on a stored file is unrecoverable.
+- **DECIDED: never destructive.** Store the original, crop at display and analysis time,
+  so a later algorithm improvement can re-crop from the full frame. A bad auto-crop baked
+  into a stored file would be unrecoverable.
 - **Trap:** LLM-vision bounding boxes are decent but not pixel-perfect. Use generous
   padding, and fall back to uncropped when the box confidence is low.
 - **Tie-in:** the quality score (PH-1) can gain a framing component ("subject fills X% of
@@ -80,20 +85,29 @@ import (expo-image-picker with EXIF dates) already exists, so the ingestion door
 
 | Phase | What ships | Effort |
 |---|---|---|
-| 1 | Multi-shot capture session + manual pose chips at save + reel view grouped by label | [M] |
-| 2 | Haiku auto-classification on save/import, confirm-chip flow, session tabs removed (1.1) | [M] |
+| 1 | Multi-shot capture + camera-roll dump import + manual pose chips at save + reel grouped by label | [M] |
+| 2 | Haiku auto-classification on save/import + confirm-chip flow + **session tabs removed (1.1)** | [M] |
 | 3 | Full reel UX: timeline dump view, pose filters, per-pose ghost references | [M/L] |
 
-**Data model:** `PhotoEntry` gains `pose` (canonical enum + `other`), `poseConfidence`,
-`isProgress` (locked-pose flag). `pickReference` extends to prefer same-pose references
-(it already ranks by coverage and quality, so this is one more sort key).
+DECIDED: auto-classification ships as part of this plan (phase 2), and the session chips
+are removed in that same phase rather than kept as a permanent manual control.
 
-**On the canonical pose set:** the notes list front relaxed, side chest, front face, side
-profile. Note that "side chest" is a flexed bodybuilding pose; mixing flexed and relaxed
-in one progress track hurts comparability more than camera distance does (flexing changes
-apparent muscularity and waist). Recommendation: relaxed poses for the core track (front
-relaxed, side relaxed, front face, side profile), flexed poses allowed as additional
-tracks for users who want them. Confirming the set in chat.
+**Data model:** `PhotoEntry` gains `pose` (canonical relaxed enum + `other`),
+`poseConfidence`, and `isRequiredSet` (true = one of the four locked poses on a required
+check-in; casual photos are false). Only `isRequiredSet` photos feed analysis, ghost
+overlay, and milestones. `pickReference` extends to prefer same-pose references (it
+already ranks by coverage and quality, so this is one more sort key).
+
+**On the canonical pose set: DECIDED.** Only the **required check-in** photos are locked
+to a canonical relaxed set: front relaxed, side relaxed, front face, side profile. (The
+owner's note said "side chest", a flexed bodybuilding pose; flexing swings apparent
+muscularity and waist far more than camera distance, so it is out of the required set.)
+**Casual check-in photos have no pose lock** — shoot anything; they land in the reel as
+context and never feed the scientific compare. So the comparability guarantee lives
+entirely in the required-set track, and the reel stays a low-friction dump.
+
+**Ingestion: DECIDED both** — in-app multi-shot capture *and* camera-roll dump import,
+both flowing through the same classifier.
 
 ### 1.4 Watermarked download, Strava style [S/M]
 
@@ -110,11 +124,12 @@ defers in-app hosting/feeds and the moderation stack. This is user-initiated exp
 user's own device through the OS share sheet; we host nothing and distribute nothing. The
 photos-private-by-default rule stays intact because the user is explicitly exporting.
 
+- **DECIDED: both ship** (stat card and photo export), and the **watermark is a toggle in
+  the settings page** (the settings page is an acknowledged dumping ground for now; it gets
+  organized later). Defaults: watermark off for photo export, on for the stat card.
 - **Traps:** (a) keep medical-sounding claims off the card; a body-fat number on a shared
-  image should read as an estimate band, not a lab result. (b) Watermark default should be
-  off for photos (a brand mark on a shirtless progress pic is a bigger ask than on a run
-  map); on by default for the stat card is fine. (c) Never watermark the stored original;
-  bake it only into the exported copy.
+  image should read as an estimate band, not a lab result. (b) Never watermark the stored
+  original; bake it only into the exported copy.
 - **Tie-in:** the natural moment is right after a milestone analysis or a new quality
   highscore; the celebration UI (PH-2) can offer "Share this" contextually.
 
@@ -189,12 +204,11 @@ pairs only, zone-anchored. Do not ship exaggeration; ship confidence.
 
 **The deltas, in order of effort:**
 
-1. **[S] Prompt copy pass.** When cycle phase suggests water retention (late luteal /
-   menstrual), the vision prompt should attribute rather than criticize, and hedge.
-   Suggested register: "some water retention is consistent with this point in your
-   cycle" rather than the notes' "hormonal inflammation detected", which reads as a
-   diagnosis and would trip the observational gate. Suppress bloating-as-regression
-   language entirely when phase data supports it. Only when data exists; never guess.
+1. **[S] Prompt copy pass. DECIDED register:** "some water retention is consistent with
+   this point in your cycle" rather than the notes' "hormonal inflammation detected"
+   (which reads as a diagnosis and would trip the observational gate). Attribute rather
+   than criticize, hedge, and suppress bloating-as-regression language entirely when
+   phase data supports it. Only when data exists; never guess.
 2. **[M] HealthKit menstrual read.** Add the category read, map to the canonical cycle
    metric, feed the same `cycleContext`. Rides the same pending device build as the rest
    of HealthKit.
@@ -256,6 +270,9 @@ engine's fat-pattern logic is keyed the same way.
 data should be excluded from community aggregates until cohort sizes make k-anonymity
 real, and the privacy copy should say clearly what is stored where.
 
+**DECIDED:** this scope (conditional goal chip + surfaced fields + direction-aware
+analysis block) is the V1 for transition tracking. No larger module for now.
+
 **Why it is worth it:** underserved segment with high logging motivation, long time
 horizons (multi-year), and a genuine fit for the photo timeline USP.
 
@@ -296,17 +313,25 @@ Instrument voice (VOICE.md) and the hedged AI gates written to the most conserva
 interpretation. So most of this pivot is prompt-and-product work, not a spec reversal.
 The one real policy decision is OTC medications (3.3).
 
-### 3.2 Proposed three-tier suggestion policy
+### 3.2 The real line: direct vs indirect (DECIDED)
+
+The owner clarified that OTC meds were only an example: the intent is that **every kind of
+indirect recommendation is on the table.** So the policy is not a graded "how much
+suggesting" scale, it is a single bright line between *indirect* guidance (allowed) and
+*direct* action on tracked compounds (never).
 
 | Tier | Contents | Posture |
 |---|---|---|
-| A: Lifestyle and behavior | Sleep hygiene, hydration, nose rinse, training-effort framing, generic calorie/protein targets, recovery habits | Allowed, including proactively. This is standard wellness-app territory (Whoop, Oura, MFP all do it). |
-| B: OTC medications and topicals | "Consider an anti-inflammatory", creams, supplements beyond protein | Reactive only, hedged, referral-framed for beta. Scope with counsel before public launch. See 3.3. |
-| C: Never | Dosing or protocol changes for any tracked compound, anything about controlled compounds beyond tracking, diagnosis | Unchanged. Most tracked peptides are grey-market research chemicals; "no suggestions for grey/black market compounds" from the notes and the existing rule are the same rule. |
+| A: Indirect guidance (the default posture now) | Lifestyle and behavior (sleep hygiene, hydration, nose rinse, recovery habits), training-effort framing, generic calorie/protein targets, and any "have you considered X?" nudge that is not about a tracked compound's dose | Allowed, including proactively. Standard wellness-app territory (Whoop, Oura, MFP). This is the companion behavior the owner wants. |
+| B: Medical-adjacent indirect recs | OTC meds ("consider an anti-inflammatory"), creams, supplements beyond protein | Allowed but **referral-framed and hedged for beta** ("worth asking a pharmacist about..."). Graduates to direct phrasing once counsel scopes it. See 3.3. This is a *framing* constraint, not a prohibition. |
+| C: Never | Dose or protocol changes for any tracked compound, anything about controlled compounds beyond tracking, medical diagnosis | Unchanged and non-negotiable. This is the locked rule (05/11); it is legal exposure, not tone. |
 
-Generic calorie targets sit in Tier A deliberately: "most people your size aiming to cut
-eat around X to Y kcal" is textbook wellness content. Personalized deficit prescriptions
-tied to medical conditions would not be.
+The mental model: Pepi can freely coach you on how to *live better around* your protocol
+(sleep, food, training, recovery, habits), and can nudge you toward professionals for
+medical-adjacent things, but it never tells you how to *run the protocol itself*. Generic
+calorie targets sit in Tier A deliberately ("most people your size aiming to cut eat
+around X to Y kcal" is textbook wellness content); a personalized deficit prescription
+tied to a medical condition would be Tier B framing.
 
 ### 3.3 The anti-inflammatory question, answered directly
 
@@ -354,26 +379,41 @@ where possible, and instantly dismissable with "stop asking about this".
 ### 3.5 Community data into suggestions [M/L, after aggregates exist]
 
 The community pipeline was always meant for output surfaces; spec 12 gates output and
-scale, not existence. The safe shape: **observational cohort phrasing with minimum
-cohort sizes** ("users on similar stacks most often reported this settling around week
-3"), never prescriptive, never dosing (Tier C), and only above an N threshold that makes
+scale, not existence. **DECIDED shape: observational cohort phrasing with minimum cohort
+sizes** ("users on similar stacks most often reported this settling around week 3"),
+never prescriptive, never dosing (Tier C), and only above an N threshold that makes
 re-identification unrealistic. This is downstream of the normalized sync engine actually
 populating aggregates, so it is a direction to design toward, not a near-term build.
 
-### 3.6 Instrument vs companion: resolve it as a setting, not a fork [S/M]
+### 3.6 Instrument vs companion: a silent, adaptive coaching level (DECIDED)
 
-The notes frame it as sterile-tool-versus-think-for-me. That is a real segmentation (the
-meticulous loggers versus the guide-me majority), and it does not need to be decided
-globally: add a **coaching level** preference (observe / nudge / coach).
+The notes frame it as sterile-tool-versus-think-for-me. Real segmentation (meticulous
+loggers versus guide-me majority), resolved with a **coaching level** (observe / nudge /
+coach) but handled the way the owner specified: **silent and adaptive, not a setting the
+user configures upfront.**
 
-- **Observe:** today's behavior. Data in, hedged reads out, no unsolicited suggestions.
-- **Nudge (default):** anomaly openers (3.4), Tier A suggestions when contextually
-  earned, gentle goal framing.
-- **Coach:** proactive weekly focus, targets, habit follow-ups.
+- **Levels:** observe (data in, hedged reads out, no unsolicited suggestions) / nudge
+  (anomaly openers, Tier A/B guidance when earned, gentle goal framing) / coach (proactive
+  weekly focus, targets, habit follow-ups).
+- **Adaptive default:** Pepi infers a starting level from commitment signals (logging
+  consistency, protocol complexity, measurement discipline) rather than asking on day one.
+- **Proactive offer, not a wall of settings:** when signals suggest an experienced,
+  disciplined user, Pepi asks in chat, for example "you seem like an experienced user,
+  want me to adjust how much I coach you?" If the user asks what that means, Pepi explains
+  the levels and lets them pick.
+- **Discoverable override:** the level also lives in the settings page (an acknowledged
+  dumping ground for now, organized later) so anyone can change it directly.
 
-One prompt parameter plus notification-policy differences. The Instrument voice stays;
-warmth was already added in the A-5 pass. Companionship here comes from *timing and
-initiative*, not from chattiness.
+Implementation is one prompt parameter plus notification-policy differences and a small
+signal-scoring function for the adaptive default. The Instrument voice stays; warmth was
+already added in the A-5 pass. Companionship comes from *timing and initiative*, not
+chattiness.
+
+**Open sub-question I am NOT deciding for you:** how aggressive the adaptive inference
+should be, i.e. does Pepi ever *raise* the level silently on its own, or only ever *offer*
+and let the user confirm? My recommendation is offer-only for anything that increases
+proactivity (silently getting chattier is the fastest way to feel invasive), and silent
+adjustment allowed only in the quieter direction. Flag if you want it more aggressive.
 
 ### 3.7 Cost and the provider question [decision needed, but measure first]
 
@@ -384,10 +424,10 @@ Sonnet cost a few cents each and are milestone-gated. The companion features as 
 above deliberately keep the new always-on parts deterministic, template-driven, or
 chip-driven, so the marginal AI cost of the pivot is mostly "more chat turns".
 
-**Recommendation:** do not switch providers on a guess. Instrument per-feature token
-counts in the edge function (one log line per call: action, model, in/out tokens), let
-the beta produce two or three weeks of real usage, then run the bake-off that is already
-on file as deferred. Two additional cautions: any provider switch requires re-validating
+**DECIDED:** do not switch providers now; keep it in mind and decide once things are ready
+for beta testing. Instrument per-feature token counts in the edge function (one log line
+per call: action, model, in/out tokens), let the beta produce two or three weeks of real
+usage, then run the bake-off that is already on file as deferred. Two additional cautions: any provider switch requires re-validating
 the safety gates per action (gate behavior is prompt-and-model-specific, and Tier C is
 legal exposure, not tone), and prompt-cache economics differ per provider, which can
 erase a headline price gap for our long-stable-prefix prompts.
@@ -401,11 +441,11 @@ erase a headline price gap for our long-stable-prefix prompts.
 Diagnosis in the notes is correct: the detailed log is a once-a-day wall, and side
 effects especially want to be captured in the moment, conversationally.
 
-**Design: micro check-ins.** Two scheduled moments by default (morning, evening), each a
-Pepi chat prompt covering one to three fields. Answers are **chips first** (1 to 5 scale
-chips, yes/no, "usual" from typical-day), which cost zero AI; free-text replies fall
-through to the existing quick-log parser, which already writes check-ins, symptoms,
-doses, and weight. The rolling one-check-in-per-day model with upsert merging means
+**Design: micro check-ins. DECIDED cadence:** two scheduled moments by default (morning,
+evening), each a Pepi chat prompt covering one to three fields. Answers are **chips
+first** (1 to 5 scale chips, yes/no, "usual" from typical-day), which cost zero AI;
+free-text replies fall through to the existing quick-log parser, which already writes
+check-ins, symptoms, doses, and weight. The rolling one-check-in-per-day model with upsert merging means
 snippets through the day compose into the same daily entry with no data-model change.
 
 - **The detailed log stays** as the power-user and backfill surface; micro check-ins are
@@ -425,18 +465,34 @@ hour") before it earns a slot in the parse schema.
 shift the scheduled time toward the median engagement hour. Deterministic, private,
 no AI involved.
 
-### 4.3 "Tone down the notifications" [S]
+### 4.3 Chat control over notifications and specific check-ins [S] (DECIDED)
 
-Map a chat intent onto the existing notification preferences. One rule: **never silently
-change settings from chat.** Pepi confirms what changed ("Reduced to one check-in a day.
-You can change this anytime in settings") and the change is reversible in the same
-place it always was. Same pattern later extends to "ask me about doses at 9 instead".
+Map chat intents onto the existing notification and check-in preferences. Two classes,
+both decided in scope:
+
+1. **Volume:** "tone down the notifications" reduces frequency.
+2. **Per-check-in control:** "can you adjust / disable the morning check-in?" or "move my
+   night check-in to 10pm" toggles or reschedules that specific micro check-in (4.1).
+
+One rule for both: **never silently change settings from chat.** Pepi confirms what
+changed ("Turned off the morning check-in. You can turn it back on in settings") and the
+change is reversible in the same place it always was. This is also the natural home for
+"ask me about doses at 9 instead". Intent detection can start as lightweight pattern
+matching before it earns a slot in the parse schema.
 
 ---
 
 ## 5. Miscellaneous: passive calorie sync is broken (bug, P0 of this batch)
 
-Verified in code; this is a real data-correctness bug with two stacked causes:
+**Owner repro (confirmed the diagnosis):** Cronometer connected to Apple Health. Logging
+breakfast writes those calories to Health; tapping Pepi's "log" (the autofill link) at
+that moment captures the morning total; opening the app at night without re-tapping still
+shows the breakfast number. The owner's intuition ("because you can log them, it doesn't
+auto-update") is right about the *display* half of the cause: the autofill copies a value
+at tap time and then freezes. The value is *also* frozen upstream by a dedupe bug. Both
+are below.
+
+Verified in code; two stacked causes:
 
 1. **Daily aggregates can never update.** Health nutrition samples are summed per day and
    stored with a midnight timestamp. `addMetricReadings` dedupes on
@@ -475,7 +531,7 @@ and the verdict.
 | 1 | Calorie sync fix (5) | S/M | Data-correctness bug feeding the verdict |
 | 2 | Review-step rework + big score (1.5) | M | Fixes a below-the-fold action bar; high-visibility polish |
 | 3 | Cycle prompt copy pass (1.7 step 1) | S | Deployed edge-function change, immediate tone win |
-| 4 | Coaching-level setting + Tier A prompt work (3.2, 3.6) | M | The companion pivot, cheapest valuable slice |
+| 4 | Adaptive coaching level + indirect-guidance prompt work (3.2, 3.6) | M | The companion pivot, cheapest valuable slice |
 | 5 | Micro check-ins + snooze + tone-down intents (4.1 to 4.3) | M | Attacks the logging-chore churn risk directly |
 | 6 | Anomaly detectors + context memory (3.4) | M | The memorable "Pepi noticed" moments |
 | 7 | Stat-card share, then photo watermark (1.4) | S/M | Organic acquisition loop |
