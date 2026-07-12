@@ -102,11 +102,11 @@ already ranks by coverage and quality, so this is one more sort key).
 to a canonical relaxed set: front relaxed, side relaxed, front face, side profile. (The
 owner's note said "side chest", a flexed bodybuilding pose; flexing swings apparent
 muscularity and waist far more than camera distance, so it is out of the required set.)
-**Casual check-in photos have no pose lock** — shoot anything; they land in the reel as
+**Casual check-in photos have no pose lock**: shoot anything; they land in the reel as
 context and never feed the scientific compare. So the comparability guarantee lives
 entirely in the required-set track, and the reel stays a low-friction dump.
 
-**Ingestion: DECIDED both** — in-app multi-shot capture *and* camera-roll dump import,
+**Ingestion: DECIDED both.** In-app multi-shot capture *and* camera-roll dump import,
 both flowing through the same classifier.
 
 ### 1.4 Watermarked download, Strava style [S/M]
