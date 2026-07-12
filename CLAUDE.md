@@ -79,7 +79,7 @@ A daily peptide-tracking journal that turns subjective check-ins + consistent ph
 ## Non-negotiable cross-cutting rules (full detail in SPEC)
 1. **No hardcoded English, ever** — every string from an i18n catalog; lint + missing-key CI enforced (09).
 2. **Photos: private by default, stored (not discarded), hardened bucket, never used to train models** (04/11). Public sharing is post-MVP (14) and drags in the heavy moderation/age-verification stack.
-3. **Dosing suggestions are DEFERRED app-wide** until a legal solution (05/11). Controlled compounds (testosterone/TRT + anabolics) are **track-only** — the `controlled` flag gates this in code at the AI service.
+3. **Dosing: observational only, never individualized, never for controlled compounds** (05/11, owner decision 2026-07-12). Pepi may surface *general, attributed* compound info ("commonly reported ranges are A–B"), but never personalizes a dose ("for your size, take Y"); the personalization is the regulated part. Controlled compounds (testosterone/TRT + anabolics) stay **track-only** + community-observational; the `controlled` flag gates this in code at the AI service. Individualized/prescriptive dosing stays deferred pending legal input. **Lifestyle coaching is direct + personalized** (calories/training/cardio/recovery/sleep). The bright line is coach-around-the-protocol vs never-prescribe-the-protocol.
 4. **What surfaces in the log = goals ∪ compound effect-tags ∪ monitoring-tags** — no personas (02/08).
 5. **Never gate data INPUT (logging/integrations/contribution); gate OUTPUT/scale** (12).
 

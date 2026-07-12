@@ -303,52 +303,49 @@ so the conditional chip must not leak into the community goal taxonomy with tiny
 
 ## 3. Pepi as companion: the suggestions pivot
 
-### 3.1 What the locked rule actually says
+### 3.1 The final policy (DECIDED 2026-07-12, spec 05 updated)
 
-Worth stating precisely, because the notes argue against a broader rule than the one that
-exists. The locked rule (spec 05/11) is: **dosing suggestions are deferred app-wide until
-there is a legal solution, and controlled compounds are track-only.** It has never
-prohibited lifestyle advice. The sterile feel comes from two softer sources: the
-Instrument voice (VOICE.md) and the hedged AI gates written to the most conservative
-interpretation. So most of this pivot is prompt-and-product work, not a spec reversal.
-The one real policy decision is OTC medications (3.3).
+The pivot resolved to one bright line: **coach freely on how to live around the protocol;
+never prescribe the protocol itself.** This reverses the earlier app-wide dosing defer for
+its lowest-risk slice while keeping the individualized/prescriptive part off the table.
+Spec 05 (capabilities #2 and #8) and CLAUDE.md rule 3 are updated to match; this is a
+recorded reversal, not drift.
 
-### 3.2 The real line: direct vs indirect (DECIDED)
+The legal reality that drove the shape: what carries weight is not *explicit vs vague
+phrasing*, it is *individualized vs general*. "Commonly reported ranges are A to B" is
+close to reproducing public info; "for someone your size, take Y" is individualized dosing
+guidance for often-controlled substances, and the "the internet says" preamble does not
+shield it. The personalization is the regulated part, not the number. Pepi knowing the
+user's exact stack arguably raises duty of care rather than lowering it.
 
-The owner clarified that OTC meds were only an example: the intent is that **every kind of
-indirect recommendation is on the table.** So the policy is not a graded "how much
-suggesting" scale, it is a single bright line between *indirect* guidance (allowed) and
-*direct* action on tracked compounds (never).
+### 3.2 What Pepi can and cannot say
 
-| Tier | Contents | Posture |
-|---|---|---|
-| A: Indirect guidance (the default posture now) | Lifestyle and behavior (sleep hygiene, hydration, nose rinse, recovery habits), training-effort framing, generic calorie/protein targets, and any "have you considered X?" nudge that is not about a tracked compound's dose | Allowed, including proactively. Standard wellness-app territory (Whoop, Oura, MFP). This is the companion behavior the owner wants. |
-| B: Medical-adjacent indirect recs | OTC meds ("consider an anti-inflammatory"), creams, supplements beyond protein | Allowed but **referral-framed and hedged for beta** ("worth asking a pharmacist about..."). Graduates to direct phrasing once counsel scopes it. See 3.3. This is a *framing* constraint, not a prohibition. |
-| C: Never | Dose or protocol changes for any tracked compound, anything about controlled compounds beyond tracking, medical diagnosis | Unchanged and non-negotiable. This is the locked rule (05/11); it is legal exposure, not tone. |
+| Domain | Posture |
+|---|---|
+| Lifestyle (calories/macros, training effort, cardio, recovery, sleep, hydration, micronutrients) | **Direct and personalized.** "Someone your size should eat ~X for maintenance; to cut, try Y," then a real back-and-forth about what to change. Standard wellness territory, proactive, no compound involved. This is the "think for me" path. |
+| Compound info | **General, attributed, observational, never individualized.** "Commonly reported ranges are A to B" (internet-cited now, community-weighted later). Never "for your size, take Y." |
+| Controlled compounds (testosterone/TRT + anabolics) | **Track-only + community-observational only.** No pushed ranges. The `controlled` flag gates this in code. |
+| Medical-adjacent (OTC meds, creams, supplements) | **Allowed but referral-framed** for beta ("worth asking a pharmacist about..."). Graduates to direct only after counsel. |
+| Never | Personalized/prescriptive dosing for any compound, any dosing for controlled compounds, medical diagnosis. |
 
-The mental model: Pepi can freely coach you on how to *live better around* your protocol
-(sleep, food, training, recovery, habits), and can nudge you toward professionals for
-medical-adjacent things, but it never tells you how to *run the protocol itself*. Generic
-calorie targets sit in Tier A deliberately ("most people your size aiming to cut eat
-around X to Y kcal" is textbook wellness content); a personalized deficit prescription
-tied to a medical condition would be Tier B framing.
+Owner call on the deferred prescriptive version: keep it chill for now; if these compounds
+ever become legal, get a doc and a lawyer to back it before moving that line.
 
-### 3.3 The anti-inflammatory question, answered directly
+**One thing I decided conservatively and am flagging, not burying:** controlled compounds
+(test/TRT/anabolics) keep the *stricter* existing treatment (community-observational only,
+no attributed internet ranges), matching "keep it chill." If you want them treated the same
+as non-controlled compounds (attributed ranges too), say so and I will loosen it.
 
-Not legal advice, and this needs counsel before launch, but the practical read: telling
-someone "consider taking an anti-inflammatory for your knee pain" is generally not
-*illegal* as information, but it is (a) personalized medication advice, which moves the
-app toward regulated territory (FDA software-as-medical-device framing in the US, MDR
-classification risk in the EU, App Store guideline 1.4.1 scrutiny for medical apps), and
-(b) a liability surface: NSAIDs are contraindicated for plenty of people, and Pepi knows
-the user's compound stack, which arguably *raises* our duty of care rather than lowering
-it (we "knew" about interaction risk). A cream is the same category with lower systemic
-risk, not a different category.
+### 3.3 Medical-adjacent, answered directly
 
-**Beta posture that keeps almost all the helpfulness:** referral phrasing. "That knee
-pain has shown up three sessions in a row. Worth asking a pharmacist about an
-anti-inflammatory option" delivers the same nudge while placing the medication decision
-with a professional. Tier B graduates to direct suggestions only after counsel scopes it.
+Not legal advice, but the practical read on the OTC example: "consider an anti-inflammatory
+for your knee pain" is generally not *illegal* as information, but it is personalized
+medication advice, which drifts toward regulated territory (FDA software-as-medical-device
+framing, EU MDR classification risk, App Store 1.4.1 scrutiny) and a liability surface
+(NSAIDs are contraindicated for many, and Pepi knows the stack). Beta posture that keeps
+almost all the helpfulness: referral phrasing. "That knee pain has shown up three sessions
+in a row. Worth asking a pharmacist about an anti-inflammatory option" delivers the nudge
+while leaving the medication decision with a professional.
 
 ### 3.4 Proactive anomaly engine: the ceramics-night loop [M, phased]
 
@@ -367,9 +364,18 @@ AI only handles conversation.**
    evenings, tag: ceramics), affected metric (sleep), explanation. Future detector hits
    check context memory first: known cause plus recurrence means Pepi can graduate from
    "why was sleep bad?" to "ceramics night again? have you tried a saline rinse before
-   bed on those nights?" (Tier A suggestion). This entity is also gold for the insights
-   prompt and the correlation chip, which currently reason from raw numbers only.
-4. **Habit inference [M, later].** Recurrence detection over context memory (same
+   bed on those nights?" (direct lifestyle coaching). This entity is also gold for the
+   insights prompt and the correlation chip, which currently reason from raw numbers only.
+4. **Anomaly baseline exclusion [S/M], the differentiator over Apple (owner point).**
+   This is what separates Pepi's context-gathering from Apple's blind inference: when a
+   day is explained as anomalous (ceramics dust, travel, illness, a bad night out), Pepi
+   tags it and the deviation detectors + rolling baselines **exclude or down-weight it**,
+   so one weird day does not drag the user's "normal". The `MetricReading` model already
+   carries a `sourceProvider`/confidence pattern (typical-day chip days ride it at low
+   confidence); an `anomaly` tag reuses exactly that mechanism. The insight is the owner's:
+   an anomalous day is expected but is not "part" of the baseline, and knowing *why* lets
+   Pepi help prevent the anomaly next time rather than just flag the dip.
+5. **Habit inference [M, later].** Recurrence detection over context memory (same
    weekday, same explanation) instead of asking the user twice.
 
 **Trap:** proactive pings are the fastest way to get notifications disabled app-wide.
@@ -381,8 +387,8 @@ where possible, and instantly dismissable with "stop asking about this".
 The community pipeline was always meant for output surfaces; spec 12 gates output and
 scale, not existence. **DECIDED shape: observational cohort phrasing with minimum cohort
 sizes** ("users on similar stacks most often reported this settling around week 3"),
-never prescriptive, never dosing (Tier C), and only above an N threshold that makes
-re-identification unrealistic. This is downstream of the normalized sync engine actually
+never prescriptive, never individualized dosing (3.2), and only above an N threshold that
+makes re-identification unrealistic. This is downstream of the normalized sync engine actually
 populating aggregates, so it is a direction to design toward, not a near-term build.
 
 ### 3.6 Instrument vs companion: a silent, adaptive coaching level (DECIDED)
@@ -393,27 +399,45 @@ coach) but handled the way the owner specified: **silent and adaptive, not a set
 user configures upfront.**
 
 - **Levels:** observe (data in, hedged reads out, no unsolicited suggestions) / nudge
-  (anomaly openers, Tier A/B guidance when earned, gentle goal framing) / coach (proactive
+  (anomaly openers, lifestyle coaching when earned, gentle goal framing) / coach (proactive
   weekly focus, targets, habit follow-ups).
 - **Adaptive default:** Pepi infers a starting level from commitment signals (logging
   consistency, protocol complexity, measurement discipline) rather than asking on day one.
-- **Proactive offer, not a wall of settings:** when signals suggest an experienced,
-  disciplined user, Pepi asks in chat, for example "you seem like an experienced user,
-  want me to adjust how much I coach you?" If the user asks what that means, Pepi explains
-  the levels and lets them pick.
 - **Discoverable override:** the level also lives in the settings page (an acknowledged
   dumping ground for now, organized later) so anyone can change it directly.
+
+**How to offer it without sounding condescending (DECIDED copy approach).** The trap is
+grading the *user* ("you seem experienced"). Four principles:
+
+1. **Describe what Pepi does, never what the user is.** No "beginner/advanced," no "you
+   seem experienced." Behavior labels only: *just log* / *nudge me* / *coach me*.
+2. **Anchor the offer to a moment, framed as serving them:**
+   - They ignore several nudges, then an *ease-off* offer (humble, reactive): "I've been
+     chiming in a lot lately. Want me to keep it to the essentials?"
+   - They ask a detailed "why" question, then a *go-deeper* offer: "I can get into the
+     reasoning behind this whenever it's useful. Want me to explain the 'why' more often,
+     or keep it short?"
+3. **Keep the inference invisible.** The commitment scoring decides *when* to ask; the copy
+   never reveals "I profiled you." The user only sees a neutral preference question.
+4. **Asymmetry:** getting quieter is safe and can be near-automatic ("I noticed you skip
+   the morning check-in, want me to drop it?"); getting louder is always an invitation
+   phrased as their preference, never Pepi deciding you need more. **DECIDED:** Pepi may
+   silently adjust only in the quieter direction; any increase in proactivity is offer-only.
+
+Neutral settings-page version (no moment, no grading):
+
+> **How much should Pepi weigh in?**
+> - Just log, stay out of the way
+> - Nudge me when something looks off (default)
+> - Coach me: targets, reasons, follow-ups
+
+This reads the same to a national-level competitor and to someone who has never counted a
+macro, because it asks how much *Pepi* talks, not how much the *user* knows.
 
 Implementation is one prompt parameter plus notification-policy differences and a small
 signal-scoring function for the adaptive default. The Instrument voice stays; warmth was
 already added in the A-5 pass. Companionship comes from *timing and initiative*, not
 chattiness.
-
-**Open sub-question I am NOT deciding for you:** how aggressive the adaptive inference
-should be, i.e. does Pepi ever *raise* the level silently on its own, or only ever *offer*
-and let the user confirm? My recommendation is offer-only for anything that increases
-proactivity (silently getting chattier is the fastest way to feel invasive), and silent
-adjustment allowed only in the quieter direction. Flag if you want it more aggressive.
 
 ### 3.7 Cost and the provider question [decision needed, but measure first]
 
@@ -428,8 +452,9 @@ chip-driven, so the marginal AI cost of the pivot is mostly "more chat turns".
 for beta testing. Instrument per-feature token counts in the edge function (one log line
 per call: action, model, in/out tokens), let the beta produce two or three weeks of real
 usage, then run the bake-off that is already on file as deferred. Two additional cautions: any provider switch requires re-validating
-the safety gates per action (gate behavior is prompt-and-model-specific, and Tier C is
-legal exposure, not tone), and prompt-cache economics differ per provider, which can
+the safety gates per action (gate behavior is prompt-and-model-specific, and the
+never-prescribe line is legal exposure, not tone), and prompt-cache economics differ per
+provider, which can
 erase a headline price gap for our long-stable-prefix prompts.
 
 ---
