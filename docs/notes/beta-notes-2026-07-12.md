@@ -323,9 +323,14 @@ user's exact stack arguably raises duty of care rather than lowering it.
 | Domain | Posture |
 |---|---|
 | Lifestyle (calories/macros, training effort, cardio, recovery, sleep, hydration, micronutrients) | **Direct and personalized.** "Someone your size should eat ~X for maintenance; to cut, try Y," then a real back-and-forth about what to change. Standard wellness territory, proactive, no compound involved. This is the "think for me" path. |
-| Compound info | **General, attributed, observational, never individualized.** "Commonly reported ranges are A to B" (internet-cited now, community-weighted later). Never "for your size, take Y." |
+| Compound info (`grey`) | **General, attributed, observational, never individualized.** "Commonly reported ranges are A to B" (curated-cited or labeled-unverified stopgap now, community-weighted later; see the sourcing ladder in spec 05). Never "for your size, take Y." |
 | Controlled compounds (testosterone/TRT + anabolics) | **Track-only + community-observational only.** No pushed ranges. The `controlled` flag gates this in code. |
-| Medical-adjacent (OTC meds, creams, supplements) | **Allowed but referral-framed** for beta ("worth asking a pharmacist about..."). Graduates to direct only after counsel. |
+| OTC (melatonin, NSAIDs, creams, supplements) | **DECIDED (round 3): direct but hedged.** "Melatonin 0.5 to 3mg before bed is commonly used", always with a "check with your doctor or pharmacist for contraindications" pointer. Not referral-only. |
+
+Postures are keyed per compound by a new `market_category` enum on the catalog
+(inoffensive / otc / grey / controlled; spec 08), enforced in code at the AI service.
+One US-calibrated posture globally; jurisdiction differences, if ever needed, are
+per-region `market_category` data overrides, not prompt forks.
 | Never | Personalized/prescriptive dosing for any compound, any dosing for controlled compounds, medical diagnosis. |
 
 Owner call on the deferred prescriptive version: keep it chill for now; if these compounds
@@ -342,10 +347,11 @@ Not legal advice, but the practical read on the OTC example: "consider an anti-i
 for your knee pain" is generally not *illegal* as information, but it is personalized
 medication advice, which drifts toward regulated territory (FDA software-as-medical-device
 framing, EU MDR classification risk, App Store 1.4.1 scrutiny) and a liability surface
-(NSAIDs are contraindicated for many, and Pepi knows the stack). Beta posture that keeps
-almost all the helpfulness: referral phrasing. "That knee pain has shown up three sessions
-in a row. Worth asking a pharmacist about an anti-inflammatory option" delivers the nudge
-while leaving the medication decision with a professional.
+(NSAIDs are contraindicated for many, and Pepi knows the stack). **Superseded (round 3):**
+the owner chose direct-but-hedged over referral-only. Pepi can name the option and common
+usage directly ("an OTC anti-inflammatory is commonly used for this") as long as every such
+rec carries the contraindication pointer: "check with your doctor or pharmacist for any
+contraindications." The pointer is mandatory copy, enforced by the eval suite (spec 05).
 
 ### 3.4 Proactive anomaly engine: the ceramics-night loop [M, phased]
 

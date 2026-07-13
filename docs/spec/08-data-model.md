@@ -15,6 +15,7 @@ Postgres (Supabase). Per-user row-level security on everything. Sketch, not fina
   - `hormone` = **testosterone / TRT** — first-class + curated (the dominant co-administered compound for peptide users; legitimate medical framing)
   - `other` = catch-all incl. **non-TRT anabolics** — *loggable for confounder capture, but NOT curated or marketed.* We don't build an AAS-cycle catalog; we just don't blind the data when someone's on more. Avoids "Pepi is a steroid app" in store review.
   - `controlled` flag (testosterone/TRT + any anabolic) → **track-only, no AI dosing cards** (05/11)
+  - **`market_category`** (inoffensive | otc | grey | controlled), added 2026-07-12: drives the per-compound AI posture table in 05, enforced at the AI service. The `controlled` boolean stays as the hard gate (= `market_category = 'controlled'`); migration backfills the enum from the boolean + a categorization pass over the seed catalog (and the bundled on-device mirror `src/data/compound-catalog.ts`).
   - ancillaries (AI/SERM/HCG) first-class so TRT/AAS protocols + bloodwork make sense
 - **effect_tags[]** — what it's expected to influence (fat_loss, muscle, recovery, healing, skin, sleep, cognition, libido, glucose, hormonal…)
 - **monitoring_tags[]** — what to watch (hematocrit, estradiol, lipids, appetite, nausea…)
