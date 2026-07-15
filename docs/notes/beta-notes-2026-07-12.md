@@ -336,10 +336,10 @@ per-region `market_category` data overrides, not prompt forks.
 Owner call on the deferred prescriptive version: keep it chill for now; if these compounds
 ever become legal, get a doc and a lawyer to back it before moving that line.
 
-**One thing I decided conservatively and am flagging, not burying:** controlled compounds
-(test/TRT/anabolics) keep the *stricter* existing treatment (community-observational only,
-no attributed internet ranges), matching "keep it chill." If you want them treated the same
-as non-controlled compounds (attributed ranges too), say so and I will loosen it.
+**RESOLVED (owner, 2026-07-14): controlled stays uniform.** All controlled compounds
+(test/TRT/anabolics) keep the stricter treatment: track-only + our-community observational
+only, no attributed internet ranges. A proposed testosterone/TRT split (clinically-cited
+ranges for TRT only) was considered and declined; one rule for the whole category.
 
 ### 3.3 Medical-adjacent, answered directly
 
