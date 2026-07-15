@@ -86,3 +86,45 @@ Strategic corollaries:
   after the current beta batch.
 - Bevel validates the AI-coach-over-Health-data direction and bloodwork-photo extraction
   (both on our roadmap); their traction de-risks our bets on those mechanics.
+
+## 5. Keepers from the external review (ChatGPT, 2026-07-14)
+
+The review was mostly the brief mirrored back as aphorisms and answered none of the five
+questions we posed, but three ideas are worth adopting; they align with the original
+direction.
+
+**5.1 The attribution phrasing ladder.** A concrete sharpening of section-3 item 1:
+attribution should not stop at correlation-to-a-start-date, it should rank competing
+explanations.
+- Bad: "Weight decreased."
+- Good: "Weight began decreasing four days after starting retatrutide."
+- Better: "The weight loss is primarily explained by your calorie deficit, with appetite
+  suppression likely contributing."
+The verdict engine already does explained-by reconciliation in one place (RHR elevation
+attributed to training load). The build is to generalize that reconciliation to compound
+attribution: hold the compound start, the nutrition deltas, and the training change as
+competing hypotheses and rank them, rather than crediting the compound by temporal
+coincidence. This is the honest, hedged version and the harder-to-copy one.
+
+**5.2 Two moats on two timescales (reframe).** We had framed the community dataset as the
+moat. The sharper framing: the **individual longitudinal protocol record** is the
+*near-term* moat (compounds from day one, no cold start, no k-anonymity gate), and the
+community aggregate is the *long-term* moat (needs scale). Personal-history attribution
+("this is your fourth cut", "your recovery consistently dips after week six", "you respond
+unusually well to high-frequency injections") is defensible immediately and is what makes
+month-two retention better than month-one. Community answers get better with N; personal
+answers get better with time on the app. Design toward both, lead with personal.
+
+**5.3 Narrative timeline (feature seed, Polish-tier).** The signal ledger rendered as a
+cross-metric chronological story rather than parallel charts: "Started TRT → sleep
+improved → strength up → hematocrit elevated → donation logged." Communicates progression
+in a way stacked graphs do not, and it is a natural surface for 5.1's attribution and 5.2's
+personal history. Seed only; sequence after the compound-intelligence core.
+
+**One conscious disagreement (recorded, not adopted).** The review said "AI as navigation,
+not conversation, do not build another chatbot." We are deliberately *not* taking this. It
+serves only the leverager persona and abandons the corner-cutter ("think for me") user we
+explicitly chose to serve, and conversational micro-logging exists precisely because
+logging-as-chore is the churn risk the owner felt firsthand. Search-as-navigation is a good
+*addition* for power users, not a *replacement* for the companion. Noted here so the "no" is
+a decision, not an oversight.

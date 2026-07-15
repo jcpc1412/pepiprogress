@@ -114,6 +114,17 @@ Replace the current compound add flow with a dedicated screen opened by a promin
 
 ---
 
+# Beta Round 2 (added 2026-07-14)
+
+## Protocol
+
+**P-04 — Off-cadence dose silently re-anchors a recurring schedule**
+For an interval/cadence compound (e.g. testosterone every 3 days), "due" is computed from the *last actual logged dose* (`today-doses.tsx`: `daysSince = daysBetween(lastBeforeToday, today)`, due when `daysSince >= interval`). So if the user logs a dose a day early (took it early for whatever reason), the whole cadence slides forward: the app re-anchors to the early dose and won't flag the originally-scheduled day.
+Desired: the schedule should be anchored to a fixed reference (protocol `startedAt` + N·interval), and a logged dose *completes the nearest scheduled slot* rather than moving the anchor. When a dose lands off the expected slot, **ask before adjusting** — a prompt like "Did you take [Wednesday]'s dose early, or is this an extra dose?" with keep-schedule / shift-schedule / extra-dose. Never silently re-slide. Note this only affects the interval (`frequency`) model; the weekday (`doseDays`) model is already anchor-stable. Spec discussion should decide whether to migrate interval compounds onto an anchored-interval representation vs. patch the due calc.
+
+**P-05 — Reactive "why are you skipping doses?" nudge**
+When N consecutive scheduled doses are missed (threshold TBD in spec; likely 2–3), Pepi should reach out reactively: an in-app notification that deep-links into the Pepi chat and asks, non-judgmentally, why doses are being skipped (ran out, side effects, intentional break, forgot). This is an instance of the anomaly-detector + context-memory pattern (see `docs/notes/beta-notes-2026-07-12.md` §3.4): the answer becomes context Pepi remembers (e.g. "intentional deload" suppresses future nudges; "ran out" ties to the low-stock inventory flag). Respects the coaching level and is rate-capped like all proactive pings. Uses the existing notification + chat-deeplink primitives (`notification-manager.tsx`, typical-day opener pattern).
+
 ---
 
 _All issues ready to spec. Start wherever._
