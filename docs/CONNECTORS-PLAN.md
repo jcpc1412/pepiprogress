@@ -80,7 +80,11 @@ plan:
 
 ## Tool surface
 
-**v1 (read-only):**
+**DECIDED (owner 2026-07-14): v1 is a two-way street** (reads + writes together), and we
+go **straight at both directories** (no custom-connector-only soft launch). Placement is
+**post-beta**, confirmed.
+
+**v1 reads:**
 | Tool | Returns |
 |---|---|
 | `get_today` | Doses due/done, check-in status, attention flags |
@@ -89,27 +93,35 @@ plan:
 | `get_protocol` | Protocol items + inventory levels (descriptive only) |
 | `get_compound_info` | Catalog facts through the posture gate |
 
-**v2 (writes via inbox):** `log_dose`, `log_checkin`, `log_symptom`, `log_weight`. Same
-entities the quick-log parser writes; the parse smarts live on the platform side (their
-model formulates the structured call), so this costs us no AI tokens.
+**v1 writes (via the inbox):** `log_dose`, `log_checkin`, `log_symptom`, `log_weight`.
+Same entities the quick-log parser writes; the parse smarts live on the platform side
+(their model formulates the structured call), so this costs us no AI tokens. Because v1 is
+two-way, the `connector_event` inbox + app-side merge is **on the critical path for
+launch, not a later phase.**
 
-**v3 (ChatGPT widgets):** a Today card and a Verdict card as Apps SDK components,
+**Later (widgets):** a Today card and a Verdict card as ChatGPT Apps SDK components,
 matching the instrument design language where their component system allows.
 
 ## Phasing
 
 | Phase | Ships | Effort | Gates |
 |---|---|---|---|
-| 0 | OAuth 2.1/PKCE provider wiring + MCP skeleton + RLS-scoped reads | M | None new (auth + cloud sync exist) |
-| 1 | v1 read tools; **Claude custom connector** (usable by beta users immediately, no review); ChatGPT developer-mode testing | S/M | Phase 0 |
-| 2 | `connector_event` inbox + write tools + app-side merge | M | Phase 1 |
-| 3 | ChatGPT widgets + both directory submissions (OpenAI identity verification + review; Anthropic directory review) | M | Phase 2; owner Apple-style review readiness |
+| 0 | OAuth 2.1/PKCE provider (Supabase Auth) + MCP skeleton + RLS-scoped reads + **`connector_event` inbox + app-side merge** | M/L | None new (auth + cloud sync exist) |
+| 1 (v1) | Read + write tools (two-way); validate in ChatGPT developer mode + Claude custom connector as the **test harness** | M | Phase 0 |
+| 2 (launch) | **Both directory submissions** (OpenAI identity/business verification + review; Anthropic connector-directory review) | M | Phase 1 + review readiness |
+| 3 | ChatGPT widgets (Today + Verdict cards) | M | Phase 2 |
 
-**Recommended placement: post-beta (Polish tier), alongside the sync-engine track.** It
-depends on nothing in the current beta batch, and the beta batch (calorie sync fix,
-review-step rework, companion pivot, micro check-ins) directly improves what the
-connector would expose. Building the inbox now without the beta learnings would be
-premature.
+**Placement DECIDED: post-beta (Polish tier)**, alongside the sync-engine track. It depends
+on nothing in the current beta batch, and the beta batch (calorie sync fix, review-step
+rework, companion pivot, micro check-ins) directly improves what the connector exposes.
+
+**Tradeoff we accepted by going straight at the directories:** the peptide-app review
+scrutiny (same "is this a steroid app?" question as App Store review) is now **on the
+critical path to any public connector launch**, rather than something we could sidestep
+with a custom-connector-only release. The custom connector is demoted from
+distribution-hedge to test harness. The `market_category` posture gates are the defense;
+readiness for that review gates Phase 2. If a directory rejects, the custom-connector path
+still exists as a fallback, but it is no longer the plan of record.
 
 ## Risks, honestly
 
@@ -126,8 +138,8 @@ premature.
 - **Freshness illusion.** Read tools reflect the last app-open. Tool descriptions must
   say so, or the assistant will confidently report stale data.
 
-## Open questions
-
-Asked directly in chat (2026-07-14), not parked here: roadmap placement confirmation,
-whether writes belong in v1, and private-connector-first vs directory-first distribution.
-Decisions land here when answered.
+## Decisions (2026-07-14)
+- **Placement:** post-beta (Polish tier).
+- **v1 scope:** two-way (reads + writes); the inbox is on the launch critical path.
+- **Distribution:** straight at both directories; custom connector is the test harness +
+  rejection fallback, not the primary channel.
