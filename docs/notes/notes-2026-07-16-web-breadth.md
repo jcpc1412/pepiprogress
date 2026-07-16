@@ -325,6 +325,12 @@ which we can run off the Health backdoor instead of a food logger):
   engine (beta-notes 3.4).
 - **Graceful degradation:** without intake data the forecast stays observed-trend-only
   (TRAJ-1); the energy-balance layer activates only when nutrition + activity data flow.
+- **Reinforced by owner screenshot (Cronometer, 2026-07-16):** intraday Apple Health
+  streams (active energy balance, workouts, HR/RHR/HRV/SpO2/respiration, sleep) update
+  through the day and should feed internal calcs, predictions, and proactive
+  notifications. Note: our Health read already maps that vitals stream to canonical
+  metrics; the P0 calorie-sync dedupe fix is what makes the *intraday updating* actually
+  land, and TRAJ-2 + the anomaly engine are what consume it.
 
 **Later (explicitly not in this scope):** per-compound expectation-timeline priors
 ("GLP-1 pace commonly decays after week N") once the compound-intelligence layer lands;
@@ -337,9 +343,12 @@ the projection then blends prior + observed instead of observed-only.
 The anti-bloat version, as discussed in chat. Not a workout app: one small entity, two
 entry paths that already exist, coaching that rides chat.
 
-- **Entity:** `StrengthSession { date, movements: [{ name, sets, reps, weight }] }` with
-  derived tonnage (sets x reps x weight), per-movement volume, and estimated 1RM
-  (Epley). One new store slice; sessions are evidence, not a program.
+- **Entity (generalized per the locked user profile, owner 2026-07-16):** a training
+  log with two shapes. `StrengthSession { date, movements: [{ name, sets, reps,
+  weight }] }` with derived tonnage, per-movement volume, and estimated 1RM (Epley);
+  and `Benchmark { date, name, value, unit }` for everything else ("Fran 4:32", "5k
+  22:10", "total 600kg"), covering crossfit/hyrox/runners/swimmers/fighters without a
+  sport module. One new store slice; sessions are evidence, not a program.
 - **Entry paths (no new screens):** (a) the quick-log/chat parser accepts "bench 5x5
   80kg, rows 3x10 60" (the parse schema gains one entity type); (b) Health-synced
   workouts keep providing duration + HR (TRIMP load) and pair with the session when
@@ -379,9 +388,17 @@ feeding it (Q2).
 strength-log entity + parser + coach-adjusted effort (section 8); cycle tracking as
 already decided; nutrition stays on the Health backdoor + typical-day chips.
 
-**Open thread (active, not parked):** monetization model. Freemium is in doubt
-(too-good-free problem + the rejected data-as-payment idea); alternatives under
-discussion in chat. Never-gate-input survives any outcome. Decision gets recorded here.
+**Monetization (DECIDED for now, owner 2026-07-16): paid-only.** Auto-converting trial
+(StoreKit intro offer on iOS; Stripe checkout on web, where margins and
+forget-to-cancel economics actually live), target price **$19/mo** with an annual
+anchor (~$99 to $120/yr). No free tier for now; **freemium goes on the backburner**,
+including the local-only-lapse variant (trial expires into free local tracking), to be
+revisited before public launch. Two flags recorded, not buried: (a) spec 12 and
+CLAUDE.md still describe freemium-at-launch and the never-gate-input principle; both
+need reconciling when this model is finalized, and trial-lapse behavior (hard lock vs
+local-only) is exactly the open sub-question parked with the backburner. (b) Nothing
+sneakier than platform-default auto-conversion (FTC click-to-cancel; Apple already
+sends pre-conversion reminders).
 
 **Held:** reptides/peptidebase outreach (competitive fear; dig first). Storage quotas
 (until the pricing model is chosen).

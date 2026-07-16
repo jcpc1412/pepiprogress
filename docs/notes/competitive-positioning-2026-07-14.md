@@ -121,6 +121,27 @@ improved → strength up → hematocrit elevated → donation logged." Communica
 in a way stacked graphs do not, and it is a natural surface for 5.1's attribution and 5.2's
 personal history. Seed only; sequence after the compound-intelligence core.
 
+## 6. Locked user profile (owner, 2026-07-16): commitment rings, sport-agnostic
+
+The recurring "who is this for" flip-flop resolved by separating two axes: commitment
+(the real design decision) and sport (a data question, not an identity question).
+
+- **Ring 1, the design center: the enhanced athlete, any sport.** Strongman, MMA/BJJ/
+  boxing, crossfit, hyrox, swimming, running, bodybuilding: the same person wanting
+  evidence their protocol works; only the outcome metrics differ per sport.
+- **Ring 2: the corner-cutter compound user** who needs think-for-me coaching. Served
+  by the adaptive coaching level, not a separate product.
+- **Ring 3: non-PED self-improvers** (HRT, cosmetics/GHK-Cu, transition). Served and
+  self-marketable (SM-1), not marketed to.
+
+"Bodybuilder-first" was never actually decided; *photo-first* was (the USP), and photos
+read bodybuilder-coded. The sport axis is handled by evidence entities, not identity:
+the training log has two shapes, a **strength session** (sets x reps x weight, tonnage,
+est. 1RM) and a generic **benchmark** (name + value + date: "Fran 4:32", "5k 22:10",
+"total 600kg"), both entered via chat parse, both feeding the goal-aware verdict. Elite
+and enhanced recreational athletes in these sports are also the high-spend segment, so
+greed and "app for me" point the same direction here.
+
 **One conscious disagreement (recorded, not adopted).** The review said "AI as navigation,
 not conversation, do not build another chatbot." We are deliberately *not* taking this. It
 serves only the leverager persona and abandons the corner-cutter ("think for me") user we
