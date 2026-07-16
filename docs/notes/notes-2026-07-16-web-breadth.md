@@ -59,12 +59,17 @@ protocols in spreadsheets are a core segment, and the web surface courts them di
   editing first (it is the retro-logging feature), chart builder second, animation
   polish last.
 
-**Questions asked in chat (Q1 to Q4):** architecture confirm (one codebase);
-who the web user is (workbench for the leverager vs primary front door for everyone);
-custom-charts v1 scope + pinned-sync model; calendar as the web's primary navigation
-metaphor vs one tab among the phone's tabs.
-
-**Owner answers:** (pending)
+**Owner answers (2026-07-16), all four DECIDED:**
+- **Q1 architecture:** one codebase, and push the responsiveness further than
+  phone/desktop: the goal is interface-agnostic reuse ("if I want to use it with an
+  Xbox, I could"). Implication: layouts key off capability classes (pointer/touch/remote,
+  density, input method), not device names; tokens/copy/store stay single-source.
+- **Q2 role:** fully agreed: web is the power workbench, phone stays the front door.
+  Web photo upload yes, capture stays native.
+- **Q3 custom charts:** as proposed (curated metric overlays, saved as synced config,
+  compact pinned rendering on the phone's Analysis tab).
+- **Q4 calendar:** the calendar is the web's **primary** navigation metaphor. The web
+  surface IS the spreadsheet-journal; phone-mirroring tabs are secondary.
 
 ---
 
@@ -91,9 +96,17 @@ around? Is the AI photo analysis + storage enough?
   comparisons meaningful ("users on X vs users on nothing"). Worth keeping them healthy
   in the funnel for data reasons alone.
 
-**Question asked in chat (Q5):** confirm "serve, don't market" for v1.
+**Owner answer (2026-07-16), DECIDED with a sharpening:** no marketing spend on them,
+but the app must be **self-marketable** to non-PED users: shown cold to, say, an HRT
+subreddit, it has to sell itself and never feel gated for performance-drug users. Geared
+to athletes primarily, but it must visibly help cosmetics users (GHK-Cu), trans users,
+and people who do not exercise at all.
 
-**Owner answers:** (pending)
+**Resulting work item (SM-1, small):** a self-marketability pass over onboarding and
+store-facing copy: goal-first framing, the compound step reads as clearly optional (not
+a gate), at least one non-PED goal path feels first-class end to end (cosmetic/skin,
+transition, plain body comp), and App Store subtitle/screenshots lead with
+protocol-to-outcome evidence rather than PED vocabulary.
 
 ---
 
@@ -124,10 +137,12 @@ this even a real worry?
   backstop. Verdict on the worry: half-necessary; the compression fix matters now, the
   cap can wait.
 
-**Question asked in chat (Q6):** approve resize-on-upload now + defer quotas to the
-freemium spec.
-
-**Owner answers:** (pending)
+**Owner answer (2026-07-16):** no objection to the compression fix (**proceeding**:
+resize-on-upload ~2048px long edge at q0.8, original kept in the local file store, plus
+a bucket max-file-size guard). Quotas defer to the pricing-model decision. The owner's
+substantive reply went to the freemium premise itself ("the problem with freemium is
+that it might be too good to pay for premium"), which merged into the Q9 monetization
+thread below.
 
 ---
 
@@ -159,10 +174,13 @@ peptidebase.io, reptides.co.
   experience data, that changes the analysis entirely (consent chain, health-data
   transfer); none of the named ones do.
 
-**Question asked in chat (Q7):** which intent to pursue (license reptides content /
-cross-promo with peptidebase / both).
-
-**Owner answers:** (pending)
+**Owner answer (2026-07-16), DECIDED: hold all outreach.** Only reptides is
+interesting (owner believes they may be community-sourced; needs to dig more), and there
+is a real competitive fear: approaching them could inspire them to build their own Pepi.
+Posture until further notice: no contact; treat their public wiki purely as a
+*reference* when curating our own `compound_fact` entries (our citations go to the
+primary sources they cite, never wholesale copying their content). Peptidebase
+cross-promo: not pursued for now.
 
 ---
 
@@ -211,11 +229,20 @@ every added surface must feed the evidence engine or it is Bevel cosplay.
   test) and reputationally off-voice. The defensible version: free tier exists on its
   own merits; contribution stays opt-in with real perks (community insights access).
 
-**Questions asked in chat (Q8, Q9):** accept the breadth ranking (cycle yes / workouts
-as evidence yes, programming later / nutrition logger no); clarify the data-as-payment
-intent given the consent constraint.
-
-**Owner answers:** (pending)
+**Owner answers (2026-07-16):**
+- **Q8, DECIDED with the bloat constraint made explicit:** the fear is app bloat; the
+  answer is lightweight, evidence-first implementations only. The typical-day chips
+  (usual/less/more) are the named model for how breadth should feel. Cycle tracking is
+  "a given" (already decided). Nutrition logger stays rejected. For strength, the owner
+  asked what "a modest strength-log entity + AI-adjusted programming" would look like;
+  the design sketch was given in chat and is recorded as section 8 below.
+- **Q9, DECIDED: data-as-payment is rejected** (the consent problem is another reason
+  against freemium in the owner's view). Monetization is now an open decision being
+  actively discussed: the owner is skeptical of freemium entirely ("free might be too
+  good to pay for premium") and asked for alternatives; options were laid out in chat
+  (hard paywall + trial / AI-depth freemium / free-local + paid-cloud) with a
+  recommendation. Decision lands here when made. The one invariant that survives any
+  model: **input is never gated** (spec 12).
 
 ---
 
@@ -249,16 +276,91 @@ and asks whether that is how "on track" is decided.
   priors per compound ("GLP-1 users commonly see pace decay after week N"). This ties
   directly into the attribution ladder and expectation-timeline roadmap items.
 
-**Question asked in chat (Q10):** want the visible calibrated trajectory line built as
-part of the charts work?
-
-**Owner answers:** (pending)
+**Owner answer (2026-07-16), DECIDED:** not a backlog note; scope it now and add it.
+Scoped as section 7 below.
 
 ---
 
-## Next step
+## 7. Scoped: projected trajectory line (TRAJ-1) [M]
 
-Owner answers Q1 to Q10 in chat; answers get recorded above; the document then hardens
-into a sequenced plan (likely ordering: storage compression fix now; web workbench +
-connectors as the paired post-beta track; breadth items folded into existing decided
-work; trajectory line into the charts backlog).
+Owner-directed scope (Q10). A visible, honest projection on the weight chart (phone
+Analysis tab first; the web chart builder inherits it).
+
+**Core (pure lib, testable):** a `projectSeries(points, horizonDays)` function in a new
+`src/lib/trajectory.ts`:
+- **Recency-weighted slope:** exponentially weighted regression over the trailing
+  window (recent days dominate), replacing the current first-to-last straight line.
+- **Plateau detection:** when the trailing 10 to 14 days are flat within noise, the
+  projection flattens instead of promising last month's pace. Reuses the plateau
+  concept already present in the evidence picker (R2-B).
+- **Uncertainty band:** widens with distance from today, derived from residual variance
+  of the fit. The band IS the honesty; the line never appears without it.
+- **Honest-horizon rules carried over from `weightForecast`:** minimum data points,
+  project only toward the target, cap at 365 days, say nothing rather than guess.
+
+**Rendering:** dotted extrapolation + shaded band appended to the weight series in
+`chart-series.ts` consumers; goal line (targetWeight) drawn where set; i18n for the
+"projected" label + accessibility description (6 locales).
+
+**Verdict tie-in:** `weightForecast` (days-to-target) switches to the same
+recency-weighted slope so the hero figure and the chart never disagree.
+
+**Later (explicitly not in this scope):** per-compound expectation-timeline priors
+("GLP-1 pace commonly decays after week N") once the compound-intelligence layer lands;
+the projection then blends prior + observed instead of observed-only.
+
+---
+
+## 8. Design sketch: modest strength log + coach-adjusted effort (answering Q8)
+
+The anti-bloat version, as discussed in chat. Not a workout app: one small entity, two
+entry paths that already exist, coaching that rides chat.
+
+- **Entity:** `StrengthSession { date, movements: [{ name, sets, reps, weight }] }` with
+  derived tonnage (sets x reps x weight), per-movement volume, and estimated 1RM
+  (Epley). One new store slice; sessions are evidence, not a program.
+- **Entry paths (no new screens):** (a) the quick-log/chat parser accepts "bench 5x5
+  80kg, rows 3x10 60" (the parse schema gains one entity type); (b) Health-synced
+  workouts keep providing duration + HR (TRIMP load) and pair with the session when
+  timestamps overlap. A compact widget on the detailed-log sheet lists/edits the day's
+  session.
+- **What it feeds:** tonnage + est-1RM trends become chartable series; workout-quality
+  and load signals in the verdict get a real progressive-overload input instead of
+  duration-only; the strength data makes gain-goal verdicts meaningfully smarter
+  (section 1.8 of the positioning note).
+- **AI-adjusted programming = coach behavior, not a planner UI.** At nudge/coach level,
+  Pepi adjusts *effort targets* conversationally from existing signals: "recovery has
+  been low three days and yesterday's squat volume was 20% over your four-week average;
+  consider capping today around RPE 7." Direct lifestyle coaching (allowed, spec 05
+  capability 8), driven by data already in the store. No periodization tables, no
+  program builder, no exercise database beyond free-text movement names normalized
+  lightly at parse time.
+- **Bloat guard:** ships as [M]; if the widget + parser path is not enough for real
+  users, that is evidence before any bigger build is considered.
+
+---
+
+## 9. The plan (hardened 2026-07-16)
+
+**Now / with current beta work:**
+1. Resize-on-upload photo compression + bucket size guard [S] (Q6).
+2. SM-1 self-marketability pass over onboarding + store copy [S/M] (Q5).
+3. TRAJ-1 projected trajectory line [M] (section 7), with the `weightForecast`
+   unification.
+
+**Post-beta track A: web workbench** (pairs with the connectors track, `docs/CONNECTORS-PLAN.md`):
+calendar-primary responsive web surface on the one codebase (capability-class layouts,
+Q1/Q4), detailed-sheet editing incl. retroactive text + photo upload, custom chart
+builder with pinned sync to phone (Q3). Connectors act as the fetch/automation layer
+feeding it (Q2).
+
+**Post-beta track B: breadth as evidence** (bloat-guarded, Q8):
+strength-log entity + parser + coach-adjusted effort (section 8); cycle tracking as
+already decided; nutrition stays on the Health backdoor + typical-day chips.
+
+**Open thread (active, not parked):** monetization model. Freemium is in doubt
+(too-good-free problem + the rejected data-as-payment idea); alternatives under
+discussion in chat. Never-gate-input survives any outcome. Decision gets recorded here.
+
+**Held:** reptides/peptidebase outreach (competitive fear; dig first). Storage quotas
+(until the pricing model is chosen).
