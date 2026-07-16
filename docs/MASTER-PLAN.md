@@ -1,0 +1,137 @@
+# MASTER PLAN (consolidated 2026-07-16)
+
+The single merged build sequence for everything decided but not yet built. This document
+is the **ordering authority**; the source docs stay as the detail specs:
+
+- `docs/notes/beta-notes-2026-07-12.md` (photos rework, companion pivot, micro-logging)
+- `docs/notes/notes-2026-07-16-web-breadth.md` (web workbench, TRAJ, strength log, SM-1)
+- `docs/notes/competitive-positioning-2026-07-14.md` (compound intelligence, user rings)
+- `docs/CONNECTORS-PLAN.md` (ChatGPT app + Claude connector)
+- `docs/ISSUES.md` Beta Round 2 (P-04, P-05)
+- `docs/spec/05-ai-layer.md` (postures, sourcing ladder, eval suite)
+
+Effort: [S] under a day, [M] days, [L] a week+.
+
+---
+
+## Blocked on owner (not code)
+
+- **EAS closed-beta build + TestFlight** (`eas build --platform ios --profile production --auto-submit`).
+  Native rebuild is required before device testing: expo-camera/sensors/image-manipulator,
+  expo-notifications, expo-haptics, HealthKit module, vision-camera flags.
+- **M4 on-device test checklist** (`docs/ROADMAP.md`) + HealthKit read/write verification
+  (existing task: Phase 2 native Health read).
+
+---
+
+## Wave 1: data correctness + scheduling trust [all code-ready]
+
+Fix the things that silently lie before building anything on top of them.
+
+1. **Nutrition sync fix [S/M], P0.** Daily aggregates re-sync correctly: upsert semantics
+   for summed-per-day readings (same provider/metric/ts replaces on value change),
+   full-day query windows, display prefers the live resolver over frozen autofill copies.
+   (beta-notes §5; reinforced by the Cronometer screenshot 2026-07-16)
+2. **Photo upload compression [S].** Resize on upload (~2048px long edge, q0.8), original
+   stays local; bucket max-file-size guard. ~4x cloud cost cut. (round-3 §3)
+3. **P-04 dose-schedule anchoring [M].** Interval schedules anchor to startedAt +
+   N*interval; a logged dose completes the nearest slot; off-slot doses prompt
+   keep-schedule / shift-schedule / extra-dose. Never silently re-anchor. (ISSUES P-04)
+4. **P-05 skip-doses nudge, simple version [S/M].** N missed scheduled doses fires an
+   in-app notification deep-linking into Pepi chat asking why. Context-memory
+   integration upgrades it in Wave 3. (ISSUES P-05)
+
+## Wave 2: photo capture UX
+
+5. **Review-step rework [M].** Two steps: shot + big quality score + fixed
+   retake/continue bar (fixes actions-below-the-fold), then prefillable measurements.
+   Background-start analysis when quality clears threshold. (beta-notes §1.5)
+6. **Cycle prompt copy pass [S].** Water-retention attribution register ("consistent with
+   this point in your cycle"), suppress bloating-as-regression when phase data exists.
+   Edge-function deploy, no app build. (beta-notes §1.7 step 1)
+
+## Wave 3: companion pivot
+
+7. **Adaptive coaching level + indirect-guidance prompts [M].** observe/nudge/coach,
+   silently inferred, offer-only upward, settings override; prompt blocks per the
+   direct-lifestyle / observational-compound policy. (beta-notes §3.2, §3.6)
+8. **Micro check-ins + chat controls [M].** Morning/evening chat snippets, chips-first;
+   "ask me in an hour" snooze; "tone down notifications" and per-check-in
+   adjust/disable intents, always confirmed, never silent. (beta-notes §4)
+9. **Anomaly engine + context memory [M].** Deterministic deviation detectors, templated
+   openers, structured context notes, recurrence inference, and anomaly-tagged days
+   excluded/down-weighted from baselines. Upgrades P-05. (beta-notes §3.4)
+
+## Wave 4: compound intelligence + predictions (the differentiation wave)
+
+10. **market_category migration + shared posture module + eval suite [M].** Enum on
+    catalog + bundled mirror; posture gate extracted for reuse (edge fn now, MCP later);
+    the four boundary evals pass **before any compound info is exposed** (spec 05 gate).
+11. **Observational compound cards [M].** Commonly-reported ranges/timing/sides through
+    the posture gate + sourcing ladder (curated cited, labeled-unverified stopgap).
+12. **Per-compound attribution insights [M].** "Since starting X (week 4), sleep +0.8 vs
+    baseline," with competing-explanation ranking (deficit vs compound vs training), the
+    attribution ladder. (positioning §3.1, §5.1)
+13. **Expectation timelines [M].** Reported onset/peak/plateau curves vs the user's own.
+    (positioning §3.2)
+14. **TRAJ-1 trajectory line [M].** Recency-weighted slope, plateau detection, widening
+    uncertainty band; weightForecast unified onto the same math. (round-3 §7)
+15. **TRAJ-2 energy-balance calibration [M].** Personal TDEE from intake vs weight delta;
+    per-user device-bias factor; blended forecast; disagreement-as-insight; proactive
+    hooks (cheat-meal water weight, step drops). (round-3 §7)
+
+## Wave 5: training log + goal symmetry
+
+16. **Training log [M].** StrengthSession (tonnage, e1RM) + Benchmark (name/value/date)
+    via chat parse + detailed-log widget; coach-adjusted effort at nudge/coach level.
+    Sport-agnostic per the locked user rings. (round-3 §8; positioning §6)
+17. **Gain-goal measurement emphasis + FFMI band [M].** Multiple extra measurements for
+    gain goals; hedged FFMI range. (beta-notes §1.8)
+18. **Transition tracking v1 + SM-1 [M].** Conditional goal chip (mtf/ftm), surfaced
+    fields, direction-aware analysis block; plus the self-marketability pass (goal-first
+    onboarding + store copy, non-PED paths first-class). (beta-notes §1.9; round-3 §2)
+
+## Wave 6: photo reel + sharing
+
+19. **Reel phase 1 [M].** Multi-shot capture + camera-roll dump import + manual pose
+    chips + reel view grouped by label. Required check-ins stay locked to the four
+    relaxed poses; casual photos freeform. (beta-notes §1.3)
+20. **Reel phase 2 [M].** Haiku auto-classification + confirm chips; session tabs
+    removed. (beta-notes §1.1, §1.3)
+21. **Share cards [S/M].** Branded stat card first, then photo export with watermark
+    toggle in settings (off for photos, on for stat card); offered contextually after
+    milestones/highscores. (beta-notes §1.4)
+22. **Auto-crop via analysis bbox [S/M].** Torso crop box returned by analyze_photo,
+    display-only, originals untouched. (beta-notes §1.2)
+23. **Reel phase 3 [M/L].** Full timeline dump view, pose filters, per-pose ghost
+    references. (beta-notes §1.3)
+
+## Post-beta platform tracks (parallel, larger)
+
+- **A. Web workbench [L].** One codebase, capability-class responsive layouts (the
+  "Xbox test"), calendar-primary navigation, detailed-sheet retro editing incl. photo
+  upload, custom chart builder with pinned sync to phone. (round-3 §1, §9)
+- **B. Connectors [L].** One MCP server, OAuth 2.1/PKCE via Supabase Auth, two-way v1
+  (reads + connector_event inbox writes), straight at both directories, photos excluded.
+  (CONNECTORS-PLAN.md)
+- **C. Monetization implementation.** Paid-only: auto-converting trial (StoreKit iOS /
+  Stripe web), $19/mo + annual anchor; reconcile spec 12 + CLAUDE.md; trial-lapse
+  behavior decided when freemium comes off the backburner. (round-3 §9)
+- **D. HealthKit cycle read + Pepi cycle setup [M].** Category read to cycle metric;
+  conversational setup for non-trackers. (beta-notes §1.7 steps 2-3)
+
+## Deferred / backlog (unchanged from prior tiers)
+
+Lab-PDF parsing + vial scan (AI vision), Drive backup (OAuth), normalized per-entity
+sync engine + storage hardening, fonts/chamfer fidelity, Terra (~500 users), storage
+quotas (pricing-model dependent), progress overlay prototype (waits on owner sketch),
+narrative timeline (positioning §5.3), community cohort insights (needs aggregates + N
+thresholds), reptides/peptidebase outreach (held), per-region posture overrides (data
+mechanism reserved, unused).
+
+## Standing gates (every wave)
+
+Green gate (typecheck / lint / i18n parity 6 locales / tests / web export); no
+hardcoded strings; no em-dashes; trunk-based commit + push per completed chunk; surface
+the EAS command after each push; posture eval suite before compound-info exposure;
+flag native-rebuild requirements explicitly.

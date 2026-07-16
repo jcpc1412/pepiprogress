@@ -555,7 +555,7 @@ and the verdict.
 
 ---
 
-## 6. Priority map (recommended, not locked)
+## 6. Priority map (superseded 2026-07-16: ordering now lives in docs/MASTER-PLAN.md; kept for the rationale column)
 
 | # | Item | Effort | Why this slot |
 |---|---|---|---|

@@ -370,7 +370,7 @@ entry paths that already exist, coaching that rides chat.
 
 ---
 
-## 9. The plan (hardened 2026-07-16)
+## 9. The plan (hardened 2026-07-16; ordering merged into docs/MASTER-PLAN.md, which is now the authority)
 
 **Now / with current beta work:**
 1. Resize-on-upload photo compression + bucket size guard [S] (Q6).
