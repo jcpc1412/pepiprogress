@@ -305,6 +305,27 @@ Analysis tab first; the web chart builder inherits it).
 **Verdict tie-in:** `weightForecast` (days-to-target) switches to the same
 recency-weighted slope so the hero figure and the chart never disagree.
 
+**TRAJ-2: energy-balance calibration (owner-directed 2026-07-16) [M].** The owner's
+original note decoded: not Apple's predictions (none exist), but Apple's *data* (active
+energy burned, steps) feeding our prediction, with Apple's known exaggeration corrected
+against reality. That is a calibrated personal TDEE loop (the MacroFactor core mechanic,
+which we can run off the Health backdoor instead of a food logger):
+- **Personal TDEE estimator:** observed weight delta (in kcal, ~7700 kcal/kg) vs logged
+  intake over the trailing window solves for actual expenditure. No device estimate
+  needed once enough data exists.
+- **Calibration factor:** actual expenditure vs Apple's reported burn yields a per-user
+  bias multiplier ("your watch overreports by ~18%"), which is exactly the
+  "use their data as base, adjusted to match reality" the owner asked for.
+- **Blended forecast:** TRAJ-1's observed trend blended with the energy-balance
+  expectation (intake minus calibrated expenditure). Disagreement between the two is
+  itself a signal ("pace is slower than your logged deficit implies: likely underlogged
+  intake or adaptation").
+- **Proactive hooks:** intake spikes vs next-day weight bumps ("cheat-meal water weight,
+  expect it to pass"), step-count drops, strain vs recovery context. Feeds the anomaly
+  engine (beta-notes 3.4).
+- **Graceful degradation:** without intake data the forecast stays observed-trend-only
+  (TRAJ-1); the energy-balance layer activates only when nutrition + activity data flow.
+
 **Later (explicitly not in this scope):** per-compound expectation-timeline priors
 ("GLP-1 pace commonly decays after week N") once the compound-intelligence layer lands;
 the projection then blends prior + observed instead of observed-only.
