@@ -813,6 +813,19 @@
     "sourceLabel": "Comumente relatado na internet, não verificado.",
     "disclaimer": "Apenas educativo, não é aconselhamento médico e nunca uma recomendação pessoal."
   },
+  "attribution": {
+    "section": "Desde que você começou · semana {{weeks}}",
+    "metricLine": "{{metric}}: {{delta}} em relação à sua base anterior",
+    "leadCompound": "Melhor explicado pelo protocolo; nada mais mudou muito ao mesmo tempo.",
+    "leadNutrition": "Sua nutrição mudou ao mesmo tempo e provavelmente explica a maior parte.",
+    "leadTraining": "Seu treino mudou ao mesmo tempo e provavelmente explica a maior parte.",
+    "confidence": {
+      "low": "Confiança baixa",
+      "medium": "Confiança média",
+      "high": "Confiança alta"
+    },
+    "disclaimer": "Associação ao longo do tempo, não uma prova. O Pepi não consegue separar as causas com certeza."
+  },
   "weekdays": {
     "mon": "Seg",
     "tue": "Ter",

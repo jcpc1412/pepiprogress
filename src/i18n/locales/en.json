@@ -813,6 +813,19 @@
     "sourceLabel": "Commonly reported online, unverified.",
     "disclaimer": "Educational only, not medical advice and never a personal recommendation."
   },
+  "attribution": {
+    "section": "Since you started · week {{weeks}}",
+    "metricLine": "{{metric}}: {{delta}} vs your pre-start baseline",
+    "leadCompound": "Best explained by the protocol; nothing else shifted much at the same time.",
+    "leadNutrition": "Your nutrition shifted at the same time and likely explains most of this.",
+    "leadTraining": "Your training shifted at the same time and likely explains most of this.",
+    "confidence": {
+      "low": "Low confidence",
+      "medium": "Medium confidence",
+      "high": "High confidence"
+    },
+    "disclaimer": "Association over time, not proof. Pepi cannot separate causes with certainty."
+  },
   "weekdays": {
     "mon": "Mon",
     "tue": "Tue",

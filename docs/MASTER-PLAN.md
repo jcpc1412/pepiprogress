@@ -93,9 +93,13 @@ the settings override + quieter-only silent adjustment shipped).
     answer, kind-grouped facts with confidence pills, otc consult pointer, the
     labeled-unverified source line, disclaimer. Curated compound_fact rows + community
     weighting later per the sourcing ladder.
-14. **Per-compound attribution insights [M].** "Since starting X (week 4), sleep +0.8 vs
-    baseline," with competing-explanation ranking (deficit vs compound vs training), the
-    attribution ladder. (positioning §3.1, §5.1)
+14. **Per-compound attribution insights ✅ SHIPPED 2026-07-16.** `src/lib/attribution.ts`
+    (pure, 7 tests): per active protocol item, pre-start vs post-start window means for
+    the effect-tag-relevant outcome metrics, with competing-explanation ranking where the
+    compound's strength is the RESIDUAL after concurrent nutrition (intake) + training
+    (effort) shifts, so the deficit outranks the protocol when both moved (§5.1 ladder).
+    `AttributionCard` on the compound-detail screen: hedged per-metric lines, confidence
+    pill, lead-factor clause, association-not-proof disclaimer. i18n ×6.
 15. **Expectation timelines [M].** Reported onset/peak/plateau curves vs the user's own.
     (positioning §3.2)
 16. **Lab upload + AI parse [M].** Photo or PDF upload on the Logging surface (ISSUES

@@ -11,6 +11,7 @@ import { ThemedView } from '@/components/themed-view';
 import { useTheme } from '@/hooks/use-theme';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { compoundBySlug } from '@/data/compound-catalog';
+import { AttributionCard } from '@/features/protocol/attribution-card';
 import { CompoundInfoCard } from '@/features/protocol/compound-info-card';
 import { roundTo } from '@/lib/reconstitution';
 import { useStore, type DoseRoute, type Frequency, type InventoryItem } from '@/lib/store';
@@ -120,6 +121,9 @@ export function CompoundDetailScreen({ itemId, onClose }: { itemId: string; onCl
               }
             />
           </Card>
+
+          {/* Per-compound attribution (spec §3.1/§5.1, W4-14) */}
+          <AttributionCard slug={item.compoundSlug} />
 
           {/* Observational compound info (spec 05, W4-13) */}
           <CompoundInfoCard slug={item.compoundSlug} />

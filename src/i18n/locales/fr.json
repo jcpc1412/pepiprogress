@@ -813,6 +813,19 @@
     "sourceLabel": "Couramment rapporté en ligne, non vérifié.",
     "disclaimer": "Contenu éducatif uniquement, pas un avis médical ni une recommandation personnelle."
   },
+  "attribution": {
+    "section": "Depuis votre début · semaine {{weeks}}",
+    "metricLine": "{{metric}} : {{delta}} par rapport à votre base d'avant",
+    "leadCompound": "Mieux expliqué par le protocole ; rien d'autre n'a beaucoup changé au même moment.",
+    "leadNutrition": "Votre nutrition a changé au même moment et explique probablement l'essentiel.",
+    "leadTraining": "Votre entraînement a changé au même moment et explique probablement l'essentiel.",
+    "confidence": {
+      "low": "Confiance faible",
+      "medium": "Confiance moyenne",
+      "high": "Confiance élevée"
+    },
+    "disclaimer": "Association dans le temps, pas une preuve. Pepi ne peut pas séparer les causes avec certitude."
+  },
   "weekdays": {
     "mon": "Lun",
     "tue": "Mar",
