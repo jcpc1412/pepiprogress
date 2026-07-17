@@ -14,8 +14,7 @@
         "ITSAppUsesNonExemptEncryption": false,
         "NSCameraUsageDescription": "PepiProgress uses the camera so you can take consistent progress photos.",
         "NSMicrophoneUsageDescription": "Microphone access is required by the camera system.",
-        "NSPhotoLibraryUsageDescription": "PepiProgress can import existing progress photos to backdate your timeline.",
-        "ITSAppUsesNonExemptEncryption": false
+        "NSPhotoLibraryUsageDescription": "PepiProgress can import existing progress photos to backdate your timeline."
       }
     },
     "android": {
@@ -39,6 +38,14 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "minSdkVersion": 26
+          }
+        }
+      ],
       "expo-router",
       [
         "expo-splash-screen",
@@ -72,7 +79,8 @@
           "background": false
         }
       ],
-      "react-native-health-connect"
+      "react-native-health-connect",
+      "expo-build-properties"
     ],
     "experiments": {
       "typedRoutes": true,
