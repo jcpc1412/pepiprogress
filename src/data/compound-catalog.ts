@@ -2,6 +2,9 @@ import type { Enums } from '@/types/database';
 
 export type CompoundType = Enums<'compound_type'>;
 
+/** AI posture key (spec 05, locked 2026-07-12). Mirrors the DB enum. */
+export type MarketCategory = 'inoffensive' | 'otc' | 'grey' | 'controlled';
+
 /**
  * On-device copy of the compound catalog (mirrors supabase/seed.sql).
  *
@@ -20,6 +23,8 @@ export type CatalogCompound = {
   type: CompoundType;
   /** controlled=true => track-only, no AI dosing (spec 05/11). */
   controlled: boolean;
+  /** AI posture override; when absent, marketCategoryOf() derives it (spec 05). */
+  marketCategory?: MarketCategory;
   effectTags: string[];
   monitoringTags: string[];
   commonUses: string[];
@@ -1762,6 +1767,24 @@ export const COMPOUND_CATALOG: readonly CatalogCompound[] = [
 ];
 
 const BY_SLUG = new Map(COMPOUND_CATALOG.map((c) => [c.slug, c]));
+
+// AI-posture derivation (spec 05, W4-12). Mirrors the market_category migration:
+// controlled flag wins, a small explicit set is inoffensive/otc, everything else is
+// 'grey' (observational only). Strict-for-lenient is safe, so Rx-but-not-controlled
+// items (SERMs, AIs, metformin, rapamycin) and injectable supplement forms
+// deliberately stay grey.
+const INOFFENSIVE_SLUGS = new Set(['creatine']);
+const OTC_SLUGS = new Set(['nmn', 'berberine']);
+
+/** Resolve the AI posture category for a compound. Custom compounds (no catalog
+ *  row) default to 'grey': never direct guidance for something we can't identify. */
+export function marketCategoryOf(c: Pick<CatalogCompound, 'slug' | 'controlled' | 'marketCategory'>): MarketCategory {
+  if (c.controlled) return 'controlled';
+  if (c.marketCategory) return c.marketCategory;
+  if (INOFFENSIVE_SLUGS.has(c.slug)) return 'inoffensive';
+  if (OTC_SLUGS.has(c.slug)) return 'otc';
+  return 'grey';
+}
 
 /**
  * User-created compounds (O-04) live in the store, but pure consumers like

@@ -68,6 +68,7 @@ export type Database = {
           created_at: string
           effect_tags: string[]
           id: string
+          market_category: Database["public"]["Enums"]["market_category"]
           monitoring_tags: string[]
           slug: string
           type: Database["public"]["Enums"]["compound_type"]
@@ -81,6 +82,7 @@ export type Database = {
           created_at?: string
           effect_tags?: string[]
           id?: string
+          market_category?: Database["public"]["Enums"]["market_category"]
           monitoring_tags?: string[]
           slug: string
           type: Database["public"]["Enums"]["compound_type"]
@@ -94,6 +96,7 @@ export type Database = {
           created_at?: string
           effect_tags?: string[]
           id?: string
+          market_category?: Database["public"]["Enums"]["market_category"]
           monitoring_tags?: string[]
           slug?: string
           type?: Database["public"]["Enums"]["compound_type"]
@@ -671,6 +674,7 @@ export type Database = {
       integration_status: "pending" | "connected" | "disconnected" | "error"
       inventory_kind: "vial" | "consumable"
       lab_source: "manual" | "ai_parsed"
+      market_category: "inoffensive" | "otc" | "grey" | "controlled"
       photo_session: "face" | "body"
       protocol_status: "active" | "paused" | "ended"
       units_system: "metric" | "imperial"
@@ -823,6 +827,7 @@ export const Constants = {
       integration_status: ["pending", "connected", "disconnected", "error"],
       inventory_kind: ["vial", "consumable"],
       lab_source: ["manual", "ai_parsed"],
+      market_category: ["inoffensive", "otc", "grey", "controlled"],
       photo_session: ["face", "body"],
       protocol_status: ["active", "paused", "ended"],
       units_system: ["metric", "imperial"],

@@ -76,6 +76,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "i18n:check": "node scripts/check-i18n-keys.mjs",
+    "eval:posture": "node scripts/eval-posture.mjs",
     "gen:types": "supabase gen types typescript --project-id pjdbxnycrvibmebfumel > src/types/database.ts",
     "gen:types:local": "supabase gen types typescript --local > src/types/database.ts"
   },

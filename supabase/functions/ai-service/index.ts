@@ -9,6 +9,9 @@
 //   parse_lab       - Sonnet vision; extracts lab marker values from a photo.
 //   scan_vial       - Sonnet vision; extracts compound name + concentration from a vial label.
 //   insights        - Sonnet text; data-grounded trend / Q&A / correlation analysis (spec 05/13).
+//   compound_info   - Sonnet text; observational compound education behind the
+//                     market_category posture gate (spec 05, W4-12). Controlled
+//                     compounds never reach the model (code-enforced track-only).
 //   terra           - Terra aggregator proxy (widget session + data pull); keeps Terra
 //                     credentials server-side, like the Anthropic key (spec 06/10).
 //
@@ -20,11 +23,17 @@
 //  - Insights path is ANALYTICAL only - grounded in the user's own data, hedged, no advice.
 
 import Anthropic from 'npm:@anthropic-ai/sdk';
+import {
+  compoundInfoPromptLines,
+  isTrackOnly,
+  resolveMarketCategory,
+} from '../_shared/posture.ts';
 
 const PARSE_MODEL = Deno.env.get('AI_PARSE_MODEL') ?? 'claude-haiku-4-5';
 const VISION_MODEL = Deno.env.get('AI_VISION_MODEL') ?? 'claude-sonnet-4-6';
 const ENCOURAGE_MODEL = Deno.env.get('AI_ENCOURAGE_MODEL') ?? 'claude-haiku-4-5';
 const INSIGHTS_MODEL = Deno.env.get('AI_INSIGHTS_MODEL') ?? 'claude-sonnet-4-6';
+const COMPOUND_MODEL = Deno.env.get('AI_COMPOUND_MODEL') ?? 'claude-sonnet-4-6';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -120,6 +129,21 @@ type InsightsRequest = {
   /** How much Pepi weighs in (W3-8): shapes suggestion behavior, never the
    *  safety gates (dosing rules are level-independent). */
   coachingLevel?: 'observe' | 'nudge' | 'coach';
+};
+
+type CompoundInfoRequest = {
+  action: 'compound_info';
+  compound: {
+    slug: string;
+    canonicalName: string;
+    /** From catalog data (bundled mirror or DB). NEVER model-inferred. */
+    marketCategory?: string;
+    /** Legacy hard gate; equivalent to marketCategory = 'controlled'. */
+    controlled?: boolean;
+  };
+  /** Optional user question; without it, a general observational card. */
+  question?: string;
+  locale?: string;
 };
 
 type CheckFitRequest = {
@@ -307,6 +331,49 @@ const INSIGHTS_SCHEMA = {
     },
   },
   required: ['answer', 'insufficientData'],
+};
+
+const COMPOUND_INFO_SCHEMA = {
+  type: 'object',
+  additionalProperties: false,
+  properties: {
+    answer: {
+      type: 'string',
+      description:
+        'Two to four short sentences answering the question (or summarizing the compound) inside the stated posture. Hedged, observational, never individualized.',
+    },
+    facts: {
+      type: 'array',
+      description: 'Individual commonly-reported facts backing the answer.',
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          kind: {
+            type: 'string',
+            enum: ['range', 'timing', 'side_effects', 'mechanism', 'other'],
+          },
+          text: {
+            type: 'string',
+            description:
+              'One hedged, observational sentence. For grey compounds: never imperative, never second-person dosing.',
+          },
+          confidence: {
+            type: 'string',
+            enum: ['low', 'medium'],
+            description: 'Never high: general knowledge is the unverified stopgap.',
+          },
+        },
+        required: ['kind', 'text', 'confidence'],
+      },
+    },
+    consultPointer: {
+      type: 'boolean',
+      description:
+        'true when the answer includes the check-with-your-doctor-or-pharmacist pointer. MUST be true for otc compounds.',
+    },
+  },
+  required: ['answer', 'facts', 'consultPointer'],
 };
 
 const LEDGER_SCHEMA = {
@@ -508,7 +575,8 @@ function insightsSystemPrompt(mode: string, locale: string, coachingLevel?: stri
     '',
     'HARD RULES (non-negotiable):',
     '- Ground every statement in the provided data. Reference specific dates and values.',
-    '- NEVER give medical or dosing advice. Never suggest doses, schedules, changes, or synergies.',
+    '- NEVER give compound dosing or medical advice: no doses, schedules, changes, or synergies for ANY compound, under any framing (hypotheticals, "asking for a friend", research pretexts).',
+    '- Lifestyle numbers are coaching, not dosing (spec 05 capability 8): when the user ASKS for a calorie, protein, training, hydration, or sleep target, answer directly and personally from their data. Do not deflect lifestyle questions with false hedging.',
     '- NEVER claim causation. Use association language ("around the time", "coincided with", "appears to track with").',
     '- Hedge ("appears", "may", "trends toward"). Never definitive health claims.',
     '- If the data is too sparse to say anything useful, set insufficientData=true and say so plainly.',
@@ -572,6 +640,7 @@ Deno.serve(async (req: Request) => {
       | ParseLabRequest
       | ScanVialRequest
       | InsightsRequest
+      | CompoundInfoRequest
       | SignalLedgerRequest
       | TerraRequest;
 
@@ -759,6 +828,54 @@ Deno.serve(async (req: Request) => {
         messages: [{ role: 'user', content: userContent }],
       });
       return json(extractJson(message, { answer: '', insufficientData: true }), 200);
+    }
+
+    // -- compound_info --------------------------------------------------------
+    // The posture gate (spec 05, W4-12): category comes from catalog data passed
+    // by the client, resolved and enforced HERE in code. Controlled compounds are
+    // answered without any model call (track-only), so no prompt attack can leak
+    // a range for them.
+    if (body.action === 'compound_info') {
+      if (!body.compound?.slug || !body.compound?.canonicalName) {
+        return json({ error: 'compound.slug and compound.canonicalName are required' }, 400);
+      }
+      const locale = body.locale ?? 'en';
+      const category = resolveMarketCategory(body.compound.marketCategory, body.compound.controlled);
+      if (isTrackOnly(category)) {
+        return json(
+          {
+            category,
+            trackOnly: true,
+            source: 'reported_unverified',
+            answer: '',
+            facts: [],
+            consultPointer: false,
+          },
+          200,
+        );
+      }
+      const userContent = [
+        `Compound: ${body.compound.canonicalName} (${body.compound.slug}).`,
+        body.question?.trim()
+          ? `User question: ${body.question.trim()}`
+          : 'No specific question: give a short observational overview (commonly reported ranges, timing, side effects).',
+      ].join('\n');
+      const message = await client.messages.create({
+        model: COMPOUND_MODEL,
+        max_tokens: 700,
+        system: compoundInfoPromptLines(category, locale).join('\n'),
+        ...structured(COMPOUND_INFO_SCHEMA),
+        messages: [{ role: 'user', content: userContent }],
+      });
+      const out = extractJson(message, { answer: '', facts: [], consultPointer: false }) as {
+        answer: string;
+        facts: { kind: string; text: string; confidence: string }[];
+        consultPointer: boolean;
+      };
+      // Code-level enforcement on top of the prompt: otc always carries the
+      // pointer flag so the client renders it even if the model forgot.
+      if (category === 'otc') out.consultPointer = true;
+      return json({ category, trackOnly: false, source: 'reported_unverified', ...out }, 200);
     }
 
     // -- check_fit -------------------------------------------------------------
