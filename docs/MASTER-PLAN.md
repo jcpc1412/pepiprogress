@@ -26,9 +26,12 @@ Effort: [S] under a day, [M] days, [L] a week+.
 
 ---
 
-## Wave 1: data correctness + scheduling trust [all code-ready]
+## Wave 1: data correctness + scheduling trust ✅ SHIPPED 2026-07-16
 
 Fix the things that silently lie before building anything on top of them.
+All four landed on main (commits 3eb96a4, cfb93f7, 3580259, 0ca9b45); the
+nutrition-sync and schedule fixes need on-device verification with live Health
+data at the next device build.
 
 1. **Nutrition sync fix [S/M], P0.** Daily aggregates re-sync correctly: upsert semantics
    for summed-per-day readings (same provider/metric/ts replaces on value change),
