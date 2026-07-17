@@ -1000,5 +1000,17 @@
       "sleep": "¿Duermes casi lo mismo?"
     },
     "sleepDuration": "Duración del sueño"
+  },
+  "coaching": {
+    "section": "Acompañamiento",
+    "question": "¿Cuánto debería opinar Pepi?",
+    "observe": "Solo registrar",
+    "nudge": "Avísame",
+    "coach": "Entréname",
+    "hint": {
+      "observe": "Datos dentro, lecturas prudentes fuera. Sin sugerencias no pedidas.",
+      "nudge": "Pepi habla cuando algo se ve raro.",
+      "coach": "Objetivos, razones, seguimiento. Solo estilo de vida, nunca dosis."
+    }
   }
 }

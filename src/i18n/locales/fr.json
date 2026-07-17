@@ -1000,5 +1000,17 @@
       "sleep": "Vous dormez à peu près pareil ?"
     },
     "sleepDuration": "Durée du sommeil"
+  },
+  "coaching": {
+    "section": "Accompagnement",
+    "question": "À quel point Pepi doit-il intervenir ?",
+    "observe": "Juste noter",
+    "nudge": "Signale-moi",
+    "coach": "Coache-moi",
+    "hint": {
+      "observe": "Données en entrée, lectures prudentes en sortie. Aucune suggestion non sollicitée.",
+      "nudge": "Pepi intervient quand quelque chose semble anormal.",
+      "coach": "Objectifs, raisons, suivis. Mode de vie uniquement, jamais de dosage."
+    }
   }
 }

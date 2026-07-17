@@ -280,6 +280,9 @@ export async function runInsights(opts: {
   /** 'quick' runs the cheap model (Pepi chat fallback); 'deep' / omitted = the
    *  capable model (Analysis trends/correlations). */
   tier?: 'quick' | 'deep';
+  /** How much Pepi weighs in (W3-8): observe = no unsolicited suggestions,
+   *  nudge = default, coach = proactive lifestyle suggestions when relevant. */
+  coachingLevel?: 'observe' | 'nudge' | 'coach';
 }): Promise<InsightResult> {
   if (!isSupabaseConfigured) throw new AiNotConfiguredError();
   const { data, error } = await supabase.functions.invoke<InsightResult>('ai-service', {

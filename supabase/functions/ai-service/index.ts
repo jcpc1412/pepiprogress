@@ -115,6 +115,9 @@ type InsightsRequest = {
   /** 'quick' runs the cheap parse model (Pepi chat Q&A fallback, spec P-1); 'deep'
    *  or omitted uses the capable insights model (Analysis trends/correlations). */
   tier?: 'quick' | 'deep';
+  /** How much Pepi weighs in (W3-8): shapes suggestion behavior, never the
+   *  safety gates (dosing rules are level-independent). */
+  coachingLevel?: 'observe' | 'nudge' | 'coach';
 };
 
 type CheckFitRequest = {
@@ -473,16 +476,25 @@ function vialSystemPrompt(_locale: string): string {
   ].join('\n');
 }
 
-function insightsSystemPrompt(mode: string, locale: string): string {
+function insightsSystemPrompt(mode: string, locale: string, coachingLevel?: string): string {
   const modeLine =
     mode === 'trend'
       ? 'Focus: describe the notable TRENDS in the data over time (weight, wellness, energy, sleep, symptoms, integration metrics). What is moving, in which direction, how steadily.'
       : mode === 'correlation'
         ? "Focus: look for TEMPORAL ASSOCIATIONS - did anything in the data shift around the time a compound's protocol started, or around symptom clusters? Describe co-occurrence in time; never claim causation."
         : 'Focus: answer the user\'s question using ONLY their logged data.';
+  // Coaching level (W3-8, beta-notes 3.6): shapes SUGGESTION behavior only. The
+  // hard rules below (no dosing, no medical advice) are level-independent.
+  const coachingLine =
+    coachingLevel === 'observe'
+      ? 'COACHING LEVEL: observe. Answer exactly what is asked; give NO unsolicited suggestions, targets, or lifestyle advice. Hedged reads of the data only.'
+      : coachingLevel === 'coach'
+        ? 'COACHING LEVEL: coach. When the data supports it, add ONE proactive, personalized lifestyle suggestion (nutrition, training effort, cardio, recovery, sleep, hydration) tied to the user\'s goal, with a short reason. Lifestyle only: NEVER a compound, dose, or schedule suggestion.'
+        : 'COACHING LEVEL: nudge. If, and only if, something in the data looks clearly off or clearly working, you may add one gentle, goal-framed observation. No targets or plans unless asked. Lifestyle only: never a compound, dose, or schedule suggestion.';
   return [
     "You are a careful analyst of a single user's own self-tracked health data.",
     modeLine,
+    coachingLine,
     '',
     'You are given a compact JSON history of their check-ins, logged doses, symptoms,',
     'integration metric readings, protocol start dates, and progress-photo results',
@@ -739,7 +751,7 @@ Deno.serve(async (req: Request) => {
       const message = await client.messages.create({
         model: insightsModel,
         max_tokens: 900,
-        system: insightsSystemPrompt(mode, locale),
+        system: insightsSystemPrompt(mode, locale, body.coachingLevel),
         ...structured(INSIGHTS_SCHEMA),
         messages: [{ role: 'user', content: userContent }],
       });

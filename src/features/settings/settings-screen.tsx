@@ -12,6 +12,7 @@ import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { AccountSection } from '@/features/auth/account-section';
 import { AppearanceSettings } from '@/features/settings/appearance-settings';
+import { CoachingSettings } from '@/features/settings/coaching-settings';
 import { IntegrationSettings } from '@/features/settings/integration-settings';
 import { useStore } from '@/lib/store';
 
@@ -49,6 +50,7 @@ export function SettingsScreen({ onClose }: { onClose: () => void }) {
           </View>
 
           {/* Compact, inline controls. */}
+          <CoachingSettings />
           <AppearanceSettings />
           <IntegrationSettings />
 

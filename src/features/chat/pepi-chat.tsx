@@ -33,6 +33,7 @@ import { executeQuery } from '@/lib/ask/execute';
 import { matchQuery, SUGGESTED_QUERIES } from '@/lib/ask/intent';
 import type { Aggregation, PepiAnswer, PepiQuery, QueryMetric, Timeframe, UnitTag } from '@/lib/ask/types';
 import { AUTO_APPLY_CONFIDENCE, isResolvable } from '@/lib/quick-log-apply';
+import { useCoachingLevel } from '@/lib/use-coaching-level';
 import { daysBetween, formatDateKey, shiftDateKey } from '@/lib/dates';
 import { surfaceFields } from '@/lib/field-surfacing';
 import { localDateKey, useStore, type CheckinEntry, type PepiMessage } from '@/lib/store';
@@ -125,6 +126,9 @@ export function PepiChat() {
   const today = localDateKey();
   const router = useRouter();
   const verdict = useVerdict();
+  // How much Pepi weighs in (W3-8): user-set or silently inferred; shapes the
+  // insights prompt (observe = no unsolicited suggestions, coach = proactive).
+  const coachingLevel = useCoachingLevel();
   const tx = t as unknown as TFn;
   // Live per-metric chart series (P-2): a metric answer renders a sparkline from
   // the same facade series the charts use, re-derived at render (messages stay light).
@@ -525,6 +529,7 @@ export function PepiChat() {
             ),
             locale: lang,
             tier: 'quick',
+            coachingLevel,
           });
           if (res.answer.trim()) {
             addPepiMessage({ role: 'pepi', text: res.answer.trim(), variant: 'answer' });
@@ -576,6 +581,7 @@ export function PepiChat() {
         ),
         locale: lang,
         tier: 'quick',
+        coachingLevel,
       });
       const answer = res.answer.trim();
       addPepiMessage({

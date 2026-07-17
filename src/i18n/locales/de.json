@@ -1000,5 +1000,17 @@
       "sleep": "Schläfst du ungefähr gleich?"
     },
     "sleepDuration": "Schlafdauer"
+  },
+  "coaching": {
+    "section": "Begleitung",
+    "question": "Wie viel soll Pepi sich einbringen?",
+    "observe": "Nur erfassen",
+    "nudge": "Hinweise geben",
+    "coach": "Coach mich",
+    "hint": {
+      "observe": "Daten rein, vorsichtige Auswertungen raus. Keine ungefragten Vorschläge.",
+      "nudge": "Pepi meldet sich, wenn etwas auffällt.",
+      "coach": "Ziele, Gründe, Nachfassen. Nur Lifestyle, nie Dosierung."
+    }
   }
 }

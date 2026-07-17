@@ -294,6 +294,9 @@ export type LocalProfile = {
   /** User-defined custom "problem area" photo tracks within the body session
    *  (spec 04 §4A), e.g. ["belly", "thighs"]. */
   customPhotoParts?: string[];
+  /** How much Pepi weighs in (beta-notes §3.6): explicit user choice. Absent =
+   *  adaptively inferred (observe/nudge only; coach is never inferred). */
+  coachingLevel?: 'observe' | 'nudge' | 'coach';
   // M5 — local notification preferences (spec 06 reminders). Times are "HH:mm" 24h.
   notifyCheckinEnabled?: boolean;
   notifyCheckinTime?: string; // default "20:00"

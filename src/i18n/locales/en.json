@@ -1000,5 +1000,17 @@
       "sleep": "Sleep about the same?"
     },
     "sleepDuration": "Sleep duration"
+  },
+  "coaching": {
+    "section": "Coaching",
+    "question": "How much should Pepi weigh in?",
+    "observe": "Just log",
+    "nudge": "Nudge me",
+    "coach": "Coach me",
+    "hint": {
+      "observe": "Data in, hedged reads out. No unsolicited suggestions.",
+      "nudge": "Pepi speaks up when something looks off.",
+      "coach": "Targets, reasons, follow-ups. Lifestyle only, never dosing."
+    }
   }
 }
