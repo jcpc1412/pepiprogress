@@ -1043,5 +1043,22 @@
     "later": "Pregúntame en una hora",
     "done": "Registrado.",
     "snoozed": "Te preguntaré de nuevo en una hora."
+  },
+  "anomaly": {
+    "opener": {
+      "sleep_short": "¿Noche corta?",
+      "sleep_poor": "El sueño se vio raro",
+      "weight_jump": "El peso se movió rápido",
+      "workout_drop": "¿Sesión difícil?"
+    },
+    "ask": {
+      "sleep_short": "Dormiste bastante menos de lo habitual. ¿Pasó algo?",
+      "sleep_poor": "La calidad de sueño bajó frente a tu norma. ¿Qué pasó?",
+      "weight_jump": "El peso se movió más de lo habitual de un día a otro. ¿Algo inusual ayer? ¿Comida grande, viaje, sal tarde?",
+      "workout_drop": "Esa sesión quedó muy por debajo de tu norma. ¿Qué se interpuso?"
+    },
+    "thanks": "Anotado. Días así quedan fuera de tu línea base, para que un día raro no sesgue tu normal.",
+    "muteChip": "Deja de preguntar sobre esto",
+    "muted": "Entendido, dejaré de preguntar sobre eso. Tus datos se siguen registrando igual."
   }
 }

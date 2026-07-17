@@ -27,6 +27,7 @@ import {
 import type { InsightHistory } from '@/lib/ai';
 import type {
   CheckinEntry,
+  ContextNote,
   DoseEvent,
   LocalProfile,
   MetricReading,
@@ -45,6 +46,9 @@ export type FacadeInput = {
   symptomEvents: SymptomEvent[];
   doseEvents: DoseEvent[];
   profile: LocalProfile;
+  /** Context-memory notes (W3-10): explained days leave baselines; the notes
+   *  themselves ride into the AI history. Optional so callers adopt gradually. */
+  contextNotes?: ContextNote[];
 };
 
 const round1 = (v: number): number => Math.round(v * 10) / 10;
@@ -79,7 +83,7 @@ export function selectMetricDirections(
  *  Extracted from the Analysis ChartsSection so charts and any other consumer use
  *  identical series. Returns the protocol-start day keys for the markers too. */
 export function selectChartSeries(
-  input: Pick<FacadeInput, 'entries' | 'metricReadings' | 'protocolItems' | 'profile'>,
+  input: Pick<FacadeInput, 'entries' | 'metricReadings' | 'protocolItems' | 'profile' | 'contextNotes'>,
   today: string,
   opts?: { selectedIds?: string[]; window?: 'protocol' | { days: number } },
 ): { series: MetricSeries[]; startKeys: string[] } {
@@ -108,6 +112,9 @@ export function selectChartSeries(
     profile: input.profile,
     windowStart,
     windowEnd: today,
+    excludeDates: input.contextNotes?.length
+      ? new Set(input.contextNotes.map((n) => n.dateKey))
+      : undefined,
   });
   return { series, startKeys };
 }
@@ -210,7 +217,14 @@ function directionSuffix(dir: MetricFavourDir): string {
 export function buildInsightHistory(
   input: Pick<
     FacadeInput,
-    'entries' | 'metricReadings' | 'protocolItems' | 'profile' | 'doseEvents' | 'symptomEvents' | 'photos'
+    | 'entries'
+    | 'metricReadings'
+    | 'protocolItems'
+    | 'profile'
+    | 'doseEvents'
+    | 'symptomEvents'
+    | 'photos'
+    | 'contextNotes'
   >,
   today: string,
 ): InsightHistory {
@@ -268,6 +282,13 @@ export function buildInsightHistory(
       count: d.count,
       comparable: d.comparable,
       note: d.changeNote,
+    })),
+    // Context memory (W3-10): the user's own explanations of off days, so the
+    // model can attribute deviations instead of reasoning from raw numbers only.
+    context: (input.contextNotes ?? []).map((n) => ({
+      date: n.dateKey,
+      note: n.explanation,
+      metric: n.metric,
     })),
   };
 }

@@ -1043,5 +1043,22 @@
     "later": "Ask me in an hour",
     "done": "Logged.",
     "snoozed": "I'll ask again in an hour."
+  },
+  "anomaly": {
+    "opener": {
+      "sleep_short": "Short night?",
+      "sleep_poor": "Sleep looked off",
+      "weight_jump": "Weight moved fast",
+      "workout_drop": "Rough session?"
+    },
+    "ask": {
+      "sleep_short": "Sleep came in well under your usual. Anything going on?",
+      "sleep_poor": "Sleep quality dipped against your usual. What happened?",
+      "weight_jump": "Weight moved more than usual overnight. Anything unusual yesterday? Big meal, travel, late salt?",
+      "workout_drop": "That session rated well under your usual. What got in the way?"
+    },
+    "thanks": "Noted. Days like this stay out of your baseline, so one odd day never skews your normal.",
+    "muteChip": "Stop asking about this",
+    "muted": "Understood, I will stop asking about that. Your data still logs as usual."
   }
 }

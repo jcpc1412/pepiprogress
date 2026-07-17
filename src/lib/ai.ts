@@ -87,6 +87,8 @@ export type InsightHistory = {
   symptoms: { date: string; type: string; severity?: number }[];
   metrics: { date: string; metric: string; value: number; unit?: string }[];
   protocolStarts: { compound: string; startedAt: string }[];
+  /** Context-memory notes (W3-10): user explanations of off days. */
+  context?: { date: string; note: string; metric?: string }[];
   /** Photo-track digest (P-3) so the AI can see progress-photo results: latest
    *  capture per track + comparability + the hedged change note. */
   photos?: {

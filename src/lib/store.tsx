@@ -297,6 +297,8 @@ export type LocalProfile = {
   /** How much Pepi weighs in (beta-notes §3.6): explicit user choice. Absent =
    *  adaptively inferred (observe/nudge only; coach is never inferred). */
   coachingLevel?: 'observe' | 'nudge' | 'coach';
+  /** Anomaly kinds the user said "stop asking about" (W3-10). */
+  anomalyMuted?: string[];
   // M5 — local notification preferences (spec 06 reminders). Times are "HH:mm" 24h.
   notifyCheckinEnabled?: boolean;
   notifyCheckinTime?: string; // default "20:00"
@@ -319,10 +321,23 @@ export type LocalProfile = {
   typicalPromptState?: Partial<Record<TypicalGroup, TypicalPromptStatus>>;
 };
 
+/** A structured user explanation of an off day (beta-notes §3.4 context memory,
+ * W3-10): "ceramics class, dust, clogged nose". Future detector hits check these
+ * first, the insights prompt reads them, and explained days are excluded from
+ * rolling baselines so one weird day never drags the user's "normal". */
+export type ContextNote = {
+  id: string;
+  dateKey: string; // the day being explained (YYYY-MM-DD)
+  metric?: string; // affected metric/field, when known
+  explanation: string;
+  createdAt: string; // ISO
+};
+
 export type PersistedState = {
   version: 1;
   profile: LocalProfile;
   entries: Record<string, CheckinEntry>; // keyed by date
+  contextNotes: ContextNote[];
   symptomEvents: SymptomEvent[];
   protocolItems: ProtocolItem[];
   doseEvents: DoseEvent[];
@@ -365,6 +380,7 @@ const EMPTY_STATE: PersistedState = {
     removedFields: [],
   },
   entries: {},
+  contextNotes: [],
   symptomEvents: [],
   protocolItems: [],
   doseEvents: [],
@@ -395,6 +411,7 @@ type StoreContextValue = {
   ready: boolean;
   profile: LocalProfile;
   entries: Record<string, CheckinEntry>;
+  contextNotes: ContextNote[];
   symptomEvents: SymptomEvent[];
   protocolItems: ProtocolItem[];
   doseEvents: DoseEvent[];
@@ -418,6 +435,9 @@ type StoreContextValue = {
   addCustomCompound: (compound: CatalogCompound) => void;
   /** Create or update the check-in for a date (merge patch). */
   upsertCheckin: (date: string, patch: Partial<Omit<CheckinEntry, 'date' | 'updatedAt'>>) => void;
+  /** Store a context-memory note (W3-10); returns its id. */
+  addContextNote: (note: Omit<ContextNote, 'id' | 'createdAt'>) => string;
+  deleteContextNote: (id: string) => void;
   /** Returns the new event's id (so callers can offer undo). */
   addSymptomEvent: (event: Omit<SymptomEvent, 'id'>) => string;
   deleteSymptomEvent: (id: string) => void;
@@ -552,6 +572,19 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       }
       return { ...s, entries: { ...s.entries, [date]: next }, metricReadings };
     });
+  }, []);
+
+  const addContextNote = useCallback<StoreContextValue['addContextNote']>((note) => {
+    const id = uid();
+    setState((s) => ({
+      ...s,
+      contextNotes: [{ ...note, id, createdAt: new Date().toISOString() }, ...s.contextNotes],
+    }));
+    return id;
+  }, []);
+
+  const deleteContextNote = useCallback((id: string) => {
+    setState((s) => ({ ...s, contextNotes: s.contextNotes.filter((n) => n.id !== id) }));
   }, []);
 
   const addSymptomEvent = useCallback<StoreContextValue['addSymptomEvent']>((event) => {
@@ -855,6 +888,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       ready,
       profile: state.profile,
       entries: state.entries,
+      contextNotes: state.contextNotes,
       symptomEvents: state.symptomEvents,
       protocolItems: state.protocolItems,
       doseEvents: state.doseEvents,
@@ -874,6 +908,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       completeOnboarding,
       addCustomCompound,
       upsertCheckin,
+      addContextNote,
+      deleteContextNote,
       addSymptomEvent,
       deleteSymptomEvent,
       addProtocolItem,
@@ -912,6 +948,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       completeOnboarding,
       addCustomCompound,
       upsertCheckin,
+      addContextNote,
+      deleteContextNote,
       addSymptomEvent,
       deleteSymptomEvent,
       addProtocolItem,

@@ -121,6 +121,8 @@ export function mergeStates(local: PersistedState, cloud: PersistedState): Persi
     version: cloud.version ?? local.version,
     profile,
     entries,
+    // Context notes (W3-10) are id-keyed rows; union by id, local wins on ties.
+    contextNotes: mergeContextNotes(local.contextNotes ?? [], cloud.contextNotes ?? []),
     symptomEvents,
     protocolItems,
     doseEvents,
@@ -136,4 +138,14 @@ export function mergeStates(local: PersistedState, cloud: PersistedState): Persi
     // preferring local (the device the user is actively on).
     pepiMessages: local.pepiMessages?.length ? local.pepiMessages : (cloud.pepiMessages ?? []),
   };
+}
+
+/** Union context notes by id; the local copy wins on id collisions. */
+function mergeContextNotes(
+  local: PersistedState['contextNotes'],
+  cloud: PersistedState['contextNotes'],
+): PersistedState['contextNotes'] {
+  const byId = new Map(cloud.map((n) => [n.id, n]));
+  for (const n of local) byId.set(n.id, n);
+  return [...byId.values()].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
 }

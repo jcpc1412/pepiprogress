@@ -99,8 +99,10 @@ export function buildMetricSeries(opts: {
   profile: ChartProfile;
   windowStart?: string;
   windowEnd?: string;
+  /** Explained-anomalous day keys (W3-10): excluded from derived baselines. */
+  excludeDates?: Set<string>;
 }): MetricSeries[] {
-  const { selectedIds, entries, metricReadings, profile, windowStart, windowEnd } = opts;
+  const { selectedIds, entries, metricReadings, profile, windowStart, windowEnd, excludeDates } = opts;
 
   // Integration readings: metric → dateKey → value (most recent reading per day;
   // addMetricReadings stores newest-first, so the first write per day wins).
@@ -116,7 +118,7 @@ export function buildMetricSeries(opts: {
   const estMode = profile.estimatedMetricsMode ?? 'fill';
   const derived = estMode === 'off'
     ? null
-    : deriveMetrics(metricReadings, { dobISO: profile.dobISO, sex: profile.sex });
+    : deriveMetrics(metricReadings, { dobISO: profile.dobISO, sex: profile.sex }, excludeDates);
 
   const inWindow = (dk: string) =>
     (windowStart === undefined || dk >= windowStart) &&

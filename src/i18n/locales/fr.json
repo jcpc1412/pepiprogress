@@ -1043,5 +1043,22 @@
     "later": "Demande-moi dans une heure",
     "done": "Consigné.",
     "snoozed": "Je redemanderai dans une heure."
+  },
+  "anomaly": {
+    "opener": {
+      "sleep_short": "Nuit courte ?",
+      "sleep_poor": "Sommeil inhabituel",
+      "weight_jump": "Poids en mouvement rapide",
+      "workout_drop": "Séance difficile ?"
+    },
+    "ask": {
+      "sleep_short": "Le sommeil est bien en dessous de votre habitude. Quelque chose à signaler ?",
+      "sleep_poor": "La qualité de sommeil a chuté par rapport à votre norme. Que s'est-il passé ?",
+      "weight_jump": "Le poids a bougé plus que d'habitude en une nuit. Quelque chose d'inhabituel hier ? Gros repas, voyage, sel tardif ?",
+      "workout_drop": "Cette séance est bien en dessous de votre norme. Qu'est-ce qui a gêné ?"
+    },
+    "thanks": "Noté. Ces journées restent hors de votre base de référence : un jour étrange ne fausse jamais votre normale.",
+    "muteChip": "Ne plus demander",
+    "muted": "Compris, je ne poserai plus la question. Vos données continuent de s'enregistrer normalement."
   }
 }

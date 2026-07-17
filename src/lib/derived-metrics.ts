@@ -68,13 +68,16 @@ function dailySeries(
   return out;
 }
 
-function baselineZ(series: Map<string, number>, dateKey: string): number | null {
+function baselineZ(series: Map<string, number>, dateKey: string, excluded?: Set<string>): number | null {
   const today = series.get(dateKey);
   if (today === undefined) return null;
   const end = new Date(`${dateKey}T00:00:00.000Z`).getTime();
   const start = end - BASELINE_WINDOW_DAYS * DAY_MS;
   const prior: number[] = [];
   for (const [k, v] of series) {
+    // Explained-anomalous days (W3-10 context notes) are excluded so one weird
+    // day never drags the rolling "normal".
+    if (excluded?.has(k)) continue;
     const t = new Date(`${k}T00:00:00.000Z`).getTime();
     if (t < end && t >= start) prior.push(v);
   }
@@ -206,6 +209,8 @@ function trailingMean(series: Map<string, number>, dateKey: string, days: number
 export function deriveMetrics(
   readings: MetricReading[],
   profile: DerivedProfile,
+  /** Explained-anomalous day keys (W3-10): excluded from every rolling baseline. */
+  excludeDates?: Set<string>,
 ): Record<DerivedMetricKey, Map<string, DerivedPoint>> {
   const grouped = collect(readings);
 
@@ -266,13 +271,13 @@ export function deriveMetrics(
   const inflammation = new Map<string, DerivedPoint>();
 
   for (const dateKey of dates) {
-    const zHrv = baselineZ(hrv, dateKey);
-    const zRhr = baselineZ(rhr, dateKey);
-    const zResp = baselineZ(resp, dateKey);
-    const zTemp = baselineZ(temp, dateKey);
-    const zSleepDur = baselineZ(sleepDur, dateKey);
-    const zCal = baselineZ(calories, dateKey);
-    const zTrimpAcute = baselineZ(trimp, dateKey);
+    const zHrv = baselineZ(hrv, dateKey, excludeDates);
+    const zRhr = baselineZ(rhr, dateKey, excludeDates);
+    const zResp = baselineZ(resp, dateKey, excludeDates);
+    const zTemp = baselineZ(temp, dateKey, excludeDates);
+    const zSleepDur = baselineZ(sleepDur, dateKey, excludeDates);
+    const zCal = baselineZ(calories, dateKey, excludeDates);
+    const zTrimpAcute = baselineZ(trimp, dateKey, excludeDates);
 
     // ─── Existing three metrics ───────────────────────────────────────────────
 
@@ -314,7 +319,7 @@ export function deriveMetrics(
     // ─── Sleep architecture ───────────────────────────────────────────────────
 
     // z-score vs own baseline (personal deep% norm varies; self-comparison is honest)
-    const zDeep = baselineZ(sleepDeepPctSeries, dateKey);
+    const zDeep = baselineZ(sleepDeepPctSeries, dateKey, excludeDates);
     if (zDeep !== null) {
       sleepDeepPctOut.set(dateKey, {
         dateKey,
@@ -323,7 +328,7 @@ export function deriveMetrics(
       });
     }
 
-    const zRem = baselineZ(sleepRemPctSeries, dateKey);
+    const zRem = baselineZ(sleepRemPctSeries, dateKey, excludeDates);
     if (zRem !== null) {
       sleepRemPctOut.set(dateKey, {
         dateKey,

@@ -1043,5 +1043,22 @@
     "later": "Frag mich in einer Stunde",
     "done": "Erfasst.",
     "snoozed": "Ich frage in einer Stunde noch einmal."
+  },
+  "anomaly": {
+    "opener": {
+      "sleep_short": "Kurze Nacht?",
+      "sleep_poor": "Schlaf wirkte anders",
+      "weight_jump": "Gewicht sprang",
+      "workout_drop": "Zähe Einheit?"
+    },
+    "ask": {
+      "sleep_short": "Der Schlaf lag deutlich unter deinem Üblichen. Ist etwas los?",
+      "sleep_poor": "Die Schlafqualität fiel gegenüber deiner Norm ab. Was war los?",
+      "weight_jump": "Das Gewicht bewegte sich über Nacht stärker als üblich. Gestern etwas Ungewöhnliches? Großes Essen, Reise, spätes Salz?",
+      "workout_drop": "Diese Einheit lag weit unter deiner Norm. Was kam dazwischen?"
+    },
+    "thanks": "Notiert. Solche Tage bleiben außerhalb deiner Baseline, damit ein seltsamer Tag dein Normal nie verzerrt.",
+    "muteChip": "Nicht mehr nachfragen",
+    "muted": "Verstanden, ich frage dazu nicht mehr nach. Deine Daten werden weiter normal erfasst."
   }
 }

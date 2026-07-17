@@ -23,6 +23,7 @@ const state = (over: Partial<PersistedState> = {}): PersistedState => ({
   version: 1,
   profile: profile(over.profile),
   entries: {},
+  contextNotes: [],
   symptomEvents: [],
   protocolItems: [],
   doseEvents: [],

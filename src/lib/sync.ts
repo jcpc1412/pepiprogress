@@ -355,6 +355,8 @@ export async function pullFromCloud(userId: string): Promise<PersistedState | nu
     version: 1,
     profile,
     entries,
+    // Context notes ride the user_state snapshot only (not normalized tables).
+    contextNotes: [],
     symptomEvents,
     protocolItems,
     doseEvents,

@@ -43,6 +43,7 @@ import {
   type ChatControl,
   type MicroSlot,
 } from '@/lib/micro-checkin';
+import { detectAnomalies, type Anomaly } from '@/lib/anomaly';
 import { scheduleMicroSnooze } from '@/lib/notifications';
 import { localDateKey, useStore, type CheckinEntry, type PepiMessage } from '@/lib/store';
 import { isSupabaseConfigured } from '@/lib/supabase';
@@ -113,6 +114,8 @@ export function PepiChat() {
     addPepiMessage,
     clearPepiMessages,
     entries,
+    contextNotes,
+    addContextNote,
     doseEvents,
     metricReadings,
     symptomEvents,
@@ -159,6 +162,10 @@ export function PepiChat() {
   const [microFlow, setMicroFlow] = useState<{ slot: MicroSlot; fields: CheckinField[]; index: number } | null>(null);
   // Snoozed/dismissed this session: hides the opener chip until the next visit.
   const [microHidden, setMicroHidden] = useState<Set<MicroSlot>>(new Set());
+  // Anomaly opener (W3-10, beta-notes §3.4): a deterministic detector fired and
+  // Pepi is waiting for the user's explanation (the next message is captured).
+  const [anomalyCapture, setAnomalyCapture] = useState<Anomaly | null>(null);
+  const [anomalyHidden, setAnomalyHidden] = useState(false);
   const [undoableIds, setUndoableIds] = useState<Set<string>>(new Set());
   const [undoneIds, setUndoneIds] = useState<Set<string>>(new Set());
   const undoMap = useRef<Map<string, () => void>>(new Map());
@@ -506,6 +513,35 @@ export function PepiChat() {
     });
   };
 
+  // ── Anomaly opener (W3-10): detection is deterministic + free; AI only ever
+  // handles the conversation after the user replies. Explained days (context
+  // notes) neither re-fire nor pollute the rolling baselines.
+  const todayAnomaly = useMemo<Anomaly | null>(() => {
+    const excluded = new Set(contextNotes.map((n) => n.dateKey));
+    const muted = new Set(profile.anomalyMuted ?? []);
+    const hits = detectAnomalies({ entries, metricReadings, todayKey: today, excludedDates: excluded });
+    return hits.find((a) => !muted.has(a.kind)) ?? null;
+  }, [contextNotes, entries, metricReadings, today, profile.anomalyMuted]);
+
+  const startAnomalyCapture = () => {
+    if (!todayAnomaly) return;
+    addPepiMessage({
+      role: 'pepi',
+      text: t(`anomaly.ask.${todayAnomaly.kind}` as 'anomaly.ask.sleep_short'),
+      variant: 'answer',
+    });
+    setAnomalyCapture(todayAnomaly);
+  };
+
+  const muteAnomaly = () => {
+    const kind = anomalyCapture?.kind ?? todayAnomaly?.kind;
+    if (!kind) return;
+    store.setProfile({ anomalyMuted: [...(profile.anomalyMuted ?? []), kind] });
+    setAnomalyCapture(null);
+    setAnomalyHidden(true);
+    addPepiMessage({ role: 'pepi', text: t('anomaly.muted'), variant: 'hint' });
+  };
+
   const startTypicalSetup = (group: TypicalGroup) => {
     addPepiMessage({ role: 'pepi', text: t(`typical.ask.${group}` as 'typical.ask.nutrition'), variant: 'answer' });
     setTypicalSetup({ group, step: 'confirm' });
@@ -559,6 +595,19 @@ export function PepiChat() {
           variant: 'hint',
         });
       }
+      return;
+    }
+
+    // Anomaly explanation capture (W3-10): the reply to an anomaly opener is
+    // stored as a structured context note, not routed to the parser.
+    if (anomalyCapture) {
+      addPepiMessage({ role: 'user', text: input });
+      setText('');
+      setSelection(undefined);
+      addContextNote({ dateKey: anomalyCapture.dateKey, metric: anomalyCapture.metric, explanation: input });
+      addPepiMessage({ role: 'pepi', text: t('anomaly.thanks'), variant: 'log' });
+      setAnomalyCapture(null);
+      setAnomalyHidden(true);
       return;
     }
 
@@ -655,7 +704,7 @@ export function PepiChat() {
             mode: 'qa',
             question: input,
             history: buildInsightHistory(
-              { entries, metricReadings, protocolItems, doseEvents, symptomEvents, profile, photos },
+              { entries, metricReadings, protocolItems, doseEvents, symptomEvents, profile, photos, contextNotes },
               today,
             ),
             locale: lang,
@@ -707,7 +756,7 @@ export function PepiChat() {
       const res = await runInsights({
         mode: 'correlation',
         history: buildInsightHistory(
-          { entries, metricReadings, protocolItems, doseEvents, symptomEvents, profile, photos },
+          { entries, metricReadings, protocolItems, doseEvents, symptomEvents, profile, photos, contextNotes },
           today,
         ),
         locale: lang,
@@ -813,7 +862,10 @@ export function PepiChat() {
 
         {!keyboardUp && (
         <View style={styles.chips}>
-          {microFlow ? (
+          {anomalyCapture ? (
+            // While waiting for the explanation: an instantly-available way out.
+            <OptionChip label={t('anomaly.muteChip')} selected={false} onPress={muteAnomaly} />
+          ) : microFlow ? (
             // Micro check-in answer chips (W3-9): 1-5 + skip + "ask me in an hour".
             <>
               {[1, 2, 3, 4, 5].map((v) => (
@@ -829,6 +881,13 @@ export function PepiChat() {
             </>
           ) : (
             <>
+              {todayAnomaly && !anomalyHidden ? (
+                <OptionChip
+                  label={t(`anomaly.opener.${todayAnomaly.kind}` as 'anomaly.opener.sleep_short')}
+                  selected={false}
+                  onPress={startAnomalyCapture}
+                />
+              ) : null}
               {microPending && !microHidden.has(microPending.slot) ? (
                 <OptionChip
                   label={t(`micro.opener.${microPending.slot}` as 'micro.opener.morning')}

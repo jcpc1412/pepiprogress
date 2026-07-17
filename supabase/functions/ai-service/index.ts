@@ -103,6 +103,8 @@ type InsightHistory = {
   symptoms: { date: string; type: string; severity?: number }[];
   metrics: { date: string; metric: string; value: number; unit?: string }[];
   protocolStarts: { compound: string; startedAt: string }[];
+  /** Context-memory notes (W3-10): the user's own explanations of off days. */
+  context?: { date: string; note: string; metric?: string }[];
   photos?: { track: string; date: string; count: number; comparable?: boolean; note?: string }[];
 };
 
@@ -742,6 +744,7 @@ Deno.serve(async (req: Request) => {
           metrics: h.metrics.slice(0, 300),
           protocolStarts: h.protocolStarts,
           photos: (h.photos ?? []).slice(0, 40),
+          context: (h.context ?? []).slice(0, 60),
         }),
       ].join('\n');
 
