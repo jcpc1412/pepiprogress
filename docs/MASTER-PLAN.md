@@ -82,9 +82,11 @@ the settings override + quieter-only silent adjustment shipped).
 
 ## Wave 4: compound intelligence + predictions (the differentiation wave)
 
-12. **market_category migration + shared posture module + eval suite [M].** Enum on
-    catalog + bundled mirror; posture gate extracted for reuse (edge fn now, MCP later);
-    the four boundary evals pass **before any compound info is exposed** (spec 05 gate).
+12. **market_category migration + shared posture module + eval suite ✅ SHIPPED 2026-07-16**
+    (commit 0dd845f). Migration 20260717032638 applied; `_shared/posture.ts` reused by
+    ai-service v20 (deployed) and the MCP connector later; `compound_info` action with
+    code-enforced track-only for controlled; `npm run eval:posture` = 4/4 PASS against
+    the deployed prompt + model pair. Re-run the evals on any model or prompt change.
 13. **Observational compound cards [M].** Commonly-reported ranges/timing/sides through
     the posture gate + sourcing ladder (curated cited, labeled-unverified stopgap).
 14. **Per-compound attribution insights [M].** "Since starting X (week 4), sleep +0.8 vs
