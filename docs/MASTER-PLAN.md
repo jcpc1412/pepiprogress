@@ -51,8 +51,8 @@ data at the next device build.
 5. **Review-step rework ✅** (commit a6a9b0f). Two steps, fixed footers, big score,
    save-on-continue warms the instant read, last-time measurement prefill.
 6. **Cycle prompt copy pass ✅** (commit ed98b87). Attribution register + regression
-   suppression in analyze_photo and simple_analysis. ⚠️ Edge function edited but NOT
-   deployed: run the ai-service deploy once the Supabase MCP is re-authorized.
+   suppression in analyze_photo and simple_analysis. Deployed as ai-service v18
+   (2026-07-16); progress-photos bucket also got its 10MB file_size_limit.
 7. **Fonts ✅** (found already shipped in a prior session: `@expo-google-fonts` +
    useFonts gate + weight-to-family map + web CSS vars). Chamfers also already exist
    (`src/components/chamfer.tsx`); the stale "deferred" notes were corrected.
