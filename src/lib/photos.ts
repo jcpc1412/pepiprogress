@@ -1,10 +1,48 @@
 import { Directory, File, Paths } from 'expo-file-system';
+import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import { useEffect, useState } from 'react';
 
 import { supabase } from '@/lib/supabase';
 import type { PhotoEntry } from '@/lib/store';
 
 const BUCKET = 'progress-photos';
+
+/** Cloud upload size policy (master-plan W1-2). The full-res original stays on
+ *  device; the cloud copy is a ~2048px-long-edge JPEG (plenty for cross-device
+ *  display + AI analysis, which downscales further to 768px anyway). Cuts
+ *  storage + egress roughly 4x vs uploading raw camera output. */
+const UPLOAD_MAX_EDGE = 2048;
+const UPLOAD_QUALITY = 0.8;
+/** Hard client-side guard so a pathological image can never blow up the bucket. */
+const UPLOAD_MAX_BYTES = 10 * 1024 * 1024;
+
+/**
+ * Renders a display-quality JPEG for upload: long edge capped at
+ * {@link UPLOAD_MAX_EDGE}, never upscaled. Falls back to the original URI if
+ * manipulation fails — an oversized upload beats a failed one.
+ */
+async function compressForUpload(uri: string): Promise<string> {
+  try {
+    const probe = await ImageManipulator.manipulate(uri).renderAsync();
+    const long = Math.max(probe.width, probe.height);
+    if (long > UPLOAD_MAX_EDGE) {
+      const scale = UPLOAD_MAX_EDGE / long;
+      const ctx = ImageManipulator.manipulate(uri);
+      ctx.resize({
+        width: Math.round(probe.width * scale),
+        height: Math.round(probe.height * scale),
+      });
+      const rendered = await ctx.renderAsync();
+      const out = await rendered.saveAsync({ format: SaveFormat.JPEG, compress: UPLOAD_QUALITY });
+      return out.uri;
+    }
+    // Already small enough — still re-encode at q0.8 to normalize oversized encodings.
+    const out = await probe.saveAsync({ format: SaveFormat.JPEG, compress: UPLOAD_QUALITY });
+    return out.uri;
+  } catch {
+    return uri;
+  }
+}
 
 /**
  * Copies a photo from the camera's evictable cache to the app's persistent
@@ -31,8 +69,12 @@ export async function uploadPhotoToCloud(
   photoId: string,
 ): Promise<string> {
   const path = `${userId}/${photoId}.jpg`;
-  const response = await fetch(localUri);
+  const uploadUri = await compressForUpload(localUri);
+  const response = await fetch(uploadUri);
   const blob = await response.blob();
+  if (blob.size > UPLOAD_MAX_BYTES) {
+    throw new Error(`photo exceeds upload cap (${blob.size} > ${UPLOAD_MAX_BYTES} bytes)`);
+  }
   const { error } = await supabase.storage
     .from(BUCKET)
     .upload(path, blob, { contentType: 'image/jpeg', upsert: true });
