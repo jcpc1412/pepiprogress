@@ -46,17 +46,16 @@ data at the next device build.
    in-app notification deep-linking into Pepi chat asking why. Context-memory
    integration upgrades it in Wave 3. (ISSUES P-05)
 
-## Wave 2: photo capture UX
+## Wave 2: photo capture UX ✅ SHIPPED 2026-07-16
 
-5. **Review-step rework [M].** Two steps: shot + big quality score + fixed
-   retake/continue bar (fixes actions-below-the-fold), then prefillable measurements.
-   Background-start analysis when quality clears threshold. (beta-notes §1.5)
-6. **Cycle prompt copy pass [S].** Water-retention attribution register ("consistent with
-   this point in your cycle"), suppress bloating-as-regression when phase data exists.
-   Edge-function deploy, no app build. (beta-notes §1.7 step 1)
-7. **Fonts [S].** IBM Plex Mono + Inter via `@expo-google-fonts/*` with a
-   weight-to-family map in `themed-text`; tokens already swappable. Chamfer fidelity
-   (react-native-svg) stays deferred.
+5. **Review-step rework ✅** (commit a6a9b0f). Two steps, fixed footers, big score,
+   save-on-continue warms the instant read, last-time measurement prefill.
+6. **Cycle prompt copy pass ✅** (commit ed98b87). Attribution register + regression
+   suppression in analyze_photo and simple_analysis. ⚠️ Edge function edited but NOT
+   deployed: run the ai-service deploy once the Supabase MCP is re-authorized.
+7. **Fonts ✅** (found already shipped in a prior session: `@expo-google-fonts` +
+   useFonts gate + weight-to-family map + web CSS vars). Chamfers also already exist
+   (`src/components/chamfer.tsx`); the stale "deferred" notes were corrected.
 
 ## Wave 3: companion pivot
 
@@ -155,9 +154,9 @@ data at the next device build.
 
 ## Deferred / backlog
 
-Vial scan (AI vision; split from lab parsing, which is now item 15), normalized
-per-entity sync engine + storage hardening, chamfer fidelity (true 45 degree chamfers
-need react-native-svg), Terra (~500 users), storage quotas (pricing-model dependent),
+Vial scan (AI vision; split from lab parsing, which is now item 16), normalized
+per-entity sync engine + storage hardening, Terra (~500 users), storage quotas
+(pricing-model dependent),
 community cohort insights (needs aggregates + N thresholds), reptides/peptidebase
 outreach (held), per-region posture overrides (data mechanism reserved, unused).
 
