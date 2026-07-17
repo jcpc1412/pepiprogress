@@ -300,6 +300,9 @@ export type LocalProfile = {
   // M5 — local notification preferences (spec 06 reminders). Times are "HH:mm" 24h.
   notifyCheckinEnabled?: boolean;
   notifyCheckinTime?: string; // default "20:00"
+  /** Morning micro check-in (beta-notes §4.1): a second scheduled chat moment. */
+  notifyMorningEnabled?: boolean;
+  notifyMorningTime?: string; // default "08:30"
   notifyDosesEnabled?: boolean;
   notifyDoseTime?: string; // default "09:00"
   notifyInventoryEnabled?: boolean;

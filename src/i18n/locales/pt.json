@@ -548,7 +548,11 @@
     "typicalBodyNutrition": "Comes mais ou menos o mesmo na maioria dos dias? Um toque podia preencher a tua nutrição.",
     "typicalBodySleep": "Dormes mais ou menos o mesmo na maioria das noites? Um toque podia preencher o teu sono.",
     "skippedTitle": "Algumas doses sem registro",
-    "skippedBody": "{{compound}}: as últimas {{count}} doses programadas não têm registro. Acabou, efeitos colaterais ou uma pausa planejada? Conte ao Pepi."
+    "skippedBody": "{{compound}}: as últimas {{count}} doses programadas não têm registro. Acabou, efeitos colaterais ou uma pausa planejada? Conte ao Pepi.",
+    "morning": "Checagem da manhã",
+    "morningTitle": "Checagem da manhã",
+    "morningBody": "Leitura rápida: como você dormiu?",
+    "snoozeBody": "Quando você quiser."
   },
   "cycle": {
     "section": "CICLO MENSTRUAL",
@@ -917,7 +921,23 @@
     "photoNone": "Ainda não há fotos de progresso. Tira uma no separador Fotos.",
     "viewTrend": "Ver na Análise",
     "chipMovedTogether": "O que mudou junto?",
-    "movedNone": "Ainda não há dados suficientes para ver o que se move junto."
+    "movedNone": "Ainda não há dados suficientes para ver o que se move junto.",
+    "ctl": {
+      "turnedOff": {
+        "morning": "Checagem da manhã desativada. Reative em Ajustes, Notificações.",
+        "evening": "Checagem da noite desativada. Reative em Ajustes, Notificações."
+      },
+      "turnedOn": {
+        "morning": "Checagem da manhã ativada.",
+        "evening": "Checagem da noite ativada."
+      },
+      "turnedOffMacros": "Lembrete de macros desativado. Fica em Ajustes, Notificações.",
+      "alreadyQuiet": "As notificações já estão no mínimo. O resto fica em Ajustes, Notificações.",
+      "moved": {
+        "morning": "Checagem da manhã movida para {{time}}.",
+        "evening": "Checagem da noite movida para {{time}}."
+      }
+    }
   },
   "analysis": {
     "heading": "Análise"
@@ -1012,5 +1032,16 @@
       "nudge": "O Pepi fala quando algo parece estranho.",
       "coach": "Metas, razões, acompanhamento. Só estilo de vida, nunca doses."
     }
+  },
+  "micro": {
+    "opener": {
+      "morning": "Checagem da manhã",
+      "evening": "Checagem da noite"
+    },
+    "ask": "Leitura rápida: {{field}}, de 1 a 5?",
+    "skip": "Pular",
+    "later": "Pergunte em uma hora",
+    "done": "Registrado.",
+    "snoozed": "Pergunto de novo em uma hora."
   }
 }

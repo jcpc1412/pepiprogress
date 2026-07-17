@@ -41,6 +41,7 @@ export function NotificationManager() {
 
   const anyEnabled =
     !!profile.notifyCheckinEnabled ||
+    !!profile.notifyMorningEnabled ||
     !!profile.notifyDosesEnabled ||
     !!profile.notifyInventoryEnabled ||
     !!profile.notifyPhotosEnabled ||
@@ -59,6 +60,8 @@ export function NotificationManager() {
   const scheduleKey = JSON.stringify({
     c: profile.notifyCheckinEnabled,
     ct: profile.notifyCheckinTime,
+    mo: profile.notifyMorningEnabled,
+    mot: profile.notifyMorningTime,
     d: profile.notifyDosesEnabled,
     dt: profile.notifyDoseTime,
     m: profile.notifyMacrosEnabled,

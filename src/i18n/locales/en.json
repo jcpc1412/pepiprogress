@@ -548,7 +548,11 @@
     "typicalBodyNutrition": "Do you eat about the same most days? One tap could fill in your nutrition.",
     "typicalBodySleep": "Do you sleep about the same most nights? One tap could fill in your sleep.",
     "skippedTitle": "A few doses went unlogged",
-    "skippedBody": "{{compound}}: the last {{count}} scheduled doses have no log. Ran out, side effects, or a planned break? Tell Pepi."
+    "skippedBody": "{{compound}}: the last {{count}} scheduled doses have no log. Ran out, side effects, or a planned break? Tell Pepi.",
+    "morning": "Morning check-in",
+    "morningTitle": "Morning check",
+    "morningBody": "A quick read: how did you sleep?",
+    "snoozeBody": "Ready when you are."
   },
   "cycle": {
     "section": "CYCLE TRACKING",
@@ -917,7 +921,23 @@
     "photoNone": "No progress photos yet. Take one from the Photos tab.",
     "viewTrend": "View in Analysis",
     "chipMovedTogether": "What moved together?",
-    "movedNone": "Not enough logged yet to see what moves together."
+    "movedNone": "Not enough logged yet to see what moves together.",
+    "ctl": {
+      "turnedOff": {
+        "morning": "Turned off the morning check-in. You can turn it back on in Settings, Notifications.",
+        "evening": "Turned off the evening check-in. You can turn it back on in Settings, Notifications."
+      },
+      "turnedOn": {
+        "morning": "Morning check-in is on.",
+        "evening": "Evening check-in is on."
+      },
+      "turnedOffMacros": "Turned off the end-of-day macro reminder. It lives in Settings, Notifications.",
+      "alreadyQuiet": "Notifications are already at the minimum. Anything else lives in Settings, Notifications.",
+      "moved": {
+        "morning": "Moved the morning check-in to {{time}}.",
+        "evening": "Moved the evening check-in to {{time}}."
+      }
+    }
   },
   "analysis": {
     "heading": "Analysis"
@@ -1012,5 +1032,16 @@
       "nudge": "Pepi speaks up when something looks off.",
       "coach": "Targets, reasons, follow-ups. Lifestyle only, never dosing."
     }
+  },
+  "micro": {
+    "opener": {
+      "morning": "Morning check",
+      "evening": "Evening check"
+    },
+    "ask": "Quick read: {{field}}, 1 to 5?",
+    "skip": "Skip",
+    "later": "Ask me in an hour",
+    "done": "Logged.",
+    "snoozed": "I'll ask again in an hour."
   }
 }

@@ -23,6 +23,7 @@ import {
 const isWeb = Platform.OS === 'web';
 
 const DEFAULT_CHECKIN_TIME = '20:00';
+const DEFAULT_MORNING_TIME = '08:30';
 const DEFAULT_DOSE_TIME = '09:00';
 const DEFAULT_MACRO_TIME = '20:30';
 
@@ -104,8 +105,31 @@ export async function rescheduleReminders(profile: LocalProfile, hasScheduledDos
   await Notifications.cancelAllScheduledNotificationsAsync();
 
   if (profile.notifyCheckinEnabled) {
-    await scheduleDaily('pepi.checkin', profile.notifyCheckinTime ?? DEFAULT_CHECKIN_TIME, DEFAULT_CHECKIN_TIME,
-      'notify.checkinTitle', 'notify.checkinBody');
+    // The evening moment (beta-notes §4.1): deep-links into Pepi chat where the
+    // micro check-in chips are waiting, instead of a dead-end reminder.
+    const { hour, minute } = parseHM(profile.notifyCheckinTime, DEFAULT_CHECKIN_TIME);
+    await Notifications.scheduleNotificationAsync({
+      identifier: 'pepi.checkin',
+      content: {
+        title: t('notify.checkinTitle'),
+        body: t('notify.checkinBody'),
+        data: { kind: 'micro', slot: 'evening' },
+      },
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour, minute },
+    });
+  }
+  if (profile.notifyMorningEnabled) {
+    // The morning moment (beta-notes §4.1).
+    const { hour, minute } = parseHM(profile.notifyMorningTime, DEFAULT_MORNING_TIME);
+    await Notifications.scheduleNotificationAsync({
+      identifier: 'pepi.morning',
+      content: {
+        title: t('notify.morningTitle'),
+        body: t('notify.morningBody'),
+        data: { kind: 'micro', slot: 'morning' },
+      },
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour, minute },
+    });
   }
   if (profile.notifyDosesEnabled && hasScheduledDoses) {
     await scheduleDaily('pepi.doses', profile.notifyDoseTime ?? DEFAULT_DOSE_TIME, DEFAULT_DOSE_TIME,
@@ -149,6 +173,25 @@ export async function notifyTypicalPrompt(group: string): Promise<boolean> {
       data: { kind: 'typical', group },
     },
     trigger: null, // immediate; once-ever per group by design
+  });
+  return true;
+}
+
+/** "Ask me in an hour" (beta-notes §4.2): reschedule the active micro check-in
+ *  as a one-shot. No-op on web. */
+export async function scheduleMicroSnooze(slot: 'morning' | 'evening'): Promise<boolean> {
+  if (isWeb) return false;
+  await Notifications.scheduleNotificationAsync({
+    identifier: `pepi.micro.snooze.${slot}`,
+    content: {
+      title: t('notify.checkinTitle'),
+      body: t('notify.snoozeBody'),
+      data: { kind: 'micro', slot },
+    },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.DATE,
+      date: new Date(Date.now() + 60 * 60 * 1000),
+    },
   });
   return true;
 }

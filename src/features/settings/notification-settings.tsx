@@ -53,6 +53,21 @@ export function NotificationSettings() {
           </ThemedText>
 
           <ToggleRow
+            label={t('notify.morning')}
+            value={!!profile.notifyMorningEnabled}
+            onChange={(v) => setProfile({ notifyMorningEnabled: v })}
+          />
+          {profile.notifyMorningEnabled && (
+            <LabeledInput
+              label={t('notify.time')}
+              placeholder="08:30"
+              value={profile.notifyMorningTime ?? '08:30'}
+              onChangeText={(v) => setProfile({ notifyMorningTime: v })}
+            />
+          )}
+
+          <Divider />
+          <ToggleRow
             label={t('notify.checkin')}
             value={!!profile.notifyCheckinEnabled}
             onChange={(v) => setProfile({ notifyCheckinEnabled: v })}

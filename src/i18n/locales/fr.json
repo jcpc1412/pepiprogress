@@ -548,7 +548,11 @@
     "typicalBodyNutrition": "Mangez-vous à peu près pareil la plupart des jours ? Un geste pourrait remplir votre nutrition.",
     "typicalBodySleep": "Dormez-vous à peu près pareil la plupart des nuits ? Un geste pourrait remplir votre sommeil.",
     "skippedTitle": "Des doses non consignées",
-    "skippedBody": "{{compound}} : les {{count}} dernières doses prévues ne sont pas consignées. Rupture de stock, effets secondaires ou pause prévue ? Dites-le à Pepi."
+    "skippedBody": "{{compound}} : les {{count}} dernières doses prévues ne sont pas consignées. Rupture de stock, effets secondaires ou pause prévue ? Dites-le à Pepi.",
+    "morning": "Point du matin",
+    "morningTitle": "Point du matin",
+    "morningBody": "Lecture rapide : comment avez-vous dormi ?",
+    "snoozeBody": "Quand vous voulez."
   },
   "cycle": {
     "section": "SUIVI DU CYCLE",
@@ -917,7 +921,23 @@
     "photoNone": "Pas encore de photos de progression. Prenez-en une dans l'onglet Photos.",
     "viewTrend": "Voir dans Analyse",
     "chipMovedTogether": "Qu’est-ce qui a bougé ensemble ?",
-    "movedNone": "Pas encore assez de données pour voir ce qui bouge ensemble."
+    "movedNone": "Pas encore assez de données pour voir ce qui bouge ensemble.",
+    "ctl": {
+      "turnedOff": {
+        "morning": "Point du matin désactivé. Réactivable dans Réglages, Notifications.",
+        "evening": "Point du soir désactivé. Réactivable dans Réglages, Notifications."
+      },
+      "turnedOn": {
+        "morning": "Point du matin activé.",
+        "evening": "Point du soir activé."
+      },
+      "turnedOffMacros": "Rappel macros de fin de journée désactivé. Il se trouve dans Réglages, Notifications.",
+      "alreadyQuiet": "Les notifications sont déjà au minimum. Le reste se trouve dans Réglages, Notifications.",
+      "moved": {
+        "morning": "Point du matin déplacé à {{time}}.",
+        "evening": "Point du soir déplacé à {{time}}."
+      }
+    }
   },
   "analysis": {
     "heading": "Analyse"
@@ -1012,5 +1032,16 @@
       "nudge": "Pepi intervient quand quelque chose semble anormal.",
       "coach": "Objectifs, raisons, suivis. Mode de vie uniquement, jamais de dosage."
     }
+  },
+  "micro": {
+    "opener": {
+      "morning": "Point du matin",
+      "evening": "Point du soir"
+    },
+    "ask": "Lecture rapide : {{field}}, de 1 à 5 ?",
+    "skip": "Passer",
+    "later": "Demande-moi dans une heure",
+    "done": "Consigné.",
+    "snoozed": "Je redemanderai dans une heure."
   }
 }

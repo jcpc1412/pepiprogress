@@ -34,8 +34,16 @@ import { matchQuery, SUGGESTED_QUERIES } from '@/lib/ask/intent';
 import type { Aggregation, PepiAnswer, PepiQuery, QueryMetric, Timeframe, UnitTag } from '@/lib/ask/types';
 import { AUTO_APPLY_CONFIDENCE, isResolvable } from '@/lib/quick-log-apply';
 import { useCoachingLevel } from '@/lib/use-coaching-level';
-import { daysBetween, formatDateKey, shiftDateKey } from '@/lib/dates';
-import { surfaceFields } from '@/lib/field-surfacing';
+import { daysBetween, formatDateKey, localHour, shiftDateKey } from '@/lib/dates';
+import { surfaceFields, type CheckinField } from '@/lib/field-surfacing';
+import {
+  activeMicroSlot,
+  matchChatControl,
+  microFieldsFor,
+  type ChatControl,
+  type MicroSlot,
+} from '@/lib/micro-checkin';
+import { scheduleMicroSnooze } from '@/lib/notifications';
 import { localDateKey, useStore, type CheckinEntry, type PepiMessage } from '@/lib/store';
 import { isSupabaseConfigured } from '@/lib/supabase';
 import {
@@ -147,6 +155,10 @@ export function PepiChat() {
   const [pending, setPending] = useState(false);
   // Typical-day setup mini-flow (spec 15). Null when not setting up.
   const [typicalSetup, setTypicalSetup] = useState<{ group: TypicalGroup; step: 'confirm' | 'baseline' } | null>(null);
+  // Micro check-in flow (W3-9, beta-notes §4.1): chips-first 1-5 answers, zero AI.
+  const [microFlow, setMicroFlow] = useState<{ slot: MicroSlot; fields: CheckinField[]; index: number } | null>(null);
+  // Snoozed/dismissed this session: hides the opener chip until the next visit.
+  const [microHidden, setMicroHidden] = useState<Set<MicroSlot>>(new Set());
   const [undoableIds, setUndoableIds] = useState<Set<string>>(new Set());
   const [undoneIds, setUndoneIds] = useState<Set<string>>(new Set());
   const undoMap = useRef<Map<string, () => void>>(new Map());
@@ -383,6 +395,117 @@ export function PepiChat() {
     return cal != null && pro != null ? { 'nutrition.energy': cal, 'nutrition.protein': pro } : null;
   };
 
+  // ── Micro check-in (W3-9, beta-notes §4.1) ──────────────────────────────────
+  // The pending fields for the current scheduled moment (morning/evening), if any.
+  const microPending = useMemo<{ slot: MicroSlot; fields: CheckinField[] } | null>(() => {
+    const slot = activeMicroSlot(localHour());
+    if (!slot) return null;
+    const fields = microFieldsFor(slot, surfaced, entries[today]);
+    return fields.length ? { slot, fields } : null;
+  }, [surfaced, entries, today]);
+
+  const startMicroFlow = () => {
+    if (!microPending) return;
+    const { slot, fields } = microPending;
+    addPepiMessage({
+      role: 'pepi',
+      text: t('micro.ask', { field: t(`fields.${fields[0]}` as 'fields.energy') }),
+      variant: 'answer',
+    });
+    setMicroFlow({ slot, fields, index: 0 });
+  };
+
+  const answerMicro = (value: number) => {
+    if (!microFlow) return;
+    const field = microFlow.fields[microFlow.index];
+    addPepiMessage({ role: 'user', text: String(value) });
+    upsertCheckin(today, { [field]: value });
+    advanceMicro();
+  };
+
+  const skipMicroField = () => {
+    if (!microFlow) return;
+    addPepiMessage({ role: 'user', text: t('micro.skip') });
+    advanceMicro();
+  };
+
+  const advanceMicro = () => {
+    if (!microFlow) return;
+    const next = microFlow.index + 1;
+    if (next >= microFlow.fields.length) {
+      addPepiMessage({ role: 'pepi', text: t('micro.done'), variant: 'log' });
+      setMicroHidden((prev) => new Set(prev).add(microFlow.slot));
+      setMicroFlow(null);
+    } else {
+      addPepiMessage({
+        role: 'pepi',
+        text: t('micro.ask', { field: t(`fields.${microFlow.fields[next]}` as 'fields.energy') }),
+        variant: 'answer',
+      });
+      setMicroFlow({ ...microFlow, index: next });
+    }
+  };
+
+  const snoozeMicro = (slot: MicroSlot) => {
+    setMicroHidden((prev) => new Set(prev).add(slot));
+    setMicroFlow(null);
+    void scheduleMicroSnooze(slot);
+    addPepiMessage({ role: 'pepi', text: t('micro.snoozed'), variant: 'hint' });
+  };
+
+  // ── Chat controls (W3-9, beta-notes §4.2/4.3): never silent, always confirmed.
+  const handleControl = (control: ChatControl) => {
+    if (control.kind === 'snooze') {
+      const slot = microPending?.slot ?? activeMicroSlot(localHour()) ?? 'evening';
+      snoozeMicro(slot);
+      return;
+    }
+    if (control.kind === 'toneDown') {
+      // Deterministic quieting ladder: morning prompt, then evening, then macros.
+      if (profile.notifyMorningEnabled) {
+        store.setProfile({ notifyMorningEnabled: false });
+        addPepiMessage({ role: 'pepi', text: t('pepi.ctl.turnedOff.morning'), variant: 'answer' });
+      } else if (profile.notifyCheckinEnabled) {
+        store.setProfile({ notifyCheckinEnabled: false });
+        addPepiMessage({ role: 'pepi', text: t('pepi.ctl.turnedOff.evening'), variant: 'answer' });
+      } else if (profile.notifyMacrosEnabled) {
+        store.setProfile({ notifyMacrosEnabled: false });
+        addPepiMessage({ role: 'pepi', text: t('pepi.ctl.turnedOffMacros'), variant: 'answer' });
+      } else {
+        addPepiMessage({ role: 'pepi', text: t('pepi.ctl.alreadyQuiet'), variant: 'hint' });
+      }
+      return;
+    }
+    if (control.kind === 'toggleCheckin') {
+      const patch =
+        control.slot === 'morning'
+          ? { notifyMorningEnabled: control.enable }
+          : { notifyCheckinEnabled: control.enable };
+      store.setProfile(patch);
+      addPepiMessage({
+        role: 'pepi',
+        text: t(
+          control.enable
+            ? (`pepi.ctl.turnedOn.${control.slot}` as 'pepi.ctl.turnedOn.morning')
+            : (`pepi.ctl.turnedOff.${control.slot}` as 'pepi.ctl.turnedOff.morning'),
+        ),
+        variant: 'answer',
+      });
+      return;
+    }
+    // moveCheckin
+    const patch =
+      control.slot === 'morning'
+        ? { notifyMorningEnabled: true, notifyMorningTime: control.time }
+        : { notifyCheckinEnabled: true, notifyCheckinTime: control.time };
+    store.setProfile(patch);
+    addPepiMessage({
+      role: 'pepi',
+      text: t(`pepi.ctl.moved.${control.slot}` as 'pepi.ctl.moved.morning', { time: control.time }),
+      variant: 'answer',
+    });
+  };
+
   const startTypicalSetup = (group: TypicalGroup) => {
     addPepiMessage({ role: 'pepi', text: t(`typical.ask.${group}` as 'typical.ask.nutrition'), variant: 'answer' });
     setTypicalSetup({ group, step: 'confirm' });
@@ -442,6 +565,14 @@ export function PepiChat() {
     addPepiMessage({ role: 'user', text: input });
     setText('');
     setSelection(undefined);
+
+    // Chat controls (W3-9 §4.2/4.3): snooze / tone-down / per-check-in intents,
+    // deterministic pattern match, always confirmed back, never silent.
+    const control = matchChatControl(input);
+    if (control) {
+      handleControl(control);
+      return;
+    }
 
     // Deterministic deviation chip from free text ("ate more than usual"): offline,
     // before the AI parse (spec 15 §UX.3).
@@ -682,13 +813,29 @@ export function PepiChat() {
 
         {!keyboardUp && (
         <View style={styles.chips}>
-          {typicalSetup?.step === 'confirm' ? (
+          {microFlow ? (
+            // Micro check-in answer chips (W3-9): 1-5 + skip + "ask me in an hour".
+            <>
+              {[1, 2, 3, 4, 5].map((v) => (
+                <OptionChip key={v} label={String(v)} selected={false} onPress={() => answerMicro(v)} />
+              ))}
+              <OptionChip label={t('micro.skip')} selected={false} onPress={skipMicroField} />
+              <OptionChip label={t('micro.later')} selected={false} onPress={() => snoozeMicro(microFlow.slot)} />
+            </>
+          ) : typicalSetup?.step === 'confirm' ? (
             <>
               <OptionChip label={t('typical.yes')} selected={false} onPress={() => confirmTypical(true)} />
               <OptionChip label={t('typical.no')} selected={false} onPress={() => confirmTypical(false)} />
             </>
           ) : (
             <>
+              {microPending && !microHidden.has(microPending.slot) ? (
+                <OptionChip
+                  label={t(`micro.opener.${microPending.slot}` as 'micro.opener.morning')}
+                  selected={false}
+                  onPress={startMicroFlow}
+                />
+              ) : null}
               {eligibleGroup && !typicalSetup ? (
                 <OptionChip
                   label={t(`typical.opener.${eligibleGroup}` as 'typical.opener.nutrition')}

@@ -548,7 +548,11 @@
     "typicalBodyNutrition": "Isst du an den meisten Tagen ungefähr gleich? Ein Tippen könnte deine Ernährung ausfüllen.",
     "typicalBodySleep": "Schläfst du in den meisten Nächten ungefähr gleich? Ein Tippen könnte deinen Schlaf ausfüllen.",
     "skippedTitle": "Einige Dosen nicht erfasst",
-    "skippedBody": "{{compound}}: die letzten {{count}} geplanten Dosen wurden nicht erfasst. Aufgebraucht, Nebenwirkungen oder eine geplante Pause? Sag es Pepi."
+    "skippedBody": "{{compound}}: die letzten {{count}} geplanten Dosen wurden nicht erfasst. Aufgebraucht, Nebenwirkungen oder eine geplante Pause? Sag es Pepi.",
+    "morning": "Morgen-Check",
+    "morningTitle": "Morgen-Check",
+    "morningBody": "Kurzer Wert: wie hast du geschlafen?",
+    "snoozeBody": "Wann immer du bereit bist."
   },
   "cycle": {
     "section": "ZYKLUS-TRACKING",
@@ -917,7 +921,23 @@
     "photoNone": "Noch keine Fortschrittsfotos. Mach eins im Fotos-Tab.",
     "viewTrend": "In Analyse ansehen",
     "chipMovedTogether": "Was bewegte sich zusammen?",
-    "movedNone": "Noch nicht genug erfasst, um zu sehen, was sich zusammen bewegt."
+    "movedNone": "Noch nicht genug erfasst, um zu sehen, was sich zusammen bewegt.",
+    "ctl": {
+      "turnedOff": {
+        "morning": "Morgen-Check ausgeschaltet. Wieder aktivierbar unter Einstellungen, Benachrichtigungen.",
+        "evening": "Abend-Check ausgeschaltet. Wieder aktivierbar unter Einstellungen, Benachrichtigungen."
+      },
+      "turnedOn": {
+        "morning": "Morgen-Check ist an.",
+        "evening": "Abend-Check ist an."
+      },
+      "turnedOffMacros": "Makro-Erinnerung ausgeschaltet. Zu finden unter Einstellungen, Benachrichtigungen.",
+      "alreadyQuiet": "Die Benachrichtigungen sind bereits auf dem Minimum. Alles Weitere unter Einstellungen, Benachrichtigungen.",
+      "moved": {
+        "morning": "Morgen-Check auf {{time}} verschoben.",
+        "evening": "Abend-Check auf {{time}} verschoben."
+      }
+    }
   },
   "analysis": {
     "heading": "Analyse"
@@ -1012,5 +1032,16 @@
       "nudge": "Pepi meldet sich, wenn etwas auffällt.",
       "coach": "Ziele, Gründe, Nachfassen. Nur Lifestyle, nie Dosierung."
     }
+  },
+  "micro": {
+    "opener": {
+      "morning": "Morgen-Check",
+      "evening": "Abend-Check"
+    },
+    "ask": "Kurzer Wert: {{field}}, 1 bis 5?",
+    "skip": "Überspringen",
+    "later": "Frag mich in einer Stunde",
+    "done": "Erfasst.",
+    "snoozed": "Ich frage in einer Stunde noch einmal."
   }
 }

@@ -23,6 +23,8 @@ export function MacroReminderHandler() {
       // P-05 skip-doses nudge: land in Pepi chat, where the user can say why
       // (ran out, side effects, planned break) in their own words.
       else if (data?.kind === 'skipped') router.navigate('/pepi');
+      // Micro check-in (W3-9): the chips are waiting in Pepi chat.
+      else if (data?.kind === 'micro') router.navigate('/pepi');
     });
     return () => sub.remove();
   }, [openLogging, router]);

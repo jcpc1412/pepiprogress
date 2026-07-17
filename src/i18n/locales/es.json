@@ -548,7 +548,11 @@
     "typicalBodyNutrition": "¿Comes más o menos lo mismo casi todos los días? Un toque podría rellenar tu nutrición.",
     "typicalBodySleep": "¿Duermes más o menos lo mismo casi todas las noches? Un toque podría rellenar tu sueño.",
     "skippedTitle": "Algunas dosis sin registrar",
-    "skippedBody": "{{compound}}: las últimas {{count}} dosis programadas no tienen registro. ¿Se acabó, efectos secundarios o una pausa planeada? Cuéntaselo a Pepi."
+    "skippedBody": "{{compound}}: las últimas {{count}} dosis programadas no tienen registro. ¿Se acabó, efectos secundarios o una pausa planeada? Cuéntaselo a Pepi.",
+    "morning": "Chequeo matinal",
+    "morningTitle": "Chequeo matinal",
+    "morningBody": "Lectura rápida: ¿qué tal dormiste?",
+    "snoozeBody": "Cuando quieras."
   },
   "cycle": {
     "section": "CICLO MENSTRUAL",
@@ -917,7 +921,23 @@
     "photoNone": "Aún no hay fotos de progreso. Toma una en la pestaña Fotos.",
     "viewTrend": "Ver en Análisis",
     "chipMovedTogether": "¿Qué cambió junto?",
-    "movedNone": "Aún no hay suficientes datos para ver qué se mueve junto."
+    "movedNone": "Aún no hay suficientes datos para ver qué se mueve junto.",
+    "ctl": {
+      "turnedOff": {
+        "morning": "Chequeo matinal desactivado. Puedes reactivarlo en Ajustes, Notificaciones.",
+        "evening": "Chequeo nocturno desactivado. Puedes reactivarlo en Ajustes, Notificaciones."
+      },
+      "turnedOn": {
+        "morning": "Chequeo matinal activado.",
+        "evening": "Chequeo nocturno activado."
+      },
+      "turnedOffMacros": "Recordatorio de macros desactivado. Está en Ajustes, Notificaciones.",
+      "alreadyQuiet": "Las notificaciones ya están al mínimo. El resto está en Ajustes, Notificaciones.",
+      "moved": {
+        "morning": "Chequeo matinal movido a las {{time}}.",
+        "evening": "Chequeo nocturno movido a las {{time}}."
+      }
+    }
   },
   "analysis": {
     "heading": "Análisis"
@@ -1012,5 +1032,16 @@
       "nudge": "Pepi habla cuando algo se ve raro.",
       "coach": "Objetivos, razones, seguimiento. Solo estilo de vida, nunca dosis."
     }
+  },
+  "micro": {
+    "opener": {
+      "morning": "Chequeo matinal",
+      "evening": "Chequeo nocturno"
+    },
+    "ask": "Lectura rápida: {{field}}, ¿del 1 al 5?",
+    "skip": "Omitir",
+    "later": "Pregúntame en una hora",
+    "done": "Registrado.",
+    "snoozed": "Te preguntaré de nuevo en una hora."
   }
 }
