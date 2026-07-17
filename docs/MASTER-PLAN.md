@@ -21,7 +21,7 @@ Effort: [S] under a day, [M] days, [L] a week+.
   expo-notifications, expo-haptics, HealthKit module, vision-camera flags.
 - **M4 on-device test checklist** (`docs/ROADMAP.md`) + HealthKit read/write verification
   (existing task: Phase 2 native Health read).
-- **Progress overlay sketches.** The exaggerated-interpretation overlay prototype (item 27)
+- **Progress overlay sketches.** The exaggerated-interpretation overlay prototype (item 30)
   waits on your sketches; build starts once they exist.
 
 ---
@@ -66,59 +66,73 @@ Fix the things that silently lie before building anything on top of them.
 10. **Anomaly engine + context memory [M].** Deterministic deviation detectors, templated
     openers, structured context notes, recurrence inference, and anomaly-tagged days
     excluded/down-weighted from baselines. Upgrades P-05. (beta-notes §3.4)
+11. **Dynamic hero metric [M].** Pepi picks today's most important signal and leads the
+    Home hero with it: weight plateau puts weight first, a visible physique change puts
+    the photo comparison first, a recovery dip puts recovery first. Driven by the verdict
+    engine's existing signal ranking; falls back to the current fixed order when nothing
+    stands out. (external review 2026-07-16)
 
 ## Wave 4: compound intelligence + predictions (the differentiation wave)
 
-11. **market_category migration + shared posture module + eval suite [M].** Enum on
+12. **market_category migration + shared posture module + eval suite [M].** Enum on
     catalog + bundled mirror; posture gate extracted for reuse (edge fn now, MCP later);
     the four boundary evals pass **before any compound info is exposed** (spec 05 gate).
-12. **Observational compound cards [M].** Commonly-reported ranges/timing/sides through
+13. **Observational compound cards [M].** Commonly-reported ranges/timing/sides through
     the posture gate + sourcing ladder (curated cited, labeled-unverified stopgap).
-13. **Per-compound attribution insights [M].** "Since starting X (week 4), sleep +0.8 vs
+14. **Per-compound attribution insights [M].** "Since starting X (week 4), sleep +0.8 vs
     baseline," with competing-explanation ranking (deficit vs compound vs training), the
     attribution ladder. (positioning §3.1, §5.1)
-14. **Expectation timelines [M].** Reported onset/peak/plateau curves vs the user's own.
+15. **Expectation timelines [M].** Reported onset/peak/plateau curves vs the user's own.
     (positioning §3.2)
-15. **Lab upload + AI parse [M].** Photo or PDF upload on the Logging surface (ISSUES
+16. **Lab upload + AI parse [M].** Photo or PDF upload on the Logging surface (ISSUES
     H-06); AI vision extracts marker values into bloodwork fields; feeds the
     bloodwork-to-compound monitoring mapping (positioning §3 item 4). Vial scan stays
     deferred; the two are separate builds.
-16. **TRAJ-1 trajectory line [M].** Recency-weighted slope, plateau detection, widening
+17. **"What should I measure next?" suggestions [S/M].** The verdict names its own
+    biggest evidence gap: "a photo this week would strengthen this," "hematocrit was
+    last checked 10 weeks ago." Sources: monitoring tags + photo cadence + bloodwork
+    recency; surfaces on the verdict reasoning screen and as an offer-level nudge.
+    (external review 2026-07-16)
+18. **Uniform confidence register [S/M].** One shared confidence component
+    (high/medium/low plus rationale on tap) applied everywhere Pepi concludes: verdict,
+    photo analysis, correlations, forecasts, compound insights. TRAJ-1's uncertainty
+    band adopts the same register. (external review 2026-07-16)
+19. **TRAJ-1 trajectory line [M].** Recency-weighted slope, plateau detection, widening
     uncertainty band; weightForecast unified onto the same math. (round-3 §7)
-17. **TRAJ-2 energy-balance calibration [M].** Personal TDEE from intake vs weight delta;
+20. **TRAJ-2 energy-balance calibration [M].** Personal TDEE from intake vs weight delta;
     per-user device-bias factor; blended forecast; disagreement-as-insight; proactive
     hooks (cheat-meal water weight, step drops). (round-3 §7)
 
 ## Wave 5: training log + goal symmetry + narrative
 
-18. **Training log [M].** StrengthSession (tonnage, e1RM) + Benchmark (name/value/date)
+21. **Training log [M].** StrengthSession (tonnage, e1RM) + Benchmark (name/value/date)
     via chat parse + detailed-log widget; coach-adjusted effort at nudge/coach level.
     Sport-agnostic per the locked user rings. (round-3 §8; positioning §6)
-19. **Gain-goal measurement emphasis + FFMI band [M].** Multiple extra measurements for
+22. **Gain-goal measurement emphasis + FFMI band [M].** Multiple extra measurements for
     gain goals; hedged FFMI range. (beta-notes §1.8)
-20. **Transition tracking v1 + SM-1 [M].** Conditional goal chip (mtf/ftm), surfaced
+23. **Transition tracking v1 + SM-1 [M].** Conditional goal chip (mtf/ftm), surfaced
     fields, direction-aware analysis block; plus the self-marketability pass (goal-first
     onboarding + store copy, non-PED paths first-class). (beta-notes §1.9; round-3 §2)
-21. **Narrative timeline [M].** The signal ledger as a cross-metric chronological story
+24. **Narrative timeline [M].** The signal ledger as a cross-metric chronological story
     ("Started TRT, sleep improved, strength up, hematocrit elevated, donation logged");
-    the natural surface for attribution (13) and personal-history moments. Sequenced
+    the natural surface for attribution (14) and personal-history moments. Sequenced
     here because it renders what Wave 4 computes. (positioning §5.3)
 
 ## Wave 6: photo reel + sharing
 
-22. **Reel phase 1 [M].** Multi-shot capture + camera-roll dump import + manual pose
+25. **Reel phase 1 [M].** Multi-shot capture + camera-roll dump import + manual pose
     chips + reel view grouped by label. Required check-ins stay locked to the four
     relaxed poses; casual photos freeform. (beta-notes §1.3)
-23. **Reel phase 2 [M].** Haiku auto-classification + confirm chips; session tabs
+26. **Reel phase 2 [M].** Haiku auto-classification + confirm chips; session tabs
     removed. (beta-notes §1.1, §1.3)
-24. **Share cards [S/M].** Branded stat card first, then photo export with watermark
+27. **Share cards [S/M].** Branded stat card first, then photo export with watermark
     toggle in settings (off for photos, on for stat card); offered contextually after
     milestones/highscores. (beta-notes §1.4)
-25. **Auto-crop via analysis bbox [S/M].** Torso crop box returned by analyze_photo,
+28. **Auto-crop via analysis bbox [S/M].** Torso crop box returned by analyze_photo,
     display-only, originals untouched. (beta-notes §1.2)
-26. **Reel phase 3 [M/L].** Full timeline dump view, pose filters, per-pose ghost
+29. **Reel phase 3 [M/L].** Full timeline dump view, pose filters, per-pose ghost
     references. (beta-notes §1.3)
-27. **Progress overlay prototype [M].** Exaggerated-interpretation overlay (lines /
+30. **Progress overlay prototype [M].** Exaggerated-interpretation overlay (lines /
     triangles / shading) rendered on progress photos. Blocked on owner sketches (see
     Blocked on owner); slots here once they land.
 
@@ -155,3 +169,8 @@ Green gate (typecheck / lint / i18n parity 6 locales / tests / web export); no
 hardcoded strings; no em-dashes; trunk-based commit + push per completed chunk; surface
 the EAS command after each push; posture eval suite before compound-info exposure;
 flag native-rebuild requirements explicitly.
+
+**Bias toward uncertainty (verdict rule, external review 2026-07-16).** One wrong
+confident verdict damages trust more than ten correct ones build it. When evidence
+conflicts or is thin, the verdict downgrades its confidence rather than picking a side;
+evals for verdict-adjacent AI output test for overconfidence, not just correctness.
