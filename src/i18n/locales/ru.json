@@ -283,7 +283,11 @@
     "timerLabel": "Таймер",
     "savedTitle": "Снято",
     "qualityHighscore": "Новый рекорд качества",
-    "savedBaselineBody": "Базовый снимок задан. Следующее фото сравнится с ним."
+    "savedBaselineBody": "Базовый снимок задан. Следующее фото сравнится с ним.",
+    "measureTitle": "Замеры",
+    "skipMeasurements": "Пропустить",
+    "tiltMeta": "Наклон {{deg}}°",
+    "analysisAfterHint": "Анализ запустится после завершения."
   },
   "markers": {
     "hematocrit": "Гематокрит",
@@ -564,7 +568,8 @@
     "thighs": "Бёдра (ноги)",
     "unitCm": "см",
     "unitIn": "дюйм",
-    "neck": "Шея"
+    "neck": "Шея",
+    "sameAsLast": "Как в прошлый раз"
   },
   "bodyType": {
     "section": "СОСТАВ ТЕЛА",

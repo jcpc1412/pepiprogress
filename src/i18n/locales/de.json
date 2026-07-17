@@ -283,7 +283,11 @@
     "timerLabel": "Selbstauslöser",
     "savedTitle": "Aufgenommen",
     "qualityHighscore": "Neue Qualitätsbestmarke",
-    "savedBaselineBody": "Ausgangsbild gesetzt. Dein nächstes Foto wird damit verglichen."
+    "savedBaselineBody": "Ausgangsbild gesetzt. Dein nächstes Foto wird damit verglichen.",
+    "measureTitle": "Messwerte",
+    "skipMeasurements": "Überspringen",
+    "tiltMeta": "Neigung {{deg}}°",
+    "analysisAfterHint": "Die Analyse läuft, sobald du fertig bist."
   },
   "markers": {
     "hematocrit": "Hämatokrit",
@@ -564,7 +568,8 @@
     "thighs": "Oberschenkel",
     "unitCm": "cm",
     "unitIn": "Zoll",
-    "neck": "Hals"
+    "neck": "Hals",
+    "sameAsLast": "Wie beim letzten Mal"
   },
   "bodyType": {
     "section": "KÖRPERZUSAMMENSETZUNG",

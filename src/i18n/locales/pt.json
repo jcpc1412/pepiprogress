@@ -283,7 +283,11 @@
     "timerLabel": "Temporizador",
     "savedTitle": "Capturada",
     "qualityHighscore": "Novo recorde de qualidade",
-    "savedBaselineBody": "Referência definida. Sua próxima foto será comparada com esta."
+    "savedBaselineBody": "Referência definida. Sua próxima foto será comparada com esta.",
+    "measureTitle": "Medidas",
+    "skipMeasurements": "Pular",
+    "tiltMeta": "Inclinação {{deg}}°",
+    "analysisAfterHint": "A análise roda quando você terminar."
   },
   "markers": {
     "hematocrit": "Hematócrito",
@@ -564,7 +568,8 @@
     "thighs": "Coxas",
     "unitCm": "cm",
     "unitIn": "pol",
-    "neck": "Pescoço"
+    "neck": "Pescoço",
+    "sameAsLast": "Igual à última vez"
   },
   "bodyType": {
     "section": "COMPOSIÇÃO CORPORAL",

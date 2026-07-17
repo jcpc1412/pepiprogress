@@ -283,7 +283,11 @@
     "timerLabel": "Temporizador",
     "savedTitle": "Capturada",
     "qualityHighscore": "Nuevo mejor de calidad",
-    "savedBaselineBody": "Línea base fijada. Tu próxima foto se comparará con esta."
+    "savedBaselineBody": "Línea base fijada. Tu próxima foto se comparará con esta.",
+    "measureTitle": "Medidas",
+    "skipMeasurements": "Omitir",
+    "tiltMeta": "Inclinación {{deg}}°",
+    "analysisAfterHint": "El análisis se ejecuta cuando termines."
   },
   "markers": {
     "hematocrit": "Hematocrito",
@@ -564,7 +568,8 @@
     "thighs": "Muslos",
     "unitCm": "cm",
     "unitIn": "in",
-    "neck": "Cuello"
+    "neck": "Cuello",
+    "sameAsLast": "Igual que la última vez"
   },
   "bodyType": {
     "section": "COMPOSICIÓN CORPORAL",

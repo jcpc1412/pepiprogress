@@ -8,14 +8,13 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 import { LabeledInput, PrimaryButton, SingleSelectChips } from '@/components/form';
 import { FlipCameraIcon } from '@/components/icons';
-import { StatusPill } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { checkFit, type FitCheck } from '@/lib/ai';
 import { bodyFatNavy, usesFemaleFormula } from '@/lib/body-composition';
 import { copyPhotoToDocuments } from '@/lib/photos';
 import { computeQuality, type PhotoQuality } from '@/lib/photo-quality';
-import { useStore, type PhotoSession } from '@/lib/store';
+import { localDateKey, useStore, type PhotoSession } from '@/lib/store';
 
 /** Tap-cycle levels for the ghost overlay opacity (R3-H). */
 const GHOST_LEVELS = [0.2, 0.4, 0.6] as const;
@@ -51,7 +50,7 @@ export function PhotoCapture({
   timer?: 0 | 3 | 10;
 }) {
   const { t } = useTranslation();
-  const { addPhoto, upsertCheckin, profile } = useStore();
+  const { addPhoto, upsertCheckin, profile, entries } = useStore();
   const [permission, requestPermission] = useCameraPermissions();
   const camRef = useRef<CameraView>(null);
   const [shot, setShot] = useState<string | null>(null);
@@ -67,6 +66,13 @@ export function PhotoCapture({
   // Quality score + low-score retry modal (redesign §4A, owner 2026-07-06).
   const [quality, setQuality] = useState<PhotoQuality | null>(null);
   const [qualityAck, setQualityAck] = useState(false);
+
+  // Two-step review (beta-notes §1.5 / W2-5): step 1 = the shot + big score with
+  // a FIXED footer (the old single scroll put Retake/Save below the fold on body
+  // sessions); step 2 = measurements (body only). The photo is saved when step 1
+  // is confirmed, so the parent's instant read warms up while the user measures.
+  const [step, setStep] = useState<1 | 2>(1);
+  const savedIdRef = useRef<string | null>(null);
 
   // Measurement inputs (body session only, all optional)
   const [waist, setWaist] = useState('');
@@ -94,6 +100,38 @@ export function PhotoCapture({
         female: usesFemaleFormula(profile?.sex),
       })
     : null;
+
+  // Most recent prior measurements, for step 2's one-tap "same as last time"
+  // (beta-notes §1.5: prefill mitigates the second step depressing completion).
+  // Plain computation: the React Compiler memoizes it (manual useMemo clashed).
+  const lastMeasurements = (() => {
+    if (!isBody) return null;
+    const dates = Object.keys(entries).sort((a, b) => (a < b ? 1 : -1));
+    for (const d of dates) {
+      const e = entries[d];
+      if (e.waist !== undefined || e.hips !== undefined || e.neck !== undefined) {
+        return {
+          waist: e.waist,
+          hips: e.hips,
+          neck: e.neck,
+          extraKey: e.extraMeasurementKey,
+          extraVal: e.extraMeasurementValue,
+        };
+      }
+    }
+    return null;
+  })();
+
+  const applyLastMeasurements = () => {
+    if (!lastMeasurements) return;
+    if (lastMeasurements.waist !== undefined) setWaist(String(lastMeasurements.waist));
+    if (lastMeasurements.hips !== undefined) setHips(String(lastMeasurements.hips));
+    if (lastMeasurements.neck !== undefined) setNeck(String(lastMeasurements.neck));
+    if (lastMeasurements.extraKey && lastMeasurements.extraVal !== undefined) {
+      setExtraKey(lastMeasurements.extraKey);
+      setExtraVal(String(lastMeasurements.extraVal));
+    }
+  };
 
   // Live level indicator (spec 04, Layer 1 — tilt aid). Raw accelerometer →
   // roll/pitch; "level" when both are within a few degrees of upright. The tilt
@@ -134,6 +172,8 @@ export function PhotoCapture({
     setFitChecking(false);
     setQuality(null);
     setQualityAck(false);
+    setStep(1);
+    savedIdRef.current = null;
   };
 
   const close = () => {
@@ -199,43 +239,57 @@ export function PhotoCapture({
     }, 1000);
   };
 
-  const save = async () => {
-    if (!shot || busy) return;
+  /** Persist + store the shot (step-1 confirm). Fires onSaved immediately so the
+   *  parent's instant read runs in the background while step 2 collects
+   *  measurements (beta-notes §1.5: the result is warm when the user finishes). */
+  const saveShot = async (): Promise<boolean> => {
+    if (!shot || busy || savedIdRef.current) return savedIdRef.current !== null;
     setBusy(true);
     try {
-      const now = new Date();
       const persistentUri = await copyPhotoToDocuments(shot);
       const newId = addPhoto({
         session,
         part,
         view,
         uri: persistentUri,
-        takenAt: now.toISOString(),
+        takenAt: new Date().toISOString(),
         tilt: shotTilt,
         qualityScore: quality?.score,
       });
-      if (isBody) {
-        const w = parseFloat(waist);
-        const nk = parseFloat(neck);
-        const h = parseFloat(hips);
-        const ev = parseFloat(extraVal);
-        const patch: Record<string, unknown> = {};
-        if (Number.isFinite(w)) patch.waist = w;
-        if (Number.isFinite(nk)) patch.neck = nk;
-        if (Number.isFinite(h)) patch.hips = h;
-        if (extraKey && Number.isFinite(ev)) {
-          patch.extraMeasurementKey = extraKey;
-          patch.extraMeasurementValue = ev;
-        }
-        if (Object.keys(patch).length > 0) {
-          upsertCheckin(now.toISOString().slice(0, 10), patch as Parameters<typeof upsertCheckin>[1]);
-        }
-      }
-      close();
+      savedIdRef.current = newId;
       onSaved?.(newId);
+      return true;
     } finally {
       setBusy(false);
     }
+  };
+
+  /** Step-1 primary action: face saves and closes; body saves then measures. */
+  const onContinue = async () => {
+    const ok = await saveShot();
+    if (!ok) return;
+    if (isBody) setStep(2);
+    else close();
+  };
+
+  /** Step-2 done: write any measurements to today's check-in, then close. */
+  const finishMeasurements = () => {
+    const w = parseFloat(waist);
+    const nk = parseFloat(neck);
+    const h = parseFloat(hips);
+    const ev = parseFloat(extraVal);
+    const patch: Record<string, unknown> = {};
+    if (Number.isFinite(w)) patch.waist = w;
+    if (Number.isFinite(nk)) patch.neck = nk;
+    if (Number.isFinite(h)) patch.hips = h;
+    if (extraKey && Number.isFinite(ev)) {
+      patch.extraMeasurementKey = extraKey;
+      patch.extraMeasurementValue = ev;
+    }
+    if (Object.keys(patch).length > 0) {
+      upsertCheckin(localDateKey(), patch as Parameters<typeof upsertCheckin>[1]);
+    }
+    close();
   };
 
   const sessionLabel = session === 'face' ? t('photos.sessionFace') : t('photos.sessionBody');
@@ -259,19 +313,42 @@ export function PhotoCapture({
               </ThemedText>
             </Pressable>
           </SafeAreaView>
-        ) : shot ? (
-          // ── Review the captured shot ──
+        ) : shot && step === 1 ? (
+          // ── Step 1: the shot + big quality score, fixed footer (§1.5) ──
           <View style={styles.fill}>
           <ScrollView style={styles.fill} contentContainerStyle={styles.reviewContent} bounces={false} showsVerticalScrollIndicator={false}>
             <Image source={{ uri: shot }} style={styles.reviewPhoto} contentFit="cover" />
-            {quality ? (
-              <View style={styles.qualityRow}>
-                <StatusPill
-                  label={`${t('photos.qualityLabel')} ${quality.displayScore}`}
-                  tone={quality.displayScore >= 80 ? 'good' : quality.displayScore >= 60 ? 'watch' : 'bad'}
-                />
-              </View>
-            ) : null}
+            <View style={styles.scoreBlock}>
+              {quality ? (
+                <>
+                  <ThemedText type="monoSm" style={styles.scoreLabel}>
+                    {t('photos.qualityLabel').toUpperCase()}
+                  </ThemedText>
+                  <ThemedText
+                    type="hero"
+                    style={[
+                      styles.scoreValue,
+                      quality.displayScore >= 80
+                        ? styles.scoreGood
+                        : quality.displayScore >= 60
+                        ? styles.scoreWatch
+                        : styles.scoreBad,
+                    ]}>
+                    {String(quality.displayScore)}
+                  </ThemedText>
+                </>
+              ) : fitChecking ? (
+                <ActivityIndicator size="small" color="#F0EFEC" />
+              ) : null}
+              {shotTilt !== undefined ? (
+                <ThemedText type="monoSm" style={styles.scoreMeta}>
+                  {t('photos.tiltMeta', { deg: shotTilt })}
+                </ThemedText>
+              ) : null}
+              <ThemedText type="monoSm" style={styles.scoreMeta}>
+                {t('photos.analysisAfterHint')}
+              </ThemedText>
+            </View>
             {ghostUri && (fitChecking || (fitResult && fitResult.fit !== 'good')) ? (
               <View style={[styles.fitBanner, fitResult?.fit === 'poor' ? styles.fitBannerPoor : styles.fitBannerWeak]}>
                 {fitChecking ? (
@@ -286,92 +363,22 @@ export function PhotoCapture({
                 </ThemedText>
               </View>
             ) : null}
-            {isBody && (
-              <View style={styles.measurePanel}>
-                <ThemedText type="monoSm" themeColor="textSecondary">
-                  {t('measurements.optionalHint')}
-                </ThemedText>
-                <View style={styles.measureRow}>
-                  <View style={styles.measureField}>
-                    <LabeledInput
-                      label={`${t('measurements.waist')} (${unitLabel})`}
-                      placeholder="—"
-                      keyboardType="decimal-pad"
-                      value={waist}
-                      onChangeText={setWaist}
-                    />
-                  </View>
-                  <View style={styles.measureField}>
-                    <LabeledInput
-                      label={`${t('measurements.hips')} (${unitLabel})`}
-                      placeholder="—"
-                      keyboardType="decimal-pad"
-                      value={hips}
-                      onChangeText={setHips}
-                    />
-                  </View>
-                </View>
-                <View style={styles.measureRow}>
-                  <View style={styles.measureField}>
-                    <LabeledInput
-                      label={`${t('measurements.neck')} (${unitLabel})`}
-                      placeholder="—"
-                      keyboardType="decimal-pad"
-                      value={neck}
-                      onChangeText={setNeck}
-                    />
-                  </View>
-                  <View style={styles.measureField}>
-                    {/* Hedged Navy body-fat estimate (observational, not medical). */}
-                    {bodyFat ? (
-                      <View style={styles.bfBox}>
-                        <ThemedText type="monoSm" style={styles.bfLabel}>
-                          {t('photos.bodyFat')}
-                        </ThemedText>
-                        <ThemedText type="metricSm" style={styles.bfValue}>
-                          {`${bodyFat.pct}%`}
-                        </ThemedText>
-                        <ThemedText type="monoSm" style={styles.bfLabel}>
-                          {t('photos.bodyFatHedge', { low: bodyFat.low, high: bodyFat.high })}
-                        </ThemedText>
-                      </View>
-                    ) : (
-                      <ThemedText type="monoSm" style={styles.bfHint}>
-                        {t('photos.bodyFatNeed')}
-                      </ThemedText>
-                    )}
-                  </View>
-                </View>
-                <SingleSelectChips
-                  options={(['chest', 'arms', 'thighs'] as const).map((k) => ({
-                    value: k,
-                    label: t(`measurements.${k}`),
-                  }))}
-                  value={extraKey}
-                  onChange={setExtraKey}
-                />
-                {extraKey && (
-                  <LabeledInput
-                    label={`${t(`measurements.${extraKey}`)} (${unitLabel})`}
-                    placeholder="—"
-                    keyboardType="decimal-pad"
-                    value={extraVal}
-                    onChangeText={setExtraVal}
-                  />
-                )}
-              </View>
-            )}
-            <SafeAreaView style={styles.reviewBar} edges={['bottom']}>
-              <Pressable accessibilityRole="button" onPress={resetShot}>
-                <ThemedText type="label" style={styles.darkText}>
-                  {t('photos.retake')}
-                </ThemedText>
-              </Pressable>
-              <View style={styles.saveBtn}>
-                <PrimaryButton label={t('photos.save')} onPress={save} />
-              </View>
-            </SafeAreaView>
           </ScrollView>
+          {/* Fixed footer: never scrolls away (the old bar sat below the
+              measurement panel, below the fold on body sessions). */}
+          <SafeAreaView style={styles.reviewBar} edges={['bottom']}>
+            <Pressable accessibilityRole="button" onPress={resetShot}>
+              <ThemedText type="label" style={styles.darkText}>
+                {t('photos.retake')}
+              </ThemedText>
+            </Pressable>
+            <View style={styles.saveBtn}>
+              <PrimaryButton
+                label={isBody ? t('common.continue') : t('photos.save')}
+                onPress={() => void onContinue()}
+              />
+            </View>
+          </SafeAreaView>
           {/* Low-score retry modal (owner decision): only below the recommended
               bar, with the clothing nudge + the "never trained on" reassurance. */}
           {quality?.belowThreshold && !qualityAck ? (
@@ -396,6 +403,112 @@ export function PhotoCapture({
               </View>
             </View>
           ) : null}
+          </View>
+        ) : shot ? (
+          // ── Step 2: measurements (body only), prefillable, skippable (§1.5) ──
+          <View style={styles.measureStep}>
+            <ScrollView
+              style={styles.fill}
+              contentContainerStyle={styles.measureStepContent}
+              bounces={false}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled">
+              <ThemedText type="smallBold" style={styles.measureTitle}>
+                {t('photos.measureTitle')}
+              </ThemedText>
+              <ThemedText type="monoSm" style={styles.bfLabel}>
+                {t('measurements.optionalHint')}
+              </ThemedText>
+              {lastMeasurements ? (
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={applyLastMeasurements}
+                  style={styles.sameAsLastBtn}>
+                  <ThemedText type="monoSm" style={styles.sameAsLastText}>
+                    {t('measurements.sameAsLast').toUpperCase()}
+                  </ThemedText>
+                </Pressable>
+              ) : null}
+              <View style={styles.measureRow}>
+                <View style={styles.measureField}>
+                  <LabeledInput
+                    label={`${t('measurements.waist')} (${unitLabel})`}
+                    placeholder={lastMeasurements?.waist !== undefined ? String(lastMeasurements.waist) : '—'}
+                    keyboardType="decimal-pad"
+                    value={waist}
+                    onChangeText={setWaist}
+                  />
+                </View>
+                <View style={styles.measureField}>
+                  <LabeledInput
+                    label={`${t('measurements.hips')} (${unitLabel})`}
+                    placeholder={lastMeasurements?.hips !== undefined ? String(lastMeasurements.hips) : '—'}
+                    keyboardType="decimal-pad"
+                    value={hips}
+                    onChangeText={setHips}
+                  />
+                </View>
+              </View>
+              <View style={styles.measureRow}>
+                <View style={styles.measureField}>
+                  <LabeledInput
+                    label={`${t('measurements.neck')} (${unitLabel})`}
+                    placeholder={lastMeasurements?.neck !== undefined ? String(lastMeasurements.neck) : '—'}
+                    keyboardType="decimal-pad"
+                    value={neck}
+                    onChangeText={setNeck}
+                  />
+                </View>
+                <View style={styles.measureField}>
+                  {/* Hedged Navy body-fat estimate (observational, not medical). */}
+                  {bodyFat ? (
+                    <View style={styles.bfBox}>
+                      <ThemedText type="monoSm" style={styles.bfLabel}>
+                        {t('photos.bodyFat')}
+                      </ThemedText>
+                      <ThemedText type="metricSm" style={styles.bfValue}>
+                        {`${bodyFat.pct}%`}
+                      </ThemedText>
+                      <ThemedText type="monoSm" style={styles.bfLabel}>
+                        {t('photos.bodyFatHedge', { low: bodyFat.low, high: bodyFat.high })}
+                      </ThemedText>
+                    </View>
+                  ) : (
+                    <ThemedText type="monoSm" style={styles.bfHint}>
+                      {t('photos.bodyFatNeed')}
+                    </ThemedText>
+                  )}
+                </View>
+              </View>
+              <SingleSelectChips
+                options={(['chest', 'arms', 'thighs'] as const).map((k) => ({
+                  value: k,
+                  label: t(`measurements.${k}`),
+                }))}
+                value={extraKey}
+                onChange={setExtraKey}
+              />
+              {extraKey && (
+                <LabeledInput
+                  label={`${t(`measurements.${extraKey}`)} (${unitLabel})`}
+                  placeholder="—"
+                  keyboardType="decimal-pad"
+                  value={extraVal}
+                  onChangeText={setExtraVal}
+                />
+              )}
+            </ScrollView>
+            {/* Fixed footer: the photo is already saved; measurements only. */}
+            <SafeAreaView style={styles.reviewBar} edges={['bottom']}>
+              <Pressable accessibilityRole="button" onPress={close}>
+                <ThemedText type="label" style={styles.darkText}>
+                  {t('photos.skipMeasurements')}
+                </ThemedText>
+              </Pressable>
+              <View style={styles.saveBtn}>
+                <PrimaryButton label={t('common.done')} onPress={finishMeasurements} />
+              </View>
+            </SafeAreaView>
           </View>
         ) : (
           // ── Live camera + ghost overlay ──
@@ -503,10 +616,29 @@ const styles = StyleSheet.create({
   },
   overlayText: { color: '#F0EFEC', letterSpacing: 1.3 },
   overlayDim: { color: 'rgba(240,239,236,0.7)' },
-  // Review screen
+  // Review step 1: shot + big score. Near-black frame (tinted, not #000-pure UI).
   reviewContent: { flexGrow: 1 },
   reviewPhoto: { width: '100%', aspectRatio: 3 / 4 },
-  measurePanel: { padding: Spacing.four, gap: Spacing.three, backgroundColor: '#F0EFEC' },
+  scoreBlock: { padding: Spacing.four, gap: Spacing.one, alignItems: 'center', backgroundColor: '#111110' },
+  scoreLabel: { color: 'rgba(240,239,236,0.6)', letterSpacing: 2 },
+  scoreValue: { fontSize: 72, lineHeight: 78, fontVariant: ['tabular-nums'] },
+  scoreGood: { color: '#5FA97A' },
+  scoreWatch: { color: '#C9A356' },
+  scoreBad: { color: '#C96A5F' },
+  scoreMeta: { color: 'rgba(240,239,236,0.55)' },
+  // Review step 2: measurements on the light panel, fixed footer.
+  measureStep: { flex: 1, backgroundColor: '#F0EFEC' },
+  measureStepContent: { padding: Spacing.four, gap: Spacing.three },
+  measureTitle: { color: '#1A1A18' },
+  sameAsLastBtn: {
+    alignSelf: 'flex-start',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: '#8A8781',
+    borderRadius: 2,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.one + 2,
+  },
+  sameAsLastText: { color: '#1A1A18', letterSpacing: 1.3 },
   measureRow: { flexDirection: 'row', gap: Spacing.three },
   measureField: { flex: 1 },
   reviewBar: {
@@ -542,8 +674,6 @@ const styles = StyleSheet.create({
   fitBannerWeak: { backgroundColor: 'rgba(180,120,0,0.85)' },
   fitBannerPoor: { backgroundColor: 'rgba(160,40,40,0.9)' },
   fitBannerText: { color: '#F0EFEC', flex: 1 },
-  // Quality readout on the review shot.
-  qualityRow: { flexDirection: 'row', paddingHorizontal: Spacing.four, paddingTop: Spacing.three },
   // Hedged body-fat estimate box (on the light measurement panel).
   bfBox: { gap: 2 },
   bfLabel: { color: '#5A5752' },

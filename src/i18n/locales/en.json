@@ -283,7 +283,11 @@
     "timerLabel": "Self-timer",
     "savedTitle": "Captured",
     "qualityHighscore": "New quality best",
-    "savedBaselineBody": "Baseline set. Your next shot compares against this one."
+    "savedBaselineBody": "Baseline set. Your next shot compares against this one.",
+    "measureTitle": "Measurements",
+    "skipMeasurements": "Skip",
+    "tiltMeta": "Tilt {{deg}}°",
+    "analysisAfterHint": "Analysis runs after you finish."
   },
   "markers": {
     "hematocrit": "Hematocrit",
@@ -564,7 +568,8 @@
     "thighs": "Thighs",
     "unitCm": "cm",
     "unitIn": "in",
-    "neck": "Neck"
+    "neck": "Neck",
+    "sameAsLast": "Same as last time"
   },
   "bodyType": {
     "section": "BODY COMPOSITION",

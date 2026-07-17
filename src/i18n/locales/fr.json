@@ -283,7 +283,11 @@
     "timerLabel": "Retardateur",
     "savedTitle": "Capturée",
     "qualityHighscore": "Nouveau record de qualité",
-    "savedBaselineBody": "Référence établie. Ta prochaine photo sera comparée à celle-ci."
+    "savedBaselineBody": "Référence établie. Ta prochaine photo sera comparée à celle-ci.",
+    "measureTitle": "Mensurations",
+    "skipMeasurements": "Passer",
+    "tiltMeta": "Inclinaison {{deg}}°",
+    "analysisAfterHint": "L'analyse se lance une fois terminé."
   },
   "markers": {
     "hematocrit": "Hématocrite",
@@ -564,7 +568,8 @@
     "thighs": "Cuisses",
     "unitCm": "cm",
     "unitIn": "po",
-    "neck": "Cou"
+    "neck": "Cou",
+    "sameAsLast": "Comme la dernière fois"
   },
   "bodyType": {
     "section": "COMPOSITION CORPORELLE",
