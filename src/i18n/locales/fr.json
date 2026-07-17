@@ -737,6 +737,10 @@
     "editNote": "Modifier la note",
     "notePlaceholder": "Ajouter une note pour aujourd’hui…",
     "doseLog": "Noter",
+    "offSlotTitle": "Cette dose est hors calendrier",
+    "offSlotKeep": "Compte pour le {{date}}",
+    "offSlotShift": "Relancer le calendrier aujourd'hui",
+    "offSlotExtra": "Dose supplémentaire",
     "dosesSetup": "Configure ton protocole",
     "stockFlag": "Les fournitures demandent attention",
     "dosesManage": "Gérer le protocole"

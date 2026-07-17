@@ -9,19 +9,23 @@ import { ThemedText } from '@/components/themed-text';
 import { TextButton } from '@/components/form';
 import { Spacing } from '@/constants/theme';
 import { compoundBySlug } from '@/data/compound-catalog';
-import { daysBetween } from '@/lib/dates';
+import { formatDateKey } from '@/lib/dates';
+import {
+  anchorFor,
+  classifyDose,
+  dueSlot,
+  intervalFor,
+  type ScheduledDose,
+} from '@/lib/dose-schedule';
 import { hapticTap } from '@/lib/haptics';
 import { itemNeedsAttention } from '@/lib/inventory';
 import { isDueOnDay } from '@/components/weekday-picker';
 import { useTheme } from '@/hooks/use-theme';
-import { localDateKey, useStore, type Frequency, type ProtocolItem } from '@/lib/store';
+import { localDateKey, useStore, type ProtocolItem } from '@/lib/store';
 
-/** Days that must pass since the last dose for a given frequency to be "due" again. */
-const DUE_AFTER: Partial<Record<Frequency, number>> = {
-  eod: 2,
-  twice_weekly: 3,
-  weekly: 7,
-};
+/** The off-slot prompt's pending state (P-04): which just-logged dose landed off
+ *  the schedule grid, and which slot it most plausibly belongs to. */
+type OffSlotPrompt = { itemId: string; doseId: string; slotKey: string };
 
 function name(slug: string | undefined): string {
   return (slug && compoundBySlug(slug)?.canonicalName) || slug || '';
@@ -35,25 +39,38 @@ function name(slug: string | undefined): string {
  * surfaces the low-stock flag where the user actually looks daily.
  */
 export function TodayDoses() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const router = useRouter();
-  const { protocolItems, doseEvents, inventory, logDose, deleteDose } = useStore();
+  const { protocolItems, doseEvents, inventory, logDose, updateDose, updateProtocolItem, deleteDose } =
+    useStore();
   const today = localDateKey();
 
   // Doses logged from this card in this session, so a fat-thumbed tap can be
   // reversed in place. itemId -> the dose event id the tap created.
   const [undoable, setUndoable] = useState<Record<string, string>>({});
+  // P-04: a just-logged dose that landed off the schedule grid awaits the user's
+  // call (counts-for-slot / restart-schedule / extra). Never decided silently.
+  const [offSlot, setOffSlot] = useState<OffSlotPrompt | null>(null);
+
+  // Per-item schedule inputs for the anchored grid (P-04).
+  const dosesByItem = useMemo(() => {
+    const map: Record<string, ScheduledDose[]> = {};
+    for (const d of doseEvents) {
+      if (!d.protocolItemId) continue;
+      (map[d.protocolItemId] ??= []).push({
+        dateKey: localDateKey(new Date(d.takenAt)),
+        slotKey: d.slotKey,
+        extra: d.extra,
+      });
+    }
+    return map;
+  }, [doseEvents]);
 
   const rows = useMemo(() => {
-    // Last dose date-key per protocol item (by item id, falling back to compound).
-    const lastByItem: Record<string, string> = {};
     const doneTodayItems = new Set<string>();
     for (const d of doseEvents) {
-      const key = localDateKey(new Date(d.takenAt));
-      const itemId = d.protocolItemId;
-      if (itemId) {
-        if (!lastByItem[itemId] || lastByItem[itemId] < key) lastByItem[itemId] = key;
-        if (key === today) doneTodayItems.add(itemId);
+      if (d.protocolItemId && localDateKey(new Date(d.takenAt)) === today) {
+        doneTodayItems.add(d.protocolItemId);
       }
     }
 
@@ -70,18 +87,22 @@ export function TodayDoses() {
         } else if (p.frequency === 'as_needed') {
           dueToday = false;
         } else {
-          // Legacy frequency cadence
-          const last = lastByItem[p.id];
-          const lastBeforeToday = last && last < today ? last : undefined;
-          const daysSince = lastBeforeToday ? daysBetween(lastBeforeToday, today) : Infinity;
-          const dueAfter = p.frequency ? DUE_AFTER[p.frequency] : undefined;
-          dueToday = dueAfter == null ? true : daysSince >= dueAfter;
+          // Anchored interval grid (P-04): slots are anchor + N*interval; a
+          // logged dose completes a slot instead of sliding the whole cadence.
+          const interval = intervalFor(p.frequency);
+          if (interval == null) {
+            dueToday = true; // 'custom' free-text cadence: always shown (unchanged)
+          } else {
+            const doses = dosesByItem[p.id] ?? [];
+            const anchor = anchorFor(p, doses.map((d) => d.dateKey), today);
+            dueToday = anchor == null ? true : dueSlot(anchor, interval, doses, today) != null;
+          }
         }
 
         return { item: p, done, show: dueToday || done };
       })
       .filter((r) => r.show);
-  }, [protocolItems, doseEvents, today]);
+  }, [protocolItems, doseEvents, dosesByItem, today]);
 
   // Low-stock/expiry flag, surfaced here because Protocol is a nested screen.
   const flagged = useMemo(
@@ -98,6 +119,26 @@ export function TodayDoses() {
       doseUnit: item.doseUnit,
     });
     setUndoable((m) => ({ ...m, [item.id]: id }));
+
+    // P-04 anchoring: interval schedules get a persistent grid reference.
+    const interval = item.doseDays === undefined ? intervalFor(item.frequency) : null;
+    if (interval != null) {
+      const doses = dosesByItem[item.id] ?? [];
+      const anchor = anchorFor(item, doses.map((d) => d.dateKey), today);
+      if (anchor == null) {
+        // First ever dose: today starts the grid.
+        updateProtocolItem(item.id, { scheduleAnchor: today });
+      } else {
+        const c = classifyDose(anchor, interval, today);
+        if (!c.onSlot) {
+          // Off the grid: ask, never silently re-anchor.
+          setOffSlot({ itemId: item.id, doseId: id, slotKey: c.slotKey });
+        } else if (!item.scheduleAnchor && !item.startedAt) {
+          // On-grid log against a derived (floating) anchor: persist it.
+          updateProtocolItem(item.id, { scheduleAnchor: anchor });
+        }
+      }
+    }
     hapticTap();
   };
 
@@ -105,11 +146,33 @@ export function TodayDoses() {
     const doseId = undoable[itemId];
     if (!doseId) return;
     deleteDose(doseId);
+    if (offSlot?.doseId === doseId) setOffSlot(null);
     setUndoable((m) => {
       const next = { ...m };
       delete next[itemId];
       return next;
     });
+  };
+
+  // The three off-slot resolutions (P-04). Dismissing by choosing nothing keeps
+  // the default: the dose completes its nearest slot, anchor untouched.
+  const onOffSlotKeep = () => {
+    if (!offSlot) return;
+    updateDose(offSlot.doseId, { slotKey: offSlot.slotKey });
+    setOffSlot(null);
+    hapticTap();
+  };
+  const onOffSlotShift = () => {
+    if (!offSlot) return;
+    updateProtocolItem(offSlot.itemId, { scheduleAnchor: today });
+    setOffSlot(null);
+    hapticTap();
+  };
+  const onOffSlotExtra = () => {
+    if (!offSlot) return;
+    updateDose(offSlot.doseId, { extra: true });
+    setOffSlot(null);
+    hapticTap();
   };
 
   const header = (
@@ -162,6 +225,23 @@ export function TodayDoses() {
             onLog={() => onLog(item)}
             onUndo={() => onUndo(item.id)}
           />
+          {offSlot?.itemId === item.id ? (
+            <View style={styles.offSlotBox}>
+              <ThemedText type="monoSm" themeColor="textSecondary" style={styles.offSlotTitle}>
+                {t('dashboard.offSlotTitle')}
+              </ThemedText>
+              <View style={styles.offSlotChips}>
+                <TextButton
+                  label={t('dashboard.offSlotKeep', {
+                    date: formatDateKey(offSlot.slotKey, i18n.language),
+                  })}
+                  onPress={onOffSlotKeep}
+                />
+                <TextButton label={t('dashboard.offSlotShift')} onPress={onOffSlotShift} />
+                <TextButton label={t('dashboard.offSlotExtra')} onPress={onOffSlotExtra} />
+              </View>
+            </View>
+          ) : null}
         </View>
       ))}
     </Card>
@@ -244,4 +324,7 @@ const styles = StyleSheet.create({
   logChip: { paddingHorizontal: Spacing.three, paddingVertical: Spacing.one + 2, borderRadius: 2, minWidth: 56, alignItems: 'center' },
   logChipPressed: { transform: [{ scale: 0.94 }] },
   logChipText: { letterSpacing: 1.3 },
+  offSlotBox: { gap: Spacing.one, paddingBottom: Spacing.two },
+  offSlotTitle: { textTransform: 'uppercase' },
+  offSlotChips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two, alignItems: 'center' },
 });

@@ -95,6 +95,10 @@ export type ProtocolItem = {
   /** When the user actually started this compound (YYYY-MM-DD). Drives cycle-week
    * context for the AI so a mid-cycle joiner isn't treated as day 1 (spec 03/08). */
   startedAt?: string;
+  /** Fixed reference day (YYYY-MM-DD) for interval schedules: slots are
+   * anchor + N*interval (P-04). Set by the first on-grid log or by the user
+   * choosing "shift schedule" on an off-slot dose. Never moved silently. */
+  scheduleAnchor?: string;
   updatedAt?: string; // ISO — for cross-device merge (last-write-wins)
 };
 
@@ -107,6 +111,11 @@ export type DoseEvent = {
   dose?: number;
   doseUnit?: string;
   site?: string; // injection-site rotation
+  /** The schedule slot (YYYY-MM-DD) this dose fulfills, when the user assigned an
+   * off-slot dose via the P-04 prompt. Unset = completes its nearest slot. */
+  slotKey?: string;
+  /** Deliberately outside the schedule (P-04 "extra dose"): completes no slot. */
+  extra?: boolean;
   updatedAt?: string; // ISO — for cross-device merge (last-write-wins)
 };
 
@@ -408,6 +417,8 @@ type StoreContextValue = {
   removeProtocolItem: (id: string) => void;
   /** Returns the new dose's id (so callers can offer undo). */
   logDose: (dose: Omit<DoseEvent, 'id'>) => string;
+  /** Patch a logged dose (P-04: assign an off-slot dose to a slot / mark extra). */
+  updateDose: (id: string, patch: Partial<Omit<DoseEvent, 'id'>>) => void;
   deleteDose: (id: string) => void;
   addInventoryItem: (item: Omit<InventoryItem, 'id'>) => void;
   updateInventoryItem: (id: string, patch: Partial<Omit<InventoryItem, 'id'>>) => void;
@@ -600,6 +611,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       return { ...s, doseEvents: [{ ...dose, id }, ...s.doseEvents], inventory };
     });
     return id;
+  }, []);
+
+  const updateDose = useCallback<StoreContextValue['updateDose']>((id, patch) => {
+    setState((s) => ({
+      ...s,
+      doseEvents: s.doseEvents.map((d) =>
+        d.id === id ? { ...d, ...patch, updatedAt: new Date().toISOString() } : d,
+      ),
+    }));
   }, []);
 
   const deleteDose = useCallback((id: string) => {
@@ -851,6 +871,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       updateProtocolItem,
       removeProtocolItem,
       logDose,
+      updateDose,
       deleteDose,
       addInventoryItem,
       updateInventoryItem,
@@ -888,6 +909,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       updateProtocolItem,
       removeProtocolItem,
       logDose,
+      updateDose,
       deleteDose,
       addInventoryItem,
       updateInventoryItem,

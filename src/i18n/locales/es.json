@@ -737,6 +737,10 @@
     "editNote": "Editar nota",
     "notePlaceholder": "Añade una nota de hoy…",
     "doseLog": "Registrar",
+    "offSlotTitle": "Esta dosis quedó fuera del calendario",
+    "offSlotKeep": "Cuenta para el {{date}}",
+    "offSlotShift": "Reiniciar calendario hoy",
+    "offSlotExtra": "Dosis extra",
     "dosesSetup": "Configura tu protocolo",
     "stockFlag": "Los suministros requieren atención",
     "dosesManage": "Gestionar protocolo"

@@ -737,6 +737,10 @@
     "editNote": "Notiz bearbeiten",
     "notePlaceholder": "Notiz für heute hinzufügen…",
     "doseLog": "Erfassen",
+    "offSlotTitle": "Diese Dosis liegt außerhalb des Plans",
+    "offSlotKeep": "Zählt für {{date}}",
+    "offSlotShift": "Plan ab heute neu starten",
+    "offSlotExtra": "Zusätzliche Dosis",
     "dosesSetup": "Protokoll einrichten",
     "stockFlag": "Vorräte brauchen Aufmerksamkeit",
     "dosesManage": "Protokoll verwalten"

@@ -737,6 +737,10 @@
     "editNote": "Edit note",
     "notePlaceholder": "Add a note for today…",
     "doseLog": "Log",
+    "offSlotTitle": "This dose landed off schedule",
+    "offSlotKeep": "Counts for {{date}}",
+    "offSlotShift": "Restart schedule today",
+    "offSlotExtra": "Extra dose",
     "dosesSetup": "Set up your protocol",
     "stockFlag": "Supplies need attention",
     "dosesManage": "Manage protocol"
