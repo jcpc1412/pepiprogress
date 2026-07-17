@@ -1173,5 +1173,17 @@
     "high": "Hoch",
     "label": "Konfidenz {{level}}",
     "why": "Für Begründung tippen"
+  },
+  "energyBalance": {
+    "title": "Energiebilanz",
+    "maintenance": "Dein Erhaltungsbedarf liegt wohl bei rund {{kcal}} kcal pro Tag.",
+    "basis": "Ermittelt aus deiner Zufuhr und dem Gewichtstrend über {{days}} Tage.",
+    "biasOver": "Dein Gerät überschätzt den Verbrauch anscheinend um rund {{pct}}%.",
+    "biasUnder": "Dein Gerät unterschätzt den Verbrauch anscheinend um rund {{pct}}%.",
+    "disagreeSlower": "Die Waage sinkt langsamer, als deine erfasste Zufuhr nahelegt. Häufige Gründe: nicht erfasstes Essen oder Anpassung deines Körpers.",
+    "disagreeFaster": "Die Waage sinkt schneller, als deine erfasste Zufuhr nahelegt. Oft Wasser oder eine etwas zu niedrig erfasste Zufuhr.",
+    "intakeLower": "Du hast die letzten Tage weniger gegessen. Die Waage hinkt so einer Änderung meist hinterher.",
+    "intakeHigher": "Du hast die letzten Tage mehr gegessen. Ein kurzer Anstieg ist meist Wasser, kein Fett.",
+    "disclaimer": "Geschätzt aus deinen eigenen Daten, keine medizinische Beratung."
   }
 }

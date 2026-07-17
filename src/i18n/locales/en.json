@@ -1173,5 +1173,17 @@
     "high": "High",
     "label": "{{level}} confidence",
     "why": "Tap for why"
+  },
+  "energyBalance": {
+    "title": "Energy balance",
+    "maintenance": "Maintenance looks like about {{kcal}} kcal a day.",
+    "basis": "Solved from your intake and weight trend over {{days}} days.",
+    "biasOver": "Your tracker looks like it overreports burn by about {{pct}}%.",
+    "biasUnder": "Your tracker looks like it underreports burn by about {{pct}}%.",
+    "disagreeSlower": "The scale is moving slower than your logged intake implies. Common reasons: underlogged food or your body adapting.",
+    "disagreeFaster": "The scale is moving faster than your logged intake implies. Often water, or intake logged a little low.",
+    "intakeLower": "You've eaten less the last few days. The scale usually lags a change like this.",
+    "intakeHigher": "You've eaten more the last few days. A short bump is usually water, not fat.",
+    "disclaimer": "Estimated from your own data, not medical advice."
   }
 }

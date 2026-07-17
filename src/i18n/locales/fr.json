@@ -1173,5 +1173,17 @@
     "high": "Élevée",
     "label": "Confiance {{level}}",
     "why": "Touche pour savoir pourquoi"
+  },
+  "energyBalance": {
+    "title": "Bilan énergétique",
+    "maintenance": "Ton maintien semble tourner autour de {{kcal}} kcal par jour.",
+    "basis": "Déduit de ton apport et de la tendance de poids sur {{days}} jours.",
+    "biasOver": "Ton appareil semble surestimer la dépense d’environ {{pct}}%.",
+    "biasUnder": "Ton appareil semble sous-estimer la dépense d’environ {{pct}}%.",
+    "disagreeSlower": "La balance descend plus lentement que ton apport enregistré ne le laisse penser. Causes fréquentes : nourriture non notée ou adaptation de ton corps.",
+    "disagreeFaster": "La balance descend plus vite que ton apport enregistré ne le laisse penser. Souvent de l’eau, ou un apport noté un peu bas.",
+    "intakeLower": "Tu as mangé moins ces derniers jours. La balance met souvent du temps à refléter ce genre de changement.",
+    "intakeHigher": "Tu as mangé plus ces derniers jours. Une hausse brève est souvent de l’eau, pas de la graisse.",
+    "disclaimer": "Estimé à partir de tes propres données, pas un avis médical."
   }
 }

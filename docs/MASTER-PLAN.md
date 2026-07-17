@@ -80,7 +80,7 @@ the settings override + quieter-only silent adjustment shipped).
     engine's existing signal ranking; falls back to the current fixed order when nothing
     stands out. (external review 2026-07-16)
 
-## Wave 4: compound intelligence + predictions (the differentiation wave)
+## Wave 4: compound intelligence + predictions (the differentiation wave) ✅ SHIPPED 2026-07-17
 
 12. **market_category migration + shared posture module + eval suite ✅ SHIPPED 2026-07-16**
     (commit 0dd845f). Migration 20260717032638 applied; `_shared/posture.ts` reused by
@@ -146,9 +146,20 @@ the settings override + quieter-only silent adjustment shipped).
     on `projectSeries` + `daysToTarget`, so the hero figure and the chart never
     disagree. `insights.projected`/`projectedFlat` i18n ×6. Browser-verified: dotted
     descent + band render on the weight chart, no projection on other metrics. (round-3 §7)
-20. **TRAJ-2 energy-balance calibration [M].** Personal TDEE from intake vs weight delta;
-    per-user device-bias factor; blended forecast; disagreement-as-insight; proactive
-    hooks (cheat-meal water weight, step drops). (round-3 §7)
+20. **TRAJ-2 energy-balance calibration ✅ SHIPPED 2026-07-17.** `src/lib/energy-balance.ts`
+    (pure, 6 tests): `computeEnergyBalance` solves personal maintenance (TDEE) from
+    average logged intake minus the weight-change energy (~7700 kcal/kg), reusing
+    TRAJ-1's `projectSeries` for the observed slope so nothing disagrees. When Health
+    activity data flows it adds a device-bias multiplier (solved maintenance vs
+    Mifflin BMR + reported active burn) and a disagreement-as-insight verdict
+    (scale slower/faster than the logged intake implies → underlogging or adaptation).
+    A recent-intake-shift hook (last 4 days vs the window) flags a change the scale
+    hasn't caught up to. `EnergyBalanceCard` on Analysis surfaces maintenance + bias +
+    the insight; self-gates to null below 5 logged intake days (graceful degradation
+    to TRAJ-1 alone). `energyBalance.*` i18n ×6. Browser-verified: maintenance 2627 kcal
+    + "eaten less lately, the scale lags" on a seeded declining series. The blended
+    forecast line + proactive water-weight/step-drop anomaly hooks activate once the
+    Health read (task #7, device build) lands the activity stream. (round-3 §7)
 
 ## Wave 5: training log + goal symmetry + narrative
 

@@ -1173,5 +1173,17 @@
     "high": "Alta",
     "label": "Confianza {{level}}",
     "why": "Toca para saber por qué"
+  },
+  "energyBalance": {
+    "title": "Balance energético",
+    "maintenance": "Tu mantenimiento parece rondar las {{kcal}} kcal al día.",
+    "basis": "Calculado con tu ingesta y la tendencia de peso de {{days}} días.",
+    "biasOver": "Tu dispositivo parece sobreestimar el gasto en torno a un {{pct}}%.",
+    "biasUnder": "Tu dispositivo parece subestimar el gasto en torno a un {{pct}}%.",
+    "disagreeSlower": "La báscula baja más despacio de lo que tu ingesta registrada sugiere. Causas comunes: comida sin registrar o adaptación de tu cuerpo.",
+    "disagreeFaster": "La báscula baja más rápido de lo que tu ingesta registrada sugiere. Suele ser agua, o ingesta registrada algo baja.",
+    "intakeLower": "Has comido menos estos últimos días. La báscula suele tardar en reflejar un cambio así.",
+    "intakeHigher": "Has comido más estos últimos días. Una subida breve suele ser agua, no grasa.",
+    "disclaimer": "Estimado a partir de tus propios datos, no es consejo médico."
   }
 }

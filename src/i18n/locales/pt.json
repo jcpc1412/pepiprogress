@@ -1173,5 +1173,17 @@
     "high": "Alta",
     "label": "Confiança {{level}}",
     "why": "Toque para ver por quê"
+  },
+  "energyBalance": {
+    "title": "Balanço energético",
+    "maintenance": "Sua manutenção parece ficar em torno de {{kcal}} kcal por dia.",
+    "basis": "Calculado a partir da sua ingestão e da tendência de peso em {{days}} dias.",
+    "biasOver": "Seu aparelho parece superestimar o gasto em cerca de {{pct}}%.",
+    "biasUnder": "Seu aparelho parece subestimar o gasto em cerca de {{pct}}%.",
+    "disagreeSlower": "A balança desce mais devagar do que sua ingestão registrada sugere. Causas comuns: comida não registrada ou adaptação do corpo.",
+    "disagreeFaster": "A balança desce mais rápido do que sua ingestão registrada sugere. Costuma ser água, ou ingestão registrada um pouco baixa.",
+    "intakeLower": "Você comeu menos nos últimos dias. A balança costuma demorar a refletir uma mudança assim.",
+    "intakeHigher": "Você comeu mais nos últimos dias. Uma alta breve costuma ser água, não gordura.",
+    "disclaimer": "Estimado a partir dos seus próprios dados, não é conselho médico."
   }
 }
