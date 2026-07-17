@@ -19,6 +19,7 @@ import { usesFemaleFormula } from '@/lib/body-composition';
 import { buildMetricSeries, CHART_METRICS, type DatedPoint } from '@/lib/chart-series';
 import type { Goal } from '@/lib/field-surfacing';
 import { compoundBySlug } from '@/data/compound-catalog';
+import { daysToTarget, projectSeries } from '@/lib/trajectory';
 import type {
   CheckinEntry,
   LocalProfile,
@@ -589,35 +590,21 @@ function isPlateau(weightRaw: Raw): boolean {
 
 /**
  * A hedged, descriptive days-to-target projection for the weight hero (redesign
- * §3.3 "mild goal-timeline"). Deliberately conservative and honest: only when
- * the hero is weight, a target is set, and current velocity is actually moving
- * toward it at a plausible rate. Reports an observed pace, never a promise or a
- * prescription — stays inside the legal rung-1 gate.
+ * §3.3 "mild goal-timeline"), now on the shared TRAJ-1 recency-weighted slope so
+ * the hero figure and the projected chart line never disagree. Deliberately
+ * conservative and honest: only when the hero is weight, a target is set, and
+ * the CURRENT pace is actually moving toward it at a plausible rate. Reports an
+ * observed pace, never a promise or a prescription (legal rung-1 gate).
  */
 function weightForecast(heroRaw: Raw, input: VerdictInput): Localizable | undefined {
   if (heroRaw.metricId !== 'weight') return undefined;
   const target = input.profile.targetWeight;
   if (typeof target !== 'number' || !Number.isFinite(target)) return undefined;
 
-  const pts = heroRaw.series;
-  if (pts.length < MIN_POINTS) return undefined;
-  const first = pts[0];
-  const last = pts[pts.length - 1];
-  const spanDays =
-    (new Date(`${last.dateKey}T00:00:00.000Z`).getTime() -
-      new Date(`${first.dateKey}T00:00:00.000Z`).getTime()) /
-    DAY_MS;
-  if (spanDays <= 0) return undefined;
-
-  const perDay = (last.value - first.value) / spanDays; // signed velocity
-  const remaining = target - last.value;
-  if (Math.abs(remaining) < 0.1) return undefined; // effectively there already
-  // Must be moving toward the target, not away from it.
-  if (Math.sign(perDay) !== Math.sign(remaining) || perDay === 0) return undefined;
-
-  const days = Math.round(Math.abs(remaining / perDay));
-  // Only project across an honest horizon — too far out is noise, not a reading.
-  if (days < 1 || days > 365) return undefined;
+  const proj = projectSeries(heroRaw.series, 365);
+  if (!proj) return undefined;
+  const days = daysToTarget(proj, target);
+  if (days === null) return undefined;
   return { key: 'verdict.forecast.daysToTarget', params: { n: days } };
 }
 

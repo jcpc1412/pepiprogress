@@ -694,6 +694,9 @@
     "unlockTitle": "Desbloquea el análisis con IA",
     "unlockBody": "El análisis encuentra patrones en tus registros: tendencias, correlaciones y respuestas sobre tus propios datos.",
     "unlockProgress": "Registra {{count}} días más para desbloquear"
+  ,
+    "projected": "Línea punteada: tendencia proyectada a tu ritmo reciente, sombreada por la incertidumbre.",
+    "projectedFlat": "Línea punteada: se mantiene cerca de tu peso actual a tu ritmo reciente."
   },
   "sync": {
     "syncing": "Sincronizando…",

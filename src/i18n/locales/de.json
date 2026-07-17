@@ -694,6 +694,9 @@
     "unlockTitle": "KI-Einblicke freischalten",
     "unlockBody": "Einblicke finden Muster in deinen Einträgen: Trends, Zusammenhänge und Antworten zu deinen Daten.",
     "unlockProgress": "Erfasse {{count}} weitere Check-ins zum Freischalten"
+  ,
+    "projected": "Gepunktete Linie: projizierter Trend in deinem aktuellen Tempo, schattiert nach Unsicherheit.",
+    "projectedFlat": "Gepunktete Linie: bleibt bei deinem aktuellen Tempo nahe deinem jetzigen Gewicht."
   },
   "sync": {
     "syncing": "Synchronisiert…",

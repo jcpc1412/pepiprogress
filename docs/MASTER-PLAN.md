@@ -135,8 +135,17 @@ the settings override + quieter-only silent adjustment shipped).
     `confidence.*` + `verdict.confidenceWhy.*` + `photos.confWhy*` i18n ×6. Forecasts +
     correlations fold into item 19 (they share the trajectory/uncertainty work; TRAJ-1's
     band adopts this same badge). (external review 2026-07-16)
-19. **TRAJ-1 trajectory line [M].** Recency-weighted slope, plateau detection, widening
-    uncertainty band; weightForecast unified onto the same math. (round-3 §7)
+19. **TRAJ-1 trajectory line ✅ SHIPPED 2026-07-17.** `src/lib/trajectory.ts`
+    (pure, 9 tests): `projectSeries` = exponentially recency-weighted least-squares
+    slope (recent days dominate), plateau flattening when the recent move sits inside
+    the fit's own noise, and an uncertainty band that widens with distance from today
+    (scaled by residual variance). `daysToTarget` reads the ETA off the same slope.
+    LineChart gained `projected` (dotted continuation from the last real point),
+    `band` (shaded wedge), and `goalValue` (target line); the weight chart on Analysis
+    draws all three (21-day horizon). `weightForecast` in the verdict engine now runs
+    on `projectSeries` + `daysToTarget`, so the hero figure and the chart never
+    disagree. `insights.projected`/`projectedFlat` i18n ×6. Browser-verified: dotted
+    descent + band render on the weight chart, no projection on other metrics. (round-3 §7)
 20. **TRAJ-2 energy-balance calibration [M].** Personal TDEE from intake vs weight delta;
     per-user device-bias factor; blended forecast; disagreement-as-insight; proactive
     hooks (cheat-meal water weight, step drops). (round-3 §7)

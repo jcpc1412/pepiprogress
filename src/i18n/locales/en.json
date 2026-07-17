@@ -694,6 +694,9 @@
     "unlockTitle": "Unlock AI insights",
     "unlockBody": "Insights find patterns across your logs: trends, correlations, and answers about your own data.",
     "unlockProgress": "Log {{count}} more check-ins to unlock"
+  ,
+    "projected": "Dotted line: projected trend at your recent pace, shaded by uncertainty.",
+    "projectedFlat": "Dotted line: holding near your current weight at your recent pace."
   },
   "sync": {
     "syncing": "Syncing…",

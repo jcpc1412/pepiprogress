@@ -1,5 +1,5 @@
 import { StyleSheet, View } from 'react-native';
-import Svg, { Circle, Line, Polyline } from 'react-native-svg';
+import Svg, { Circle, Line, Polygon, Polyline } from 'react-native-svg';
 
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
@@ -8,14 +8,21 @@ import { useTheme } from '@/hooks/use-theme';
 export type ChartPoint = { label: string; value: number };
 /** A vertical reference line (e.g. a dose/protocol start) at a 0–1 x-fraction. */
 export type ChartMarker = { fraction: number };
+/** One point of the projected uncertainty band (TRAJ-1). */
+export type BandPoint = { label: string; lower: number; upper: number };
 
 /** Minimal line chart on react-native-svg, themed to the instrument aesthetic (H-01).
  *  `estimated` is an optional secondary series (wearable-derived) drawn dashed +
- *  hollow so it reads as inferred, not logged. Both series share one x-domain
- *  (sorted unique labels) so they align by date rather than array index. */
+ *  hollow so it reads as inferred, not logged. `projected` + `band` draw the
+ *  TRAJ-1 forward trajectory: a dotted continuation inside a shaded uncertainty
+ *  band. `goalValue` draws a horizontal target line. All series share one
+ *  x-domain (sorted unique labels) so they align by date rather than array index. */
 export function LineChart({
   data,
   estimated,
+  projected,
+  band,
+  goalValue,
   height = 160,
   unit,
   markers,
@@ -23,6 +30,9 @@ export function LineChart({
 }: {
   data: ChartPoint[];
   estimated?: ChartPoint[];
+  projected?: ChartPoint[];
+  band?: BandPoint[];
+  goalValue?: number;
   height?: number;
   unit?: string;
   markers?: ChartMarker[];
@@ -34,6 +44,8 @@ export function LineChart({
   const padY = 14;
 
   const est = estimated ?? [];
+  const proj = projected ?? [];
+  const bnd = band ?? [];
   const totalPoints = data.length + est.length;
 
   // Empty/insufficient — draw a dashed baseline + axis so it reads as a chart
@@ -62,24 +74,52 @@ export function LineChart({
     );
   }
 
-  // Shared x-domain: sorted unique labels across both series.
-  const domain = Array.from(new Set([...data, ...est].map((d) => d.label))).sort();
+  // Shared x-domain: sorted unique labels across every series (incl. the future).
+  const domain = Array.from(
+    new Set([...data, ...est, ...proj, ...bnd.map((b) => ({ label: b.label }))].map((d) => d.label)),
+  ).sort();
   const xIndex = new Map(domain.map((l, i) => [l, i]));
   const stepX = (width - padX * 2) / Math.max(1, domain.length - 1);
   const xFor = (label: string) => padX + (xIndex.get(label) ?? 0) * stepX;
 
-  // Shared y-scale across both series so they're comparable.
-  const allValues = [...data, ...est].map((d) => d.value);
-  const min = Math.min(...allValues);
-  const max = Math.max(...allValues);
+  // Header range reflects only the ACTUAL data (manual + estimated), so the
+  // projection + band never inflate the "N – M" readout.
+  const displayValues = [...data, ...est].map((d) => d.value);
+  const displayMin = Math.min(...displayValues);
+  const displayMax = Math.max(...displayValues);
+
+  // Y-scale spans everything drawn — data, estimated, projection, band edges and
+  // the goal line — so nothing clips.
+  const scaleValues = [
+    ...displayValues,
+    ...proj.map((p) => p.value),
+    ...bnd.flatMap((b) => [b.lower, b.upper]),
+    ...(typeof goalValue === 'number' ? [goalValue] : []),
+  ];
+  const min = Math.min(...scaleValues);
+  const max = Math.max(...scaleValues);
   const span = max - min || 1;
   const yFor = (v: number) => padY + (1 - (v - min) / span) * (height - padY * 2);
 
   const sortedData = [...data].sort((a, b) => a.label.localeCompare(b.label));
   const sortedEst = [...est].sort((a, b) => a.label.localeCompare(b.label));
+  const sortedProj = [...proj].sort((a, b) => a.label.localeCompare(b.label));
+  const sortedBand = [...bnd].sort((a, b) => a.label.localeCompare(b.label));
 
   const mainPoints = sortedData.map((d) => `${xFor(d.label)},${yFor(d.value)}`).join(' ');
   const estPoints = sortedEst.map((d) => `${xFor(d.label)},${yFor(d.value)}`).join(' ');
+
+  // The projected line connects to the last actual point so it reads as one arc.
+  const lastActual = sortedData[sortedData.length - 1];
+  const projLine = [
+    ...(lastActual ? [lastActual] : []),
+    ...sortedProj,
+  ].map((d) => `${xFor(d.label)},${yFor(d.value)}`);
+  // Band polygon: upper edge left→right, then lower edge right→left.
+  const bandPolygon = [
+    ...sortedBand.map((b) => `${xFor(b.label)},${yFor(b.upper)}`),
+    ...[...sortedBand].reverse().map((b) => `${xFor(b.label)},${yFor(b.lower)}`),
+  ].join(' ');
 
   // With many points, per-point dots turn the line into a dense "barcode". Past a
   // threshold, draw the line alone — the solid series keeps only its trailing dot
@@ -98,7 +138,7 @@ export function LineChart({
       <View style={styles.head}>
         <ThemedText type="metricSm">{`${fmt(last.value)}${unit ? ` ${unit}` : ''}`}</ThemedText>
         <ThemedText type="monoSm" themeColor="textMuted">
-          {`${fmt(min)} – ${fmt(max)}`}
+          {`${fmt(displayMin)} – ${fmt(displayMax)}`}
         </ThemedText>
       </View>
       <Svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`}>
@@ -109,6 +149,22 @@ export function LineChart({
             <Line key={`m${i}`} x1={x} y1={padY} x2={x} y2={height - padY} stroke={theme.border} strokeWidth={1} strokeDasharray="3 3" />
           );
         })}
+        {/* Projected uncertainty band (TRAJ-1) — a faint shaded wedge behind the line. */}
+        {sortedBand.length >= 2 && (
+          <Polygon points={bandPolygon} fill={theme.accent} fillOpacity={0.16} stroke="none" />
+        )}
+        {/* Goal line — horizontal target where set. */}
+        {typeof goalValue === 'number' && (
+          <Line
+            x1={padX}
+            y1={yFor(goalValue)}
+            x2={width - padX}
+            y2={yFor(goalValue)}
+            stroke={theme.textMuted}
+            strokeWidth={1}
+            strokeDasharray="2 4"
+          />
+        )}
         {/* Estimated (wearable-derived) overlay — dashed line, hollow dots. */}
         {sortedEst.length >= 2 && (
           <Polyline
@@ -125,6 +181,19 @@ export function LineChart({
           sortedEst.map((d, i) => (
             <Circle key={`e${i}`} cx={xFor(d.label)} cy={yFor(d.value)} r={2} fill={theme.background} stroke={theme.textMuted} strokeWidth={1} />
           ))}
+        {/* Projected trajectory — dotted continuation of the solid series. */}
+        {projLine.length >= 2 && (
+          <Polyline
+            points={projLine.join(' ')}
+            fill="none"
+            stroke={theme.accent}
+            strokeWidth={1.5}
+            strokeDasharray="2 4"
+            strokeOpacity={0.8}
+            strokeLinejoin="round"
+            strokeLinecap="round"
+          />
+        )}
         {/* Subjective (logged) series — solid accent line, filled dots. */}
         {sortedData.length >= 2 && (
           <Polyline points={mainPoints} fill="none" stroke={theme.accent} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
 import { OptionChip } from '@/components/form';
-import { LineChart, type ChartMarker, type ChartPoint } from '@/components/line-chart';
+import { LineChart, type BandPoint, type ChartMarker, type ChartPoint } from '@/components/line-chart';
 import { Card, EngravedLabel, Metric, SignalText } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
@@ -13,9 +13,14 @@ import { CHART_METRICS } from '@/lib/chart-series';
 import { selectChartSeries } from '@/lib/data-facade';
 import { daysBetween } from '@/lib/dates';
 import { localDateKey, useStore, type CheckinEntry } from '@/lib/store';
+import { projectSeries } from '@/lib/trajectory';
 
 /** Min check-ins before the AI text features unlock (matches the Insights component). */
 export const MIN_CHECKINS = 4;
+
+/** How far the weight chart's projected trajectory reaches (days). Kept modest so
+ *  the dotted forward line never dwarfs the logged history. */
+const PROJECTION_HORIZON_DAYS = 21;
 
 type DeltaTone = 'good' | 'bad' | 'neutral';
 
@@ -163,6 +168,15 @@ export function ChartsSection() {
       {series.map((s) => {
         const points: ChartPoint[] = s.primary.map((p) => ({ label: p.dateKey.slice(5), value: p.value }));
         const estimated: ChartPoint[] = s.estimated.map((p) => ({ label: p.dateKey.slice(5), value: p.value }));
+
+        // TRAJ-1: an honest projected trajectory + widening band on the weight
+        // chart only (the metric with a modeled forecast + optional goal line).
+        const proj =
+          s.id === 'weight' && s.primary.length >= 3 ? projectSeries(s.primary, PROJECTION_HORIZON_DAYS) : null;
+        const projected: ChartPoint[] | undefined = proj?.points.map((p) => ({ label: p.dateKey.slice(5), value: p.value }));
+        const band: BandPoint[] | undefined = proj?.points.map((p) => ({ label: p.dateKey.slice(5), lower: p.lower, upper: p.upper }));
+        const goalValue =
+          s.id === 'weight' && typeof profile.targetWeight === 'number' ? profile.targetWeight : undefined;
         // Protocol-start markers positioned across the chart's actual date span.
         const span = [...s.primary, ...s.estimated];
         let markers: ChartMarker[] = [];
@@ -181,10 +195,18 @@ export function ChartsSection() {
             <LineChart
               data={points}
               estimated={estimated}
+              projected={projected}
+              band={band}
+              goalValue={goalValue}
               markers={markers}
               unit={s.unitKey ? t(s.unitKey as 'units.g') : undefined}
               emptyLabel={t('common.noData')}
             />
+            {proj ? (
+              <ThemedText type="monoSm" themeColor="textMuted">
+                {t(proj.plateau ? 'insights.projectedFlat' : 'insights.projected')}
+              </ThemedText>
+            ) : null}
           </Card>
         );
       })}

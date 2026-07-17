@@ -694,6 +694,9 @@
     "unlockTitle": "Desbloqueie a análise com IA",
     "unlockBody": "A análise encontra padrões nos seus registros: tendências, correlações e respostas sobre seus dados.",
     "unlockProgress": "Registre mais {{count}} dias para desbloquear"
+  ,
+    "projected": "Linha pontilhada: tendência projetada no seu ritmo recente, sombreada pela incerteza.",
+    "projectedFlat": "Linha pontilhada: mantém-se perto do seu peso atual no seu ritmo recente."
   },
   "sync": {
     "syncing": "Sincronizando…",
