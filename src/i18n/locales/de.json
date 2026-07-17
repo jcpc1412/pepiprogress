@@ -826,6 +826,45 @@
     },
     "disclaimer": "Zusammenhang über die Zeit, kein Beweis. Pepi kann Ursachen nicht mit Sicherheit trennen."
   },
+  "expectation": {
+    "section": "Was Leute häufig berichten",
+    "weekRange": "Wo {{from}}–{{to}}",
+    "weekOnward": "Wo {{from}}+",
+    "currentWeek": "Du bist in Woche {{week}}.",
+    "disclaimer": "Häufig berichtete Zeitverläufe, unverifiziert. Jeder reagiert anders; deine Kurve ist die, die zählt.",
+    "phase": {
+      "fat_loss": {
+        "onset": { "label": "Appetit beruhigt sich", "desc": "Zuerst werden meist geringerer Appetit und frühe Sättigung berichtet." },
+        "early_loss": { "label": "Frühe Abnahme", "desc": "Die stärkste Veränderung auf der Waage wird oft in diesem Zeitraum berichtet." },
+        "continued": { "label": "Stetige Abnahme", "desc": "Die Abnahme geht meist langsamer und stetiger weiter." },
+        "plateau": { "label": "Plateauphase", "desc": "Viele berichten von einer Abflachung; Konsequenz und Zufuhr zählen hier am meisten." }
+      },
+      "healing": {
+        "onset": { "label": "Beginn", "desc": "Erste Veränderungen im Zielbereich werden oft früh berichtet." },
+        "peak": { "label": "Maximale Wirkung", "desc": "Die deutlichste Erholung wird oft in diesem Zeitraum berichtet." },
+        "taper": { "label": "Gehalten", "desc": "Der Nutzen hält oft an und lässt nach, wenn sich das Gewebe stabilisiert." }
+      },
+      "skin": {
+        "settling": { "label": "Eingewöhnung", "desc": "So früh wird meist wenig sichtbare Veränderung berichtet." },
+        "visible": { "label": "Sichtbare Veränderung", "desc": "Veränderungen von Hautton und -struktur werden hier am häufigsten berichtet." },
+        "maintained": { "label": "Gehalten", "desc": "Veränderungen halten meist bei fortgesetzter Anwendung an." }
+      },
+      "gh_recovery": {
+        "sleep_recovery": { "label": "Schlaf und Erholung", "desc": "Zuerst werden meist tieferer Schlaf und schnellere Erholung berichtet." },
+        "water": { "label": "Wassereinlagerung", "desc": "Etwas frühe Wassereinlagerung oder ein Völlegefühl wird häufig berichtet." },
+        "body_comp": { "label": "Körperzusammensetzung", "desc": "Langsame Veränderungen der Körperzusammensetzung werden eher später berichtet." },
+        "plateau": { "label": "Plateauphase", "desc": "Viele berichten, dass sich die Wirkung um diese Zeit einpendelt." }
+      },
+      "sleep": {
+        "onset": { "label": "Beginn", "desc": "Veränderungen des Schlafs werden oft schon in den ersten Nächten berichtet." },
+        "settled": { "label": "Eingependelt", "desc": "Die Wirkung pendelt sich meist zu einem konstanten Muster ein." }
+      },
+      "cognition": {
+        "onset": { "label": "Beginn", "desc": "Feine Veränderungen bei Fokus oder Stimmung werden oft früh berichtet." },
+        "settled": { "label": "Eingependelt", "desc": "Die Wirkung pendelt sich meist über die folgenden Wochen ein." }
+      }
+    }
+  },
   "weekdays": {
     "mon": "Mo",
     "tue": "Di",

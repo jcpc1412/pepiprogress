@@ -100,8 +100,13 @@ the settings override + quieter-only silent adjustment shipped).
     (effort) shifts, so the deficit outranks the protocol when both moved (§5.1 ladder).
     `AttributionCard` on the compound-detail screen: hedged per-metric lines, confidence
     pill, lead-factor clause, association-not-proof disclaimer. i18n ×6.
-15. **Expectation timelines [M].** Reported onset/peak/plateau curves vs the user's own.
-    (positioning §3.2)
+15. **Expectation timelines ✅ SHIPPED 2026-07-16.** `src/lib/expectation-timeline.ts`
+    (pure, 11 tests): curated commonly-reported phase tables per effect class
+    (fat_loss/healing/skin/gh_recovery/sleep/cognition), resolved by effect tags;
+    controlled compounds get NO pushed timeline (track-only). `ExpectationTimelineCard`
+    on compound-detail highlights the user's current week against the phase strip.
+    Labeled-unverified per the sourcing ladder; curated + community percentiles later.
+    i18n ×6.
 16. **Lab upload + AI parse [M].** Photo or PDF upload on the Logging surface (ISSUES
     H-06); AI vision extracts marker values into bloodwork fields; feeds the
     bloodwork-to-compound monitoring mapping (positioning §3 item 4). Vial scan stays

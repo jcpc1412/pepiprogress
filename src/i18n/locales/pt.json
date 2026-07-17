@@ -826,6 +826,45 @@
     },
     "disclaimer": "Associação ao longo do tempo, não uma prova. O Pepi não consegue separar as causas com certeza."
   },
+  "expectation": {
+    "section": "O que as pessoas costumam relatar",
+    "weekRange": "sem {{from}}–{{to}}",
+    "weekOnward": "sem {{from}}+",
+    "currentWeek": "Você está na semana {{week}}.",
+    "disclaimer": "Cronologias comumente relatadas, não verificadas. Cada pessoa responde de forma diferente; a curva que importa é a sua.",
+    "phase": {
+      "fat_loss": {
+        "onset": { "label": "O apetite se acalma", "desc": "O primeiro relato costuma ser menos apetite e saciedade precoce." },
+        "early_loss": { "label": "Perda inicial", "desc": "A maior variação na balança costuma ser relatada nesta fase." },
+        "continued": { "label": "Perda constante", "desc": "A perda costuma continuar num ritmo mais lento e estável." },
+        "plateau": { "label": "Platô", "desc": "Muitos relatam o ritmo achatando; aqui a constância e a ingestão importam mais." }
+      },
+      "healing": {
+        "onset": { "label": "Início", "desc": "As primeiras mudanças na área-alvo costumam ser relatadas cedo." },
+        "peak": { "label": "Efeito máximo", "desc": "A recuperação mais notável costuma ser relatada nesta fase." },
+        "taper": { "label": "Mantido", "desc": "Os benefícios costumam se manter e diminuir à medida que o tecido se estabiliza." }
+      },
+      "skin": {
+        "settling": { "label": "Adaptação", "desc": "Pouca mudança visível costuma ser relatada tão cedo." },
+        "visible": { "label": "Mudança visível", "desc": "As mudanças de tom e textura da pele são mais relatadas nesta fase." },
+        "maintained": { "label": "Mantido", "desc": "As mudanças costumam se manter com o uso contínuo." }
+      },
+      "gh_recovery": {
+        "sleep_recovery": { "label": "Sono e recuperação", "desc": "O primeiro relato costuma ser sono mais profundo e recuperação mais rápida." },
+        "water": { "label": "Retenção de água", "desc": "Alguma retenção de água ou inchaço inicial costuma ser relatada." },
+        "body_comp": { "label": "Composição corporal", "desc": "Mudanças lentas de composição corporal são mais relatadas depois." },
+        "plateau": { "label": "Platô", "desc": "Muitos relatam os efeitos se estabilizando por volta desta fase." }
+      },
+      "sleep": {
+        "onset": { "label": "Início", "desc": "Mudanças no sono costumam ser relatadas nas primeiras noites." },
+        "settled": { "label": "Estabilizado", "desc": "O efeito costuma se assentar em um padrão constante." }
+      },
+      "cognition": {
+        "onset": { "label": "Início", "desc": "Mudanças sutis de foco ou humor costumam ser relatadas cedo." },
+        "settled": { "label": "Estabilizado", "desc": "O efeito costuma se assentar nas semanas seguintes." }
+      }
+    }
+  },
   "weekdays": {
     "mon": "Seg",
     "tue": "Ter",

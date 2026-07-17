@@ -826,6 +826,45 @@
     },
     "disclaimer": "Asociación en el tiempo, no una prueba. Pepi no puede separar las causas con certeza."
   },
+  "expectation": {
+    "section": "Lo que la gente suele reportar",
+    "weekRange": "sem {{from}}–{{to}}",
+    "weekOnward": "sem {{from}}+",
+    "currentWeek": "Estás en la semana {{week}}.",
+    "disclaimer": "Cronologías reportadas habitualmente, sin verificar. Cada persona responde distinto; la curva que importa es la tuya.",
+    "phase": {
+      "fat_loss": {
+        "onset": { "label": "El apetito se calma", "desc": "Lo primero que se suele reportar es menos apetito y saciedad temprana." },
+        "early_loss": { "label": "Pérdida inicial", "desc": "El mayor movimiento en la báscula se suele reportar en esta etapa." },
+        "continued": { "label": "Pérdida constante", "desc": "La pérdida suele continuar a un ritmo más lento y estable." },
+        "plateau": { "label": "Meseta", "desc": "Muchos reportan que el ritmo se aplana; aquí la constancia y la ingesta importan más." }
+      },
+      "healing": {
+        "onset": { "label": "Inicio", "desc": "Los primeros cambios en la zona objetivo se suelen reportar pronto." },
+        "peak": { "label": "Efecto máximo", "desc": "La recuperación más notable se suele reportar en esta etapa." },
+        "taper": { "label": "Mantenido", "desc": "Los beneficios suelen mantenerse y disminuir a medida que el tejido se estabiliza." }
+      },
+      "skin": {
+        "settling": { "label": "Adaptación", "desc": "Tan pronto se suele reportar poco cambio visible." },
+        "visible": { "label": "Cambio visible", "desc": "Los cambios de tono y textura de la piel se reportan más en esta etapa." },
+        "maintained": { "label": "Mantenido", "desc": "Los cambios suelen mantenerse con el uso continuado." }
+      },
+      "gh_recovery": {
+        "sleep_recovery": { "label": "Sueño y recuperación", "desc": "Lo primero que se suele reportar es sueño más profundo y recuperación más rápida." },
+        "water": { "label": "Cambio de agua", "desc": "Se suele reportar algo de retención de agua o hinchazón al principio." },
+        "body_comp": { "label": "Composición corporal", "desc": "Los cambios lentos de composición corporal se reportan más adelante." },
+        "plateau": { "label": "Meseta", "desc": "Muchos reportan que los efectos se estabilizan por esta etapa." }
+      },
+      "sleep": {
+        "onset": { "label": "Inicio", "desc": "Los cambios en el sueño se suelen reportar en las primeras noches." },
+        "settled": { "label": "Estabilizado", "desc": "El efecto suele asentarse en un patrón constante." }
+      },
+      "cognition": {
+        "onset": { "label": "Inicio", "desc": "Cambios sutiles en el enfoque o el ánimo se suelen reportar pronto." },
+        "settled": { "label": "Estabilizado", "desc": "El efecto suele asentarse en las semanas siguientes." }
+      }
+    }
+  },
   "weekdays": {
     "mon": "Lun",
     "tue": "Mar",
