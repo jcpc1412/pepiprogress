@@ -14,6 +14,7 @@ import { compoundBySlug } from '@/data/compound-catalog';
 import { AttributionCard } from '@/features/protocol/attribution-card';
 import { CompoundInfoCard } from '@/features/protocol/compound-info-card';
 import { ExpectationTimelineCard } from '@/features/protocol/expectation-timeline-card';
+import { MonitoringMarkersCard } from '@/features/protocol/monitoring-markers-card';
 import { roundTo } from '@/lib/reconstitution';
 import { useStore, type DoseRoute, type Frequency, type InventoryItem } from '@/lib/store';
 import { Constants } from '@/types/database';
@@ -128,6 +129,9 @@ export function CompoundDetailScreen({ itemId, onClose }: { itemId: string; onCl
 
           {/* Expectation timeline (spec §3.2, W4-15) */}
           <ExpectationTimelineCard slug={item.compoundSlug} />
+
+          {/* Bloodwork to watch (spec §3 item 4, W4-16) */}
+          <MonitoringMarkersCard slug={item.compoundSlug} />
 
           {/* Observational compound info (spec 05, W4-13) */}
           <CompoundInfoCard slug={item.compoundSlug} />

@@ -74,7 +74,10 @@ type AnalyzePhotoRequest = {
 
 type ParseLabRequest = {
   action: 'parse_lab';
-  image: string; // base64 JPEG
+  /** base64 JPEG of a photographed report. One of image | pdf is required. */
+  image?: string;
+  /** base64 of an uploaded PDF report (Claude reads it as a document). */
+  pdf?: string;
   locale?: string;
 };
 
@@ -758,21 +761,21 @@ Deno.serve(async (req: Request) => {
     }
 
     // -- parse_lab ------------------------------------------------------------
+    // Accepts a photographed report (image) OR an uploaded PDF (document block).
+    // The document is never stored (spec 05): values are extracted, then discarded.
     if (body.action === 'parse_lab') {
-      if (!body.image) return json({ error: 'image is required' }, 400);
+      if (!body.image && !body.pdf) return json({ error: 'image or pdf is required' }, 400);
       const locale = body.locale ?? 'en';
+      const source = body.pdf
+        ? { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: body.pdf } }
+        : { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: body.image } };
       const message = await client.messages.create({
         model: VISION_MODEL,
         max_tokens: 1024,
         system: labSystemPrompt(locale),
         ...structured(LAB_SCHEMA),
-        messages: [
-          {
-            role: 'user',
-            // deno-lint-ignore no-explicit-any
-            content: [{ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: body.image } }] as any,
-          },
-        ],
+        // deno-lint-ignore no-explicit-any
+        messages: [{ role: 'user', content: [source] as any }],
       });
       return json(extractJson(message, { values: [] }), 200);
     }

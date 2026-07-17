@@ -294,7 +294,18 @@
     "estradiol": "Estradiol",
     "lipids": "Lipids",
     "glucose": "Glucose",
-    "testosterone_total": "Total testosterone"
+    "testosterone_total": "Total testosterone",
+    "liver_enzymes": "Liver enzymes",
+    "prolactin": "Prolactin"
+  },
+  "monitoring": {
+    "section": "Bloodwork to watch",
+    "description": "Markers people commonly watch on this compound. Import a lab to fill them in.",
+    "recent": "Recent",
+    "due": "Due",
+    "never": "Not checked",
+    "lastValue": "{{value}} on {{date}}",
+    "noValue": "No lab value yet."
   },
   "symptoms": {
     "title": "Symptoms & side effects",
@@ -636,7 +647,7 @@
     "vialUnreadable": "Label is unclear. Try a closer, well-lit photo.",
     "vialResult": "{{compound}}, {{concentration}} mg/mL",
     "uploadPdf": "Upload PDF",
-    "pdfSaved": "Saved {{name}}. PDF parsing is coming soon."
+    "pdfTooLarge": "That PDF is too large. Try a photo of the report instead."
   },
   "drive": {
     "section": "GOOGLE DRIVE BACKUP",

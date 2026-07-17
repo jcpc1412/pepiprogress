@@ -294,7 +294,18 @@
     "estradiol": "Östradiol",
     "lipids": "Blutfette",
     "glucose": "Glukose",
-    "testosterone_total": "Gesamttestosteron"
+    "testosterone_total": "Gesamttestosteron",
+    "liver_enzymes": "Leberenzyme",
+    "prolactin": "Prolaktin"
+  },
+  "monitoring": {
+    "section": "Blutwerte im Blick",
+    "description": "Werte, die man bei diesem Wirkstoff häufig beobachtet. Importiere einen Laborbericht, um sie zu füllen.",
+    "recent": "Aktuell",
+    "due": "Fällig",
+    "never": "Nicht geprüft",
+    "lastValue": "{{value}} am {{date}}",
+    "noValue": "Noch kein Laborwert."
   },
   "symptoms": {
     "title": "Symptome & Nebenwirkungen",
@@ -636,7 +647,7 @@
     "vialUnreadable": "Etikett unklar. Versuche ein näheres, gut beleuchtetes Foto.",
     "vialResult": "{{compound}}, {{concentration}} mg/mL",
     "uploadPdf": "PDF hochladen",
-    "pdfSaved": "{{name}} gespeichert. PDF-Analyse kommt bald."
+    "pdfTooLarge": "Dieses PDF ist zu groß. Versuche stattdessen ein Foto des Berichts."
   },
   "drive": {
     "section": "GOOGLE DRIVE-BACKUP",

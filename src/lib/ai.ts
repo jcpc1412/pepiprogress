@@ -258,6 +258,20 @@ export async function parseLab(uri: string, locale: string): Promise<ParseLabRes
 }
 
 /**
+ * Parse an uploaded PDF lab report (Claude reads it as a document). Extracts
+ * values only — the PDF is NOT stored; only the numeric results land in the app.
+ */
+export async function parseLabPdf(base64Pdf: string, locale: string): Promise<ParseLabResult> {
+  if (!isSupabaseConfigured) throw new AiNotConfiguredError();
+  const { data, error } = await supabase.functions.invoke<ParseLabResult>('ai-service', {
+    body: { action: 'parse_lab', pdf: base64Pdf, locale },
+  });
+  if (error) raiseAiError(error);
+  if (!data) return { values: [] };
+  return data;
+}
+
+/**
  * Scan a vial label photo and extract compound name + concentration (spec 03/05).
  * Returns confidence < 0.5 when the label is unreadable.
  */

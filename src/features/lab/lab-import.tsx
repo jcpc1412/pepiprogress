@@ -1,4 +1,5 @@
 import * as DocumentPicker from 'expo-document-picker';
+import * as FileSystem from 'expo-file-system';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 import { useCallback, useState } from 'react';
@@ -9,8 +10,11 @@ import { PrimaryButton } from '@/components/form';
 import { Card, Divider, EngravedLabel } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
-import { parseLab, scanVial, type LabValue, type VialScanResult } from '@/lib/ai';
+import { parseLab, parseLabPdf, scanVial, type LabValue, type VialScanResult } from '@/lib/ai';
 import { localDateKey, useStore } from '@/lib/store';
+
+/** Supabase edge payloads cap ~6MB; base64 inflates ~33%, so guard the raw PDF. */
+const MAX_PDF_BYTES = 4 * 1024 * 1024;
 
 function LabValueRow({ item }: { item: LabValue }) {
   const { t } = useTranslation();
@@ -37,15 +41,32 @@ export function LabImport() {
   const [scanning, setScanning] = useState(false);
   const [results, setResults] = useState<LabValue[] | null>(null);
   const [labDate, setLabDate] = useState<string | undefined>();
-  const [pdfName, setPdfName] = useState<string | undefined>();
 
-  // PDF upload (H-06). Parsing PDFs is deferred (AI task); we accept + retain the
-  // file now and surface a "parsing coming" acknowledgement.
+  // PDF upload + AI parse (H-06, W4-16). The PDF is read as base64, sent to the
+  // vision service as a document, and discarded once markers are extracted.
   const pickPdf = useCallback(async () => {
     const res = await DocumentPicker.getDocumentAsync({ type: 'application/pdf', copyToCacheDirectory: true });
     if (res.canceled || !res.assets?.[0]) return;
-    setPdfName(res.assets[0].name);
-  }, []);
+    const asset = res.assets[0];
+    if (asset.size && asset.size > MAX_PDF_BYTES) {
+      Alert.alert(t('lab.pdfTooLarge'));
+      return;
+    }
+    setScanning(true);
+    setResults(null);
+    try {
+      const base64 = await FileSystem.readAsStringAsync(asset.uri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+      const parsed = await parseLabPdf(base64, i18n.language);
+      setResults(parsed.values);
+      setLabDate(parsed.labDate);
+    } catch {
+      Alert.alert(t('lab.error'));
+    } finally {
+      setScanning(false);
+    }
+  }, [t, i18n.language]);
 
   const pickAndScan = useCallback(async () => {
     const perm = await ImagePicker.requestCameraPermissionsAsync();
@@ -105,12 +126,12 @@ export function LabImport() {
         disabled={scanning}
       />
 
-      <PrimaryButton label={t('lab.uploadPdf')} variant="secondary" onPress={pickPdf} />
-      {pdfName && (
-        <ThemedText type="monoSm" themeColor="textMuted">
-          {t('lab.pdfSaved', { name: pdfName })}
-        </ThemedText>
-      )}
+      <PrimaryButton
+        label={scanning ? t('lab.scanning') : t('lab.uploadPdf')}
+        variant="secondary"
+        onPress={pickPdf}
+        disabled={scanning}
+      />
 
       {results && results.length === 0 && (
         <ThemedText type="monoSm" themeColor="textMuted">{t('lab.empty')}</ThemedText>

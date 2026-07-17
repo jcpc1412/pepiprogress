@@ -294,7 +294,18 @@
     "estradiol": "Œstradiol",
     "lipids": "Lipides",
     "glucose": "Glucose",
-    "testosterone_total": "Testostérone totale"
+    "testosterone_total": "Testostérone totale",
+    "liver_enzymes": "Enzymes hépatiques",
+    "prolactin": "Prolactine"
+  },
+  "monitoring": {
+    "section": "Bilan sanguin à surveiller",
+    "description": "Marqueurs que l'on surveille souvent avec ce composé. Importez un bilan pour les renseigner.",
+    "recent": "Récent",
+    "due": "À refaire",
+    "never": "Non vérifié",
+    "lastValue": "{{value}} le {{date}}",
+    "noValue": "Pas encore de valeur de laboratoire."
   },
   "symptoms": {
     "title": "Symptômes et effets secondaires",
@@ -636,7 +647,7 @@
     "vialUnreadable": "Étiquette illisible. Essayez une photo plus rapprochée et bien éclairée.",
     "vialResult": "{{compound}}, {{concentration}} mg/mL",
     "uploadPdf": "Importer un PDF",
-    "pdfSaved": "{{name}} enregistré. L'analyse des PDF arrive bientôt."
+    "pdfTooLarge": "Ce PDF est trop volumineux. Essayez plutôt une photo du rapport."
   },
   "drive": {
     "section": "SAUVEGARDE GOOGLE DRIVE",

@@ -107,10 +107,14 @@ the settings override + quieter-only silent adjustment shipped).
     on compound-detail highlights the user's current week against the phase strip.
     Labeled-unverified per the sourcing ladder; curated + community percentiles later.
     i18n ×6.
-16. **Lab upload + AI parse [M].** Photo or PDF upload on the Logging surface (ISSUES
-    H-06); AI vision extracts marker values into bloodwork fields; feeds the
-    bloodwork-to-compound monitoring mapping (positioning §3 item 4). Vial scan stays
-    deferred; the two are separate builds.
+16. **Lab upload + AI parse ✅ SHIPPED 2026-07-16.** Photo lab parse already existed;
+    this added real **PDF parse** (ai-service v21 `parse_lab` accepts a base64 PDF as a
+    document block; client `parseLabPdf` reads via expo-file-system, 4MB guard; the doc
+    is never stored) and the **bloodwork-to-compound monitoring mapping**
+    (`src/lib/lab-monitoring.ts`, 7 tests + `MonitoringMarkersCard` on compound-detail):
+    per active compound, its bloodwork monitoring_tags with the latest imported value +
+    recency, flagging never-checked and >90-day-stale markers. Posture evals re-run 4/4.
+    i18n ×6. Vial scan stays deferred.
 17. **"What should I measure next?" suggestions [S/M].** The verdict names its own
     biggest evidence gap: "a photo this week would strengthen this," "hematocrit was
     last checked 10 weeks ago." Sources: monitoring tags + photo cadence + bloodwork
