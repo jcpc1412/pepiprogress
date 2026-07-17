@@ -425,7 +425,16 @@ function visionSystemPrompt(
     }
   }
   if (ctx?.cycleContext === 'luteal') {
-    lines.push('', 'Note: user may be in their luteal phase. Any bloating or fullness may reflect normal hormonal water retention, not actual body composition change. Account for this in your assessment.');
+    // Cycle attribution register (beta-notes 1.7 step 1, owner-decided copy):
+    // attribute, never criticize; suppress bloating-as-regression entirely.
+    lines.push(
+      '',
+      'Cycle context: the user is likely in their luteal phase. Register rules for this case:',
+      '- If you observe bloating, fullness, or midsection softness, ATTRIBUTE it in this hedged register: "some water retention is consistent with this point in your cycle."',
+      '- Never describe such changes as regression, fat gain, or lost progress; do not count them against progress in your comparability or change assessment.',
+      '- Never use diagnostic phrasing (e.g. "hormonal inflammation detected"). Attribution, not diagnosis.',
+      '- Mention the cycle only when a visible change plausibly relates to it; otherwise leave it out.',
+    );
   }
   if (ctx?.symptomContext) {
     lines.push('', `User reported a symptom to document: "${ctx.symptomContext}". Focus on whether this is visually apparent.`);
@@ -641,7 +650,7 @@ Deno.serve(async (req: Request) => {
         : 'No photo comparison yet.';
 
       const cycleNote = body.cycleContext === 'luteal'
-        ? 'The user may be in their luteal phase - acknowledge that water retention this week is normal and expected.'
+        ? 'The user may be in their luteal phase. If weight or bloating ticked up, attribute it in a hedged register ("some water retention is consistent with this point in your cycle") and never frame it as regression or lost progress.'
         : '';
 
       const userContext = [
