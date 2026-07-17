@@ -73,10 +73,24 @@ export function Dashboard() {
     return { latest, baseline };
   }, [photos, today]);
 
+  // Photo hero (W3-11): a fresh comparable photo with a visible change leads;
+  // resolve it to a baseline/latest pair for the compare block.
+  const heroPhotoPair = useMemo(() => {
+    if (hero?.kind !== 'photo') return null;
+    const latest = photos.find((p) => p.id === hero.photoId);
+    if (!latest) return null;
+    const baseline = photos
+      .filter((p) => p.session === latest.session && (p.part ?? undefined) === (latest.part ?? undefined))
+      .sort((a, b) => (a.takenAt < b.takenAt ? -1 : 1))[0];
+    if (!baseline || baseline.id === latest.id) return null;
+    return { latest, baseline };
+  }, [hero, photos]);
+
   const heroSignal =
     hero?.kind === 'metric'
       ? verdict.signals.find((s) => s.metricId === hero?.metricId)
-      : undefined;
+      : // Photo hero: the evidence slot shows the top-weighted signal instead.
+        verdict.signals[0];
 
   const stateTone =
     verdict.state === 'on_track'
@@ -138,6 +152,35 @@ export function Dashboard() {
               ) : null}
             </View>
 
+            {heroPhotoPair ? (
+              // The photo compare AS the hero (W3-11): visible change leads.
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t('verdict.photoHero')}
+                accessibilityHint={t('photos.heading')}
+                onPress={() => router.push('/photos')}>
+                <View style={styles.compareRow}>
+                  <View style={styles.compareCol}>
+                    <Image source={{ uri: heroPhotoPair.baseline.uri }} style={styles.photo} contentFit="cover" />
+                    <ThemedText type="monoSm" themeColor="textMuted">
+                      {t('photos.baseline')}
+                    </ThemedText>
+                  </View>
+                  <View style={styles.compareCol}>
+                    <Image source={{ uri: heroPhotoPair.latest.uri }} style={styles.photo} contentFit="cover" />
+                    <ThemedText type="monoSm" themeColor="textMuted">
+                      {t('photos.latest')}
+                    </ThemedText>
+                  </View>
+                </View>
+                {heroPhotoPair.latest.changeNote ? (
+                  <ThemedText type="small" themeColor="textSecondary" style={styles.heroSub}>
+                    {heroPhotoPair.latest.changeNote}
+                  </ThemedText>
+                ) : null}
+              </Pressable>
+            ) : null}
+
             {hero?.kind === 'metric' && heroFmt ? (
               <Pressable
                 accessibilityRole="button"
@@ -184,8 +227,9 @@ export function Dashboard() {
 
           <Divider style={styles.rule} />
 
-          {/* ── Evidence — a recent photo compare wins, else the hero chart (R2-B B1) ── */}
-          {evidencePair ? (
+          {/* ── Evidence — a recent photo compare wins (unless the photo already
+              IS the hero, W3-11), else the hero chart (R2-B B1) ── */}
+          {evidencePair && hero?.kind !== 'photo' ? (
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={t('verdict.evidenceTitle')}

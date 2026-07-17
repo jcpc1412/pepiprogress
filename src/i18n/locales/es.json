@@ -899,7 +899,8 @@
     "forecast": {
       "daysToTarget": "≈ {{n}} DÍAS AL OBJETIVO"
     },
-    "trackingFooter": "Siguiendo {{list}}"
+    "trackingFooter": "Siguiendo {{list}}",
+    "photoHero": "Cambio visible, de la base a lo último"
   },
   "pepi": {
     "subtitle": "Registra lo que sea, o pregunta sobre tus datos.",

@@ -524,17 +524,35 @@ export function computeVerdict(input: VerdictInput): Verdict {
     explanation = { key: `verdict.explanation.${state}`, params: { metric: heroRaw.labelKey } };
   }
 
-  const hero: VerdictHero = {
-    kind: 'metric',
-    metricId: heroRaw.metricId,
-    labelKey: heroRaw.labelKey,
-    value: heroRaw.latest,
-    delta: heroRaw.delta,
-    windowDays: WINDOW_DAYS,
-    unit: unitFor(heroRaw.metricId),
-    favour: heroRaw.favourSign > 0 ? 'good' : heroRaw.favourSign < 0 ? 'bad' : 'watch',
-    trend: heroRaw.trend === 'flat' ? (heroRaw.delta >= 0 ? 'up' : 'down') : heroRaw.trend,
-  };
+  // Dynamic hero (W3-11): a fresh, comparable, ANALYZED photo with a visible
+  // change note outranks the numeric signals — a visible physique change is the
+  // strongest evidence the app has. Otherwise the most decision-relevant metric
+  // (relevance boosted by anomaly deviation, plateau swap above) leads as before.
+  const heroPhoto = input.photos
+    .filter(
+      (p) =>
+        p.comparable === true &&
+        !!p.changeNote &&
+        (new Date(`${today}T00:00:00.000Z`).getTime() -
+          new Date(`${p.takenAt.slice(0, 10)}T00:00:00.000Z`).getTime()) /
+          DAY_MS <=
+          7,
+    )
+    .sort((a, b) => (a.takenAt < b.takenAt ? 1 : -1))[0];
+
+  const hero: VerdictHero = heroPhoto
+    ? { kind: 'photo', photoId: heroPhoto.id }
+    : {
+        kind: 'metric',
+        metricId: heroRaw.metricId,
+        labelKey: heroRaw.labelKey,
+        value: heroRaw.latest,
+        delta: heroRaw.delta,
+        windowDays: WINDOW_DAYS,
+        unit: unitFor(heroRaw.metricId),
+        favour: heroRaw.favourSign > 0 ? 'good' : heroRaw.favourSign < 0 ? 'bad' : 'watch',
+        trend: heroRaw.trend === 'flat' ? (heroRaw.delta >= 0 ? 'up' : 'down') : heroRaw.trend,
+      };
 
   return {
     state,
