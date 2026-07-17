@@ -11,6 +11,7 @@ import {
 } from 'react';
 
 import { registerCustomCompounds, type CatalogCompound } from '@/data/compound-catalog';
+import { localDateKey } from '@/lib/dates';
 import type { CheckinField, Goal } from '@/lib/field-surfacing';
 import {
   baselineFor,
@@ -60,6 +61,10 @@ export type CheckinEntry = {
   note?: string;
   /** Lab marker values from a photo import — marker slug → numeric reading. */
   labValues?: Record<string, number>;
+  /** Fields whose current value was written by integration autofill (not typed by
+   *  the user). Autofill keeps these in sync with later re-syncs of the same day;
+   *  a manual edit removes the field so the user's value is never overwritten. */
+  autoFilled?: string[];
   updatedAt: string;
 };
 
@@ -357,13 +362,10 @@ const EMPTY_STATE: PersistedState = {
 /** How many Pepi chat turns to retain (redesign R2-F: last N, lightly persisted). */
 const PEPI_HISTORY_LIMIT = 40;
 
-/** Local date as YYYY-MM-DD (not UTC — the check-in is anchored to the user's day). */
-export function localDateKey(d: Date = new Date()): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
+/** Local date as YYYY-MM-DD — canonical definition moved to dates.ts (so
+ *  integration providers can use it without importing the store); re-exported
+ *  here for the many existing importers. */
+export { localDateKey };
 
 /** Local id for offline-created rows; mapped to a DB uuid on sync (spec 10). */
 function uid(): string {
@@ -639,16 +641,34 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const addMetricReadings = useCallback<StoreContextValue['addMetricReadings']>((readings) => {
     if (readings.length === 0) return;
     setState((s) => {
-      const seen = new Set(s.metricReadings.map((r) => `${r.sourceProvider}|${r.metric}|${r.ts}`));
-      const added: MetricReading[] = [];
+      // Upsert semantics (master-plan W1-1): a reading with the same
+      // provider|metric|ts key REPLACES the stored value when it changed, instead
+      // of being dropped. Daily aggregates (nutrition, steps, energy) all carry a
+      // midnight ts, so the old dedup froze each day at its first-synced partial
+      // total and every later re-sync of the growing total was silently discarded.
+      const key = (r: Pick<MetricReading, 'sourceProvider' | 'metric' | 'ts'>) =>
+        `${r.sourceProvider}|${r.metric}|${r.ts}`;
+      const indexByKey = new Map<string, number>();
+      s.metricReadings.forEach((r, i) => indexByKey.set(key(r), i));
+      let updated: MetricReading[] | null = null; // copy-on-write of the stored list
+      const addedByKey = new Map<string, MetricReading>();
       for (const r of readings) {
-        const key = `${r.sourceProvider}|${r.metric}|${r.ts}`;
-        if (seen.has(key)) continue;
-        seen.add(key);
-        added.push({ ...r, id: uid() });
+        const k = key(r);
+        const idx = indexByKey.get(k);
+        if (idx !== undefined) {
+          const cur = (updated ?? s.metricReadings)[idx];
+          if (cur.value !== r.value || cur.unit !== r.unit || cur.confidence !== r.confidence) {
+            if (!updated) updated = [...s.metricReadings];
+            updated[idx] = { ...cur, ...r, id: cur.id };
+          }
+        } else {
+          // Within-batch duplicate keys: last one wins, keep a stable id.
+          addedByKey.set(k, { ...r, id: addedByKey.get(k)?.id ?? uid() });
+        }
       }
-      if (added.length === 0) return s;
-      return { ...s, metricReadings: [...added, ...s.metricReadings] };
+      const added = [...addedByKey.values()];
+      if (!updated && added.length === 0) return s;
+      return { ...s, metricReadings: [...added, ...(updated ?? s.metricReadings)] };
     });
   }, []);
 

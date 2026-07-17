@@ -1,5 +1,16 @@
 /** Date-key helpers. A "date key" is a local YYYY-MM-DD string (see localDateKey). */
 
+/** Local date as YYYY-MM-DD (not UTC — user-facing days are anchored to the local
+ *  calendar). Lives here (dependency-free) so integration providers can bucket
+ *  daily aggregates onto the same local days the check-in uses; re-exported from
+ *  the store for existing importers. */
+export function localDateKey(d: Date = new Date()): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
 /** The current local hour (0-23). Wrapped so callers stay pure at the call site. */
 export function localHour(): number {
   return new Date().getHours();

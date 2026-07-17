@@ -1,5 +1,6 @@
 import { Platform } from 'react-native';
 
+import { localDateKey } from '@/lib/dates';
 import {
   CanonicalMetric,
   type HealthWriteResult,
@@ -194,7 +195,19 @@ async function diagnose(): Promise<string> {
 }
 
 async function readHealthKit(since?: string): Promise<ProviderReading[]> {
-  const startDate = since ? new Date(since) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  // Full-day query window (master-plan W1-1): daily aggregates (nutrition, steps,
+  // energy, sleep) must be summed from ALL of a day's samples, so an incremental
+  // pull re-reads from the start of the local day BEFORE `since` (the extra day
+  // covers sleep sessions that started the previous evening). Querying from the
+  // raw `since` timestamp produced partial-day totals that undercounted.
+  let startDate: Date;
+  if (since) {
+    startDate = new Date(since);
+    startDate.setHours(0, 0, 0, 0);
+    startDate.setDate(startDate.getDate() - 1);
+  } else {
+    startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  }
   const endDate = new Date();
   const { queryQuantitySamples, queryCategorySamples, queryWorkoutSamples } = hk();
   const readings: ProviderReading[] = [];
@@ -208,11 +221,13 @@ async function readHealthKit(since?: string): Promise<ProviderReading[]> {
       });
 
       if (entry.sumPerDay) {
+        // Bucket by LOCAL day — check-in dates are local, so UTC bucketing put
+        // late-evening samples on the wrong day for users east of UTC.
         const daily: Record<string, number> = {};
         for (const s of samples) {
           const d = toDate(s.startDate);
           if (!d || typeof s.quantity !== 'number') continue;
-          const dateKey = d.toISOString().slice(0, 10);
+          const dateKey = localDateKey(d);
           daily[dateKey] = (daily[dateKey] ?? 0) + s.quantity;
         }
         for (const [dateKey, value] of Object.entries(daily)) {
@@ -252,7 +267,7 @@ async function readHealthKit(since?: string): Promise<ProviderReading[]> {
       const start = toDate(s.startDate);
       const end = toDate(s.endDate);
       if (!start || !end) continue;
-      const dateKey = start.toISOString().slice(0, 10);
+      const dateKey = localDateKey(start);
       const durationHours = (end.getTime() - start.getTime()) / 3_600_000;
       dailyTotal[dateKey] = (dailyTotal[dateKey] ?? 0) + durationHours;
       if (value === 4) dailyDeep[dateKey] = (dailyDeep[dateKey] ?? 0) + durationHours;

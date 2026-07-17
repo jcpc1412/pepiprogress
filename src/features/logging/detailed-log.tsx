@@ -167,23 +167,36 @@ export function DetailedLog({ onDismiss }: { onDismiss?: () => void } = {}) {
   ];
 
   // Passive fill: when a synced nutrition reading exists and the field is still
-  // empty, write it once (per date/field, per session) so the value is "filled
-  // up by the integration". A conflicting user-typed value is never overwritten
-  // — that case still shows the tap-to-apply link below the input.
-  const autoFilledRef = useRef<Set<string>>(new Set());
+  // empty, write it and record the field in `entry.autoFilled`. Auto-filled
+  // fields TRACK later re-syncs of the same day (master-plan W1-1: the copy is
+  // never frozen at the first partial-day total); a user-typed value is never
+  // overwritten (manual edits remove the field from autoFilled) — that case
+  // shows the tap-to-apply link below the input instead. The session ref only
+  // guards against re-filling a field the user cleared this session.
+  const clearedRef = useRef<Set<string>>(new Set());
   useEffect(() => {
+    // One combined upsert per run: per-field upserts would each snapshot the same
+    // pre-update autoFilled array and clobber each other's additions.
+    const e = entries[date];
+    const patch: Partial<Omit<CheckinEntry, 'date' | 'updatedAt'>> = {};
+    let auto = e?.autoFilled ?? [];
+    let changed = false;
     for (const n of nutritionActive) {
-      const key = `${date}-${n.field}`;
-      if (autoFilledRef.current.has(key)) continue;
-      if (entries[date]?.[n.field] !== undefined) {
-        autoFilledRef.current.add(key);
-        continue;
-      }
       const reading = metricForDate(metricReadings, n.metric, date);
       if (!reading) continue;
-      autoFilledRef.current.add(key);
-      upsertCheckin(date, { [n.field]: Math.round(reading.value) });
+      const synced = Math.round(reading.value);
+      const cur = e?.[n.field];
+      if (cur === undefined) {
+        if (clearedRef.current.has(`${date}-${n.field}`)) continue;
+        patch[n.field] = synced;
+        if (!auto.includes(n.field)) auto = [...auto, n.field];
+        changed = true;
+      } else if (auto.includes(n.field) && cur !== synced) {
+        patch[n.field] = synced;
+        changed = true;
+      }
     }
+    if (changed) upsertCheckin(date, { ...patch, autoFilled: auto });
   }, [nutritionActive, date, entries, metricReadings, upsertCheckin]);
 
   const history = useMemo(
@@ -237,9 +250,13 @@ export function DetailedLog({ onDismiss }: { onDismiss?: () => void } = {}) {
           error={nutritionError[n.field]}
           onEndEditing={(e) => {
             const raw = e.nativeEvent.text.trim().replace(',', '.');
+            // A manual edit takes the field out of autoFilled tracking so the
+            // user's value is never overwritten by a later sync.
+            const manualAuto = (entry?.autoFilled ?? []).filter((f) => f !== n.field);
             if (raw === '') {
               setNutritionError((p) => ({ ...p, [n.field]: undefined }));
-              upsertCheckin(date, { [n.field]: undefined });
+              clearedRef.current.add(`${date}-${n.field}`);
+              upsertCheckin(date, { [n.field]: undefined, autoFilled: manualAuto });
               return;
             }
             const v = parseFloat(raw);
@@ -248,11 +265,21 @@ export function DetailedLog({ onDismiss }: { onDismiss?: () => void } = {}) {
               return;
             }
             setNutritionError((p) => ({ ...p, [n.field]: undefined }));
-            upsertCheckin(date, { [n.field]: v });
+            upsertCheckin(date, { [n.field]: v, autoFilled: manualAuto });
           }}
         />
         {synced !== undefined && num(n.field) !== synced && (
-          <Pressable accessibilityRole="button" onPress={() => upsertCheckin(date, { [n.field]: synced })}>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() =>
+              // Applying the synced value re-enters autoFilled tracking: the user
+              // chose "whatever Health says", so later re-syncs keep it fresh.
+              upsertCheckin(date, {
+                [n.field]: synced,
+                autoFilled: [...(entry?.autoFilled ?? []).filter((f) => f !== n.field), n.field],
+              })
+            }
+          >
             <ThemedText type="monoSm" themeColor="textSecondary" style={styles.autofill}>
               {t(n.autofillKey, { value: synced })}
             </ThemedText>

@@ -1,5 +1,6 @@
 import { Platform } from 'react-native';
 
+import { localDateKey } from '@/lib/dates';
 import { CanonicalMetric, type IntegrationProvider, type ProviderReading } from '@/lib/integrations/types';
 
 const PROVIDER_ID = 'health_connect';
@@ -31,12 +32,20 @@ async function readHealthConnect(since?: string): Promise<ProviderReading[]> {
   if (status !== SDK_AVAILABLE) return [];
   await initialize();
 
-  const timeRangeFilter = since
-    ? ({ operator: 'after', startTime: since } as const)
-    : ({
-        operator: 'after',
-        startTime: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-      } as const);
+  // Full-day query window (master-plan W1-1): daily aggregates must re-read ALL
+  // of a day's records, so an incremental pull starts at the beginning of the
+  // local day before `since` (the extra day covers sleep sessions that started
+  // the previous evening). Reading from the raw `since` timestamp undercounted.
+  let startTime: string;
+  if (since) {
+    const d = new Date(since);
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() - 1);
+    startTime = d.toISOString();
+  } else {
+    startTime = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+  }
+  const timeRangeFilter = { operator: 'after', startTime } as const;
 
   const readings: ProviderReading[] = [];
 
@@ -69,7 +78,7 @@ async function readHealthConnect(since?: string): Promise<ProviderReading[]> {
     const { records } = await readRecords('Steps', { timeRangeFilter });
     const daily: Record<string, number> = {};
     for (const r of records) {
-      const dateKey = r.startTime.slice(0, 10);
+      const dateKey = localDateKey(new Date(r.startTime)); // local day, not UTC
       daily[dateKey] = (daily[dateKey] ?? 0) + r.count;
     }
     for (const [dateKey, value] of Object.entries(daily)) {
@@ -82,7 +91,7 @@ async function readHealthConnect(since?: string): Promise<ProviderReading[]> {
     const { records } = await readRecords('ActiveCaloriesBurned', { timeRangeFilter });
     const daily: Record<string, number> = {};
     for (const r of records) {
-      const dateKey = r.startTime.slice(0, 10);
+      const dateKey = localDateKey(new Date(r.startTime)); // local day, not UTC
       daily[dateKey] = (daily[dateKey] ?? 0) + r.energy.inKilocalories;
     }
     for (const [dateKey, value] of Object.entries(daily)) {
@@ -111,7 +120,7 @@ async function readHealthConnect(since?: string): Promise<ProviderReading[]> {
     const { records } = await readRecords('SleepSession', { timeRangeFilter });
     const daily: Record<string, number> = {};
     for (const r of records) {
-      const dateKey = r.startTime.slice(0, 10);
+      const dateKey = localDateKey(new Date(r.startTime)); // local day, not UTC
       const durationHours =
         (new Date(r.endTime).getTime() - new Date(r.startTime).getTime()) / 3_600_000;
       daily[dateKey] = (daily[dateKey] ?? 0) + durationHours;
@@ -131,7 +140,7 @@ async function readHealthConnect(since?: string): Promise<ProviderReading[]> {
       fat: {} as Record<string, number>,
     };
     for (const r of records) {
-      const dateKey = r.startTime.slice(0, 10);
+      const dateKey = localDateKey(new Date(r.startTime)); // local day, not UTC
       if (r.energy) daily.energy[dateKey] = (daily.energy[dateKey] ?? 0) + r.energy.inKilocalories;
       if (r.protein) daily.protein[dateKey] = (daily.protein[dateKey] ?? 0) + r.protein.inGrams;
       if (r.totalCarbohydrate) daily.carbs[dateKey] = (daily.carbs[dateKey] ?? 0) + r.totalCarbohydrate.inGrams;

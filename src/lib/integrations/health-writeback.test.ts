@@ -10,6 +10,8 @@ const baseProfile: LocalProfile = {
   onboardingComplete: true,
   sex: 'male',
   height: 180,
+  addedFields: [],
+  removedFields: [],
 };
 
 function checkin(patch: Partial<CheckinEntry>): CheckinEntry {
