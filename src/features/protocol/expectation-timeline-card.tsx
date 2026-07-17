@@ -7,8 +7,7 @@ import { Card, EngravedLabel } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
 import { useTheme } from '@/hooks/use-theme';
 import { Radii, Spacing } from '@/constants/theme';
-import { daysBetween } from '@/lib/dates';
-import { localDateKey } from '@/lib/dates';
+import { daysBetween, localDateKey } from '@/lib/dates';
 import { resolveTimeline } from '@/lib/expectation-timeline';
 import { useStore } from '@/lib/store';
 

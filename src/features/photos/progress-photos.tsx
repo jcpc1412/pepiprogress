@@ -5,6 +5,7 @@ import { type MutableRefObject, type ReactNode, useCallback, useEffect, useMemo,
 import { useTranslation } from 'react-i18next';
 import { AccessibilityInfo, Animated, Dimensions, type LayoutChangeEvent, Modal, PanResponder, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
+import { ConfidenceBadge } from '@/components/confidence-badge';
 import { LabeledInput, PrimaryButton, TextButton, SingleSelectChips } from '@/components/form';
 import { Card, Divider, EngravedLabel, Placeholder, Skeleton, StatusPill } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
@@ -20,6 +21,7 @@ import {
   type PhotoAnalysis,
 } from '@/lib/ai';
 import { bodyFatNavy, inferBodyComposition, usesFemaleFormula } from '@/lib/body-composition';
+import type { ConfidenceLevel } from '@/lib/confidence';
 import { hapticSuccess } from '@/lib/haptics';
 import { quickReadout, type Comparability, type QuickReadout } from '@/lib/photo-readout';
 import { isNewHighscore, pickReference } from '@/lib/photo-reference';
@@ -36,6 +38,22 @@ import {
 import { daysBetween } from '@/lib/dates';
 import { copyPhotoToDocuments, syncPhotoRow, uploadPhotoToCloud, useResolvedUris } from '@/lib/photos';
 import { localDateKey, useStore, type PhotoEntry, type PhotoSession } from '@/lib/store';
+
+/**
+ * A photo read's confidence in the shared register (W4-18). How much to trust
+ * the change note: full trust when the shot is comparable and cleanly lit, less
+ * when lighting or framing drifted, least when it is not comparable at all.
+ */
+function photoReadLevel(a: PhotoAnalysis): ConfidenceLevel {
+  if (!a.comparable) return 'low';
+  return a.lighting === 'ok' && a.framing === 'ok' ? 'high' : 'medium';
+}
+function photoReadWhyKey(a: PhotoAnalysis): 'photos.confWhyHigh' {
+  const level = photoReadLevel(a);
+  return (
+    level === 'high' ? 'photos.confWhyHigh' : level === 'medium' ? 'photos.confWhyMedium' : 'photos.confWhyLow'
+  ) as 'photos.confWhyHigh';
+}
 
 // ─── Wipe/slider compare ────────────────────────────────────────────────────
 
@@ -892,7 +910,10 @@ export function ProgressPhotos({
         <Card>
           {note?.change ? (
             <>
-              <EngravedLabel>{t('photos.analysisLabel')}</EngravedLabel>
+              <View style={styles.analysisHead}>
+                <EngravedLabel>{t('photos.analysisLabel')}</EngravedLabel>
+                <ConfidenceBadge level={photoReadLevel(note)} rationale={t(photoReadWhyKey(note))} />
+              </View>
               <ThemedText type="mono" themeColor="textSecondary">
                 {note.change}
               </ThemedText>
@@ -1030,6 +1051,7 @@ const styles = StyleSheet.create({
   emptyBlock: { gap: Spacing.two },
   clothingGuidance: { lineHeight: 18 },
   badgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.one },
+  analysisHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.one },
   timelineHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: Spacing.one },
   strip: { gap: Spacing.two, paddingVertical: Spacing.one },
   thumbCol: { alignItems: 'center', gap: Spacing.half },

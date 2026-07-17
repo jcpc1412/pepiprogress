@@ -2,10 +2,12 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
-import { Card, EngravedLabel, StatusPill } from '@/components/surface';
+import { ConfidenceBadge } from '@/components/confidence-badge';
+import { Card, EngravedLabel } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { computeAttributions, type MetricAttribution } from '@/lib/attribution';
+import { levelFromScore } from '@/lib/confidence';
 import { localDateKey } from '@/lib/dates';
 import { useStore } from '@/lib/store';
 
@@ -54,9 +56,6 @@ export function AttributionCard({ slug }: { slug: string }) {
     return `${sign}${num}${suffix}`;
   };
 
-  const confLabel = (c: number): string =>
-    t(c >= 0.75 ? 'attribution.confidence.high' : c >= 0.4 ? 'attribution.confidence.medium' : 'attribution.confidence.low');
-
   const leadKey = (m: MetricAttribution) => {
     const lead = m.factors[0]?.factor ?? 'compound';
     return lead === 'nutrition'
@@ -80,10 +79,7 @@ export function AttributionCard({ slug }: { slug: string }) {
                   delta: fmt(m),
                 })}
               </ThemedText>
-              <StatusPill
-                label={confLabel(m.confidence)}
-                tone={m.favourable ? 'good' : 'neutral'}
-              />
+              <ConfidenceBadge level={levelFromScore(m.confidence)} />
             </View>
             <ThemedText type="small" themeColor="textSecondary">
               {t(leadKey(m))}

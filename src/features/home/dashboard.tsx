@@ -13,6 +13,7 @@ import { Divider, EngravedLabel, Placeholder, StatusPill } from '@/components/su
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { ConfidenceBadge } from '@/components/confidence-badge';
 import { MeasureNextNudge } from '@/features/home/measure-next-nudge';
 import { TodayDoses } from '@/features/home/today-doses';
 import { formatHeroValue, resolveMsg, useVerdict, type TFn } from '@/features/home/use-verdict';
@@ -147,9 +148,10 @@ export function Dashboard() {
             <View style={styles.verdictHead}>
               <StatusPill label={t(`verdict.state.${verdict.state}` as 'verdict.state.on_track')} tone={stateTone} />
               {verdict.state !== 'building' ? (
-                <ThemedText type="monoSm" themeColor="textMuted">
-                  {t(`verdict.confidence.${verdict.confidence}` as 'verdict.confidence.low')}
-                </ThemedText>
+                <ConfidenceBadge
+                  level={verdict.confidence}
+                  rationale={resolveMsg(tx, verdict.confidenceRationale)}
+                />
               ) : null}
             </View>
 

@@ -288,6 +288,10 @@
     "skipMeasurements": "Skip",
     "tiltMeta": "Tilt {{deg}}°",
     "analysisAfterHint": "Analysis runs after you finish."
+  ,
+    "confWhyHigh": "Lighting and framing match the baseline.",
+    "confWhyMedium": "Lighting or framing drifted from the baseline.",
+    "confWhyLow": "Too different from the baseline to compare closely."
   },
   "markers": {
     "hematocrit": "Hematocrit",
@@ -965,6 +969,12 @@
       "medium": "Medium confidence",
       "high": "High confidence"
     },
+    "confidenceWhy": {
+      "high": "{{n}} signals move together clearly.",
+      "medium": "A few signals agree; others are mixed.",
+      "low": "Not enough agreeing signals yet.",
+      "building": "Still gathering your first readings."
+    },
     "role": {
       "supports": "Progressing",
       "drags": "Drags",
@@ -1153,5 +1163,12 @@
     "photoBaseline": "A baseline photo would give the read something to compare against.",
     "photoDue_one": "Your last photo was {{count}} week ago. A fresh one would sharpen the read.",
     "photoDue_other": "Your last photo was {{count}} weeks ago. A fresh one would sharpen the read."
+  },
+  "confidence": {
+    "low": "Low",
+    "medium": "Medium",
+    "high": "High",
+    "label": "{{level}} confidence",
+    "why": "Tap for why"
   }
 }

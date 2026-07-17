@@ -288,6 +288,10 @@
     "skipMeasurements": "Passer",
     "tiltMeta": "Inclinaison {{deg}}°",
     "analysisAfterHint": "L'analyse se lance une fois terminé."
+  ,
+    "confWhyHigh": "L'éclairage et le cadrage correspondent à la référence.",
+    "confWhyMedium": "L'éclairage ou le cadrage a changé par rapport à la référence.",
+    "confWhyLow": "Trop différente de la référence pour comparer précisément."
   },
   "markers": {
     "hematocrit": "Hématocrite",
@@ -965,6 +969,12 @@
       "medium": "Confiance moyenne",
       "high": "Confiance élevée"
     },
+    "confidenceWhy": {
+      "high": "{{n}} signaux évoluent nettement ensemble.",
+      "medium": "Quelques signaux concordent ; d'autres sont mitigés.",
+      "low": "Pas encore assez de signaux concordants.",
+      "building": "Encore en train de rassembler tes premières mesures."
+    },
     "role": {
       "supports": "En progrès",
       "drags": "Freine",
@@ -1153,5 +1163,12 @@
     "photoBaseline": "Une photo de référence donnerait à la lecture un point de comparaison.",
     "photoDue_one": "Ta dernière photo date d'il y a {{count}} semaine. Une nouvelle affinerait la lecture.",
     "photoDue_other": "Ta dernière photo date d'il y a {{count}} semaines. Une nouvelle affinerait la lecture."
+  },
+  "confidence": {
+    "low": "Faible",
+    "medium": "Moyenne",
+    "high": "Élevée",
+    "label": "Confiance {{level}}",
+    "why": "Touche pour savoir pourquoi"
   }
 }

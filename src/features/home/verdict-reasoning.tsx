@@ -2,6 +2,7 @@ import { useRouter, type Href } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { ConfidenceBadge } from '@/components/confidence-badge';
 import { Card, Divider, EngravedLabel, Placeholder, StatusPill } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing, type ThemeColor } from '@/constants/theme';
@@ -60,9 +61,10 @@ export function ReasoningRecap() {
           label={t(`verdict.state.${verdict.state}` as 'verdict.state.on_track')}
           tone={stateTone}
         />
-        <ThemedText type="monoSm" themeColor="textMuted">
-          {t(`verdict.confidence.${verdict.confidence}` as 'verdict.confidence.low')}
-        </ThemedText>
+        <ConfidenceBadge
+          level={verdict.confidence}
+          rationale={resolveMsg(tx, verdict.confidenceRationale)}
+        />
       </View>
       {verdict.hero?.kind === 'metric' && heroFmt ? (
         // The hero drills into that metric's signal ledger, same as the stack

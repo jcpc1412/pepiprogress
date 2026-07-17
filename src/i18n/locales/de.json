@@ -288,6 +288,10 @@
     "skipMeasurements": "Überspringen",
     "tiltMeta": "Neigung {{deg}}°",
     "analysisAfterHint": "Die Analyse läuft, sobald du fertig bist."
+  ,
+    "confWhyHigh": "Licht und Bildausschnitt passen zur Ausgangsaufnahme.",
+    "confWhyMedium": "Licht oder Bildausschnitt weichen von der Ausgangsaufnahme ab.",
+    "confWhyLow": "Zu verschieden von der Ausgangsaufnahme für einen genauen Vergleich."
   },
   "markers": {
     "hematocrit": "Hämatokrit",
@@ -965,6 +969,12 @@
       "medium": "Mittlere Zuversicht",
       "high": "Hohe Zuversicht"
     },
+    "confidenceWhy": {
+      "high": "{{n}} Signale bewegen sich klar gemeinsam.",
+      "medium": "Einige Signale stimmen überein, andere sind gemischt.",
+      "low": "Noch nicht genug übereinstimmende Signale.",
+      "building": "Sammle noch deine ersten Messwerte."
+    },
     "role": {
       "supports": "Fortschritt",
       "drags": "Bremst",
@@ -1153,5 +1163,12 @@
     "photoBaseline": "Ein Ausgangsfoto gäbe der Auswertung einen Vergleichspunkt.",
     "photoDue_one": "Dein letztes Foto ist {{count}} Woche her. Ein neues würde die Auswertung schärfen.",
     "photoDue_other": "Dein letztes Foto ist {{count}} Wochen her. Ein neues würde die Auswertung schärfen."
+  },
+  "confidence": {
+    "low": "Gering",
+    "medium": "Mittel",
+    "high": "Hoch",
+    "label": "Konfidenz {{level}}",
+    "why": "Für Begründung tippen"
   }
 }

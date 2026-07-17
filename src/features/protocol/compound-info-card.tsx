@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
 import { TextButton } from '@/components/form';
-import { Card, EngravedLabel, StatusPill } from '@/components/surface';
+import { ConfidenceBadge } from '@/components/confidence-badge';
+import { Card, EngravedLabel } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import {
@@ -91,10 +92,7 @@ export function CompoundInfoCard({ slug }: { slug: string }) {
                 <ThemedText type="smallBold" themeColor="textSecondary">
                   {t(`compoundInfo.kind.${fact.kind}` as const)}
                 </ThemedText>
-                <StatusPill
-                  label={t(`compoundInfo.confidence.${fact.confidence}` as const)}
-                  tone="neutral"
-                />
+                <ConfidenceBadge level={fact.confidence} />
               </View>
               <ThemedText type="small">{fact.text}</ThemedText>
             </View>

@@ -288,6 +288,10 @@
     "skipMeasurements": "Pular",
     "tiltMeta": "Inclinação {{deg}}°",
     "analysisAfterHint": "A análise roda quando você terminar."
+  ,
+    "confWhyHigh": "Iluminação e enquadramento combinam com a referência.",
+    "confWhyMedium": "Iluminação ou enquadramento mudaram em relação à referência.",
+    "confWhyLow": "Diferente demais da referência para comparar com precisão."
   },
   "markers": {
     "hematocrit": "Hematócrito",
@@ -965,6 +969,12 @@
       "medium": "Confiança média",
       "high": "Confiança alta"
     },
+    "confidenceWhy": {
+      "high": "{{n}} sinais se movem juntos com clareza.",
+      "medium": "Alguns sinais concordam; outros estão misturados.",
+      "low": "Ainda não há sinais concordantes suficientes.",
+      "building": "Ainda reunindo suas primeiras leituras."
+    },
     "role": {
       "supports": "Progredindo",
       "drags": "Freia",
@@ -1153,5 +1163,12 @@
     "photoBaseline": "Uma foto inicial daria à leitura algo com que comparar.",
     "photoDue_one": "Sua última foto foi há {{count}} semana. Uma nova deixaria a leitura mais nítida.",
     "photoDue_other": "Sua última foto foi há {{count}} semanas. Uma nova deixaria a leitura mais nítida."
+  },
+  "confidence": {
+    "low": "Baixa",
+    "medium": "Média",
+    "high": "Alta",
+    "label": "Confiança {{level}}",
+    "why": "Toque para ver por quê"
   }
 }

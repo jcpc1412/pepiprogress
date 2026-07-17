@@ -124,10 +124,17 @@ the settings override + quieter-only silent adjustment shipped).
     as a "Strengthen the read" section on the Analysis reasoning screen; taps route
     to Photos or the lab importer. `measureNext.*` i18n ×6 (count plurals).
     (external review 2026-07-16)
-18. **Uniform confidence register [S/M].** One shared confidence component
-    (high/medium/low plus rationale on tap) applied everywhere Pepi concludes: verdict,
-    photo analysis, correlations, forecasts, compound insights. TRAJ-1's uncertainty
-    band adopts the same register. (external review 2026-07-16)
+18. **Uniform confidence register ✅ SHIPPED 2026-07-17.** `src/lib/confidence.ts`
+    (pure, 2 tests): `ConfidenceLevel`, `levelFromScore` (canonical 0.4/0.75 cuts),
+    `meterFilled`. Shared `ConfidenceBadge` (`src/components/confidence-badge.tsx`):
+    monochrome three-dot instrument gauge, deliberately NOT the good/watch/bad signal
+    palette (confidence is orthogonal to favourability); rationale-on-tap when supplied.
+    Adopted on: verdict (engine now emits `confidenceRationale` in the same register —
+    dashboard + reasoning recap), compound-info facts, per-compound attribution, and
+    the photo analysis read (`photoReadLevel` from comparable + lighting + framing).
+    `confidence.*` + `verdict.confidenceWhy.*` + `photos.confWhy*` i18n ×6. Forecasts +
+    correlations fold into item 19 (they share the trajectory/uncertainty work; TRAJ-1's
+    band adopts this same badge). (external review 2026-07-16)
 19. **TRAJ-1 trajectory line [M].** Recency-weighted slope, plateau detection, widening
     uncertainty band; weightForecast unified onto the same math. (round-3 §7)
 20. **TRAJ-2 energy-balance calibration [M].** Personal TDEE from intake vs weight delta;

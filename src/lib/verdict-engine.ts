@@ -87,6 +87,9 @@ export type VerdictHero =
 export type Verdict = {
   state: VerdictState;
   confidence: Confidence;
+  /** Why the engine is this sure (W4-18) — the "rationale on tap" for the shared
+   *  confidence badge. Named in the same three-level register as everywhere else. */
+  confidenceRationale: Localizable;
   hero: VerdictHero;
   /** The weighted signal stack for the decompose screen (most relevant first). */
   signals: SignalContribution[];
@@ -446,6 +449,11 @@ export function computeVerdict(input: VerdictInput): Verdict {
   if (decisive.length >= 3 && agreement >= 0.5) confidence = 'high';
   else if (decisive.length >= 2 && agreement >= 0.3) confidence = 'medium';
 
+  const confidenceRationale: Localizable =
+    confidence === 'low'
+      ? { key: 'verdict.confidenceWhy.low' }
+      : { key: `verdict.confidenceWhy.${confidence}`, params: { n: decisive.length } };
+
   let state: VerdictState =
     score >= STATE_THRESHOLD ? 'on_track' : score <= -STATE_THRESHOLD ? 'off_track' : 'watch';
   // Conservative: never claim a firm verdict on thin evidence.
@@ -557,6 +565,7 @@ export function computeVerdict(input: VerdictInput): Verdict {
   return {
     state,
     confidence,
+    confidenceRationale,
     hero,
     signals,
     reconciliation,
@@ -619,6 +628,7 @@ function buildingVerdict(input: VerdictInput): Verdict {
   return {
     state: 'building',
     confidence: 'low',
+    confidenceRationale: { key: 'verdict.confidenceWhy.building' },
     hero: latestPhoto ? { kind: 'photo', photoId: latestPhoto.id } : null,
     signals: [],
     explanation: { key: 'verdict.explanation.building' },
