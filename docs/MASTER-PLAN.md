@@ -87,8 +87,12 @@ the settings override + quieter-only silent adjustment shipped).
     ai-service v20 (deployed) and the MCP connector later; `compound_info` action with
     code-enforced track-only for controlled; `npm run eval:posture` = 4/4 PASS against
     the deployed prompt + model pair. Re-run the evals on any model or prompt change.
-13. **Observational compound cards [M].** Commonly-reported ranges/timing/sides through
-    the posture gate + sourcing ladder (curated cited, labeled-unverified stopgap).
+13. **Observational compound cards ✅ SHIPPED 2026-07-16.** `getCompoundInfo` client fn
+    (14-day on-device cache per slug+locale, spec 05 cost rule; client-side track-only
+    short-circuit for controlled) + `CompoundInfoCard` on the compound-detail screen:
+    answer, kind-grouped facts with confidence pills, otc consult pointer, the
+    labeled-unverified source line, disclaimer. Curated compound_fact rows + community
+    weighting later per the sourcing ladder.
 14. **Per-compound attribution insights [M].** "Since starting X (week 4), sleep +0.8 vs
     baseline," with competing-explanation ranking (deficit vs compound vs training), the
     attribution ladder. (positioning §3.1, §5.1)

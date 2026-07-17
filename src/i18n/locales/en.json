@@ -793,6 +793,26 @@
     "noDoses": "No doses logged yet.",
     "noVials": "No vials tracked."
   },
+  "compoundInfo": {
+    "section": "Commonly reported",
+    "loading": "Reading the record.",
+    "error": "Could not load compound info.",
+    "trackOnly": "Track-only compound. Pepi records your doses and effects but does not surface ranges or protocol information for it.",
+    "kind": {
+      "range": "Reported ranges",
+      "timing": "Timing",
+      "side_effects": "Reported side effects",
+      "mechanism": "Mechanism",
+      "other": "Notes"
+    },
+    "confidence": {
+      "low": "Low confidence",
+      "medium": "Medium confidence"
+    },
+    "consultPointer": "Check with your doctor or pharmacist about contraindications and interactions.",
+    "sourceLabel": "Commonly reported online, unverified.",
+    "disclaimer": "Educational only, not medical advice and never a personal recommendation."
+  },
   "weekdays": {
     "mon": "Mon",
     "tue": "Tue",

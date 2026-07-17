@@ -793,6 +793,26 @@
     "noDoses": "Aún no hay dosis registradas.",
     "noVials": "No hay viales registrados."
   },
+  "compoundInfo": {
+    "section": "Reportado habitualmente",
+    "loading": "Leyendo el registro.",
+    "error": "No se pudo cargar la información del compuesto.",
+    "trackOnly": "Compuesto solo de seguimiento. Pepi registra tus dosis y efectos, pero no muestra rangos ni información de protocolo para él.",
+    "kind": {
+      "range": "Rangos reportados",
+      "timing": "Momento de uso",
+      "side_effects": "Efectos secundarios reportados",
+      "mechanism": "Mecanismo",
+      "other": "Notas"
+    },
+    "confidence": {
+      "low": "Confianza baja",
+      "medium": "Confianza media"
+    },
+    "consultPointer": "Consulta con tu médico o farmacéutico sobre contraindicaciones e interacciones.",
+    "sourceLabel": "Reportado habitualmente en internet, sin verificar.",
+    "disclaimer": "Solo educativo, no es consejo médico y nunca una recomendación personal."
+  },
   "weekdays": {
     "mon": "Lun",
     "tue": "Mar",

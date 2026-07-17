@@ -11,6 +11,7 @@ import { ThemedView } from '@/components/themed-view';
 import { useTheme } from '@/hooks/use-theme';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { compoundBySlug } from '@/data/compound-catalog';
+import { CompoundInfoCard } from '@/features/protocol/compound-info-card';
 import { roundTo } from '@/lib/reconstitution';
 import { useStore, type DoseRoute, type Frequency, type InventoryItem } from '@/lib/store';
 import { Constants } from '@/types/database';
@@ -119,6 +120,9 @@ export function CompoundDetailScreen({ itemId, onClose }: { itemId: string; onCl
               }
             />
           </Card>
+
+          {/* Observational compound info (spec 05, W4-13) */}
+          <CompoundInfoCard slug={item.compoundSlug} />
 
           {/* Vials */}
           <View style={styles.section}>

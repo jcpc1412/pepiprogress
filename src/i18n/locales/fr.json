@@ -793,6 +793,26 @@
     "noDoses": "Aucune dose enregistrée.",
     "noVials": "Aucun flacon suivi."
   },
+  "compoundInfo": {
+    "section": "Couramment rapporté",
+    "loading": "Lecture du registre.",
+    "error": "Impossible de charger les informations du composé.",
+    "trackOnly": "Composé en suivi seul. Pepi enregistre vos doses et effets mais n'affiche ni plages ni informations de protocole pour celui-ci.",
+    "kind": {
+      "range": "Plages rapportées",
+      "timing": "Moment de prise",
+      "side_effects": "Effets secondaires rapportés",
+      "mechanism": "Mécanisme",
+      "other": "Remarques"
+    },
+    "confidence": {
+      "low": "Confiance faible",
+      "medium": "Confiance moyenne"
+    },
+    "consultPointer": "Consultez votre médecin ou pharmacien au sujet des contre-indications et interactions.",
+    "sourceLabel": "Couramment rapporté en ligne, non vérifié.",
+    "disclaimer": "Contenu éducatif uniquement, pas un avis médical ni une recommandation personnelle."
+  },
   "weekdays": {
     "mon": "Lun",
     "tue": "Mar",

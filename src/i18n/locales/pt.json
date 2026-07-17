@@ -793,6 +793,26 @@
     "noDoses": "Nenhuma dose registrada ainda.",
     "noVials": "Nenhum frasco registrado."
   },
+  "compoundInfo": {
+    "section": "Comumente relatado",
+    "loading": "Lendo o registro.",
+    "error": "Não foi possível carregar as informações do composto.",
+    "trackOnly": "Composto apenas de acompanhamento. O Pepi registra suas doses e efeitos, mas não exibe faixas nem informações de protocolo para ele.",
+    "kind": {
+      "range": "Faixas relatadas",
+      "timing": "Momento de uso",
+      "side_effects": "Efeitos colaterais relatados",
+      "mechanism": "Mecanismo",
+      "other": "Notas"
+    },
+    "confidence": {
+      "low": "Confiança baixa",
+      "medium": "Confiança média"
+    },
+    "consultPointer": "Converse com seu médico ou farmacêutico sobre contraindicações e interações.",
+    "sourceLabel": "Comumente relatado na internet, não verificado.",
+    "disclaimer": "Apenas educativo, não é aconselhamento médico e nunca uma recomendação pessoal."
+  },
   "weekdays": {
     "mon": "Seg",
     "tue": "Ter",

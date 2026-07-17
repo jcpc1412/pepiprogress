@@ -1,7 +1,9 @@
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import { FunctionsFetchError, FunctionsRelayError } from '@supabase/supabase-js';
 
-import { COMPOUND_CATALOG } from '@/data/compound-catalog';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+import { COMPOUND_CATALOG, compoundBySlug, marketCategoryOf, type MarketCategory } from '@/data/compound-catalog';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 import type { PhotoSession } from '@/lib/store';
 
@@ -342,6 +344,88 @@ export type SignalLedgerResult = {
  * per-event notes. Best-effort: returns null on any miss (not configured,
  * offline, or server error) so the caller keeps the offline ledger unchanged.
  */
+/** One commonly-reported fact on a compound card (spec 05, W4-13). */
+export type CompoundFact = {
+  kind: 'range' | 'timing' | 'side_effects' | 'mechanism' | 'other';
+  text: string;
+  /** Never 'high': general knowledge is the unverified sourcing-ladder stopgap. */
+  confidence: 'low' | 'medium';
+};
+
+export type CompoundInfo = {
+  category: MarketCategory;
+  trackOnly: boolean;
+  source: 'reported_unverified';
+  answer: string;
+  facts: CompoundFact[];
+  consultPointer: boolean;
+};
+
+const COMPOUND_INFO_CACHE_PREFIX = 'pepi.compoundInfo.';
+const COMPOUND_INFO_TTL_MS = 14 * 24 * 60 * 60 * 1000;
+
+/** Static track-only card, built without a network call: the client-side half of
+ *  the controlled gate (the edge fn enforces the same in code). */
+function trackOnlyInfo(): CompoundInfo {
+  return {
+    category: 'controlled',
+    trackOnly: true,
+    source: 'reported_unverified',
+    answer: '',
+    facts: [],
+    consultPointer: false,
+  };
+}
+
+/**
+ * Observational compound info through the posture gate (spec 05, W4-13).
+ * Catalog-level content is identical for every user, so responses are cached
+ * on-device per slug+locale for 14 days (spec 05 cost rule).
+ */
+export async function getCompoundInfo(slug: string, locale: string): Promise<CompoundInfo> {
+  const compound = compoundBySlug(slug);
+  const category = compound
+    ? marketCategoryOf(compound)
+    : // Custom/unknown compounds are 'grey' by rule, but with no catalog identity
+      // there is nothing factual to summarize: treat as track-only.
+      'controlled';
+  if (!compound || category === 'controlled') return trackOnlyInfo();
+
+  const cacheKey = `${COMPOUND_INFO_CACHE_PREFIX}${slug}.${locale}`;
+  try {
+    const raw = await AsyncStorage.getItem(cacheKey);
+    if (raw) {
+      const cached = JSON.parse(raw) as { at: number; info: CompoundInfo };
+      if (Date.now() - cached.at < COMPOUND_INFO_TTL_MS && cached.info?.answer) return cached.info;
+    }
+  } catch {
+    // cache is best-effort
+  }
+
+  if (!isSupabaseConfigured) throw new AiNotConfiguredError();
+  const { data, error } = await supabase.functions.invoke<CompoundInfo>('ai-service', {
+    body: {
+      action: 'compound_info',
+      compound: {
+        slug: compound.slug,
+        canonicalName: compound.canonicalName,
+        marketCategory: category,
+        controlled: compound.controlled,
+      },
+      locale,
+    },
+  });
+  if (error) raiseAiError(error);
+  if (!data) throw new AiServerError();
+
+  try {
+    await AsyncStorage.setItem(cacheKey, JSON.stringify({ at: Date.now(), info: data }));
+  } catch {
+    // cache is best-effort
+  }
+  return data;
+}
+
 export async function getSignalLedger(opts: {
   metric: string;
   goal?: string;

@@ -793,6 +793,26 @@
     "noDoses": "Noch keine Dosen erfasst.",
     "noVials": "Keine Fläschchen erfasst."
   },
+  "compoundInfo": {
+    "section": "Häufig berichtet",
+    "loading": "Aufzeichnung wird gelesen.",
+    "error": "Substanzinformationen konnten nicht geladen werden.",
+    "trackOnly": "Nur-Tracking-Substanz. Pepi erfasst deine Dosen und Effekte, zeigt für sie aber keine Bereiche oder Protokollinformationen an.",
+    "kind": {
+      "range": "Berichtete Bereiche",
+      "timing": "Einnahmezeitpunkt",
+      "side_effects": "Berichtete Nebenwirkungen",
+      "mechanism": "Wirkmechanismus",
+      "other": "Hinweise"
+    },
+    "confidence": {
+      "low": "Geringe Konfidenz",
+      "medium": "Mittlere Konfidenz"
+    },
+    "consultPointer": "Sprich mit deinem Arzt oder Apotheker über Kontraindikationen und Wechselwirkungen.",
+    "sourceLabel": "Häufig online berichtet, unverifiziert.",
+    "disclaimer": "Nur zur Information, kein medizinischer Rat und nie eine persönliche Empfehlung."
+  },
   "weekdays": {
     "mon": "Mo",
     "tue": "Di",
