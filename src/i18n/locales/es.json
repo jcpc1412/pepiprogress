@@ -1144,5 +1144,14 @@
     "thanks": "Anotado. Días así quedan fuera de tu línea base, para que un día raro no sesgue tu normal.",
     "muteChip": "Deja de preguntar sobre esto",
     "muted": "Entendido, dejaré de preguntar sobre eso. Tus datos se siguen registrando igual."
+  },
+  "measureNext": {
+    "title": "Refuerza la lectura",
+    "bloodworkNever": "{{marker}} aún no se ha medido.",
+    "bloodworkStale_one": "{{marker}} se midió por última vez hace {{count}} semana.",
+    "bloodworkStale_other": "{{marker}} se midió por última vez hace {{count}} semanas.",
+    "photoBaseline": "Una foto inicial le daría a la lectura algo con qué comparar.",
+    "photoDue_one": "Tu última foto fue hace {{count}} semana. Una nueva afinaría la lectura.",
+    "photoDue_other": "Tu última foto fue hace {{count}} semanas. Una nueva afinaría la lectura."
   }
 }

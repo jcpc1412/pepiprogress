@@ -13,6 +13,7 @@ import { Divider, EngravedLabel, Placeholder, StatusPill } from '@/components/su
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { MeasureNextNudge } from '@/features/home/measure-next-nudge';
 import { TodayDoses } from '@/features/home/today-doses';
 import { formatHeroValue, resolveMsg, useVerdict, type TFn } from '@/features/home/use-verdict';
 import { daysBetween } from '@/lib/dates';
@@ -223,6 +224,9 @@ export function Dashboard() {
                 accessibilityHint={t('verdict.reasoningHint')}
               />
             ) : null}
+
+            {/* The verdict names its own biggest evidence gap (W4-17). */}
+            <MeasureNextNudge variant="nudge" />
           </View>
 
           <Divider style={styles.rule} />

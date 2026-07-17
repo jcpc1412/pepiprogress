@@ -29,7 +29,7 @@ export function resolveMsg(
   // These params carry metric i18n keys (e.g. "fields.soreness"); translate them
   // before interpolation so the sentence reads in the user's language.
   if (params) {
-    for (const k of ['metric', 'drag', 'drag2'] as const) {
+    for (const k of ['metric', 'drag', 'drag2', 'marker'] as const) {
       if (typeof params[k] === 'string') params[k] = t(params[k] as 'fields.weight');
     }
   }

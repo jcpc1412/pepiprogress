@@ -7,6 +7,7 @@ import { EngravedLabel } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { MeasureNextNudge } from '@/features/home/measure-next-nudge';
 import { ReasoningRecap, SignalStack } from '@/features/home/verdict-reasoning';
 import { Insights } from '@/features/insights/insights';
 import { ChartsSection, MIN_CHECKINS, SummaryCards, UnlockCard } from '@/features/insights/insights-screen';
@@ -56,6 +57,7 @@ export function AnalysisScreen() {
             showsVerticalScrollIndicator={false}>
             <ReasoningRecap />
             <SignalStack />
+            <MeasureNextNudge variant="section" />
             <SummaryCards />
             <ChartsSection />
             {checkinCount < MIN_CHECKINS ? (

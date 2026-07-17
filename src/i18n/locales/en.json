@@ -1144,5 +1144,14 @@
     "thanks": "Noted. Days like this stay out of your baseline, so one odd day never skews your normal.",
     "muteChip": "Stop asking about this",
     "muted": "Understood, I will stop asking about that. Your data still logs as usual."
+  },
+  "measureNext": {
+    "title": "Strengthen the read",
+    "bloodworkNever": "{{marker}} hasn't been checked yet.",
+    "bloodworkStale_one": "{{marker}} was last checked {{count}} week ago.",
+    "bloodworkStale_other": "{{marker}} was last checked {{count}} weeks ago.",
+    "photoBaseline": "A baseline photo would give the read something to compare against.",
+    "photoDue_one": "Your last photo was {{count}} week ago. A fresh one would sharpen the read.",
+    "photoDue_other": "Your last photo was {{count}} weeks ago. A fresh one would sharpen the read."
   }
 }

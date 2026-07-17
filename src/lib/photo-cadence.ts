@@ -68,6 +68,13 @@ export function getCadence(group: CompoundGroup): Cadence {
   return CADENCES[group];
 }
 
+/** The raw group for a single slug (no shortest-cadence selection), so callers
+ *  can see an ancillary's true 0-cadence group instead of the 'unknown' fallback
+ *  that getGroupForSlugs returns when every mapped group has a 0 cadence. */
+export function groupForSlug(slug: string): CompoundGroup {
+  return SLUG_TO_GROUP[slug] ?? 'unknown';
+}
+
 export function isVisualSymptom(type: string): boolean {
   return VISUAL_SYMPTOMS.has(type);
 }

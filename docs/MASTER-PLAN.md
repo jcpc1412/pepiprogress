@@ -115,10 +115,14 @@ the settings override + quieter-only silent adjustment shipped).
     per active compound, its bloodwork monitoring_tags with the latest imported value +
     recency, flagging never-checked and >90-day-stale markers. Posture evals re-run 4/4.
     i18n ×6. Vial scan stays deferred.
-17. **"What should I measure next?" suggestions [S/M].** The verdict names its own
-    biggest evidence gap: "a photo this week would strengthen this," "hematocrit was
-    last checked 10 weeks ago." Sources: monitoring tags + photo cadence + bloodwork
-    recency; surfaces on the verdict reasoning screen and as an offer-level nudge.
+17. **"What should I measure next?" suggestions ✅ SHIPPED 2026-07-17.**
+    `src/lib/measure-next.ts` (pure, 9 tests): `computeEvidenceGaps` ranks a stack's
+    biggest evidence gaps — never-checked/overdue bloodwork markers (via
+    lab-monitoring) above photo gaps (baseline missing or last shot past the
+    compound's scientific cadence, via photo-cadence's new `groupForSlug`).
+    `MeasureNextNudge` surfaces the top gap under the Today verdict and the top two
+    as a "Strengthen the read" section on the Analysis reasoning screen; taps route
+    to Photos or the lab importer. `measureNext.*` i18n ×6 (count plurals).
     (external review 2026-07-16)
 18. **Uniform confidence register [S/M].** One shared confidence component
     (high/medium/low plus rationale on tap) applied everywhere Pepi concludes: verdict,
