@@ -21,6 +21,8 @@ Effort: [S] under a day, [M] days, [L] a week+.
   expo-notifications, expo-haptics, HealthKit module, vision-camera flags.
 - **M4 on-device test checklist** (`docs/ROADMAP.md`) + HealthKit read/write verification
   (existing task: Phase 2 native Health read).
+- **Progress overlay sketches.** The exaggerated-interpretation overlay prototype (item 27)
+  waits on your sketches; build starts once they exist.
 
 ---
 
@@ -49,62 +51,76 @@ Fix the things that silently lie before building anything on top of them.
 6. **Cycle prompt copy pass [S].** Water-retention attribution register ("consistent with
    this point in your cycle"), suppress bloating-as-regression when phase data exists.
    Edge-function deploy, no app build. (beta-notes §1.7 step 1)
+7. **Fonts [S].** IBM Plex Mono + Inter via `@expo-google-fonts/*` with a
+   weight-to-family map in `themed-text`; tokens already swappable. Chamfer fidelity
+   (react-native-svg) stays deferred.
 
 ## Wave 3: companion pivot
 
-7. **Adaptive coaching level + indirect-guidance prompts [M].** observe/nudge/coach,
+8. **Adaptive coaching level + indirect-guidance prompts [M].** observe/nudge/coach,
    silently inferred, offer-only upward, settings override; prompt blocks per the
    direct-lifestyle / observational-compound policy. (beta-notes §3.2, §3.6)
-8. **Micro check-ins + chat controls [M].** Morning/evening chat snippets, chips-first;
+9. **Micro check-ins + chat controls [M].** Morning/evening chat snippets, chips-first;
    "ask me in an hour" snooze; "tone down notifications" and per-check-in
    adjust/disable intents, always confirmed, never silent. (beta-notes §4)
-9. **Anomaly engine + context memory [M].** Deterministic deviation detectors, templated
-   openers, structured context notes, recurrence inference, and anomaly-tagged days
-   excluded/down-weighted from baselines. Upgrades P-05. (beta-notes §3.4)
+10. **Anomaly engine + context memory [M].** Deterministic deviation detectors, templated
+    openers, structured context notes, recurrence inference, and anomaly-tagged days
+    excluded/down-weighted from baselines. Upgrades P-05. (beta-notes §3.4)
 
 ## Wave 4: compound intelligence + predictions (the differentiation wave)
 
-10. **market_category migration + shared posture module + eval suite [M].** Enum on
+11. **market_category migration + shared posture module + eval suite [M].** Enum on
     catalog + bundled mirror; posture gate extracted for reuse (edge fn now, MCP later);
     the four boundary evals pass **before any compound info is exposed** (spec 05 gate).
-11. **Observational compound cards [M].** Commonly-reported ranges/timing/sides through
+12. **Observational compound cards [M].** Commonly-reported ranges/timing/sides through
     the posture gate + sourcing ladder (curated cited, labeled-unverified stopgap).
-12. **Per-compound attribution insights [M].** "Since starting X (week 4), sleep +0.8 vs
+13. **Per-compound attribution insights [M].** "Since starting X (week 4), sleep +0.8 vs
     baseline," with competing-explanation ranking (deficit vs compound vs training), the
     attribution ladder. (positioning §3.1, §5.1)
-13. **Expectation timelines [M].** Reported onset/peak/plateau curves vs the user's own.
+14. **Expectation timelines [M].** Reported onset/peak/plateau curves vs the user's own.
     (positioning §3.2)
-14. **TRAJ-1 trajectory line [M].** Recency-weighted slope, plateau detection, widening
+15. **Lab upload + AI parse [M].** Photo or PDF upload on the Logging surface (ISSUES
+    H-06); AI vision extracts marker values into bloodwork fields; feeds the
+    bloodwork-to-compound monitoring mapping (positioning §3 item 4). Vial scan stays
+    deferred; the two are separate builds.
+16. **TRAJ-1 trajectory line [M].** Recency-weighted slope, plateau detection, widening
     uncertainty band; weightForecast unified onto the same math. (round-3 §7)
-15. **TRAJ-2 energy-balance calibration [M].** Personal TDEE from intake vs weight delta;
+17. **TRAJ-2 energy-balance calibration [M].** Personal TDEE from intake vs weight delta;
     per-user device-bias factor; blended forecast; disagreement-as-insight; proactive
     hooks (cheat-meal water weight, step drops). (round-3 §7)
 
-## Wave 5: training log + goal symmetry
+## Wave 5: training log + goal symmetry + narrative
 
-16. **Training log [M].** StrengthSession (tonnage, e1RM) + Benchmark (name/value/date)
+18. **Training log [M].** StrengthSession (tonnage, e1RM) + Benchmark (name/value/date)
     via chat parse + detailed-log widget; coach-adjusted effort at nudge/coach level.
     Sport-agnostic per the locked user rings. (round-3 §8; positioning §6)
-17. **Gain-goal measurement emphasis + FFMI band [M].** Multiple extra measurements for
+19. **Gain-goal measurement emphasis + FFMI band [M].** Multiple extra measurements for
     gain goals; hedged FFMI range. (beta-notes §1.8)
-18. **Transition tracking v1 + SM-1 [M].** Conditional goal chip (mtf/ftm), surfaced
+20. **Transition tracking v1 + SM-1 [M].** Conditional goal chip (mtf/ftm), surfaced
     fields, direction-aware analysis block; plus the self-marketability pass (goal-first
     onboarding + store copy, non-PED paths first-class). (beta-notes §1.9; round-3 §2)
+21. **Narrative timeline [M].** The signal ledger as a cross-metric chronological story
+    ("Started TRT, sleep improved, strength up, hematocrit elevated, donation logged");
+    the natural surface for attribution (13) and personal-history moments. Sequenced
+    here because it renders what Wave 4 computes. (positioning §5.3)
 
 ## Wave 6: photo reel + sharing
 
-19. **Reel phase 1 [M].** Multi-shot capture + camera-roll dump import + manual pose
+22. **Reel phase 1 [M].** Multi-shot capture + camera-roll dump import + manual pose
     chips + reel view grouped by label. Required check-ins stay locked to the four
     relaxed poses; casual photos freeform. (beta-notes §1.3)
-20. **Reel phase 2 [M].** Haiku auto-classification + confirm chips; session tabs
+23. **Reel phase 2 [M].** Haiku auto-classification + confirm chips; session tabs
     removed. (beta-notes §1.1, §1.3)
-21. **Share cards [S/M].** Branded stat card first, then photo export with watermark
+24. **Share cards [S/M].** Branded stat card first, then photo export with watermark
     toggle in settings (off for photos, on for stat card); offered contextually after
     milestones/highscores. (beta-notes §1.4)
-22. **Auto-crop via analysis bbox [S/M].** Torso crop box returned by analyze_photo,
+25. **Auto-crop via analysis bbox [S/M].** Torso crop box returned by analyze_photo,
     display-only, originals untouched. (beta-notes §1.2)
-23. **Reel phase 3 [M/L].** Full timeline dump view, pose filters, per-pose ghost
+26. **Reel phase 3 [M/L].** Full timeline dump view, pose filters, per-pose ghost
     references. (beta-notes §1.3)
+27. **Progress overlay prototype [M].** Exaggerated-interpretation overlay (lines /
+    triangles / shading) rendered on progress photos. Blocked on owner sketches (see
+    Blocked on owner); slots here once they land.
 
 ## Post-beta platform tracks (parallel, larger)
 
@@ -120,14 +136,18 @@ Fix the things that silently lie before building anything on top of them.
 - **D. HealthKit cycle read + Pepi cycle setup [M].** Category read to cycle metric;
   conversational setup for non-trackers. (beta-notes §1.7 steps 2-3)
 
-## Deferred / backlog (unchanged from prior tiers)
+## Deferred / backlog
 
-Lab-PDF parsing + vial scan (AI vision), Drive backup (OAuth), normalized per-entity
-sync engine + storage hardening, fonts/chamfer fidelity, Terra (~500 users), storage
-quotas (pricing-model dependent), progress overlay prototype (waits on owner sketch),
-narrative timeline (positioning §5.3), community cohort insights (needs aggregates + N
-thresholds), reptides/peptidebase outreach (held), per-region posture overrides (data
-mechanism reserved, unused).
+Vial scan (AI vision; split from lab parsing, which is now item 15), normalized
+per-entity sync engine + storage hardening, chamfer fidelity (true 45 degree chamfers
+need react-native-svg), Terra (~500 users), storage quotas (pricing-model dependent),
+community cohort insights (needs aggregates + N thresholds), reptides/peptidebase
+outreach (held), per-region posture overrides (data mechanism reserved, unused).
+
+Cut 2026-07-16: **Drive backup (OAuth).** Continuous Supabase cloud backup (user_state
+mirror) plus the manual data-export file already cover the backup need; a second OAuth
+backup target adds integration surface without adding safety. Revisit only if a
+no-account-ever user segment materially asks for it.
 
 ## Standing gates (every wave)
 
