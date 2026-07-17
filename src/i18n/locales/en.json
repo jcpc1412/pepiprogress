@@ -542,7 +542,9 @@
     "macroBody": "How much protein and calories did you have today?",
     "typicalTitle": "Quick question",
     "typicalBodyNutrition": "Do you eat about the same most days? One tap could fill in your nutrition.",
-    "typicalBodySleep": "Do you sleep about the same most nights? One tap could fill in your sleep."
+    "typicalBodySleep": "Do you sleep about the same most nights? One tap could fill in your sleep.",
+    "skippedTitle": "A few doses went unlogged",
+    "skippedBody": "{{compound}}: the last {{count}} scheduled doses have no log. Ran out, side effects, or a planned break? Tell Pepi."
   },
   "cycle": {
     "section": "CYCLE TRACKING",

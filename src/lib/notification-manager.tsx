@@ -5,6 +5,7 @@ import {
   configureNotifications,
   ensureNotificationPermission,
   maybeNotifyInventory,
+  maybeNotifySkippedDoses,
   notifyTypicalPrompt,
   rescheduleReminders,
 } from '@/lib/notifications';
@@ -21,8 +22,17 @@ import { firstEligibleTypicalGroup } from '@/lib/typical-day';
  * All scheduling is a no-op on web (see notifications.ts).
  */
 export function NotificationManager() {
-  const { ready, profile, protocolItems, inventory, entries, metricReadings, setProfile, setTypicalPromptState } =
-    useStore();
+  const {
+    ready,
+    profile,
+    protocolItems,
+    doseEvents,
+    inventory,
+    entries,
+    metricReadings,
+    setProfile,
+    setTypicalPromptState,
+  } = useStore();
 
   // Configure the handler + Android channel once.
   useEffect(() => {
@@ -83,11 +93,15 @@ export function NotificationManager() {
   const profileRef = useRef(profile);
   const entriesRef = useRef(entries);
   const readingsRef = useRef(metricReadings);
+  const protocolRef = useRef(protocolItems);
+  const dosesRef = useRef(doseEvents);
   useEffect(() => {
     inventoryRef.current = inventory;
     profileRef.current = profile;
     entriesRef.current = entries;
     readingsRef.current = metricReadings;
+    protocolRef.current = protocolItems;
+    dosesRef.current = doseEvents;
   });
 
   useEffect(() => {
@@ -96,6 +110,10 @@ export function NotificationManager() {
       const p = profileRef.current;
       const day = await maybeNotifyInventory(p, inventoryRef.current);
       if (day) setProfile({ inventoryNotifiedOn: day });
+
+      // P-05: reactive skip-doses nudge (simple version; Wave 3 upgrades it).
+      const nudged = await maybeNotifySkippedDoses(p, protocolRef.current, dosesRef.current);
+      if (nudged) setProfile({ skipNudgedOn: nudged });
 
       // One-time "typical day" nudge for a freshly-eligible group (spec 15).
       const today = localDateKey();

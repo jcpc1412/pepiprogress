@@ -542,7 +542,9 @@
     "macroBody": "Combien de protéines et de calories avez-vous consommées aujourd'hui ?",
     "typicalTitle": "Petite question",
     "typicalBodyNutrition": "Mangez-vous à peu près pareil la plupart des jours ? Un geste pourrait remplir votre nutrition.",
-    "typicalBodySleep": "Dormez-vous à peu près pareil la plupart des nuits ? Un geste pourrait remplir votre sommeil."
+    "typicalBodySleep": "Dormez-vous à peu près pareil la plupart des nuits ? Un geste pourrait remplir votre sommeil.",
+    "skippedTitle": "Des doses non consignées",
+    "skippedBody": "{{compound}} : les {{count}} dernières doses prévues ne sont pas consignées. Rupture de stock, effets secondaires ou pause prévue ? Dites-le à Pepi."
   },
   "cycle": {
     "section": "SUIVI DU CYCLE",

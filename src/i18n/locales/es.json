@@ -542,7 +542,9 @@
     "macroBody": "¿Cuánta proteína y calorías consumiste hoy?",
     "typicalTitle": "Pregunta rápida",
     "typicalBodyNutrition": "¿Comes más o menos lo mismo casi todos los días? Un toque podría rellenar tu nutrición.",
-    "typicalBodySleep": "¿Duermes más o menos lo mismo casi todas las noches? Un toque podría rellenar tu sueño."
+    "typicalBodySleep": "¿Duermes más o menos lo mismo casi todas las noches? Un toque podría rellenar tu sueño.",
+    "skippedTitle": "Algunas dosis sin registrar",
+    "skippedBody": "{{compound}}: las últimas {{count}} dosis programadas no tienen registro. ¿Se acabó, efectos secundarios o una pausa planeada? Cuéntaselo a Pepi."
   },
   "cycle": {
     "section": "CICLO MENSTRUAL",

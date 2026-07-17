@@ -20,6 +20,9 @@ export function MacroReminderHandler() {
       const data = response.notification.request.content.data as { kind?: string } | undefined;
       if (data?.kind === 'macros') openLogging('quick', 'macros');
       else if (data?.kind === 'typical') router.navigate('/pepi');
+      // P-05 skip-doses nudge: land in Pepi chat, where the user can say why
+      // (ran out, side effects, planned break) in their own words.
+      else if (data?.kind === 'skipped') router.navigate('/pepi');
     });
     return () => sub.remove();
   }, [openLogging, router]);

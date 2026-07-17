@@ -542,7 +542,9 @@
     "macroBody": "Wie viel Protein und Kalorien hattest du heute?",
     "typicalTitle": "Kurze Frage",
     "typicalBodyNutrition": "Isst du an den meisten Tagen ungefähr gleich? Ein Tippen könnte deine Ernährung ausfüllen.",
-    "typicalBodySleep": "Schläfst du in den meisten Nächten ungefähr gleich? Ein Tippen könnte deinen Schlaf ausfüllen."
+    "typicalBodySleep": "Schläfst du in den meisten Nächten ungefähr gleich? Ein Tippen könnte deinen Schlaf ausfüllen.",
+    "skippedTitle": "Einige Dosen nicht erfasst",
+    "skippedBody": "{{compound}}: die letzten {{count}} geplanten Dosen wurden nicht erfasst. Aufgebraucht, Nebenwirkungen oder eine geplante Pause? Sag es Pepi."
   },
   "cycle": {
     "section": "ZYKLUS-TRACKING",

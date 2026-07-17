@@ -112,3 +112,48 @@ export function classifyDose(
   const s = nearestSlot(anchorKey, interval, doseKey);
   return { onSlot: s.offsetDays === 0, slotKey: s.slotKey, offsetDays: s.offsetDays };
 }
+
+/**
+ * Consecutive missed interval slots counting back from the most recent slot
+ * strictly before today (ISSUES P-05). Today's still-pending slot doesn't count
+ * as missed. 0 = nothing missed (or no past slots yet).
+ */
+export function missedSlotStreak(
+  anchorKey: string,
+  interval: number,
+  doses: ScheduledDose[],
+  todayKey: string,
+): number {
+  const days = daysBetween(anchorKey, todayKey);
+  if (days <= 0) return 0;
+  const latestPast = Math.floor((days - 1) / interval); // largest idx with slotKey < today
+  if (latestPast < 0) return 0;
+  const done = completedSlots(anchorKey, interval, doses);
+  let streak = 0;
+  for (let idx = latestPast; idx >= 0 && !done.has(idx); idx--) streak++;
+  return streak;
+}
+
+/**
+ * Consecutive missed weekday-schedule days counting back from yesterday
+ * (P-05, `doseDays` model). Looks back at most `maxDays` (default 28).
+ */
+export function missedWeekdayStreak(
+  doseDays: number[],
+  doseKeys: string[] | Set<string>,
+  todayKey: string,
+  maxDays = 28,
+): number {
+  if (doseDays.length === 0) return 0;
+  const logged = doseKeys instanceof Set ? doseKeys : new Set(doseKeys);
+  const dueSet = new Set(doseDays);
+  let streak = 0;
+  for (let back = 1; back <= maxDays; back++) {
+    const key = shiftDateKey(todayKey, -back);
+    const [y, m, d] = key.split('-').map(Number);
+    if (!dueSet.has(new Date(y, m - 1, d).getDay())) continue;
+    if (logged.has(key)) break;
+    streak++;
+  }
+  return streak;
+}

@@ -303,6 +303,9 @@ export type LocalProfile = {
   notifyPhotosEnabled?: boolean;
   /** Last day (YYYY-MM-DD) an inventory-attention notification fired — dedupes the foreground check. */
   inventoryNotifiedOn?: string;
+  /** P-05 skip-doses nudge dedup: protocol item id → day (YYYY-MM-DD) the nudge
+   *  last fired. Re-arms after a new dose for the item or 7 days. */
+  skipNudgedOn?: Record<string, string>;
   // Typical-day baselines (spec 15): one-time "normal day" values per repetitive
   // metric group, so the log can collapse to usual/less/more chips.
   typicalBaselines?: TypicalBaseline[];

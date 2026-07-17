@@ -2,8 +2,23 @@ import * as Notifications from 'expo-notifications';
 import { t as i18nT } from 'i18next';
 import { Platform } from 'react-native';
 
+import { compoundBySlug } from '@/data/compound-catalog';
+import { daysBetween } from '@/lib/dates';
+import {
+  anchorFor,
+  intervalFor,
+  missedSlotStreak,
+  missedWeekdayStreak,
+  type ScheduledDose,
+} from '@/lib/dose-schedule';
 import { inventoryAttention } from '@/lib/inventory';
-import { localDateKey, type InventoryItem, type LocalProfile } from '@/lib/store';
+import {
+  localDateKey,
+  type DoseEvent,
+  type InventoryItem,
+  type LocalProfile,
+  type ProtocolItem,
+} from '@/lib/store';
 
 const isWeb = Platform.OS === 'web';
 
@@ -136,6 +151,79 @@ export async function notifyTypicalPrompt(group: string): Promise<boolean> {
     trigger: null, // immediate; once-ever per group by design
   });
   return true;
+}
+
+/** Missed scheduled doses before a nudge fires (ISSUES P-05; spec discussion
+ *  suggested 2-3, resolved to 2 — early enough to matter, late enough to not
+ *  ping over a single forgotten log). */
+const SKIP_NUDGE_THRESHOLD = 2;
+/** Days after a nudge before it can re-fire without a new dose in between. */
+const SKIP_NUDGE_REARM_DAYS = 7;
+
+/**
+ * P-05: when {@link SKIP_NUDGE_THRESHOLD}+ consecutive scheduled doses went
+ * unlogged for an item, fire ONE non-judgmental notification that deep-links
+ * into Pepi chat (data.kind='skipped'). Deduped per item via
+ * `profile.skipNudgedOn`; re-arms after a new dose for the item or
+ * {@link SKIP_NUDGE_REARM_DAYS} days. Returns the skipNudgedOn patch to persist
+ * (or null when nothing fired). No-op on web; respects notifyDosesEnabled.
+ * The Wave-3 anomaly engine + context memory upgrades this simple version.
+ */
+export async function maybeNotifySkippedDoses(
+  profile: LocalProfile,
+  protocolItems: ProtocolItem[],
+  doseEvents: DoseEvent[],
+): Promise<Record<string, string> | null> {
+  if (isWeb || !profile.notifyDosesEnabled) return null;
+  const today = localDateKey();
+
+  // Doses per item: by explicit link, falling back to compound match (chat-logged
+  // doses carry no protocolItemId — they must still count as taken).
+  const dosesFor = (p: ProtocolItem): ScheduledDose[] =>
+    doseEvents
+      .filter((d) => (d.protocolItemId ? d.protocolItemId === p.id : d.compoundSlug === p.compoundSlug))
+      .map((d) => ({
+        dateKey: localDateKey(new Date(d.takenAt)),
+        slotKey: d.slotKey,
+        extra: d.extra,
+      }));
+
+  const fired: Record<string, string> = {};
+  for (const p of protocolItems) {
+    const doses = dosesFor(p);
+
+    let streak = 0;
+    if (p.doseDays !== undefined) {
+      streak = missedWeekdayStreak(p.doseDays, doses.map((d) => d.dateKey), today);
+    } else {
+      const interval = intervalFor(p.frequency);
+      if (interval == null) continue; // as_needed / custom: no schedule to miss
+      const anchor = anchorFor(p, doses.map((d) => d.dateKey), today);
+      if (!anchor) continue;
+      streak = missedSlotStreak(anchor, interval, doses, today);
+    }
+    if (streak < SKIP_NUDGE_THRESHOLD) continue;
+
+    // Dedup / re-arm.
+    const nudgedOn = profile.skipNudgedOn?.[p.id];
+    if (nudgedOn) {
+      const doseAfterNudge = doses.some((d) => d.dateKey >= nudgedOn);
+      if (!doseAfterNudge && daysBetween(nudgedOn, today) < SKIP_NUDGE_REARM_DAYS) continue;
+    }
+
+    const compound = compoundBySlug(p.compoundSlug)?.canonicalName ?? p.compoundSlug;
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: t('notify.skippedTitle'),
+        body: t('notify.skippedBody', { compound, count: streak }),
+        data: { kind: 'skipped', itemId: p.id },
+      },
+      trigger: null, // immediate
+    });
+    fired[p.id] = today;
+  }
+
+  return Object.keys(fired).length ? { ...profile.skipNudgedOn, ...fired } : null;
 }
 
 /**

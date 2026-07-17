@@ -6,6 +6,8 @@ import {
   completedSlots,
   dueSlot,
   intervalFor,
+  missedSlotStreak,
+  missedWeekdayStreak,
   nearestSlot,
 } from '@/lib/dose-schedule';
 
@@ -101,6 +103,42 @@ describe('completedSlots + dueSlot', () => {
       slotKey: '2026-07-16',
     });
     expect(dueSlot(anchor, 1, [{ dateKey: '2026-07-16' }], '2026-07-16')).toBeNull();
+  });
+});
+
+describe('missedSlotStreak', () => {
+  const anchor = '2026-07-01'; // interval 3: slots 1, 4, 7, 10, 13, 16...
+
+  it('counts consecutive uncompleted past slots, ignoring today', () => {
+    // Doses on the 1st and 4th; the 7th, 10th, 13th missed; today the 16th (pending).
+    const doses = [{ dateKey: '2026-07-01' }, { dateKey: '2026-07-04' }];
+    expect(missedSlotStreak(anchor, 3, doses, '2026-07-16')).toBe(3);
+  });
+
+  it('resets at the most recent completed slot', () => {
+    const doses = [{ dateKey: '2026-07-13' }];
+    expect(missedSlotStreak(anchor, 3, doses, '2026-07-16')).toBe(0);
+  });
+
+  it('is zero before any past slot exists', () => {
+    expect(missedSlotStreak('2026-07-16', 3, [], '2026-07-16')).toBe(0);
+    expect(missedSlotStreak('2026-07-16', 3, [], '2026-07-17')).toBe(1);
+  });
+});
+
+describe('missedWeekdayStreak', () => {
+  // 2026-07-16 is a Thursday. Schedule: Mon (1) + Thu (4).
+  it('counts consecutive missed due days back from yesterday', () => {
+    // Missed Mon 13th and Thu 9th; last logged Mon 6th.
+    expect(missedWeekdayStreak([1, 4], ['2026-07-06'], '2026-07-16')).toBe(2);
+  });
+
+  it('stops at the last logged due day', () => {
+    expect(missedWeekdayStreak([1, 4], ['2026-07-13'], '2026-07-16')).toBe(0);
+  });
+
+  it('handles empty schedules', () => {
+    expect(missedWeekdayStreak([], [], '2026-07-16')).toBe(0);
   });
 });
 
