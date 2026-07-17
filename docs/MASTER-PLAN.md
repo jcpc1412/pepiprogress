@@ -57,7 +57,13 @@ data at the next device build.
    useFonts gate + weight-to-family map + web CSS vars). Chamfers also already exist
    (`src/components/chamfer.tsx`); the stale "deferred" notes were corrected.
 
-## Wave 3: companion pivot
+## Wave 3: companion pivot ✅ SHIPPED 2026-07-16
+
+All four landed on main (commits cd13e0f, 6d7e5f8, 78f4671, a1a337a); ai-service v19
+deployed with the coaching-level prompt + context-memory payload. Deferred within the
+wave: recurrence/habit inference over context notes (listed "later" in beta-notes 3.4)
+and the moment-anchored ease-off / go-deeper offers (need nudge-ignore telemetry;
+the settings override + quieter-only silent adjustment shipped).
 
 8. **Adaptive coaching level + indirect-guidance prompts [M].** observe/nudge/coach,
    silently inferred, offer-only upward, settings override; prompt blocks per the
