@@ -163,9 +163,17 @@ the settings override + quieter-only silent adjustment shipped).
 
 ## Wave 5: training log + goal symmetry + narrative
 
-21. **Training log [M].** StrengthSession (tonnage, e1RM) + Benchmark (name/value/date)
-    via chat parse + detailed-log widget; coach-adjusted effort at nudge/coach level.
-    Sport-agnostic per the locked user rings. (round-3 §8; positioning §6)
+21. **Training log ✅ SHIPPED 2026-07-17 (manual path).** `src/lib/strength.ts`
+    (pure, 9 tests): tonnage, Epley `epley1RM`, `bestE1RM`, `totalReps`. Store:
+    `StrengthSession` (movement + sets → derived tonnage/e1RM) + `Benchmark`
+    (sport-agnostic name + freeform value) entities, add/delete actions, snapshot +
+    merge-by-id wiring. `TrainingLog` widget in the detailed log (mode chip
+    strength/benchmark, set builder with live tonnage + e1RM preview, recent list,
+    long-press to remove); attaches to the logged day. `training.*` i18n ×6.
+    Browser-verified: session renders "e1RM 117 kg · 2 sets" from 100×5, benchmark
+    "5k run 25:30". **Deferred:** chat-parse for training (needs a `parse_log` kind +
+    edge deploy + eval pass, kept off the current quick-log parse) and the
+    coach-adjusted effort line (rides W3-8 coaching level). (round-3 §8; positioning §6)
 22. **Gain-goal measurement emphasis + FFMI band [M].** Multiple extra measurements for
     gain goals; hedged FFMI range. (beta-notes §1.8)
 23. **Transition tracking v1 + SM-1 [M].** Conditional goal chip (mtf/ftm), surfaced

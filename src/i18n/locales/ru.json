@@ -1185,5 +1185,25 @@
     "intakeLower": "Последние дни вы ели меньше. Весы обычно отражают такое изменение с задержкой.",
     "intakeHigher": "Последние дни вы ели больше. Кратковременный рост обычно это вода, а не жир.",
     "disclaimer": "Оценка по вашим собственным данным, не медицинская рекомендация."
+  },
+  "training": {
+    "title": "Тренировки",
+    "modeStrength": "Сила",
+    "modeBenchmark": "Норматив",
+    "exercise": "Упражнение",
+    "exercisePlaceholder": "напр. жим лёжа",
+    "weight": "Вес ({{unit}})",
+    "reps": "Повт.",
+    "addSet": "+ Добавить подход",
+    "derived": "Тоннаж {{tonnage}} {{unit}} · лучший e1RM {{e1rm}} {{unit}}",
+    "saveSession": "Сохранить тренировку",
+    "benchName": "Тест",
+    "benchNamePlaceholder": "напр. бег 5 км",
+    "benchValue": "Результат",
+    "benchValuePlaceholder": "напр. 25:30",
+    "saveBenchmark": "Сохранить норматив",
+    "recent": "Недавние",
+    "rowStrength": "e1RM {{e1rm}} {{unit}} · подходов: {{sets}}",
+    "deleteHint": "Долгое нажатие на запись, чтобы удалить."
   }
 }

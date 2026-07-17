@@ -2,7 +2,9 @@ import type {
   CheckinEntry,
   DoseEvent,
   IntegrationState,
+  Benchmark,
   InventoryItem,
+  StrengthSession,
   LocalProfile,
   MetricReading,
   PersistedState,
@@ -49,6 +51,8 @@ export function mergeStates(local: PersistedState, cloud: PersistedState): Persi
   const protocolItems = mergeById<ProtocolItem>(local.protocolItems, cloud.protocolItems);
   const doseEvents = mergeById<DoseEvent>(local.doseEvents, cloud.doseEvents);
   const inventory = mergeById<InventoryItem>(local.inventory, cloud.inventory);
+  const strengthSessions = mergeById<StrengthSession>(local.strengthSessions ?? [], cloud.strengthSessions ?? []);
+  const benchmarks = mergeById<Benchmark>(local.benchmarks ?? [], cloud.benchmarks ?? []);
 
   // Photos: keyed by takenAt (capture time is immutable; no updatedAt needed)
   const photosByTime = new Map<string, PhotoEntry>(cloud.photos.map((p) => [p.takenAt, p]));
@@ -137,6 +141,8 @@ export function mergeStates(local: PersistedState, cloud: PersistedState): Persi
     // Pepi chat is a light, session-scoped thread — keep whichever side has it,
     // preferring local (the device the user is actively on).
     pepiMessages: local.pepiMessages?.length ? local.pepiMessages : (cloud.pepiMessages ?? []),
+    strengthSessions,
+    benchmarks,
   };
 }
 

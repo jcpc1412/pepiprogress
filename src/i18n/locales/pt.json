@@ -1185,5 +1185,25 @@
     "intakeLower": "Você comeu menos nos últimos dias. A balança costuma demorar a refletir uma mudança assim.",
     "intakeHigher": "Você comeu mais nos últimos dias. Uma alta breve costuma ser água, não gordura.",
     "disclaimer": "Estimado a partir dos seus próprios dados, não é conselho médico."
+  },
+  "training": {
+    "title": "Treino",
+    "modeStrength": "Força",
+    "modeBenchmark": "Marca",
+    "exercise": "Exercício",
+    "exercisePlaceholder": "ex. Supino",
+    "weight": "Carga ({{unit}})",
+    "reps": "Repet.",
+    "addSet": "+ Adicionar série",
+    "derived": "Tonelagem {{tonnage}} {{unit}} · melhor e1RM {{e1rm}} {{unit}}",
+    "saveSession": "Salvar sessão",
+    "benchName": "Teste",
+    "benchNamePlaceholder": "ex. corrida 5k",
+    "benchValue": "Resultado",
+    "benchValuePlaceholder": "ex. 25:30",
+    "saveBenchmark": "Salvar marca",
+    "recent": "Recente",
+    "rowStrength": "e1RM {{e1rm}} {{unit}} · {{sets}} séries",
+    "deleteHint": "Pressione e segure uma entrada para removê-la."
   }
 }

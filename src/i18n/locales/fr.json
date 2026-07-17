@@ -1185,5 +1185,25 @@
     "intakeLower": "Tu as mangé moins ces derniers jours. La balance met souvent du temps à refléter ce genre de changement.",
     "intakeHigher": "Tu as mangé plus ces derniers jours. Une hausse brève est souvent de l’eau, pas de la graisse.",
     "disclaimer": "Estimé à partir de tes propres données, pas un avis médical."
+  },
+  "training": {
+    "title": "Entraînement",
+    "modeStrength": "Force",
+    "modeBenchmark": "Référence",
+    "exercise": "Exercice",
+    "exercisePlaceholder": "ex. Développé couché",
+    "weight": "Charge ({{unit}})",
+    "reps": "Répét.",
+    "addSet": "+ Ajouter une série",
+    "derived": "Tonnage {{tonnage}} {{unit}} · meilleur e1RM {{e1rm}} {{unit}}",
+    "saveSession": "Enregistrer la séance",
+    "benchName": "Épreuve",
+    "benchNamePlaceholder": "ex. course 5 km",
+    "benchValue": "Résultat",
+    "benchValuePlaceholder": "ex. 25:30",
+    "saveBenchmark": "Enregistrer la référence",
+    "recent": "Récent",
+    "rowStrength": "e1RM {{e1rm}} {{unit}} · {{sets}} séries",
+    "deleteHint": "Appui long sur une entrée pour la supprimer."
   }
 }

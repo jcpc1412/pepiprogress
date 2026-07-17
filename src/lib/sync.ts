@@ -367,6 +367,9 @@ export async function pullFromCloud(userId: string): Promise<PersistedState | nu
     customCompounds: [],
     quickLogJobs: [],
     pepiMessages: [],
+    // Strength/benchmarks ride the user_state snapshot only (not normalized tables).
+    strengthSessions: [],
+    benchmarks: [],
   };
 }
 

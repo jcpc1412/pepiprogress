@@ -1185,5 +1185,25 @@
     "intakeLower": "Du hast die letzten Tage weniger gegessen. Die Waage hinkt so einer Änderung meist hinterher.",
     "intakeHigher": "Du hast die letzten Tage mehr gegessen. Ein kurzer Anstieg ist meist Wasser, kein Fett.",
     "disclaimer": "Geschätzt aus deinen eigenen Daten, keine medizinische Beratung."
+  },
+  "training": {
+    "title": "Training",
+    "modeStrength": "Kraft",
+    "modeBenchmark": "Richtwert",
+    "exercise": "Übung",
+    "exercisePlaceholder": "z. B. Bankdrücken",
+    "weight": "Gewicht ({{unit}})",
+    "reps": "Wdh.",
+    "addSet": "+ Satz hinzufügen",
+    "derived": "Tonnage {{tonnage}} {{unit}} · bestes e1RM {{e1rm}} {{unit}}",
+    "saveSession": "Einheit speichern",
+    "benchName": "Prüfung",
+    "benchNamePlaceholder": "z. B. 5-km-Lauf",
+    "benchValue": "Ergebnis",
+    "benchValuePlaceholder": "z. B. 25:30",
+    "saveBenchmark": "Benchmark speichern",
+    "recent": "Zuletzt",
+    "rowStrength": "e1RM {{e1rm}} {{unit}} · {{sets}} Sätze",
+    "deleteHint": "Eintrag lange drücken, um ihn zu entfernen."
   }
 }

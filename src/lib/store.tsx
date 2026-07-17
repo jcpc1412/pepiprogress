@@ -102,6 +102,32 @@ export type ProtocolItem = {
   updatedAt?: string; // ISO — for cross-device merge (last-write-wins)
 };
 
+/** One set inside a strength session (weight in the user's unit, kg or lb). */
+export type StrengthSet = { weight: number; reps: number };
+
+/** A logged strength-training session (training log, W5-21). Sport-agnostic: a
+ *  named movement + its sets; the engine derives tonnage + e1RM. */
+export type StrengthSession = {
+  id: string;
+  date: string; // YYYY-MM-DD
+  exercise: string;
+  sets: StrengthSet[];
+  note?: string;
+  updatedAt?: string; // ISO — cross-device merge (last-write-wins)
+};
+
+/** A sport-agnostic benchmark result (training log, W5-21): a named test with a
+ *  value, e.g. "5k" 25:30 stored as a string, "max pushups" 42, "vertical" 28in. */
+export type Benchmark = {
+  id: string;
+  date: string; // YYYY-MM-DD
+  name: string;
+  value: string; // freeform so time/reps/distance all fit one field
+  unit?: string;
+  note?: string;
+  updatedAt?: string; // ISO — cross-device merge (last-write-wins)
+};
+
 /** A logged dose (tap-to-confirm from schedule, or manual — spec 03). */
 export type DoseEvent = {
   id: string;
@@ -351,6 +377,9 @@ export type PersistedState = {
   quickLogJobs: QuickLogJob[];
   /** Pepi chat thread, trimmed to the last N messages (redesign R2-F). */
   pepiMessages: PepiMessage[];
+  /** Strength sessions + benchmarks (training log, W5-21). */
+  strengthSessions: StrengthSession[];
+  benchmarks: Benchmark[];
 };
 
 /** Manual check-in nutrition field → its canonical metric (for precedence cleanup). */
@@ -391,6 +420,8 @@ const EMPTY_STATE: PersistedState = {
   customCompounds: [],
   quickLogJobs: [],
   pepiMessages: [],
+  strengthSessions: [],
+  benchmarks: [],
 };
 
 /** How many Pepi chat turns to retain (redesign R2-F: last N, lightly persisted). */
@@ -422,6 +453,8 @@ type StoreContextValue = {
   customCompounds: CatalogCompound[];
   quickLogJobs: QuickLogJob[];
   pepiMessages: PepiMessage[];
+  strengthSessions: StrengthSession[];
+  benchmarks: Benchmark[];
   /** Queue a natural-language quick-log for background parsing; returns its id. */
   enqueueQuickLog: (text: string, locale: string) => string;
   updateQuickLogJob: (id: string, patch: Partial<QuickLogJob>) => void;
@@ -440,6 +473,11 @@ type StoreContextValue = {
   deleteContextNote: (id: string) => void;
   /** Returns the new event's id (so callers can offer undo). */
   addSymptomEvent: (event: Omit<SymptomEvent, 'id'>) => string;
+  /** Training log (W5-21): add/remove strength sessions + benchmarks; adds return the new id. */
+  addStrengthSession: (session: Omit<StrengthSession, 'id'>) => string;
+  deleteStrengthSession: (id: string) => void;
+  addBenchmark: (benchmark: Omit<Benchmark, 'id'>) => string;
+  deleteBenchmark: (id: string) => void;
   deleteSymptomEvent: (id: string) => void;
   addProtocolItem: (item: Omit<ProtocolItem, 'id'>) => void;
   updateProtocolItem: (id: string, patch: Partial<Omit<ProtocolItem, 'id'>>) => void;
@@ -595,6 +633,26 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const deleteSymptomEvent = useCallback((id: string) => {
     setState((s) => ({ ...s, symptomEvents: s.symptomEvents.filter((e) => e.id !== id) }));
+  }, []);
+
+  const addStrengthSession = useCallback<StoreContextValue['addStrengthSession']>((session) => {
+    const id = uid();
+    setState((s) => ({ ...s, strengthSessions: [{ ...session, id }, ...s.strengthSessions] }));
+    return id;
+  }, []);
+
+  const deleteStrengthSession = useCallback((id: string) => {
+    setState((s) => ({ ...s, strengthSessions: s.strengthSessions.filter((x) => x.id !== id) }));
+  }, []);
+
+  const addBenchmark = useCallback<StoreContextValue['addBenchmark']>((benchmark) => {
+    const id = uid();
+    setState((s) => ({ ...s, benchmarks: [{ ...benchmark, id }, ...s.benchmarks] }));
+    return id;
+  }, []);
+
+  const deleteBenchmark = useCallback((id: string) => {
+    setState((s) => ({ ...s, benchmarks: s.benchmarks.filter((x) => x.id !== id) }));
   }, []);
 
   const addProtocolItem = useCallback<StoreContextValue['addProtocolItem']>((item) => {
@@ -899,6 +957,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       customCompounds: state.customCompounds,
       quickLogJobs: state.quickLogJobs,
       pepiMessages: state.pepiMessages,
+      strengthSessions: state.strengthSessions,
+      benchmarks: state.benchmarks,
       enqueueQuickLog,
       updateQuickLogJob,
       removeQuickLogJob,
@@ -912,6 +972,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       deleteContextNote,
       addSymptomEvent,
       deleteSymptomEvent,
+      addStrengthSession,
+      deleteStrengthSession,
+      addBenchmark,
+      deleteBenchmark,
       addProtocolItem,
       updateProtocolItem,
       removeProtocolItem,
@@ -952,6 +1016,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       deleteContextNote,
       addSymptomEvent,
       deleteSymptomEvent,
+      addStrengthSession,
+      deleteStrengthSession,
+      addBenchmark,
+      deleteBenchmark,
       addProtocolItem,
       updateProtocolItem,
       removeProtocolItem,

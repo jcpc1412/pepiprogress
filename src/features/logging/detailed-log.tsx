@@ -9,6 +9,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Fonts, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { LabImport } from '@/features/lab/lab-import';
+import { TrainingLog } from '@/features/training/training-log';
 import { SymptomEvents } from '@/features/symptoms/symptom-events';
 import { formatDateKey, localHour, shiftDateKey } from '@/lib/dates';
 import { metricForDate, weightInUnits } from '@/lib/integrations/autofill';
@@ -527,6 +528,11 @@ export function DetailedLog({ onDismiss }: { onDismiss?: () => void } = {}) {
       )}
 
       <SymptomEvents />
+
+      {/* Training log — strength sessions + benchmarks (W5-21). */}
+      <View style={styles.section}>
+        <TrainingLog date={date} />
+      </View>
 
       {/* Lab results upload — photo (AI-parsed) or PDF (H-06). */}
       <Card style={styles.section}>

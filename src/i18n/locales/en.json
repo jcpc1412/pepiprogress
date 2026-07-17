@@ -1185,5 +1185,25 @@
     "intakeLower": "You've eaten less the last few days. The scale usually lags a change like this.",
     "intakeHigher": "You've eaten more the last few days. A short bump is usually water, not fat.",
     "disclaimer": "Estimated from your own data, not medical advice."
+  },
+  "training": {
+    "title": "Training",
+    "modeStrength": "Strength",
+    "modeBenchmark": "Benchmark",
+    "exercise": "Exercise",
+    "exercisePlaceholder": "e.g. Bench press",
+    "weight": "Weight ({{unit}})",
+    "reps": "Reps",
+    "addSet": "+ Add set",
+    "derived": "Tonnage {{tonnage}} {{unit}} · best e1RM {{e1rm}} {{unit}}",
+    "saveSession": "Save session",
+    "benchName": "Test",
+    "benchNamePlaceholder": "e.g. 5k run",
+    "benchValue": "Result",
+    "benchValuePlaceholder": "e.g. 25:30",
+    "saveBenchmark": "Save benchmark",
+    "recent": "Recent",
+    "rowStrength": "e1RM {{e1rm}} {{unit}} · {{sets}} sets",
+    "deleteHint": "Long-press an entry to remove it."
   }
 }

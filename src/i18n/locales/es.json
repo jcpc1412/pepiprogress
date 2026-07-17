@@ -1185,5 +1185,25 @@
     "intakeLower": "Has comido menos estos últimos días. La báscula suele tardar en reflejar un cambio así.",
     "intakeHigher": "Has comido más estos últimos días. Una subida breve suele ser agua, no grasa.",
     "disclaimer": "Estimado a partir de tus propios datos, no es consejo médico."
+  },
+  "training": {
+    "title": "Entrenamiento",
+    "modeStrength": "Fuerza",
+    "modeBenchmark": "Marca",
+    "exercise": "Ejercicio",
+    "exercisePlaceholder": "p. ej. Press de banca",
+    "weight": "Peso ({{unit}})",
+    "reps": "Repet.",
+    "addSet": "+ Añadir serie",
+    "derived": "Tonelaje {{tonnage}} {{unit}} · mejor e1RM {{e1rm}} {{unit}}",
+    "saveSession": "Guardar sesión",
+    "benchName": "Prueba",
+    "benchNamePlaceholder": "p. ej. carrera 5k",
+    "benchValue": "Resultado",
+    "benchValuePlaceholder": "p. ej. 25:30",
+    "saveBenchmark": "Guardar marca",
+    "recent": "Reciente",
+    "rowStrength": "e1RM {{e1rm}} {{unit}} · {{sets}} series",
+    "deleteHint": "Mantén pulsada una entrada para quitarla."
   }
 }
