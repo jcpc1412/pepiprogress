@@ -218,6 +218,9 @@ const GOAL_METRIC_WEIGHTS: Record<Goal, Record<string, number>> = {
   recovery: { soreness: 1.0, energy: 0.7, cv_strain: 0.5, sleep_quality: 0.4 },
   wellness: { energy: 0.8, sleep_quality: 0.6, inflammation: 0.4 },
   skin: {}, // photo-driven; no charted numeric signal
+  // Transition tracking (beta-notes §1.9): hips is the redistribution signal;
+  // its favourable direction is sex-keyed in contextDirection, not here.
+  gender_transition: { hips: 0.6, energy: 0.2 },
 };
 
 /** Compound effect/monitoring tag → per-metric relevance. */
@@ -250,9 +253,20 @@ function shiftDay(dateKey: string, delta: number): string {
   return new Date(t).toISOString().slice(0, 10);
 }
 
+/** Direction of fat/tissue redistribution a transition-tracking user is working
+ *  toward, from the sex field the Navy formula + verdict fat-pattern already key
+ *  on (beta-notes §1.9). Requires the goal chip too — mtf/ftm alone doesn't imply
+ *  transition tracking; some trans users are here for peptides only. */
+type TransitionDir = 'mtf' | 'ftm' | null;
+
 /** Protocol intent, read from goals + active-compound effect tags. Drives the
- *  favourable direction of "context" metrics (weight, caloric balance). */
-function resolveIntent(goals: Goal[], protocolItems: ProtocolItem[]): { cutting: boolean; bulking: boolean } {
+ *  favourable direction of "context" metrics (weight, caloric balance), plus the
+ *  transition-redistribution direction for hips (sex-keyed, goal-gated). */
+function resolveIntent(
+  goals: Goal[],
+  protocolItems: ProtocolItem[],
+  sex?: VerdictInput['profile']['sex'],
+): { cutting: boolean; bulking: boolean; transitionDir: TransitionDir } {
   const goalSet = new Set(goals);
   const tags = new Set<string>();
   for (const item of protocolItems) {
@@ -261,7 +275,14 @@ function resolveIntent(goals: Goal[], protocolItems: ProtocolItem[]): { cutting:
   }
   const cutting = goalSet.has('weight_loss') || tags.has('fat_loss');
   const bulking = goalSet.has('body_comp') || tags.has('muscle');
-  return { cutting, bulking };
+  const transitionDir: TransitionDir = goalSet.has('gender_transition')
+    ? sex === 'mtf'
+      ? 'mtf'
+      : sex === 'ftm'
+        ? 'ftm'
+        : null
+    : null;
+  return { cutting, bulking, transitionDir };
 }
 
 /** Resolved goal-direction for a metric: is UP favourable, DOWN favourable, or is
@@ -274,13 +295,15 @@ export type MetricFavourDir = 'up_good' | 'down_good' | 'neutral';
  * the user's goals + active compounds. Every surface that frames a movement as
  * good/bad, INCLUDING AI prompts, must resolve direction through this so nothing
  * ever contradicts the verdict engine (e.g. calling a male cutter's rising hips a
- * good sign). Pure + deterministic.
+ * good sign, or reading an MTF user's hip growth as a regression). Pure +
+ * deterministic.
  */
 export function resolveMetricDirections(
   goals: Goal[],
   protocolItems: ProtocolItem[],
+  sex?: VerdictInput['profile']['sex'],
 ): Record<string, MetricFavourDir> {
-  const intent = resolveIntent(goals, protocolItems);
+  const intent = resolveIntent(goals, protocolItems, sex);
   const out: Record<string, MetricFavourDir> = {};
   for (const metricId of Object.keys(METRIC_DIRECTION)) {
     const dir = METRIC_DIRECTION[metricId];
@@ -293,8 +316,14 @@ export function resolveMetricDirections(
 /** Resolve a "context" metric to a concrete good-direction, or null if neutral. */
 function contextDirection(
   metricId: string,
-  intent: { cutting: boolean; bulking: boolean },
+  intent: { cutting: boolean; bulking: boolean; transitionDir?: TransitionDir },
 ): 'up_good' | 'down_good' | null {
+  // Transition redistribution takes priority for hips specifically: it is the
+  // user's stated intent, not a byproduct of a cut/bulk. mtf tracks toward more
+  // hip fat, ftm toward less — independent of any co-selected cut/bulk goal.
+  if (metricId === 'hips' && intent.transitionDir) {
+    return intent.transitionDir === 'mtf' ? 'up_good' : 'down_good';
+  }
   // Body-composition metrics: fat leaving the body is favourable whenever there is
   // ANY body intent (cut or recomp/mass), and up is never "good" for these. A pure
   // wellness/sleep user (no body intent) reads them as neutral.
@@ -373,7 +402,7 @@ type Raw = {
 export function computeVerdict(input: VerdictInput): Verdict {
   const today = input.today ?? new Date().toISOString().slice(0, 10);
   const windowStart = shiftDay(today, -(WINDOW_DAYS - 1));
-  const intent = resolveIntent(input.profile.goals, input.protocolItems);
+  const intent = resolveIntent(input.profile.goals, input.protocolItems, input.profile.sex);
 
   const series = buildMetricSeries({
     selectedIds: CHART_METRICS.map((m) => m.id),

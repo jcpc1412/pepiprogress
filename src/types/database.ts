@@ -671,6 +671,7 @@ export type Database = {
         | "sleep"
         | "recovery"
         | "wellness"
+        | "gender_transition"
       integration_status: "pending" | "connected" | "disconnected" | "error"
       inventory_kind: "vial" | "consumable"
       lab_source: "manual" | "ai_parsed"
@@ -823,6 +824,7 @@ export const Constants = {
         "sleep",
         "recovery",
         "wellness",
+        "gender_transition",
       ],
       integration_status: ["pending", "connected", "disconnected", "error"],
       inventory_kind: ["vial", "consumable"],

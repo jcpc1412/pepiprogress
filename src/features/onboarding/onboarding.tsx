@@ -546,6 +546,16 @@ export function Onboarding() {
   }
 
   // Step 6 — Goals → completeOnboarding
+  // Transition tracking (beta-notes §1.9): the chip appears only when sex is
+  // mtf/ftm, and is never preselected — some trans users are here for
+  // peptides, not transition tracking, so we don't assume intent.
+  const visibleGoals = GOALS.filter(
+    (g) =>
+      g !== 'gender_transition' ||
+      profile.sex === 'mtf' ||
+      profile.sex === 'ftm' ||
+      profile.goals.includes('gender_transition'),
+  );
   return (
     <Frame step={step}>
       <View style={styles.section}>
@@ -555,7 +565,7 @@ export function Onboarding() {
         <BodySilhouette goals={profile.goals} />
 
         <View style={styles.goalGrid}>
-          {GOALS.map((g) => (
+          {visibleGoals.map((g) => (
             <GoalChip
               key={g}
               goal={g}

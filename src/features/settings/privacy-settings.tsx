@@ -174,6 +174,13 @@ export function PrivacySettings() {
             {t('privacy.lastUpdated', { date: new Date(profile.consentTimestamp).toLocaleDateString() })}
           </ThemedText>
         )}
+        {/* Transition tracking (beta-notes §1.9): say clearly what is stored
+            where, shown only when it applies. */}
+        {profile.goals.includes('gender_transition') && (
+          <ThemedText type="monoSm" themeColor="textMuted" style={styles.transitionNote}>
+            {t('privacy.transitionDataNote')}
+          </ThemedText>
+        )}
       </Card>
 
       {/* Data portability */}
@@ -227,4 +234,5 @@ const styles = StyleSheet.create({
   consentToggle: { alignItems: 'flex-end' },
   link: { textDecorationLine: 'underline' },
   legal: { lineHeight: 18, paddingBottom: Spacing.four },
+  transitionNote: { fontStyle: 'italic' },
 });

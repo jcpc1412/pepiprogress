@@ -110,7 +110,15 @@ export function MeSettings() {
           {t('me.goalsHint')}
         </ThemedText>
         <View style={styles.chips}>
-          {GOALS.map((g) => (
+          {/* Transition tracking (beta-notes §1.9): visible only for mtf/ftm;
+              a prior selection stays visible+editable even if sex changes later. */}
+          {GOALS.filter(
+            (g) =>
+              g !== 'gender_transition' ||
+              profile.sex === 'mtf' ||
+              profile.sex === 'ftm' ||
+              profile.goals.includes('gender_transition'),
+          ).map((g) => (
             <OptionChip
               key={g}
               label={t(`goals.${g}` as 'goals.weight_loss')}

@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { computeSignalTone, computeVerdict, levelBand, type VerdictInput } from '@/lib/verdict-engine';
+import {
+  computeSignalTone,
+  computeVerdict,
+  levelBand,
+  resolveMetricDirections,
+  type VerdictInput,
+} from '@/lib/verdict-engine';
 import type { CheckinEntry, PhotoEntry, ProtocolItem } from '@/lib/store';
 
 const TODAY = '2026-07-06';
@@ -330,5 +336,50 @@ describe('computeVerdict — legal gate (descriptive only)', () => {
     }
     expect(['building', 'on_track', 'watch', 'off_track']).toContain(v.state);
     expect(['low', 'medium', 'high']).toContain(v.confidence);
+  });
+});
+
+describe('transition-direction (beta-notes §1.9)', () => {
+  it('reads hips as up_good for an mtf user with the transition goal', () => {
+    const dirs = resolveMetricDirections(['gender_transition'], [], 'mtf');
+    expect(dirs.hips).toBe('up_good');
+  });
+
+  it('reads hips as down_good for an ftm user with the transition goal', () => {
+    const dirs = resolveMetricDirections(['gender_transition'], [], 'ftm');
+    expect(dirs.hips).toBe('down_good');
+  });
+
+  it('does not apply transition direction without the goal, even for mtf/ftm sex', () => {
+    // sex alone must not assume intent — some trans users are here for peptides only.
+    const dirs = resolveMetricDirections([], [], 'mtf');
+    expect(dirs.hips).toBe('neutral');
+  });
+
+  it('does not apply transition direction for a cis user who somehow has the goal', () => {
+    const dirs = resolveMetricDirections(['gender_transition'], [], 'male');
+    expect(dirs.hips).toBe('neutral');
+  });
+
+  it('transition direction for hips overrides a co-selected cutting goal', () => {
+    // weight_loss alone would read hips as down_good (fat leaving the body);
+    // the transition goal for an mtf user should win for hips specifically.
+    const dirs = resolveMetricDirections(['weight_loss', 'gender_transition'], [], 'mtf');
+    expect(dirs.hips).toBe('up_good');
+    // weight_loss's own direction (weight down_good) is untouched.
+    expect(dirs.weight).toBe('down_good');
+  });
+
+  it('rising hips read as a supporting (not dragging) signal for an mtf transition user', () => {
+    const entries = entriesOf(6, (o) => ({ hips: 96 - o * 0.4, weight: 70 }));
+    const v = computeVerdict(
+      makeInput({
+        entries,
+        profile: { goals: ['gender_transition'], units: 'metric', sex: 'mtf' },
+      }),
+    );
+    const hipsSignal = v.signals.find((s) => s.metricId === 'hips');
+    expect(hipsSignal).toBeDefined();
+    expect(hipsSignal!.favour).toBe('good');
   });
 });

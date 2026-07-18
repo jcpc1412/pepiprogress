@@ -195,6 +195,9 @@ export async function analyzePhoto(opts: {
   /** The user's chosen unit system, so measurements + any weight are reported in
    * their units instead of defaulting to imperial. */
   units?: 'metric' | 'imperial';
+  /** Direction-aware transition-tracking framing (beta-notes §1.9). Pass only
+   *  when the user selected the gender_transition goal AND sex is mtf/ftm. */
+  transitionContext?: 'mtf' | 'ftm';
 }): Promise<PhotoAnalysis> {
   if (!isSupabaseConfigured) throw new AiNotConfiguredError();
 
@@ -216,6 +219,7 @@ export async function analyzePhoto(opts: {
       bodyTypeCalibration: opts.bodyTypeCalibration,
       cycleWeek: opts.cycleWeek,
       units: opts.units,
+      transitionContext: opts.transitionContext,
     },
   });
 

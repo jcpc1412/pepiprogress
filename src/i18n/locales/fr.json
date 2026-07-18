@@ -51,6 +51,8 @@
     "sleep": "Sommeil",
     "recovery": "Récupération",
     "wellness": "Bien-être"
+  ,
+    "gender_transition": "Suivre ma transition"
   },
   "onboarding": {
     "step": "Étape {{current}} sur {{total}}",
@@ -496,6 +498,8 @@
     "notMedicalAdvice": "PepiProgress n'est pas un dispositif médical et ne fournit pas de conseils médicaux. Consultez toujours un professionnel de santé qualifié.",
     "delete": "Supprimer toutes mes données",
     "pageTitle": "Confidentialité et données"
+  ,
+    "transitionDataNote": "Le suivi de transition reste local par défaut et n’est jamais inclus dans les agrégats communautaires, quel que soit le réglage ci-dessus."
   },
   "report": {
     "title": "Rapport PepiProgress",
@@ -806,6 +810,8 @@
     "sleep": "Récupération",
     "recovery": "Réparation",
     "wellness": "Vitalité"
+  ,
+    "gender_transition": "Identité"
   },
   "compoundDetail": {
     "history": "Historique des doses",

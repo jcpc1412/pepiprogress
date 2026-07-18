@@ -402,6 +402,17 @@ export function ProgressPhotos({
         if (dayInCycle >= profile.cycleLength - 14) cycleCtx = 'luteal';
       }
 
+      // Direction-aware transition framing (beta-notes §1.9): the goal is the
+      // intent signal, sex alone never implies it (some trans users are here
+      // for peptides only). Applies to both face and body sessions.
+      const transitionCtx: 'mtf' | 'ftm' | undefined = profile.goals.includes('gender_transition')
+        ? profile.sex === 'mtf'
+          ? 'mtf'
+          : profile.sex === 'ftm'
+            ? 'ftm'
+            : undefined
+        : undefined;
+
       let measurementDelta: Parameters<typeof analyzePhoto>[0]['measurementDelta'];
       const withMeasurements = Object.values(entries)
         .filter((e) => e.waist !== undefined || e.hips !== undefined)
@@ -473,6 +484,7 @@ export function ProgressPhotos({
         symptomContext: symptomCtx,
         cycleWeek,
         units: profile.units,
+        transitionContext: transitionCtx,
       });
       updatePhoto(latest.id, {
         driftScore: res.driftScore,

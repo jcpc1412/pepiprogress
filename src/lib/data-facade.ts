@@ -75,7 +75,7 @@ export function selectVerdict(
 export function selectMetricDirections(
   input: Pick<FacadeInput, 'profile' | 'protocolItems'>,
 ): Record<string, MetricFavourDir> {
-  return resolveMetricDirections(input.profile.goals, input.protocolItems);
+  return resolveMetricDirections(input.profile.goals, input.protocolItems, input.profile.sex);
 }
 
 /** Charted trend series over the protocol span (or an explicit window), merging

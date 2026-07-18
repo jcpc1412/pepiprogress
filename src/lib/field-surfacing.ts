@@ -51,6 +51,10 @@ const GOAL_FIELDS: Record<Goal, CheckinField[]> = {
   sleep: ['sleep_quality'],
   recovery: ['soreness', 'energy', 'workout_effort'],
   wellness: ['wellness', 'energy'],
+  // Transition tracking v1 (beta-notes §1.9): skin, mood, libido, plus
+  // measurement emphasis for redistribution. Conditional chip (mtf/ftm only,
+  // never preselected) — see the onboarding goals step.
+  gender_transition: ['skin_notes', 'wellness', 'libido', 'measurements'],
 };
 
 /** Compound effect-tag → fields (the outcomes a compound should move, spec 02). */

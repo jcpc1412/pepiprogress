@@ -182,9 +182,33 @@ the settings override + quieter-only silent adjustment shipped).
     *band*, returned as a hedged range (inverts the bf band); rendered under the
     measurements for gainers with a "not a medical measurement" hedge. `measurements.ffmi*`
     i18n ×6. Browser-verified: 82 kg/180 cm/waist 84/neck 39 → FFMI 20.6–22.7. (beta-notes §1.8)
-23. **Transition tracking v1 + SM-1 [M].** Conditional goal chip (mtf/ftm), surfaced
-    fields, direction-aware analysis block; plus the self-marketability pass (goal-first
-    onboarding + store copy, non-PED paths first-class). (beta-notes §1.9; round-3 §2)
+23. **Transition tracking v1 ✅ SHIPPED 2026-07-17.** DB: `goal` enum gained
+    `gender_transition` (migration `20260717221006`), applied + types regenerated;
+    `user_profile.goals` column comment documents the k-anonymity exclusion so the
+    V2 aggregation job (not built yet — `community_aggregate` has no populate job
+    today) can't silently violate it later. **Conditional chip:** visible only when
+    sex is mtf/ftm (or already selected), never preselected — in both onboarding and
+    the post-onboarding Me settings editor. **Surfaced fields:** skin_notes, wellness
+    (mood), libido, measurements. **Direction-aware verdict:** `resolveIntent` gained
+    a goal+sex-derived `transitionDir`; hips reads up_good for mtf / down_good for
+    ftm, overriding the generic cut/bulk rule for that metric specifically (9 new
+    verdict-engine tests) — flows through `resolveMetricDirections`, the single
+    source every surface including AI prompts reads from. **Direction-aware vision
+    prompt:** extracted `supabase/functions/_shared/transition-context.ts` (mirrors
+    the posture.ts reuse pattern) with a `transitionPromptLines(dir)` block applied
+    to BOTH face and body sessions in `analyze_photo`; unit-tested on the literal
+    prompt text (5 tests, zero API cost) rather than a live vision eval, which would
+    need real photos this feature doesn't have — deployed as ai-service v22, posture
+    evals re-run 4/4 clean. **Privacy:** a conditional note in Privacy settings states
+    plainly that transition data is never in community aggregates regardless of the
+    community-sharing toggle. Browser-verified: chip appears for mtf, hidden for a
+    cis user with no prior selection. i18n ×6 (goalCat/goals/privacy keys).
+    **SM-1 self-marketability, scoped down:** the goal-first onboarding + non-PED-
+    first-class substance is already satisfied by prior shipped work (6 non-PED
+    goals incl. sleep/recovery/wellness/skin, goals-first onboarding flow); the
+    "store copy" portion (App Store listing copy) is an external marketing artifact,
+    not app code — flagged here rather than silently dropped, left for the owner to
+    commission separately. (beta-notes §1.9; round-3 §2)
 24. **Narrative timeline [M].** The signal ledger as a cross-metric chronological story
     ("Started TRT, sleep improved, strength up, hematocrit elevated, donation logged");
     the natural surface for attribution (14) and personal-history moments. Sequenced

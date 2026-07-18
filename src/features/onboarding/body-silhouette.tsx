@@ -14,6 +14,7 @@ const GOAL_REGIONS: Record<Goal, Region[]> = {
   sleep: ['head', 'glow'],
   recovery: ['arms', 'legs'],
   wellness: ['glow'],
+  gender_transition: ['core', 'glow'],
 };
 
 /** Front-view silhouette whose regions light up as goals are selected (O-07). */

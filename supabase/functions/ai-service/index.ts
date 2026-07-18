@@ -28,6 +28,7 @@ import {
   isTrackOnly,
   resolveMarketCategory,
 } from '../_shared/posture.ts';
+import { transitionPromptLines } from '../_shared/transition-context.ts';
 
 const PARSE_MODEL = Deno.env.get('AI_PARSE_MODEL') ?? 'claude-haiku-4-5';
 const VISION_MODEL = Deno.env.get('AI_VISION_MODEL') ?? 'claude-sonnet-4-6';
@@ -70,6 +71,10 @@ type AnalyzePhotoRequest = {
   bodyTypeCalibration?: string;
   cycleWeek?: number;
   units?: 'metric' | 'imperial';
+  /** Direction-aware transition-tracking framing (beta-notes §1.9). Only sent
+   *  when the user selected the gender_transition goal AND their sex is mtf/ftm
+   *  — the goal is the intent signal, sex alone never implies it. */
+  transitionContext?: 'mtf' | 'ftm';
 };
 
 type ParseLabRequest = {
@@ -454,6 +459,7 @@ function visionSystemPrompt(
     bodyTypeCalibration?: string;
     cycleWeek?: number;
     units?: 'metric' | 'imperial';
+    transitionContext?: 'mtf' | 'ftm';
   },
 ): string {
   const unitLabel = ctx?.units === 'imperial' ? 'in' : 'cm';
@@ -511,6 +517,7 @@ function visionSystemPrompt(
       '- Mention the cycle only when a visible change plausibly relates to it; otherwise leave it out.',
     );
   }
+  lines.push(...transitionPromptLines(ctx?.transitionContext));
   if (ctx?.symptomContext) {
     lines.push('', `User reported a symptom to document: "${ctx.symptomContext}". Focus on whether this is visually apparent.`);
   }
@@ -698,6 +705,7 @@ Deno.serve(async (req: Request) => {
           bodyTypeCalibration: body.bodyTypeCalibration,
           cycleWeek: body.cycleWeek,
           units: body.units,
+          transitionContext: body.transitionContext,
         }),
         ...structured(ANALYZE_SCHEMA),
         // deno-lint-ignore no-explicit-any
