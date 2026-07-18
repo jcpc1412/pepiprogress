@@ -17,6 +17,7 @@ import {
   aiErrorKind,
   analyzePhoto,
   checkFit,
+  classifyPose,
   runEncouragementAnalysis,
   type PhotoAnalysis,
 } from '@/lib/ai';
@@ -36,7 +37,7 @@ import {
   sessionScientificKey,
 } from '@/lib/photo-cadence';
 import { daysBetween } from '@/lib/dates';
-import { CANONICAL_POSES, groupPhotosByPose, poseFromCapture, type CanonicalPose, type PoseKey } from '@/lib/photo-pose';
+import { CANONICAL_POSES, groupPhotosByPose, needsPoseConfirm, poseFromCapture, type CanonicalPose, type PoseKey } from '@/lib/photo-pose';
 import { copyPhotoToDocuments, syncPhotoRow, uploadPhotoToCloud, useResolvedUris } from '@/lib/photos';
 import { localDateKey, useStore, type PhotoEntry, type PhotoSession } from '@/lib/store';
 
@@ -665,15 +666,26 @@ export function ProgressPhotos({
       allowsMultipleSelection: true,
     });
     if (result.canceled || result.assets.length === 0) return;
-    // Import oldest-first so takenAt ties resolve to camera-roll order.
+    const imported: { id: string; uri: string }[] = [];
     for (const asset of result.assets) {
       const exifDate = asset.exif?.DateTimeOriginal as string | undefined;
       const parsed = exifDate ? new Date(exifDate.replace(/^(\d{4}):(\d{2}):(\d{2})/, '$1-$2-$3')) : null;
       const takenAt = parsed && Number.isFinite(parsed.getTime()) ? parsed.toISOString() : new Date().toISOString();
       const persistentUri = await copyPhotoToDocuments(asset.uri);
-      addPhoto({ session, part, uri: persistentUri, takenAt, isRequiredSet: false });
+      const id = addPhoto({ session, part, uri: persistentUri, takenAt, isRequiredSet: false });
+      imported.push({ id, uri: persistentUri });
     }
-  }, [session, part, addPhoto]);
+    // Auto-classify in the background, sequentially so a big dump doesn't burst the
+    // API. Fails open (classifyPose returns null) → the photo stays untagged for
+    // manual sorting. High-confidence poses apply silently; low-confidence ones
+    // carry their confidence so the reel can ask for a one-tap confirm (§1.3).
+    void (async () => {
+      for (const it of imported) {
+        const res = await classifyPose(it.uri);
+        if (res) updatePhoto(it.id, { pose: res.pose, poseConfidence: res.confidence });
+      }
+    })();
+  }, [session, part, addPhoto, updatePhoto]);
 
   // ── Reel (W6-25): every photo, grouped by pose ───────────────────────────
   const reelGroups = useMemo(() => groupPhotosByPose(photos), [photos]);
@@ -999,20 +1011,24 @@ export function ProgressPhotos({
                 {`${poseLabel(g.pose)} (${g.photos.length})`}
               </ThemedText>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.strip}>
-                {g.photos.map((p) => (
-                  <Pressable
-                    key={p.id}
-                    accessibilityRole="button"
-                    accessibilityLabel={t('photos.assignPose')}
-                    onPress={() => setTaggingId(p.id)}
-                    style={({ pressed }) => [
-                      styles.thumb,
-                      { width: thumbW, height: thumbH, borderColor: 'transparent' },
-                      pressed && styles.thumbPressed,
-                    ]}>
-                    <Image source={{ uri: resolvedUris[p.id] ?? p.uri }} style={styles.thumbImg} contentFit="cover" />
-                  </Pressable>
-                ))}
+                {g.photos.map((p) => {
+                  const confirm = needsPoseConfirm(p);
+                  return (
+                    <Pressable
+                      key={p.id}
+                      accessibilityRole="button"
+                      accessibilityLabel={confirm ? t('photos.confirmPose') : t('photos.assignPose')}
+                      onPress={() => setTaggingId(p.id)}
+                      style={({ pressed }) => [
+                        styles.thumb,
+                        { width: thumbW, height: thumbH, borderColor: confirm ? theme.accent : 'transparent' },
+                        pressed && styles.thumbPressed,
+                      ]}>
+                      <Image source={{ uri: resolvedUris[p.id] ?? p.uri }} style={styles.thumbImg} contentFit="cover" />
+                      {confirm && <View style={[dotStyles.dot, { backgroundColor: theme.accent }]} />}
+                    </Pressable>
+                  );
+                })}
               </ScrollView>
             </View>
           ))}
@@ -1089,13 +1105,20 @@ export function ProgressPhotos({
           <View
             style={[styles.partModalSheet, { backgroundColor: theme.surfaceRaised, borderColor: theme.border }]}
             onStartShouldSetResponder={() => true}>
-            <EngravedLabel>{t('photos.assignPose')}</EngravedLabel>
+            <EngravedLabel>{taggingPhoto && needsPoseConfirm(taggingPhoto) ? t('photos.confirmPose') : t('photos.assignPose')}</EngravedLabel>
             {taggingPhoto && (
               <Image
                 source={{ uri: resolvedUris[taggingPhoto.id] ?? taggingPhoto.uri }}
                 style={[styles.tagPreview, { backgroundColor: theme.surfaceSunken }]}
                 contentFit="cover"
               />
+            )}
+            {taggingPhoto && needsPoseConfirm(taggingPhoto) && (
+              <ThemedText type="monoSm" themeColor="textMuted">
+                {t('photos.poseSuggested', {
+                  pose: t(`photos.pose_${taggingPhoto.pose}` as 'photos.pose_front_relaxed'),
+                })}
+              </ThemedText>
             )}
             <SingleSelectChips
               options={CANONICAL_POSES.map((p) => ({
@@ -1104,7 +1127,9 @@ export function ProgressPhotos({
               }))}
               value={taggingPhoto?.pose}
               onChange={(v: CanonicalPose) => {
-                if (taggingId) updatePhoto(taggingId, { pose: v });
+                // Any tap confirms: the pose is now ground truth, so drop the
+                // auto-classifier confidence that drove the "confirm?" prompt.
+                if (taggingId) updatePhoto(taggingId, { pose: v, poseConfidence: undefined });
                 setTaggingId(null);
               }}
             />

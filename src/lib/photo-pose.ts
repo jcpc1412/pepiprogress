@@ -34,6 +34,23 @@ export function poseFromCapture(session: PhotoSession, view?: 'front' | 'side'):
   return view === 'side' ? 'side_relaxed' : 'front_relaxed';
 }
 
+/**
+ * Auto-classified poses at or above this confidence are treated as good and
+ * apply silently; below it the reel asks the user to confirm (W6-26 §1.3
+ * human-in-the-loop). A manually confirmed pose carries no `poseConfidence`.
+ */
+export const POSE_CONFIRM_THRESHOLD = 0.75;
+
+/** True when a photo carries a low-confidence auto-suggested pose the user hasn't
+ *  confirmed yet (so the reel can surface a one-tap confirm). */
+export function needsPoseConfirm(photo: PhotoEntry): boolean {
+  return (
+    photo.pose !== undefined &&
+    photo.poseConfidence !== undefined &&
+    photo.poseConfidence < POSE_CONFIRM_THRESHOLD
+  );
+}
+
 export type PoseGroup = { pose: PoseKey; photos: PhotoEntry[] };
 
 /**

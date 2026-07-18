@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { groupPhotosByPose, poseFromCapture, type CanonicalPose } from './photo-pose';
+import { groupPhotosByPose, needsPoseConfirm, poseFromCapture, type CanonicalPose } from './photo-pose';
 import type { PhotoEntry } from './store';
 
 const photo = (id: string, takenAt: string, pose?: CanonicalPose): PhotoEntry =>
@@ -46,5 +46,26 @@ describe('groupPhotosByPose', () => {
   it('omits empty groups', () => {
     const groups = groupPhotosByPose([photo('a', '2026-06-01T00:00:00.000Z', 'side_profile')]);
     expect(groups.map((g) => g.pose)).toEqual(['side_profile']);
+  });
+});
+
+describe('needsPoseConfirm', () => {
+  const p = (over: Partial<PhotoEntry>): PhotoEntry =>
+    ({ id: 'x', session: 'body', uri: 'file://x', takenAt: '2026-06-01T00:00:00.000Z', ...over }) as PhotoEntry;
+
+  it('is false for untagged photos', () => {
+    expect(needsPoseConfirm(p({}))).toBe(false);
+  });
+
+  it('is false for a manually confirmed pose (no confidence)', () => {
+    expect(needsPoseConfirm(p({ pose: 'front_relaxed' }))).toBe(false);
+  });
+
+  it('is false for a high-confidence auto pose', () => {
+    expect(needsPoseConfirm(p({ pose: 'front_relaxed', poseConfidence: 0.9 }))).toBe(false);
+  });
+
+  it('is true for a low-confidence auto pose', () => {
+    expect(needsPoseConfirm(p({ pose: 'other', poseConfidence: 0.4 }))).toBe(true);
   });
 });

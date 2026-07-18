@@ -5,6 +5,7 @@
 //   parse_log       - Haiku; parses NL quick-log text into structured entities.
 //   analyze_photo   - Sonnet vision; drift score + hedged change note.
 //   check_fit       - Haiku vision; pre-capture fit check (position / angle / distance).
+//   classify_pose   - Haiku vision; sorts a reel photo into the canonical pose set (framing only).
 //   simple_analysis - Haiku text-only; encouraging weekly check-in message.
 //   parse_lab       - Sonnet vision; extracts lab marker values from a photo.
 //   scan_vial       - Sonnet vision; extracts compound name + concentration from a vial label.
@@ -158,6 +159,11 @@ type CheckFitRequest = {
   action: 'check_fit';
   newImage: string; // base64 JPEG
   baselineImage?: string; // base64 JPEG - if absent, returns good fit
+};
+
+type ClassifyPoseRequest = {
+  action: 'classify_pose';
+  image: string; // base64 JPEG, downscaled aggressively (classification needs little res)
 };
 
 type TerraRequest = {
@@ -646,6 +652,7 @@ Deno.serve(async (req: Request) => {
       | ParseLogRequest
       | AnalyzePhotoRequest
       | CheckFitRequest
+      | ClassifyPoseRequest
       | SimpleAnalysisRequest
       | ParseLabRequest
       | ScanVialRequest
@@ -921,6 +928,49 @@ Deno.serve(async (req: Request) => {
         }],
       });
       return json(extractJson(message, { fit: 'good', confidence: 1 }), 200);
+    }
+
+    // -- classify_pose ---------------------------------------------------------
+    // Reel auto-cataloguing (W6-26): a cheap Haiku-vision call that sorts a photo
+    // into the canonical pose set (or `other` for casual shots / non-body images
+    // like screenshots or pets). Purely descriptive of framing — never analyses
+    // the body, never identifies a person. The client downscales aggressively;
+    // classification needs far less resolution than the scientific compare.
+    if (body.action === 'classify_pose') {
+      const message = await client.messages.create({
+        model: PARSE_MODEL,
+        max_tokens: 120,
+        ...structured({
+          type: 'object',
+          additionalProperties: false,
+          properties: {
+            pose: {
+              type: 'string',
+              enum: ['front_face', 'side_profile', 'front_relaxed', 'side_relaxed', 'other'],
+            },
+            confidence: { type: 'number', description: '0..1 confidence in the pose label' },
+          },
+          required: ['pose', 'confidence'],
+        }),
+        system: [
+          'You sort a progress photo into one camera framing. Categories:',
+          '"front_face" = head/face shot facing the camera;',
+          '"side_profile" = head/face shot from the side;',
+          '"front_relaxed" = full or upper body facing the camera, arms relaxed (not flexed);',
+          '"side_relaxed" = full or upper body from the side, relaxed;',
+          '"other" = anything else, incl. flexed/posed shots, screenshots, close-ups, objects, or photos with no clear single subject.',
+          'Judge framing only. Do NOT describe, assess, or identify the body or person.',
+          'confidence reflects how clearly the framing matches; use <=0.6 when ambiguous.',
+        ].join(' '),
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: body.image } },
+            { type: 'text', text: 'Return the JSON pose classification for this photo.' },
+          ],
+        }],
+      });
+      return json(extractJson(message, { pose: 'other', confidence: 0 }), 200);
     }
 
     // -- signal_ledger ---------------------------------------------------------

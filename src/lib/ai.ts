@@ -6,6 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { COMPOUND_CATALOG, compoundBySlug, marketCategoryOf, type MarketCategory } from '@/data/compound-catalog';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 import type { PhotoSession } from '@/lib/store';
+import type { CanonicalPose } from '@/lib/photo-pose';
 
 /** One parsed entity from a natural-language quick-log (spec 13). */
 export type ParsedItem = {
@@ -243,6 +244,36 @@ export async function checkFit(newUri: string, baselineUri?: string): Promise<Fi
     return data ?? { fit: 'good', confidence: 1 };
   } catch {
     return { fit: 'good', confidence: 1 };
+  }
+}
+
+/** Downscaled base64 for cheap classification (needs far less res than analysis). */
+async function toBase64Small(uri: string): Promise<string> {
+  const ctx = ImageManipulator.manipulate(uri);
+  ctx.resize({ width: 384 });
+  const rendered = await ctx.renderAsync();
+  const out = await rendered.saveAsync({ format: SaveFormat.JPEG, base64: true });
+  return out.base64 ?? '';
+}
+
+export type PoseClassification = { pose: CanonicalPose; confidence: number };
+
+/**
+ * Auto-classify a reel photo into the canonical pose set (W6-26). Cheap Haiku
+ * vision over a downscaled frame. Fails open (returns null) when AI is
+ * unconfigured or the call errors, so an import never blocks on it — the photo
+ * simply stays untagged for manual classification.
+ */
+export async function classifyPose(uri: string): Promise<PoseClassification | null> {
+  if (!isSupabaseConfigured) return null;
+  try {
+    const image = await toBase64Small(uri);
+    const { data } = await supabase.functions.invoke<PoseClassification>('ai-service', {
+      body: { action: 'classify_pose', image },
+    });
+    return data ?? null;
+  } catch {
+    return null;
   }
 }
 

@@ -197,6 +197,8 @@
     "tplDose": "Доза: "
   },
   "photos": {
+    "confirmPose": "Подтвердите позу",
+    "poseSuggested": "Предложено: {{pose}}. Нажмите, чтобы подтвердить.",
     "pose_front_relaxed": "Спереди расслабленно",
     "pose_side_relaxed": "Сбоку расслабленно",
     "pose_front_face": "Лицо спереди",
