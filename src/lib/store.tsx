@@ -13,6 +13,7 @@ import {
 import { registerCustomCompounds, type CatalogCompound } from '@/data/compound-catalog';
 import { localDateKey } from '@/lib/dates';
 import type { CheckinField, Goal } from '@/lib/field-surfacing';
+import type { CanonicalPose } from '@/lib/photo-pose';
 import {
   baselineFor,
   buildTypicalReadings,
@@ -203,6 +204,18 @@ export type PhotoEntry = {
   changeNote?: string;
   // User-edited tags (overrides auto-derived compound+week tags in Photo History).
   customTags?: string[];
+  // ── Photo reel (W6-25, beta-notes §1.3) ──────────────────────────────────
+  /** Canonical relaxed pose (front/side face, front/side body) or `other` for
+   *  casual shots. Undefined = untagged (needs triage in the reel). In-app
+   *  captures derive it from session+angle; imports are tagged manually (phase 1)
+   *  or auto-classified (phase 2). */
+  pose?: CanonicalPose;
+  /** Classifier confidence for an auto-assigned pose (phase 2); absent when the
+   *  pose was set manually or derived from an in-app capture. */
+  poseConfidence?: number;
+  /** True = one of the four locked poses on a required check-in (feeds analysis,
+   *  ghost overlay, milestones). Casual reel photos are false/undefined. */
+  isRequiredSet?: boolean;
 };
 
 /** A normalized reading ingested from an integration source (spec 06). The daily

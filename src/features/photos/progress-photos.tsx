@@ -36,6 +36,7 @@ import {
   sessionScientificKey,
 } from '@/lib/photo-cadence';
 import { daysBetween } from '@/lib/dates';
+import { CANONICAL_POSES, groupPhotosByPose, poseFromCapture, type CanonicalPose, type PoseKey } from '@/lib/photo-pose';
 import { copyPhotoToDocuments, syncPhotoRow, uploadPhotoToCloud, useResolvedUris } from '@/lib/photos';
 import { localDateKey, useStore, type PhotoEntry, type PhotoSession } from '@/lib/store';
 
@@ -271,6 +272,8 @@ export function ProgressPhotos({
   const [part, setPart] = useState<string | undefined>(undefined);
   const [addingPart, setAddingPart] = useState(false);
   const [partDraft, setPartDraft] = useState('');
+  // Reel (W6-25): id of the photo whose pose is being assigned via the chip sheet.
+  const [taggingId, setTaggingId] = useState<string | null>(null);
   // Capture settings moved out of the camera (beta feedback): the angle + self-
   // timer are chosen here and handed to PhotoCapture, keeping the camera clean.
   const [view, setView] = useState<'front' | 'side'>('front');
@@ -314,7 +317,9 @@ export function ProgressPhotos({
     [profile.customPhotoParts, photos],
   );
   const latest = sessionPhotos[0];
-  const resolvedUris = useResolvedUris(sessionPhotos);
+  // Resolve every photo's uri once (covers the compare views AND the reel, which
+  // spans all sessions/parts). `sessionPhotos` is a subset, so this is enough.
+  const resolvedUris = useResolvedUris(photos);
   const baseline = sessionPhotos[sessionPhotos.length - 1];
   const selected = sessionPhotos.find((p) => p.id === selectedId) ?? latest;
   const canCompare = sessionPhotos.length >= 2;
@@ -633,13 +638,23 @@ export function ProgressPhotos({
     const saved = photos.find((p) => p.id === pendingSaveId);
     if (!saved) return; // wait for the store to reflect the new photo
     processedSaves.current.add(pendingSaveId);
+    // In-app captures use the locked-pose flow (ghost + measurement), so their
+    // pose is derived from session+angle and they belong to the comparability
+    // (required) set. Only tag once, never overwrite a manual/imported pose.
+    if (saved.pose === undefined) {
+      updatePhoto(saved.id, { pose: poseFromCapture(saved.session, saved.view), isRequiredSet: true });
+    }
     // The read is async (first state update lands after a microtask); firing it
     // here is the intended "react to a saved photo" synchronization.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void runInstantRead(saved);
-  }, [pendingSaveId, photos, runInstantRead]);
+  }, [pendingSaveId, photos, runInstantRead, updatePhoto]);
 
-  // ── Retroactive import ───────────────────────────────────────────────────
+  // ── Camera-roll dump import (W6-25) ──────────────────────────────────────
+  // Multi-select: shoot or dump a pile of photos and let the reel catalogue
+  // them. Imported shots land casual (not the locked comparability set) and
+  // untagged, so they surface in the reel's "unsorted" group for a one-tap pose
+  // assignment (phase 1) / auto-classification (phase 2).
   const importFromLibrary = useCallback(async () => {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!perm.granted) return;
@@ -647,15 +662,27 @@ export function ProgressPhotos({
       mediaTypes: ['images'],
       exif: true,
       quality: 0.8,
+      allowsMultipleSelection: true,
     });
-    if (result.canceled || !result.assets[0]) return;
-    const asset = result.assets[0];
-    const exifDate = asset.exif?.DateTimeOriginal as string | undefined;
-    const parsed = exifDate ? new Date(exifDate.replace(/^(\d{4}):(\d{2}):(\d{2})/, '$1-$2-$3')) : null;
-    const takenAt = parsed && Number.isFinite(parsed.getTime()) ? parsed.toISOString() : new Date().toISOString();
-    const persistentUri = await copyPhotoToDocuments(asset.uri);
-    addPhoto({ session, part, uri: persistentUri, takenAt });
+    if (result.canceled || result.assets.length === 0) return;
+    // Import oldest-first so takenAt ties resolve to camera-roll order.
+    for (const asset of result.assets) {
+      const exifDate = asset.exif?.DateTimeOriginal as string | undefined;
+      const parsed = exifDate ? new Date(exifDate.replace(/^(\d{4}):(\d{2}):(\d{2})/, '$1-$2-$3')) : null;
+      const takenAt = parsed && Number.isFinite(parsed.getTime()) ? parsed.toISOString() : new Date().toISOString();
+      const persistentUri = await copyPhotoToDocuments(asset.uri);
+      addPhoto({ session, part, uri: persistentUri, takenAt, isRequiredSet: false });
+    }
   }, [session, part, addPhoto]);
+
+  // ── Reel (W6-25): every photo, grouped by pose ───────────────────────────
+  const reelGroups = useMemo(() => groupPhotosByPose(photos), [photos]);
+  const poseLabel = useCallback(
+    (pose: PoseKey): string =>
+      t(`photos.pose_${pose}` as 'photos.pose_front_relaxed'),
+    [t],
+  );
+  const taggingPhoto = taggingId ? photos.find((p) => p.id === taggingId) ?? null : null;
 
   // ── Derived display ───────────────────────────────────────────────────────
   const note = lastNote && selected && lastNote.id === selected.id ? lastNote.analysis : null;
@@ -958,6 +985,40 @@ export function ProgressPhotos({
         </Card>
       )}
 
+      {/* Reel (W6-25): the whole library, grouped by pose. Spans every session
+          and part; untagged shots surface first for a one-tap classification. */}
+      {reelGroups.length > 0 && (
+        <View style={styles.reel}>
+          <View style={styles.timelineHeader}>
+            <EngravedLabel>{t('photos.reelLabel')}</EngravedLabel>
+            <ThemedText type="monoSm" themeColor="textMuted">{t('photos.reelHint')}</ThemedText>
+          </View>
+          {reelGroups.map((g) => (
+            <View key={g.pose} style={styles.reelGroup}>
+              <ThemedText type="monoSm" themeColor={g.pose === 'unsorted' ? 'accent' : 'textMuted'}>
+                {`${poseLabel(g.pose)} (${g.photos.length})`}
+              </ThemedText>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.strip}>
+                {g.photos.map((p) => (
+                  <Pressable
+                    key={p.id}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('photos.assignPose')}
+                    onPress={() => setTaggingId(p.id)}
+                    style={({ pressed }) => [
+                      styles.thumb,
+                      { width: thumbW, height: thumbH, borderColor: 'transparent' },
+                      pressed && styles.thumbPressed,
+                    ]}>
+                    <Image source={{ uri: resolvedUris[p.id] ?? p.uri }} style={styles.thumbImg} contentFit="cover" />
+                  </Pressable>
+                ))}
+              </ScrollView>
+            </View>
+          ))}
+        </View>
+      )}
+
       <Pressable accessibilityRole="button" onPress={importFromLibrary} style={styles.importBtn}>
         <ThemedText type="monoSm" themeColor="textSecondary" style={styles.importText}>
           {t('photos.importLibrary')}
@@ -1018,6 +1079,36 @@ export function ProgressPhotos({
                 />
               </View>
             </View>
+          </View>
+        </Pressable>
+      </Modal>
+
+      {/* Assign / correct a pose for a reel photo (W6-25 manual classification). */}
+      <Modal visible={!!taggingPhoto} transparent animationType="fade" onRequestClose={() => setTaggingId(null)}>
+        <Pressable style={styles.partModalBackdrop} onPress={() => setTaggingId(null)}>
+          <View
+            style={[styles.partModalSheet, { backgroundColor: theme.surfaceRaised, borderColor: theme.border }]}
+            onStartShouldSetResponder={() => true}>
+            <EngravedLabel>{t('photos.assignPose')}</EngravedLabel>
+            {taggingPhoto && (
+              <Image
+                source={{ uri: resolvedUris[taggingPhoto.id] ?? taggingPhoto.uri }}
+                style={[styles.tagPreview, { backgroundColor: theme.surfaceSunken }]}
+                contentFit="cover"
+              />
+            )}
+            <SingleSelectChips
+              options={CANONICAL_POSES.map((p) => ({
+                value: p,
+                label: t(`photos.pose_${p}` as 'photos.pose_front_relaxed'),
+              }))}
+              value={taggingPhoto?.pose}
+              onChange={(v: CanonicalPose) => {
+                if (taggingId) updatePhoto(taggingId, { pose: v });
+                setTaggingId(null);
+              }}
+            />
+            <TextButton label={t('common.cancel')} onPress={() => setTaggingId(null)} />
           </View>
         </Pressable>
       </Modal>
@@ -1104,4 +1195,7 @@ const styles = StyleSheet.create({
   encouragementNote: { lineHeight: 18 },
   importBtn: { alignSelf: 'center' },
   importText: { textDecorationLine: 'underline' },
+  reel: { gap: Spacing.two },
+  reelGroup: { gap: Spacing.half },
+  tagPreview: { width: '100%', aspectRatio: 3 / 4, borderRadius: Radii.chamfer },
 });

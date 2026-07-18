@@ -197,6 +197,15 @@
     "tplDose": "Доза: "
   },
   "photos": {
+    "pose_front_relaxed": "Спереди расслабленно",
+    "pose_side_relaxed": "Сбоку расслабленно",
+    "pose_front_face": "Лицо спереди",
+    "pose_side_profile": "Профиль сбоку",
+    "pose_other": "Другое",
+    "pose_unsorted": "Без сортировки",
+    "reelLabel": "Лента",
+    "reelHint": "Нажмите, чтобы отсортировать",
+    "assignPose": "Выберите позу",
     "title": "Фото прогресса",
     "analyzing": "Анализ…",
     "comparable": "Сопоставимо",

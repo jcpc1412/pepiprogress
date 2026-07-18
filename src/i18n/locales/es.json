@@ -197,6 +197,15 @@
     "tplDose": "Dosis: "
   },
   "photos": {
+    "pose_front_relaxed": "Frente relajado",
+    "pose_side_relaxed": "Lateral relajado",
+    "pose_front_face": "Cara de frente",
+    "pose_side_profile": "Perfil lateral",
+    "pose_other": "Otro",
+    "pose_unsorted": "Sin clasificar",
+    "reelLabel": "Galería",
+    "reelHint": "Toca para clasificar",
+    "assignPose": "Elige una pose",
     "title": "Fotos de progreso",
     "analyzing": "Analizando…",
     "comparable": "Comparable",

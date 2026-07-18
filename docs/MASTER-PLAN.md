@@ -224,8 +224,12 @@ the settings override + quieter-only silent adjustment shipped).
 
 ## Wave 6: photo reel + sharing
 
-25. **Reel phase 1 [M].** Multi-shot capture + camera-roll dump import + manual pose
-    chips + reel view grouped by label. Required check-ins stay locked to the four
+25. **Reel phase 1 [M].** ✅ SHIPPED 2026-07-18. Multi-shot camera-roll dump import
+    (`allowsMultipleSelection`) + manual pose chips at save + reel view grouped by
+    pose label. `PhotoEntry` gained `pose`/`poseConfidence`/`isRequiredSet`; pure
+    `photo-pose.ts` (`poseFromCapture` + `groupPhotosByPose`, +6 tests). In-app
+    captures derive their pose (locked comparability set); imports land casual +
+    untagged for one-tap classification. Required check-ins stay locked to the four
     relaxed poses; casual photos freeform. (beta-notes §1.3)
 26. **Reel phase 2 [M].** Haiku auto-classification + confirm chips; session tabs
     removed. (beta-notes §1.1, §1.3)

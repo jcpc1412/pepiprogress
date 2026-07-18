@@ -1,0 +1,60 @@
+import type { PhotoEntry, PhotoSession } from '@/lib/store';
+
+/**
+ * Photo reel poses (W6-25, beta-notes §1.3). The reel lets a user shoot or dump a
+ * pile of photos; the library groups itself by pose. Only REQUIRED check-in
+ * photos are locked to the canonical relaxed set (front/side face, front/side
+ * body) and feed the scientific compare; casual reel photos are freeform (`other`
+ * or untagged) and never feed analysis.
+ *
+ * Pure + deterministic: pose assignment is manual in phase 1 (chips at save) and
+ * gains Haiku auto-classification in phase 2. This module owns the pose taxonomy,
+ * the capture → pose derivation, and the reel grouping.
+ */
+
+export const CANONICAL_POSES = ['front_relaxed', 'side_relaxed', 'front_face', 'side_profile', 'other'] as const;
+export type CanonicalPose = (typeof CANONICAL_POSES)[number];
+
+/** Only the four locked poses feed the comparability track; `other` is casual. */
+export const REQUIRED_POSES: CanonicalPose[] = ['front_face', 'side_profile', 'front_relaxed', 'side_relaxed'];
+
+/** Stable display order for reel groups; casual `other` last. */
+export const POSE_ORDER: CanonicalPose[] = ['front_face', 'side_profile', 'front_relaxed', 'side_relaxed', 'other'];
+
+/** Untagged photos sort first in the reel so they're easy to triage. */
+export type PoseKey = CanonicalPose | 'unsorted';
+
+/**
+ * The canonical pose an in-app capture lands in, from its session + angle. In-app
+ * captures use the locked-pose flow (ghost + measurement), so their pose is
+ * derived deterministically, never guessed.
+ */
+export function poseFromCapture(session: PhotoSession, view?: 'front' | 'side'): CanonicalPose {
+  if (session === 'face') return view === 'side' ? 'side_profile' : 'front_face';
+  return view === 'side' ? 'side_relaxed' : 'front_relaxed';
+}
+
+export type PoseGroup = { pose: PoseKey; photos: PhotoEntry[] };
+
+/**
+ * Group photos into the reel by pose: untagged first (they need triage), then
+ * POSE_ORDER. Newest-first within a group; empty groups omitted.
+ */
+export function groupPhotosByPose(photos: PhotoEntry[]): PoseGroup[] {
+  const byPose = new Map<PoseKey, PhotoEntry[]>();
+  for (const p of photos) {
+    const key: PoseKey = p.pose ?? 'unsorted';
+    const arr = byPose.get(key) ?? [];
+    arr.push(p);
+    byPose.set(key, arr);
+  }
+  const order: PoseKey[] = ['unsorted', ...POSE_ORDER];
+  const groups: PoseGroup[] = [];
+  for (const key of order) {
+    const arr = byPose.get(key);
+    if (!arr || arr.length === 0) continue;
+    arr.sort((a, b) => b.takenAt.localeCompare(a.takenAt));
+    groups.push({ pose: key, photos: arr });
+  }
+  return groups;
+}
