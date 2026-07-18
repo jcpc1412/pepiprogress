@@ -161,7 +161,7 @@ the settings override + quieter-only silent adjustment shipped).
     forecast line + proactive water-weight/step-drop anomaly hooks activate once the
     Health read (task #7, device build) lands the activity stream. (round-3 §7)
 
-## Wave 5: training log + goal symmetry + narrative
+## Wave 5: training log + goal symmetry + narrative ✅ SHIPPED 2026-07-17
 
 21. **Training log ✅ SHIPPED 2026-07-17 (manual path).** `src/lib/strength.ts`
     (pure, 9 tests): tonnage, Epley `epley1RM`, `bestE1RM`, `totalReps`. Store:
@@ -209,10 +209,18 @@ the settings override + quieter-only silent adjustment shipped).
     "store copy" portion (App Store listing copy) is an external marketing artifact,
     not app code — flagged here rather than silently dropped, left for the owner to
     commission separately. (beta-notes §1.9; round-3 §2)
-24. **Narrative timeline [M].** The signal ledger as a cross-metric chronological story
-    ("Started TRT, sleep improved, strength up, hematocrit elevated, donation logged");
-    the natural surface for attribution (14) and personal-history moments. Sequenced
-    here because it renders what Wave 4 computes. (positioning §5.3)
+24. **Narrative timeline ✅ SHIPPED 2026-07-17.** `src/lib/narrative.ts` (pure,
+    8 tests): `buildNarrative` assembles a cross-metric chronological STORY from the
+    store's own logged events — protocol starts, first symptom onsets, first lab
+    readings per marker, strength PRs (strict e1RM improvements only), benchmarks,
+    and analyzed photo notes — deduped to milestones (not a diary) and ordered
+    oldest → newest. Emits STRUCTURED moments, never prose, so the engine stays
+    pure/locale-agnostic and the UI owns all copy + unit formatting. Chronology
+    only, never causation. `NarrativeTimeline` on the Analysis tab: a single dotted
+    spine, moment kinds color-coded, self-gates below 2 moments. `narrative.*` i18n
+    ×6. Browser-verified: "Started Testosterone → Hematocrit 45 → first acne → 5k
+    benchmark → photo leaner → Estradiol 30 → Squat PR 140 kg." Wave 5 complete.
+    (positioning §5.3)
 
 ## Wave 6: photo reel + sharing
 

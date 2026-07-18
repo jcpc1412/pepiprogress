@@ -9,6 +9,7 @@ import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { MeasureNextNudge } from '@/features/home/measure-next-nudge';
 import { EnergyBalanceCard } from '@/features/insights/energy-balance-card';
+import { NarrativeTimeline } from '@/features/insights/narrative-timeline';
 import { ReasoningRecap, SignalStack } from '@/features/home/verdict-reasoning';
 import { Insights } from '@/features/insights/insights';
 import { ChartsSection, MIN_CHECKINS, SummaryCards, UnlockCard } from '@/features/insights/insights-screen';
@@ -60,6 +61,7 @@ export function AnalysisScreen() {
             <SignalStack />
             <MeasureNextNudge variant="section" />
             <SummaryCards />
+            <NarrativeTimeline />
             <ChartsSection />
             <EnergyBalanceCard />
             {checkinCount < MIN_CHECKINS ? (

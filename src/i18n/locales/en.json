@@ -1215,5 +1215,13 @@
     "recent": "Recent",
     "rowStrength": "e1RM {{e1rm}} {{unit}} · {{sets}} sets",
     "deleteHint": "Long-press an entry to remove it."
+  },
+  "narrative": {
+    "title": "Your story",
+    "protocolStart": "Started {{compound}}",
+    "symptomFirst": "First noted: {{symptom}}",
+    "lab": "Bloodwork {{marker}}: {{value}}",
+    "benchmark": "Benchmark {{name}}: {{value}}",
+    "strengthPr": "New best on {{exercise}}: {{value}} {{unit}}"
   }
 }

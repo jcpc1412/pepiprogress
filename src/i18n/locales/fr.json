@@ -1215,5 +1215,13 @@
     "recent": "Récent",
     "rowStrength": "e1RM {{e1rm}} {{unit}} · {{sets}} séries",
     "deleteHint": "Appui long sur une entrée pour la supprimer."
+  },
+  "narrative": {
+    "title": "Ton histoire",
+    "protocolStart": "Début de {{compound}}",
+    "symptomFirst": "Première fois : {{symptom}}",
+    "lab": "Analyse {{marker}} : {{value}}",
+    "benchmark": "Référence {{name}} : {{value}}",
+    "strengthPr": "Nouveau record sur {{exercise}} : {{value}} {{unit}}"
   }
 }

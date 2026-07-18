@@ -1215,5 +1215,13 @@
     "recent": "Reciente",
     "rowStrength": "e1RM {{e1rm}} {{unit}} · {{sets}} series",
     "deleteHint": "Mantén pulsada una entrada para quitarla."
+  },
+  "narrative": {
+    "title": "Tu historia",
+    "protocolStart": "Empezaste {{compound}}",
+    "symptomFirst": "Primera vez: {{symptom}}",
+    "lab": "Análisis {{marker}}: {{value}}",
+    "benchmark": "Marca {{name}}: {{value}}",
+    "strengthPr": "Nuevo récord en {{exercise}}: {{value}} {{unit}}"
   }
 }

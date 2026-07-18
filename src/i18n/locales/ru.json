@@ -1215,5 +1215,13 @@
     "recent": "Недавние",
     "rowStrength": "e1RM {{e1rm}} {{unit}} · подходов: {{sets}}",
     "deleteHint": "Долгое нажатие на запись, чтобы удалить."
+  },
+  "narrative": {
+    "title": "Ваша история",
+    "protocolStart": "Начат приём {{compound}}",
+    "symptomFirst": "Впервые отмечено: {{symptom}}",
+    "lab": "Анализ {{marker}}: {{value}}",
+    "benchmark": "Норматив {{name}}: {{value}}",
+    "strengthPr": "Новый рекорд в {{exercise}}: {{value}} {{unit}}"
   }
 }
