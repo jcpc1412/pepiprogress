@@ -231,8 +231,25 @@ the settings override + quieter-only silent adjustment shipped).
     captures derive their pose (locked comparability set); imports land casual +
     untagged for one-tap classification. Required check-ins stay locked to the four
     relaxed poses; casual photos freeform. (beta-notes §1.3)
-26. **Reel phase 2 [M].** Haiku auto-classification + confirm chips; session tabs
-    removed. (beta-notes §1.1, §1.3)
+26. **Reel phase 2 [M].** PART-SHIPPED 2026-07-18: Haiku auto-classification
+    (`classify_pose`, ai-service v23, dump imports auto-classify sequentially,
+    fails open) + confirm-chip flow (low-confidence reads surface an accent
+    confirm affordance; any tap becomes ground truth). REMAINING: session tabs
+    removed (blocked on the capture-entry split, see 26c note). (beta-notes
+    §1.1, §1.3)
+26.5. **Live pose hybrid (inserted 2026-07-18, owner-decided).** ✅ SHIPPED
+    (device test pending). No vision-camera-v5-compatible body-pose lib exists
+    (mediapipe libs pin v4; mlkit plugin's pose is unreleased), so: FACE = real
+    on-device yaw from the existing face detector → front/side ghost auto-swap
+    with hysteresis + pose tag at shutter; BODY = silent low-res sampling
+    (`shutterSound:false`, `animateShutter:false`) every 2.5s through
+    `classify_pose` (max 10/session, stops when 2 consecutive reads agree) →
+    ghost swap + save tag; CUSTOM PARTS = same sampling runs `check_fit` vs the
+    part reference for a live match hint. Pure schedule/stability layer
+    `src/lib/pose-live.ts` (+9 tests); per-pose ghost references (`ghostByPose`)
+    in progress-photos. Offline/AI-off: fails open to manual chips. True native
+    skeleton overlay stays a flagged future device-spike (revisit when the
+    ecosystem ships a v5 pose plugin).
 27. **Share cards [S/M].** Branded stat card first, then photo export with watermark
     toggle in settings (off for photos, on for stat card); offered contextually after
     milestones/highscores. (beta-notes §1.4)

@@ -10,11 +10,14 @@ import { LabeledInput, PrimaryButton, SingleSelectChips } from '@/components/for
 import { FlipCameraIcon } from '@/components/icons';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
-import { checkFit, type FitCheck } from '@/lib/ai';
+import { checkFit, classifyPose, type FitCheck } from '@/lib/ai';
 import { bodyFatNavy, usesFemaleFormula } from '@/lib/body-composition';
 import { copyPhotoToDocuments } from '@/lib/photos';
+import { poseFromCapture, type CanonicalPose } from '@/lib/photo-pose';
 import { computeQuality, type PhotoQuality } from '@/lib/photo-quality';
+import { initialSampleState, recordSample, shouldSample } from '@/lib/pose-live';
 import { localDateKey, useStore, type PhotoSession } from '@/lib/store';
+import { isSupabaseConfigured } from '@/lib/supabase';
 
 /** Tap-cycle levels for the ghost overlay opacity (R3-H). */
 const GHOST_LEVELS = [0.2, 0.4, 0.6] as const;
@@ -31,6 +34,7 @@ export function PhotoCapture({
   session,
   part,
   ghostUri,
+  ghostByPose,
   visible,
   onClose,
   onSaved,
@@ -40,6 +44,9 @@ export function PhotoCapture({
   session: PhotoSession;
   part?: string;
   ghostUri?: string;
+  /** Per-pose references (W6-26.5): the sampled live classification swaps the
+   *  ghost to the reference matching the pose the user is actually holding. */
+  ghostByPose?: Partial<Record<CanonicalPose, string>>;
   visible: boolean;
   onClose: () => void;
   /** Fired after a shot is saved to the store (PH-2): the parent runs the instant
@@ -156,6 +163,64 @@ export function PhotoCapture({
 
   const level = Math.abs(roll) < 5 && Math.abs(pitch) < 5;
 
+  // ── Live pose sampling (W6-26.5) ─────────────────────────────────────────
+  // No on-device body-pose model exists for vision-camera v5 yet, so the body
+  // session silently samples a low-res frame every few seconds through the
+  // cheap classify_pose call (schedule + stability live in pose-live.ts):
+  //  - main track: a stable read swaps the ghost to that pose's reference and
+  //    tags the eventual save, so the user never has to pre-declare the angle.
+  //  - custom parts: no canonical pose to detect, so the sample runs check_fit
+  //    against the part's reference instead — a live "does this match my
+  //    reference shot" hint (the custom-pose version of pose detection).
+  // Offline / AI-unconfigured: fails open, manual chips + last ghost remain.
+  const [detectedPose, setDetectedPose] = useState<CanonicalPose | null>(null);
+  const [liveFit, setLiveFit] = useState<FitCheck | null>(null);
+  const samplingRef = useRef(false); // serializes sampling captures
+  const actionRef = useRef(false); // true while a real capture is in flight
+  const isBodyMain = session === 'body' && !part;
+
+  useEffect(() => {
+    if (!live || !isSupabaseConfigured) return;
+    if (!isBodyMain && !(part && ghostUri)) return; // face → VisionCameraCapture
+    let cancelled = false;
+    let state = initialSampleState();
+    const id = setInterval(async () => {
+      if (cancelled || samplingRef.current || actionRef.current) return;
+      if (!shouldSample(state, Date.now())) return;
+      samplingRef.current = true;
+      try {
+        const pic = await camRef.current?.takePictureAsync({
+          quality: 0.25,
+          shutterSound: false,
+          skipProcessing: true,
+        });
+        if (!pic?.uri || cancelled) return;
+        if (part && ghostUri) {
+          // Custom track: live fit vs the part reference. Reuse the schedule's
+          // sample cap as the cost ceiling; never "stabilizes".
+          state = { ...state, samples: state.samples + 1, lastAt: Date.now() };
+          const fit = await checkFit(pic.uri, ghostUri);
+          if (!cancelled) setLiveFit(fit);
+        } else {
+          const res = await classifyPose(pic.uri);
+          if (!res || cancelled) return;
+          state = recordSample(state, res.pose, res.confidence, Date.now());
+          if (state.stable === 'front_relaxed' || state.stable === 'side_relaxed') {
+            setDetectedPose(state.stable);
+          }
+        }
+      } catch {
+        // fail open — sampling is a pure enhancement
+      } finally {
+        samplingRef.current = false;
+      }
+    }, 1000);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, [live, isBodyMain, part, ghostUri]);
+
   /** Stop any running self-timer countdown. */
   const clearCountdown = () => {
     if (countdownRef.current) clearInterval(countdownRef.current);
@@ -185,12 +250,15 @@ export function PhotoCapture({
     setHips('');
     setExtraKey(undefined);
     setExtraVal('');
+    setDetectedPose(null);
+    setLiveFit(null);
     onClose();
   };
 
   const capture = async () => {
     if (!camRef.current || busy) return;
     setBusy(true);
+    actionRef.current = true; // pause pose sampling while the real shot runs
     try {
       const pic = await camRef.current.takePictureAsync({ quality: 0.8 });
       if (pic?.uri) {
@@ -198,12 +266,13 @@ export function PhotoCapture({
         setShotTilt(tiltNow);
         setShot(pic.uri);
         setQualityAck(false);
-        if (ghostUri) {
+        if (liveGhostUri) {
           // Score once the fit check resolves (framing feeds the quality score).
+          // Compared against the pose-matched reference, not just the chain's.
           setFitChecking(true);
           setFitResult(null);
           setQuality(null);
-          checkFit(pic.uri, ghostUri).then((r) => {
+          checkFit(pic.uri, liveGhostUri).then((r) => {
             setFitResult(r);
             setFitChecking(false);
             setQuality(computeQuality({ tiltDeg: tiltNow, fit: r.fit }));
@@ -215,6 +284,7 @@ export function PhotoCapture({
       }
     } finally {
       setBusy(false);
+      actionRef.current = false;
     }
   };
 
@@ -247,14 +317,19 @@ export function PhotoCapture({
     setBusy(true);
     try {
       const persistentUri = await copyPhotoToDocuments(shot);
+      // Detected pose (live sampling) wins over the manual angle chip; custom
+      // parts are their own sub-track, not one of the four locked poses.
+      const savedView = detectedPose === 'side_relaxed' ? 'side' : detectedPose === 'front_relaxed' ? 'front' : view;
       const newId = addPhoto({
         session,
         part,
-        view,
+        view: savedView,
         uri: persistentUri,
         takenAt: new Date().toISOString(),
         tilt: shotTilt,
         qualityScore: quality?.score,
+        pose: part ? 'other' : detectedPose ?? poseFromCapture(session, view),
+        isRequiredSet: !part,
       });
       savedIdRef.current = newId;
       onSaved?.(newId);
@@ -293,6 +368,11 @@ export function PhotoCapture({
   };
 
   const sessionLabel = session === 'face' ? t('photos.sessionFace') : t('photos.sessionBody');
+
+  // Ghost for the live view: prefer the reference of the pose being held
+  // (detected live, else the manual angle chip); fall back to the chain ghost.
+  const activePose: CanonicalPose = part ? 'other' : detectedPose ?? poseFromCapture(session, view);
+  const liveGhostUri = ghostByPose?.[activePose] ?? ghostUri;
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={close}>
@@ -513,15 +593,23 @@ export function PhotoCapture({
         ) : (
           // ── Live camera + ghost overlay ──
           <View style={styles.fill}>
-            <CameraView ref={camRef} style={styles.fill} facing={facing} mirror={facing === 'front'} />
-            {ghostUri ? (
+            {/* animateShutter off: the silent pose-sampling captures (W6-26.5)
+                must not flash the screen every few seconds. */}
+            <CameraView
+              ref={camRef}
+              style={styles.fill}
+              facing={facing}
+              mirror={facing === 'front'}
+              animateShutter={false}
+            />
+            {liveGhostUri ? (
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel={t('photos.ghostLevel', { pct: Math.round(GHOST_LEVELS[ghostLevelIdx] * 100) })}
                 style={StyleSheet.absoluteFill}
                 onPress={() => setGhostLevelIdx((i) => (i + 1) % GHOST_LEVELS.length)}>
                 <Image
-                  source={{ uri: ghostUri }}
+                  source={{ uri: liveGhostUri }}
                   style={[StyleSheet.absoluteFill, { opacity: GHOST_LEVELS[ghostLevelIdx] }]}
                   contentFit="cover"
                 />
@@ -531,6 +619,18 @@ export function PhotoCapture({
               <ThemedText type="label" style={styles.overlayText}>
                 {sessionLabel}
               </ThemedText>
+              {/* Live-detected pose (sampled): the tag the shot will save with. */}
+              {detectedPose ? (
+                <ThemedText type="monoSm" style={styles.overlayDim}>
+                  {t('photos.poseDetected', { pose: t(`photos.pose_${detectedPose}` as 'photos.pose_front_relaxed') })}
+                </ThemedText>
+              ) : null}
+              {/* Custom-part live fit vs the reference (the custom-pose flavor). */}
+              {part && liveFit && liveFit.fit !== 'good' ? (
+                <ThemedText type="monoSm" style={styles.overlayDim}>
+                  {liveFit.hint ?? t(liveFit.fit === 'poor' ? 'photos.fitPoor' : 'photos.fitWeak')}
+                </ThemedText>
+              ) : null}
               {ghostUri ? (
                 <>
                   <ThemedText type="monoSm" style={styles.overlayDim}>

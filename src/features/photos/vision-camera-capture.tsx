@@ -35,7 +35,9 @@ import { FlipCameraIcon } from '@/components/icons';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { copyPhotoToDocuments } from '@/lib/photos';
+import type { CanonicalPose } from '@/lib/photo-pose';
 import { computeQuality } from '@/lib/photo-quality';
+import { nextFacePose, type FacePose } from '@/lib/pose-live';
 import { useStore, type PhotoEntry, type PhotoSession } from '@/lib/store';
 
 const GHOST_OPACITY = 0.35;
@@ -68,6 +70,7 @@ function distanceHint(currentRatio: number, baselineRatio: number | undefined): 
 export function VisionCameraCapture({
   session,
   ghostUri,
+  ghostByPose,
   baseline,
   visible,
   onClose,
@@ -75,6 +78,9 @@ export function VisionCameraCapture({
 }: {
   session: PhotoSession;
   ghostUri?: string;
+  /** Per-pose references (W6-26.5): the live yaw-detected pose swaps the ghost
+   *  to the matching reference; poses without one fall back to `ghostUri`. */
+  ghostByPose?: Partial<Record<CanonicalPose, string>>;
   baseline?: PhotoEntry; // for distance comparison
   visible: boolean;
   onClose: () => void;
@@ -124,6 +130,12 @@ export function VisionCameraCapture({
   const [faceDetected, setFaceDetected] = useState(false);
   const autoFired = useRef(false);
 
+  // Live pose from the face yaw angle (W6-26.5): front vs side profile with
+  // hysteresis, so the ghost + saved pose tag follow the pose the user is
+  // actually holding instead of assuming front.
+  const [facePose, setFacePose] = useState<FacePose>('front_face');
+  const facePoseRef = useRef<FacePose>('front_face');
+
   const faceOutput = useFaceDetectorOutput({
     onError: () => { /* face detection errors are non-fatal — fall through to manual */ },
     onFacesDetected: (faces) => {
@@ -133,6 +145,11 @@ export function VisionCameraCapture({
         return;
       }
       const face = faces[0];
+      const nextPose = nextFacePose(facePoseRef.current, face.yawAngle);
+      if (nextPose !== facePoseRef.current) {
+        facePoseRef.current = nextPose;
+        setFacePose(nextPose);
+      }
       const ratio = faceBoxRatio(
         face.bounds.width,
         face.bounds.height,
@@ -152,6 +169,9 @@ export function VisionCameraCapture({
   });
 
   // ── Capture ───────────────────────────────────────────────────────────────
+  // Pose is frozen at shutter time: turning your head during review must not
+  // retag the shot.
+  const shotPoseRef = useRef<FacePose>('front_face');
   const capture = async (boxRatioOverride?: number) => {
     if (busy) return;
     setBusy(true);
@@ -159,6 +179,7 @@ export function VisionCameraCapture({
       const photo = await photoOutput.capturePhoto({}, {});
       const path = await photo.saveToTemporaryFileAsync();
       photo.dispose();
+      shotPoseRef.current = facePoseRef.current;
       setShotTilt(Math.round(tiltRef.current));
       setShotBoxRatio(boxRatioOverride ?? (currentRatioRef.current || undefined));
       setShot(`file://${path}`);
@@ -181,6 +202,11 @@ export function VisionCameraCapture({
         tilt: shotTilt,
         boxRatio: shotBoxRatio,
         qualityScore: computeQuality({ tiltDeg: shotTilt }).score,
+        // Guided captures are the locked comparability set; the pose comes from
+        // the live yaw read at shutter time (front face vs side profile).
+        pose: shotPoseRef.current,
+        view: shotPoseRef.current === 'side_profile' ? 'side' : 'front',
+        isRequiredSet: true,
       });
       close();
       onSaved?.(newId);
@@ -248,10 +274,11 @@ export function VisionCameraCapture({
               mirrorMode="on"
             />
 
-            {/* Ghost overlay */}
-            {ghostUri ? (
+            {/* Ghost overlay — swaps to the reference matching the live-detected
+                pose (front vs side profile) when one exists (W6-26.5). */}
+            {(ghostByPose?.[facePose] ?? ghostUri) ? (
               <Image
-                source={{ uri: ghostUri }}
+                source={{ uri: ghostByPose?.[facePose] ?? ghostUri }}
                 style={[StyleSheet.absoluteFill, { opacity: GHOST_OPACITY }]}
                 contentFit="cover"
               />
@@ -292,6 +319,12 @@ export function VisionCameraCapture({
               <ThemedText type="label" style={styles.overlayText}>
                 {sessionLabel}
               </ThemedText>
+              {/* Live-detected pose (yaw): the tag the shot will save with. */}
+              {faceDetected ? (
+                <ThemedText type="monoSm" style={styles.overlayDim}>
+                  {t('photos.poseDetected', { pose: t(`photos.pose_${facePose}` as 'photos.pose_front_face') })}
+                </ThemedText>
+              ) : null}
               {ghostUri ? (
                 <ThemedText type="monoSm" style={styles.overlayDim}>
                   {t('photos.ghostHint')}

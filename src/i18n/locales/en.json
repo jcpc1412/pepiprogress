@@ -197,6 +197,7 @@
     "tplDose": "Dose: "
   },
   "photos": {
+    "poseDetected": "Detected: {{pose}}",
     "confirmPose": "Confirm pose",
     "poseSuggested": "Suggested: {{pose}}. Tap to confirm.",
     "pose_front_relaxed": "Front relaxed",

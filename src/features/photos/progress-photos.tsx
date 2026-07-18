@@ -329,6 +329,19 @@ export function ProgressPhotos({
   // `baseline` (the oldest) stays the immutable day-one compare anchor.
   const reference = useMemo(() => pickReference(sessionPhotos), [sessionPhotos]);
   const ghostUri = reference ? resolvedUris[reference.id] ?? reference.uri : undefined;
+  // Per-pose ghost references (W6-26.5): the live pose detection in the capture
+  // screens swaps the ghost to the best reference OF THE POSE the user is
+  // actually holding. Poses without a tagged reference fall back to `ghostUri`.
+  const ghostByPose = useMemo(() => {
+    const map: Partial<Record<CanonicalPose, string>> = {};
+    for (const p of CANONICAL_POSES) {
+      const chain = sessionPhotos.filter((ph) => ph.pose === p);
+      const ref = pickReference(chain);
+      if (ref) map[p] = resolvedUris[ref.id] ?? ref.uri;
+    }
+    return map;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [photos, session, part, resolvedUris]);
 
   // ── Compound group + cadence ─────────────────────────────────────────────
   const group = useMemo(() => getGroupForSlugs(profile.compoundSlugs), [profile.compoundSlugs]);
@@ -1045,6 +1058,7 @@ export function ProgressPhotos({
         <VisionCameraCapture
           session={session}
           ghostUri={ghostUri}
+          ghostByPose={ghostByPose}
           baseline={reference ?? baseline}
           visible={capturing}
           onClose={() => setCapturing(false)}
@@ -1057,6 +1071,7 @@ export function ProgressPhotos({
           view={view}
           timer={timer}
           ghostUri={ghostUri}
+          ghostByPose={ghostByPose}
           visible={capturing}
           onClose={() => setCapturing(false)}
           onSaved={onPhotoSaved}
