@@ -83,6 +83,30 @@ export function bodyFatNavy(opts: {
   };
 }
 
+export type FFMIBand = { low: number; high: number };
+
+/**
+ * Fat-free mass index band (W5-22, beta-notes §1.8) — a lean-mass-relative
+ * strength/size number gainers care about, derived from height + weight + the
+ * Navy body-fat *band*. Because body fat is a range, FFMI is returned as a range
+ * too, and shown hedged (same rules as body fat). Never a lean-mass figure from
+ * a photo. Uses the normalized FFMI (adjusted to a 1.8 m reference) so it is
+ * comparable across heights. Weight in kg, height in cm.
+ */
+export function ffmiBand(opts: { weightKg?: number; heightCm?: number; bf: BodyFatEstimate }): FFMIBand | null {
+  const { weightKg, heightCm, bf } = opts;
+  if (!weightKg || weightKg <= 0 || !heightCm || heightCm <= 0) return null;
+  const hM = heightCm / 100;
+  const ffmiAt = (bfPct: number) => {
+    const lean = weightKg * (1 - bfPct / 100);
+    return lean / (hM * hM) + 6.1 * (1.8 - hM); // normalized to 1.8 m
+  };
+  // Lower body-fat → more lean mass → higher FFMI, so the band inverts bf's.
+  const high = ffmiAt(bf.low);
+  const low = ffmiAt(bf.high);
+  return { low: Math.round(low * 10) / 10, high: Math.round(high * 10) / 10 };
+}
+
 export type BodyComposition = 'lean' | 'fit' | 'average' | 'higher';
 
 /**

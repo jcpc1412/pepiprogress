@@ -589,6 +589,10 @@
     "unitIn": "pol",
     "neck": "Pescoço",
     "sameAsLast": "Igual à última vez"
+  ,
+    "ffmi": "FFMI (índice de massa magra)",
+    "ffmiRange": "{{low}} – {{high}}",
+    "ffmiHedge": "Faixa estimada a partir da sua banda de gordura corporal. Não é uma medida médica."
   },
   "bodyType": {
     "section": "COMPOSIÇÃO CORPORAL",

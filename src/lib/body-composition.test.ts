@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   bodyFatNavy,
+  ffmiBand,
   inferBodyComposition,
   usesFemaleFormula,
   BF_ERROR_MARGIN,
@@ -82,5 +83,30 @@ describe('inferBodyComposition', () => {
     // 24% reads as "average" for men but "fit" for women.
     expect(inferBodyComposition(24, false)).toBe('average');
     expect(inferBodyComposition(24, true)).toBe('fit');
+  });
+});
+
+describe('ffmiBand', () => {
+  it('returns a normalized FFMI range that inverts the body-fat band', () => {
+    // 80 kg, 180 cm, body-fat 15% (band 11–19). At 1.8 m the normalization is 0.
+    const band = ffmiBand({ weightKg: 80, heightCm: 180, bf: { pct: 15, low: 11, high: 19 } })!;
+    expect(band).not.toBeNull();
+    // low bf → more lean → higher FFMI; ~20.0 to ~22.0.
+    expect(band.low).toBeGreaterThan(19);
+    expect(band.high).toBeLessThan(23);
+    expect(band.high).toBeGreaterThan(band.low);
+  });
+
+  it('applies the height normalization for a shorter athlete', () => {
+    // 70 kg, 165 cm adds +6.1*(1.8-1.65)=+0.915 to the raw index.
+    const band = ffmiBand({ weightKg: 70, heightCm: 165, bf: { pct: 15, low: 12, high: 18 } })!;
+    const hM = 1.65;
+    const rawHigh = (70 * 0.88) / (hM * hM) + 6.1 * (1.8 - hM);
+    expect(band.high).toBeCloseTo(Math.round(rawHigh * 10) / 10, 1);
+  });
+
+  it('is null without weight or height', () => {
+    expect(ffmiBand({ weightKg: 0, heightCm: 180, bf: { pct: 15, low: 11, high: 19 } })).toBeNull();
+    expect(ffmiBand({ weightKg: 80, heightCm: undefined, bf: { pct: 15, low: 11, high: 19 } })).toBeNull();
   });
 });

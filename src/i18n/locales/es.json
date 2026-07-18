@@ -589,6 +589,10 @@
     "unitIn": "in",
     "neck": "Cuello",
     "sameAsLast": "Igual que la última vez"
+  ,
+    "ffmi": "FFMI (índice de masa magra)",
+    "ffmiRange": "{{low}} – {{high}}",
+    "ffmiHedge": "Rango estimado a partir de tu banda de grasa corporal. No es una medida médica."
   },
   "bodyType": {
     "section": "COMPOSICIÓN CORPORAL",

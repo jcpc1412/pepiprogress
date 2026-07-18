@@ -174,8 +174,14 @@ the settings override + quieter-only silent adjustment shipped).
     "5k run 25:30". **Deferred:** chat-parse for training (needs a `parse_log` kind +
     edge deploy + eval pass, kept off the current quick-log parse) and the
     coach-adjusted effort line (rides W3-8 coaching level). (round-3 §8; positioning §6)
-22. **Gain-goal measurement emphasis + FFMI band [M].** Multiple extra measurements for
-    gain goals; hedged FFMI range. (beta-notes §1.8)
+22. **Gain-goal measurement emphasis + FFMI band ✅ SHIPPED 2026-07-17.** Dedicated
+    `chest`/`arms`/`thighs` check-in fields; the detailed-log measurement card surfaces
+    all three (plus waist/hips) for gain intent (body_comp goal or a muscle-tagged
+    compound), not just the single legacy extra slot. `ffmiBand` in body-composition.ts
+    (pure, +3 tests): normalized FFMI derived from height + weight + the Navy body-fat
+    *band*, returned as a hedged range (inverts the bf band); rendered under the
+    measurements for gainers with a "not a medical measurement" hedge. `measurements.ffmi*`
+    i18n ×6. Browser-verified: 82 kg/180 cm/waist 84/neck 39 → FFMI 20.6–22.7. (beta-notes §1.8)
 23. **Transition tracking v1 + SM-1 [M].** Conditional goal chip (mtf/ftm), surfaced
     fields, direction-aware analysis block; plus the self-marketability pass (goal-first
     onboarding + store copy, non-PED paths first-class). (beta-notes §1.9; round-3 §2)

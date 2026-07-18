@@ -14,6 +14,8 @@ import { SymptomEvents } from '@/features/symptoms/symptom-events';
 import { formatDateKey, localHour, shiftDateKey } from '@/lib/dates';
 import { metricForDate, weightInUnits } from '@/lib/integrations/autofill';
 import { applyFieldCustomization, partitionByTime, surfaceFields } from '@/lib/field-surfacing';
+import { bodyFatNavy, ffmiBand, usesFemaleFormula } from '@/lib/body-composition';
+import { compoundBySlug } from '@/data/compound-catalog';
 import { localDateKey, useStore, type CheckinEntry } from '@/lib/store';
 import {
   baselineFor,
@@ -32,6 +34,8 @@ type ScaleField =
   | 'libido';
 type TextField = 'skin_notes' | 'measurements' | 'note';
 type NutritionField = 'protein' | 'calories';
+/** Numeric circumference fields entered in the measurement card (W5-22). */
+type GainMeasureField = 'waist' | 'hips' | 'chest' | 'arms' | 'thighs';
 
 const NUTRITION_FIELDS: {
   field: NutritionField;
@@ -82,7 +86,7 @@ export function DetailedLog({ onDismiss }: { onDismiss?: () => void } = {}) {
   const [showExactNutrition, setShowExactNutrition] = useState(false);
   const [weightError, setWeightError] = useState<string | undefined>(undefined);
   const [nutritionError, setNutritionError] = useState<Partial<Record<NutritionField, string>>>({});
-  const [measurementError, setMeasurementError] = useState<Partial<Record<'waist' | 'hips' | 'extra', string>>>({});
+  const [measurementError, setMeasurementError] = useState<Partial<Record<GainMeasureField | 'extra', string>>>({});
   const isToday = date === today;
   const entry = entries[date];
 
@@ -90,11 +94,56 @@ export function DetailedLog({ onDismiss }: { onDismiss?: () => void } = {}) {
   // they can be reviewed/corrected afterward (bug: previously edit-only at capture).
   const measurementUnit = profile.units === 'imperial' ? t('measurements.unitIn') : t('measurements.unitCm');
   const hasBodyPhotos = photos.some((p) => p.session === 'body');
+  // Gain intent (W5-22): body_comp goal or an active muscle-tagged compound.
+  const isGainGoal =
+    profile.goals.includes('body_comp') ||
+    protocolItems.some((it) => compoundBySlug(it.compoundSlug)?.effectTags.includes('muscle'));
+  // Gainers track arms + chest + thighs together; everyone tracks waist + hips.
+  const measureFields: GainMeasureField[] = isGainGoal
+    ? ['waist', 'hips', 'chest', 'arms', 'thighs']
+    : ['waist', 'hips'];
   const showMeasurements =
     hasBodyPhotos ||
     entry?.waist !== undefined ||
     entry?.hips !== undefined ||
-    entry?.extraMeasurementValue !== undefined;
+    entry?.extraMeasurementValue !== undefined ||
+    entry?.chest !== undefined ||
+    entry?.arms !== undefined ||
+    entry?.thighs !== undefined;
+
+  // FFMI band (W5-22): a lean-mass-relative size number for gainers, derived from
+  // height + weight + the Navy body-fat band, shown hedged. Weight falls back to
+  // the most recent logged weight when this day has none.
+  const heightCm =
+    typeof profile.height === 'number'
+      ? profile.units === 'imperial'
+        ? profile.height * 2.54
+        : profile.height
+      : undefined;
+  const latestWeight =
+    entry?.weight ??
+    Object.keys(entries)
+      .sort((a, b) => (a < b ? 1 : -1))
+      .map((d) => entries[d].weight)
+      .find((w) => typeof w === 'number');
+  const weightKg =
+    typeof latestWeight === 'number'
+      ? profile.units === 'imperial'
+        ? latestWeight / 2.20462
+        : latestWeight
+      : undefined;
+  const ffmi = (() => {
+    if (!isGainGoal) return null;
+    const bf = bodyFatNavy({
+      units: profile.units,
+      heightCm,
+      waist: entry?.waist,
+      neck: entry?.neck,
+      hip: entry?.hips,
+      female: usesFemaleFormula(profile.sex),
+    });
+    return bf ? ffmiBand({ weightKg, heightCm, bf }) : null;
+  })();
 
   const [savedPulse, setSavedPulse] = useState(false);
   const seenUpdatedAt = useRef<string | null>(null);
@@ -424,7 +473,7 @@ export function DetailedLog({ onDismiss }: { onDismiss?: () => void } = {}) {
       {showMeasurements && (
         <Card style={styles.section}>
           <EngravedLabel>{t('fields.measurements')}</EngravedLabel>
-          {(['waist', 'hips'] as const).map((field) => (
+          {measureFields.map((field) => (
             <View key={`${date}-${field}`} style={styles.weightInput}>
               <LabeledInput
                 key={`${date}-${field}-${num(field) ?? ''}`}
@@ -474,6 +523,17 @@ export function DetailedLog({ onDismiss }: { onDismiss?: () => void } = {}) {
                   upsertCheckin(date, { extraMeasurementValue: v });
                 }}
               />
+            </View>
+          )}
+          {ffmi && (
+            <View style={styles.ffmiBox}>
+              <ThemedText type="monoSm" themeColor="textMuted">
+                {t('measurements.ffmi')}
+              </ThemedText>
+              <ThemedText type="metricSm">{t('measurements.ffmiRange', { low: ffmi.low, high: ffmi.high })}</ThemedText>
+              <ThemedText type="monoSm" themeColor="textMuted">
+                {t('measurements.ffmiHedge')}
+              </ThemedText>
             </View>
           )}
         </Card>
@@ -588,6 +648,7 @@ const styles = StyleSheet.create({
   weightNumeral: { flex: 1, fontFamily: Fonts.mono, fontSize: 40, fontVariant: ['tabular-nums'], padding: 0 },
   weightSide: { alignItems: 'flex-end', gap: Spacing.one },
   weightInput: { flex: 1, gap: Spacing.one },
+  ffmiBox: { gap: 2, marginTop: Spacing.one },
   autofill: { textDecorationLine: 'underline' },
   sectionLabel: { marginBottom: Spacing.two },
   scaleField: { gap: Spacing.two, paddingVertical: Spacing.two },

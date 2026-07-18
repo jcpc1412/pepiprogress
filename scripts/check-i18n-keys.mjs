@@ -58,7 +58,7 @@ const IDENTICAL_OK = new Set([
   'verdict.unitScale', 'verdict.type.body_comp', 'verdict.role.neutral',
   'signal.source.manual', 'signal.event.symptom', 'signal.event.dose',
   'pepi.ansValue', 'pepi.ansCompare', 'pepi.ansExtremum', 'quicklog.tplDose',
-  'photos.angleLabel', 'typical.group.nutrition', 'training.title',
+  'photos.angleLabel', 'typical.group.nutrition', 'training.title', 'measurements.ffmiRange',
 ]);
 
 const load = (file) => JSON.parse(readFileSync(join(localesDir, file), 'utf8'));

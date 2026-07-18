@@ -58,6 +58,11 @@ export type CheckinEntry = {
   neck?: number; // circumference, for the Navy body-fat estimate (spec 04)
   extraMeasurementKey?: 'chest' | 'arms' | 'thighs';
   extraMeasurementValue?: number;
+  // Gain-goal circumference emphasis (W5-22): dedicated slots so a gainer can
+  // track arms + chest + thighs together, not just one extra.
+  chest?: number;
+  arms?: number;
+  thighs?: number;
   note?: string;
   /** Lab marker values from a photo import — marker slug → numeric reading. */
   labValues?: Record<string, number>;

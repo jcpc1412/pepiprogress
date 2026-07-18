@@ -589,6 +589,10 @@
     "unitIn": "in",
     "neck": "Neck",
     "sameAsLast": "Same as last time"
+  ,
+    "ffmi": "FFMI (lean-mass index)",
+    "ffmiRange": "{{low}} – {{high}}",
+    "ffmiHedge": "Estimated range from your body-fat band. Not a medical measurement."
   },
   "bodyType": {
     "section": "BODY COMPOSITION",

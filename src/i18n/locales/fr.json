@@ -589,6 +589,10 @@
     "unitIn": "po",
     "neck": "Cou",
     "sameAsLast": "Comme la dernière fois"
+  ,
+    "ffmi": "FFMI (indice de masse maigre)",
+    "ffmiRange": "{{low}} – {{high}}",
+    "ffmiHedge": "Fourchette estimée à partir de ta plage de masse grasse. Pas une mesure médicale."
   },
   "bodyType": {
     "section": "COMPOSITION CORPORELLE",

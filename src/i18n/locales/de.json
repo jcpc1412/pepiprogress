@@ -589,6 +589,10 @@
     "unitIn": "Zoll",
     "neck": "Hals",
     "sameAsLast": "Wie beim letzten Mal"
+  ,
+    "ffmi": "FFMI (Magermasse-Index)",
+    "ffmiRange": "{{low}} – {{high}}",
+    "ffmiHedge": "Geschätzter Bereich aus deiner Körperfett-Spanne. Keine medizinische Messung."
   },
   "bodyType": {
     "section": "KÖRPERZUSAMMENSETZUNG",
