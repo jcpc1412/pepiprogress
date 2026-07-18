@@ -81,7 +81,13 @@
         }
       ],
       "react-native-health-connect",
-      "expo-build-properties"
+      "expo-build-properties",
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.1062784454416-20t130tgnlbe0uv4dp4pk860a9vikau0"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

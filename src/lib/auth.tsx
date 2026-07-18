@@ -1,7 +1,7 @@
 import type { Session, User } from '@supabase/supabase-js';
+import { GoogleSignin, isErrorWithCode, isSuccessResponse, statusCodes } from '@react-native-google-signin/google-signin';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as WebBrowser from 'expo-web-browser';
-import { Platform } from 'react-native';
 import {
   createContext,
   useCallback,
@@ -11,8 +11,23 @@ import {
   useState,
   type ReactNode,
 } from 'react';
+import { Platform } from 'react-native';
 
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
+
+const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID;
+const GOOGLE_IOS_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
+// Native Google Sign-In is web/Expo-Go incompatible (it needs the linked native
+// module) and pointless without a configured web client (the id token's
+// audience Supabase verifies against). Falls back to the existing browser-OAuth
+// path (signInWithProvider('google')) in both cases.
+const googleNativeConfigured = Platform.OS !== 'web' && !!GOOGLE_WEB_CLIENT_ID;
+if (googleNativeConfigured) {
+  GoogleSignin.configure({
+    webClientId: GOOGLE_WEB_CLIENT_ID,
+    iosClientId: GOOGLE_IOS_CLIENT_ID,
+  });
+}
 
 /** OAuth providers offered in the UI. Provider config lives in Supabase Auth. */
 export type OAuthProvider = 'apple' | 'google';
@@ -36,6 +51,11 @@ type AuthContextValue = {
   signInWithApple: () => Promise<boolean>;
   /** True when the native Apple button should be shown (iOS + module available). */
   appleAuthAvailable: boolean;
+  /** Native Google Sign In via @react-native-google-signin + Supabase id-token
+   *  exchange. Resolves true once a session is set, false if cancelled. */
+  signInWithGoogle: () => Promise<boolean>;
+  /** True when the native Google button should be shown (mobile + web client configured). */
+  googleAuthAvailable: boolean;
   signOut: () => Promise<void>;
 };
 
@@ -151,7 +171,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  // Native Google Sign In (iOS/Android). Mirrors signInWithApple: exchange the
+  // provider's id token for a Supabase session, no browser round-trip. Web
+  // (and any build where the web client isn't configured) falls back to the
+  // browser OAuth path via signInWithProvider('google').
+  const signInWithGoogle = useCallback(async () => {
+    if (!googleNativeConfigured) throw new Error('Google native sign-in is not configured');
+    try {
+      if (Platform.OS === 'android') await GoogleSignin.hasPlayServices();
+      const response = await GoogleSignin.signIn();
+      if (!isSuccessResponse(response)) return false; // user cancelled
+      const idToken = response.data.idToken;
+      if (!idToken) throw new Error('No identity token returned from Google');
+      const { error } = await supabase.auth.signInWithIdToken({ provider: 'google', token: idToken });
+      if (error) throw error;
+      return true; // session lands via onAuthStateChange
+    } catch (err) {
+      if (isErrorWithCode(err) && err.code === statusCodes.SIGN_IN_CANCELLED) return false;
+      throw err;
+    }
+  }, []);
+
   const signOut = useCallback(async () => {
+    // Best-effort: only relevant when the last sign-in was native Google.
+    if (googleNativeConfigured) await GoogleSignin.signOut().catch(() => {});
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
   }, []);
@@ -180,9 +223,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signInWithProvider,
       signInWithApple,
       appleAuthAvailable,
+      signInWithGoogle,
+      googleAuthAvailable: googleNativeConfigured,
       signOut,
     }),
-    [session, initializing, signInWithPassword, signUp, signInWithProvider, signInWithApple, appleAuthAvailable, signOut],
+    [
+      session,
+      initializing,
+      signInWithPassword,
+      signUp,
+      signInWithProvider,
+      signInWithApple,
+      appleAuthAvailable,
+      signInWithGoogle,
+      signOut,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

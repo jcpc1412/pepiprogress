@@ -29,7 +29,15 @@ export function AuthScreen({
   onClose: () => void;
 }) {
   const { t } = useTranslation();
-  const { signUp, signInWithPassword, signInWithProvider, signInWithApple, appleAuthAvailable } = useAuth();
+  const {
+    signUp,
+    signInWithPassword,
+    signInWithProvider,
+    signInWithApple,
+    appleAuthAvailable,
+    signInWithGoogle,
+    googleAuthAvailable,
+  } = useAuth();
   const { exportState, replaceState } = useStore();
 
   const [mode, setMode] = useState<Mode>('signUp');
@@ -217,7 +225,9 @@ export function AuthScreen({
               )}
               <SocialButton
                 label={t('auth.continueGoogle')}
-                onPress={() => handleSocial(() => signInWithProvider('google'))}
+                onPress={() =>
+                  handleSocial(googleAuthAvailable ? signInWithGoogle : () => signInWithProvider('google'))
+                }
               />
             </View>
           )}
