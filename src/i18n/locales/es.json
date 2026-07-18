@@ -618,6 +618,9 @@
     "heavyset": "Corpulento/a"
   },
   "auth": {
+    "or": "o",
+    "continueApple": "Continuar con Apple",
+    "continueGoogle": "Continuar con Google",
     "signUpLabel": "CREAR CUENTA",
     "signInLabel": "INICIAR SESIÓN",
     "signUpTitle": "Guarda tus datos",

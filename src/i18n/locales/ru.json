@@ -618,6 +618,9 @@
     "heavyset": "Плотный/ая"
   },
   "auth": {
+    "or": "или",
+    "continueApple": "Продолжить с Apple",
+    "continueGoogle": "Продолжить с Google",
     "signUpLabel": "СОЗДАТЬ АККАУНТ",
     "signInLabel": "ВОЙТИ",
     "signUpTitle": "Сохраните данные",

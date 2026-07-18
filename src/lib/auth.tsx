@@ -1,5 +1,7 @@
 import type { Session, User } from '@supabase/supabase-js';
+import * as AppleAuthentication from 'expo-apple-authentication';
 import * as WebBrowser from 'expo-web-browser';
+import { Platform } from 'react-native';
 import {
   createContext,
   useCallback,
@@ -29,6 +31,11 @@ type AuthContextValue = {
   /** Native OAuth via the system browser; resolves true once a session is set,
    *  false if the user cancelled. Provider must be enabled in Supabase Auth. */
   signInWithProvider: (provider: OAuthProvider) => Promise<boolean>;
+  /** Native Apple Sign In (iOS only) via expo-apple-authentication + Supabase
+   *  id-token exchange. Resolves true once a session is set, false if cancelled. */
+  signInWithApple: () => Promise<boolean>;
+  /** True when the native Apple button should be shown (iOS + module available). */
+  appleAuthAvailable: boolean;
   signOut: () => Promise<void>;
 };
 
@@ -117,9 +124,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return false;
   }, []);
 
+  // Native Apple Sign In (iOS). Apple returns an identity token we hand to
+  // Supabase's id-token flow — no browser round-trip. Android/web fall back to
+  // the browser OAuth path via signInWithProvider('apple').
+  const signInWithApple = useCallback(async () => {
+    try {
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+      if (!credential.identityToken) throw new Error('No identity token returned from Apple');
+      const { error } = await supabase.auth.signInWithIdToken({
+        provider: 'apple',
+        token: credential.identityToken,
+      });
+      if (error) throw error;
+      return true; // session lands via onAuthStateChange
+    } catch (err) {
+      // The user tapping "Cancel" on the Apple sheet is not an error.
+      if (err && typeof err === 'object' && 'code' in err && err.code === 'ERR_REQUEST_CANCELED') {
+        return false;
+      }
+      throw err;
+    }
+  }, []);
+
   const signOut = useCallback(async () => {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
+  }, []);
+
+  // Native Apple button: iOS only, and only when the module is actually linked
+  // (a bare Expo Go / web bundle has the JS stub but no native support).
+  const [appleAuthAvailable, setAppleAuthAvailable] = useState(false);
+  useEffect(() => {
+    if (Platform.OS !== 'ios') return;
+    let active = true;
+    AppleAuthentication.isAvailableAsync()
+      .then((ok) => active && setAppleAuthAvailable(ok))
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
   }, []);
 
   const value = useMemo<AuthContextValue>(
@@ -130,9 +178,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signInWithPassword,
       signUp,
       signInWithProvider,
+      signInWithApple,
+      appleAuthAvailable,
       signOut,
     }),
-    [session, initializing, signInWithPassword, signUp, signInWithProvider, signOut],
+    [session, initializing, signInWithPassword, signUp, signInWithProvider, signInWithApple, appleAuthAvailable, signOut],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

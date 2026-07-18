@@ -618,6 +618,9 @@
     "heavyset": "Heavyset"
   },
   "auth": {
+    "or": "or",
+    "continueApple": "Continue with Apple",
+    "continueGoogle": "Continue with Google",
     "signUpLabel": "CREATE ACCOUNT",
     "signInLabel": "SIGN IN",
     "signUpTitle": "Save your data",

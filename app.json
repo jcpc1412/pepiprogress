@@ -65,6 +65,7 @@
         }
       ],
       "expo-notifications",
+      "expo-apple-authentication",
       [
         "expo-image-picker",
         {

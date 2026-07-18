@@ -1,12 +1,13 @@
+import * as AppleAuthentication from 'expo-apple-authentication';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, KeyboardAvoidingView, Modal, Platform, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, View } from 'react-native';
 
 import { LabeledInput, PrimaryButton } from '@/components/form';
 import { Card, EngravedLabel } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Colors, Spacing } from '@/constants/theme';
+import { Colors, Radii, Spacing } from '@/constants/theme';
 import { useAuth } from '@/lib/auth';
 import { useStore } from '@/lib/store';
 import { isSupabaseConfigured } from '@/lib/supabase';
@@ -28,7 +29,7 @@ export function AuthScreen({
   onClose: () => void;
 }) {
   const { t } = useTranslation();
-  const { signUp, signInWithPassword } = useAuth();
+  const { signUp, signInWithPassword, signInWithProvider, signInWithApple, appleAuthAvailable } = useAuth();
   const { exportState, replaceState } = useStore();
 
   const [mode, setMode] = useState<Mode>('signUp');
@@ -93,6 +94,35 @@ export function AuthScreen({
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       setFormError(msg);
+      setPhase('form');
+    }
+  };
+
+  // Social sign-in is one button for both new and returning users (the provider
+  // decides). We detect which by whether a cloud snapshot already exists: restore
+  // + merge for a returning account, migrate the local data up for a new one.
+  const handleSocial = async (start: () => Promise<boolean>) => {
+    setFormError(null);
+    try {
+      const ok = await start();
+      if (!ok) return; // user cancelled the provider sheet
+      setPhase('syncing');
+      const { supabase } = await import('@/lib/supabase');
+      const { data } = await supabase.auth.getUser();
+      if (data.user) {
+        const cloud = (await pullSnapshot(data.user.id)) ?? (await pullFromCloud(data.user.id));
+        if (cloud) {
+          replaceState(mergeStates(exportState(), cloud));
+        } else {
+          const local = exportState();
+          const result = await migrateToCloud(local, data.user.id);
+          await pushSnapshot(local, data.user.id);
+          setSyncErrors(result.errors);
+        }
+      }
+      setPhase('done');
+    } catch (err: unknown) {
+      setFormError(err instanceof Error ? err.message : String(err));
       setPhase('form');
     }
   };
@@ -162,6 +192,36 @@ export function AuthScreen({
             </Card>
           )}
 
+          {/* Social sign-in (spec 10): Apple native on iOS, browser OAuth for
+              Google + Apple-on-Android. Same account-linking + sync as email. */}
+          {phase === 'form' && (
+            <View style={styles.social}>
+              <View style={styles.orRow}>
+                <View style={styles.orLine} />
+                <ThemedText type="monoSm" themeColor="textMuted">{t('auth.or')}</ThemedText>
+                <View style={styles.orLine} />
+              </View>
+              {Platform.OS === 'ios' && appleAuthAvailable ? (
+                <AppleAuthentication.AppleAuthenticationButton
+                  buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
+                  buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.WHITE}
+                  cornerRadius={Radii.chamfer}
+                  style={styles.appleButton}
+                  onPress={() => handleSocial(signInWithApple)}
+                />
+              ) : (
+                <SocialButton
+                  label={t('auth.continueApple')}
+                  onPress={() => handleSocial(() => signInWithProvider('apple'))}
+                />
+              )}
+              <SocialButton
+                label={t('auth.continueGoogle')}
+                onPress={() => handleSocial(() => signInWithProvider('google'))}
+              />
+            </View>
+          )}
+
           {phase === 'syncing' && (
             <View style={styles.centered}>
               <ActivityIndicator size="large" color={Colors.dark.accent} />
@@ -203,11 +263,37 @@ export function AuthScreen({
   );
 }
 
+/** Outlined provider button (instrument register) for the browser-OAuth paths. */
+function SocialButton({ label, onPress }: { label: string; onPress: () => void }) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      onPress={onPress}
+      style={({ pressed }) => [styles.socialButton, pressed && styles.socialButtonPressed]}>
+      <ThemedText type="mono" themeColor="text">{label}</ThemedText>
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: 'transparent' },
   inner: { flex: 1, padding: Spacing.four, gap: Spacing.four },
   header: { gap: Spacing.two, paddingTop: Spacing.four },
   form: { gap: Spacing.three },
+  social: { gap: Spacing.two },
+  orRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two, paddingVertical: Spacing.one },
+  orLine: { flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: Colors.dark.border },
+  appleButton: { height: 48, width: '100%' },
+  socialButton: {
+    height: 48,
+    borderRadius: Radii.chamfer,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Colors.dark.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  socialButtonPressed: { opacity: 0.7 },
   toggleRow: { flexDirection: 'row', gap: Spacing.one, flexWrap: 'wrap' },
   toggleLink: { textDecorationLine: 'underline' },
   centered: { gap: Spacing.three, alignItems: 'center', flex: 1, justifyContent: 'center' },

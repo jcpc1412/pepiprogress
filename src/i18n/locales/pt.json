@@ -618,6 +618,9 @@
     "heavyset": "Robusto/a"
   },
   "auth": {
+    "or": "ou",
+    "continueApple": "Continuar com a Apple",
+    "continueGoogle": "Continuar com o Google",
     "signUpLabel": "CRIAR CONTA",
     "signInLabel": "ENTRAR",
     "signUpTitle": "Salve seus dados",
