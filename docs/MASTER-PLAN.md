@@ -276,9 +276,9 @@ the settings override + quieter-only silent adjustment shipped).
     pixel-perfect: 0.6 confidence floor, 8% padding, edge clamping, fall back to
     full frame on degenerate/no-op boxes. `CroppedPhoto` applies it to timeline +
     reel thumbs and the baseline frame; the wipe compare is deliberately left
-    uncropped (independent crops would desync the two halves). Fails open, so it
-    is inert until deployed. ⚠️ **ai-service not yet deployed** (v24) and
-    `npm run eval:posture` must pass 4/4 after. (beta-notes §1.2)
+    uncropped (independent crops would desync the two halves). Fails open end to
+    end. **ai-service deployed as v24 (2026-07-18); `eval:posture` 4/4.**
+    (beta-notes §1.2)
 29. **Reel phase 3 ✅ SHIPPED 2026-07-18** (commit d82626a). Photo-history dump
     view converted from stale Face/Body session filters to **pose filters**
     (including the `unsorted` bucket), pose badges on thumbnails, and W6-28 crops
