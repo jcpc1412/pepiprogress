@@ -327,6 +327,7 @@ function AccountStep({ onNext }: { onNext: () => void }) {
               value={password}
               onChangeText={(v) => { setPassword(v); setError(null); }}
               secureTextEntry
+              revealToggle
               autoComplete={mode === 'signUp' ? 'new-password' : 'current-password'}
             />
             {error && <ThemedText type="monoSm" style={{ color: theme.signalBad }}>{error}</ThemedText>}

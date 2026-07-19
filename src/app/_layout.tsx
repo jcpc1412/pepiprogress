@@ -14,6 +14,7 @@ import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { InstrumentBackground } from '@/components/instrument-background';
 import { AuthProvider } from '@/lib/auth';
 import { CloudSync } from '@/lib/cloud-sync';
+import { PhotoSync } from '@/lib/photo-sync';
 import { IntegrationSync } from '@/lib/integration-sync';
 import { HealthWriteBack } from '@/lib/health-writeback';
 import { LanguageSync } from '@/lib/language-sync';
@@ -48,6 +49,9 @@ function RootContent() {
       <HealthWriteBack />
       {/* Parses queued natural-language quick-logs in the background; renders nothing. */}
       <QuickLogRunner />
+      {/* Backfills photo uploads whenever signed in, so photos exist in the
+          cloud regardless of which tab the user visits; renders nothing. */}
+      <PhotoSync />
       {/* Provides SyncStatus context + debounced cloud backup while signed in. */}
       <CloudSync>
         {/* Base canvas + the continuous breathing lattice, mounted once behind

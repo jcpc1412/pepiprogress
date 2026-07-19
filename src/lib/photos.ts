@@ -1,7 +1,8 @@
 import { Directory, File, Paths } from 'expo-file-system';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
+import { cloudPathFor, resolutionPlan } from '@/lib/photo-cloud';
 import { supabase } from '@/lib/supabase';
 import type { PhotoEntry } from '@/lib/store';
 
@@ -68,7 +69,9 @@ export async function uploadPhotoToCloud(
   userId: string,
   photoId: string,
 ): Promise<string> {
-  const path = `${userId}/${photoId}.jpg`;
+  // Deterministic by design: recovery probes this exact path when a photo's
+  // cloudPath never made it into the synced snapshot (see photo-cloud.ts).
+  const path = cloudPathFor(userId, photoId);
   const uploadUri = await compressForUpload(localUri);
   const response = await fetch(uploadUri);
   const blob = await response.blob();
@@ -134,45 +137,100 @@ export async function getSignedUrl(cloudPath: string): Promise<string> {
 // In-memory cache: cloudPath → { url, expiresAt }. Cleared on app restart, which is fine.
 const signedUrlCache = new Map<string, { url: string; expiresAt: number }>();
 
-/**
- * Resolves the best displayable URI for a photo.
- * If the local file still exists (same device), returns it immediately.
- * Otherwise fetches a signed URL from cloudPath (cross-device restore).
- */
-export async function resolvePhotoUri(photo: PhotoEntry): Promise<string> {
-  try {
-    if (new File(photo.uri).exists) return photo.uri;
-  } catch {
-    // URI is not a valid local path (e.g. different device after cloud restore)
-  }
-
-  if (!photo.cloudPath) return photo.uri; // best-effort: show broken img rather than crash
-
-  const cached = signedUrlCache.get(photo.cloudPath);
+/** Signs a storage path, reusing a cached URL while it has life left. */
+async function signedUrlCached(path: string): Promise<string> {
+  const cached = signedUrlCache.get(path);
   if (cached && cached.expiresAt > Date.now() + 60_000) return cached.url;
-
-  const url = await getSignedUrl(photo.cloudPath);
-  signedUrlCache.set(photo.cloudPath, { url, expiresAt: Date.now() + 3_600_000 });
+  const url = await getSignedUrl(path);
+  signedUrlCache.set(path, { url, expiresAt: Date.now() + 3_600_000 });
   return url;
 }
 
+/** Outcome of resolving one photo for display. `healedPath` is set when a probe
+ *  found the object at its deterministic path, so the caller can record it. */
+export type ResolvedPhoto = { uri: string | null; healedPath?: string };
+
 /**
- * Hook: resolves display URIs for an array of photos, falling back to signed
- * URLs when local files are missing (cross-device). Starts with local URIs as
- * a placeholder (fast) then patches in cloud URLs as they resolve.
+ * Resolves the best displayable URI for a photo (W7-32).
+ *
+ * Local file wins when present. Otherwise the cloud copy is signed, either from
+ * the recorded `cloudPath` or, when that never synced, by probing the
+ * deterministic upload path. Returns `null` when nothing is displayable so the
+ * UI can show a placeholder instead of a broken image.
  */
-export function useResolvedUris(photos: PhotoEntry[]): Record<string, string> {
+export async function resolvePhotoUri(
+  photo: PhotoEntry,
+  userId: string | null,
+): Promise<ResolvedPhoto> {
+  let localExists = false;
+  try {
+    localExists = new File(photo.uri).exists;
+  } catch {
+    // Not a valid local path (e.g. a different device after cloud restore).
+  }
+
+  const plan = resolutionPlan(photo, userId, localExists);
+  switch (plan.kind) {
+    case 'local':
+      return { uri: plan.uri };
+    case 'signed':
+      return { uri: await signedUrlCached(plan.path) };
+    case 'probe':
+      try {
+        // Signing succeeds for a path that exists; a miss throws and we fall
+        // through to "nothing to show" rather than rendering a dead URI.
+        const uri = await signedUrlCached(plan.path);
+        return { uri, healedPath: plan.path };
+      } catch {
+        return { uri: null };
+      }
+    case 'none':
+      return { uri: null };
+  }
+}
+
+/**
+ * Hook: resolves display URIs for an array of photos, falling back to the cloud
+ * when local files are missing (cross-device restore). A photo that resolves to
+ * nothing is absent from the map, which the UI renders as a placeholder.
+ *
+ * When a probe recovers a photo whose `cloudPath` never synced, the entry is
+ * healed via `onHeal` so the next render skips straight to the signed path.
+ */
+export function useResolvedUris(
+  photos: PhotoEntry[],
+  userId: string | null,
+  onHeal?: (photoId: string, cloudPath: string) => void,
+): Record<string, string> {
   const [uris, setUris] = useState<Record<string, string>>(() =>
+    // Seed with local URIs so same-device rendering is immediate. Entries that
+    // turn out to be dead get replaced or dropped as resolution completes.
     Object.fromEntries(photos.map((p) => [p.id, p.uri])),
   );
+  // Held in a ref so a caller passing an inline callback doesn't re-trigger
+  // resolution on every render.
+  const healRef = useRef(onHeal);
+  useEffect(() => {
+    healRef.current = onHeal;
+  }, [onHeal]);
 
   useEffect(() => {
     let cancelled = false;
     for (const photo of photos) {
-      resolvePhotoUri(photo)
-        .then((url) => {
-          if (cancelled || url === photo.uri) return;
-          setUris((prev) => ({ ...prev, [photo.id]: url }));
+      resolvePhotoUri(photo, userId)
+        .then(({ uri, healedPath }) => {
+          if (cancelled) return;
+          if (healedPath) healRef.current?.(photo.id, healedPath);
+          setUris((prev) => {
+            if (uri === null) {
+              if (!(photo.id in prev)) return prev;
+              const next = { ...prev };
+              delete next[photo.id];
+              return next;
+            }
+            if (prev[photo.id] === uri) return prev;
+            return { ...prev, [photo.id]: uri };
+          });
         })
         .catch(() => {});
     }
@@ -181,7 +239,7 @@ export function useResolvedUris(photos: PhotoEntry[]): Record<string, string> {
     };
   // Re-run when the photo list identity changes (new photo added or cloudPath updated).
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [photos.map((p) => `${p.id}:${p.cloudPath ?? ''}`).join(',')]);
+  }, [photos.map((p) => `${p.id}:${p.cloudPath ?? ''}`).join(','), userId]);
 
   return uris;
 }

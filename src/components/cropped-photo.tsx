@@ -1,6 +1,7 @@
 import { Image } from 'expo-image';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
+import { useTheme } from '@/hooks/use-theme';
 import { cropToImageStyle, displayCrop, type CropBox } from '@/lib/photo-crop';
 
 /**
@@ -18,13 +19,26 @@ export function CroppedPhoto({
   style,
   accessibilityLabel,
 }: {
-  uri: string;
+  /** Undefined when the photo has no displayable source: the local file is gone
+   *  and no cloud copy could be resolved (W7-32). Renders as a placeholder,
+   *  which beats a broken image frame. */
+  uri?: string;
   cropBox?: CropBox;
   /** Sizing for the visible window (width/height/border, etc.). */
   style?: StyleProp<ViewStyle>;
   accessibilityLabel?: string;
 }) {
+  const theme = useTheme();
   const crop = displayCrop(cropBox);
+
+  if (!uri) {
+    return (
+      <View
+        style={[styles.window, { backgroundColor: theme.surfaceSunken }, style]}
+        accessibilityLabel={accessibilityLabel}
+      />
+    );
+  }
 
   if (!crop) {
     return (

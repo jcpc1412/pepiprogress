@@ -52,7 +52,7 @@ import {
   type CanonicalPose,
   type PoseKey,
 } from '@/lib/photo-pose';
-import { copyPhotoToDocuments, syncPhotoRow, uploadPhotoToCloud, useResolvedUris } from '@/lib/photos';
+import { copyPhotoToDocuments, useResolvedUris } from '@/lib/photos';
 import { localDateKey, useStore, type PhotoEntry, type PhotoSession } from '@/lib/store';
 
 /**
@@ -85,8 +85,10 @@ function WipeCompare({
   selectedUri,
   badge,
 }: {
-  baselineUri: string;
-  selectedUri: string;
+  /** Either may be undefined when a photo has no displayable source (W7-32).
+   *  The wipe needs both frames, so it degrades to a placeholder. */
+  baselineUri?: string;
+  selectedUri?: string;
   badge?: ReactNode;
 }) {
   const theme = useTheme();
@@ -120,18 +122,21 @@ function WipeCompare({
   };
 
   const clipW = w > 0 ? frac.interpolate({ inputRange: [0, 1], outputRange: [0, w] }) : undefined;
+  const bothPresent = !!baselineUri && !!selectedUri;
 
   return (
     <View
       style={[wipeStyles.wrap, { borderColor: theme.border, backgroundColor: theme.surfaceSunken }]}
       onLayout={handleLayout}
       {...pan.panHandlers}>
-      <Image source={{ uri: baselineUri }} style={StyleSheet.absoluteFill} contentFit="cover" />
+      {baselineUri ? (
+        <Image source={{ uri: baselineUri }} style={StyleSheet.absoluteFill} contentFit="cover" />
+      ) : null}
 
-      {clipW !== undefined && (
+      {bothPresent && clipW !== undefined && (
         <>
           <Animated.View style={[StyleSheet.absoluteFill, { width: clipW, overflow: 'hidden' }]}>
-            <Image source={{ uri: selectedUri }} style={{ width: w, flex: 1 }} contentFit="cover" />
+            <Image source={{ uri: selectedUri as string }} style={{ width: w, flex: 1 }} contentFit="cover" />
           </Animated.View>
           <Animated.View
             style={[wipeStyles.divider, { left: clipW, backgroundColor: 'rgba(240,239,236,0.85)' }]}
@@ -356,7 +361,13 @@ export function ProgressPhotos({
   const latest = sessionPhotos[0];
   // Resolve every photo's uri once (covers the compare views AND the reel, which
   // spans all sessions/parts). `sessionPhotos` is a subset, so this is enough.
-  const resolvedUris = useResolvedUris(photos);
+  // A probe that finds a photo at its deterministic cloud path records it, so
+  // later renders skip the probe entirely (W7-32).
+  const healCloudPath = useCallback(
+    (photoId: string, cloudPath: string) => updatePhoto(photoId, { cloudPath }),
+    [updatePhoto],
+  );
+  const resolvedUris = useResolvedUris(photos, user?.id ?? null, healCloudPath);
   const baseline = sessionPhotos[sessionPhotos.length - 1];
   const selected = sessionPhotos.find((p) => p.id === selectedId) ?? latest;
   const canCompare = sessionPhotos.length >= 2;
@@ -413,30 +424,9 @@ export function ProgressPhotos({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionPhotos.length, trackSession]);
 
-  // ── Upload new photos to cloud when signed in ────────────────────────────
-  const uploadedIds = useRef<Set<string>>(new Set());
-  useEffect(() => {
-    if (!user) return;
-    for (const photo of photos) {
-      if (photo.cloudPath || uploadedIds.current.has(photo.id)) continue;
-      uploadedIds.current.add(photo.id);
-      uploadPhotoToCloud(photo.uri, user.id, photo.id)
-        .then(async (cloudPath) => {
-          // Link the Storage object to a normalized `photo` row (best-effort).
-          await syncPhotoRow(photo, user.id, cloudPath, {
-            storage: profile.consentPhotoStorage ?? false,
-            ai: profile.consentPhotoAI ?? false,
-          }).catch(() => {});
-          updatePhoto(photo.id, { cloudPath });
-        })
-        .catch(() => {
-          uploadedIds.current.delete(photo.id);
-        });
-    }
-    // Consents are read at upload time; re-running on their change is unnecessary
-    // (uploads are guarded per photo by cloudPath/uploadedIds).
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [photos, user, updatePhoto]);
+  // Uploads used to live here, which meant a signed-in user who never opened
+  // this tab uploaded nothing and had no photos on a second device. They now
+  // run globally in <PhotoSync>, mounted in the root layout (W7-32).
 
   // ── Scientific analysis ──────────────────────────────────────────────────
   const runScientificAnalysis = useCallback(async () => {
@@ -881,7 +871,7 @@ export function ProgressPhotos({
                             pressed && styles.thumbPressed,
                           ]}>
                           <CroppedPhoto
-                            uri={resolvedUris[p.id] ?? p.uri}
+                            uri={resolvedUris[p.id]}
                             cropBox={p.cropBox}
                             style={styles.thumbImg}
                           />
@@ -949,13 +939,13 @@ export function ProgressPhotos({
               {/* Photo display */}
               {showWipe ? (
                 <WipeCompare
-                  baselineUri={resolvedUris[baseline.id] ?? baseline.uri}
-                  selectedUri={resolvedUris[selected.id] ?? selected.uri}
+                  baselineUri={resolvedUris[baseline.id]}
+                  selectedUri={resolvedUris[selected.id]}
                   badge={selectedBadge}
                 />
               ) : (
                 <PhotoFrame
-                  uri={resolvedUris[baseline.id] ?? baseline.uri}
+                  uri={resolvedUris[baseline.id]}
                   caption={t('photos.baseline')}
                   cropBox={baseline.cropBox}
                 />
@@ -1044,7 +1034,7 @@ export function ProgressPhotos({
                               pressed && styles.thumbPressed,
                             ]}>
                             <CroppedPhoto
-                              uri={resolvedUris[p.id] ?? p.uri}
+                              uri={resolvedUris[p.id]}
                               cropBox={p.cropBox}
                               style={styles.thumbImg}
                             />

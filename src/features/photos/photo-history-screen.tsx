@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Modal,
@@ -18,6 +18,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Fonts, MaxContentWidth, Radii, Spacing } from '@/constants/theme';
 import { compoundBySlug } from '@/data/compound-catalog';
+import { useAuth } from '@/lib/auth';
 import { daysBetween } from '@/lib/dates';
 import { useTheme } from '@/hooks/use-theme';
 import { CroppedPhoto } from '@/components/cropped-photo';
@@ -295,7 +296,8 @@ const filterStyles = StyleSheet.create({
 export function PhotoHistoryScreen({ onClose }: { onClose: () => void }) {
   const { t, i18n } = useTranslation();
   const theme = useTheme();
-  const { photos, doseEvents, protocolItems } = useStore();
+  const { photos, doseEvents, protocolItems, updatePhoto: updatePhotoEntry } = useStore();
+  const { user } = useAuth();
 
   const [filterPose, setFilterPose] = useState<PoseKey | 'all'>('all');
   const [filterCompounds, setFilterCompounds] = useState<string[]>([]);
@@ -318,7 +320,12 @@ export function PhotoHistoryScreen({ onClose }: { onClose: () => void }) {
     [photos, doseEvents, protocolItems],
   );
 
-  const resolvedUris = useResolvedUris(photos);
+  // Heal a probed cloud path so the next render signs it directly (W7-32).
+  const healCloudPath = useCallback(
+    (photoId: string, cloudPath: string) => updatePhotoEntry(photoId, { cloudPath }),
+    [updatePhotoEntry],
+  );
+  const resolvedUris = useResolvedUris(photos, user?.id ?? null, healCloudPath);
 
   const filtered = useMemo(() => {
     return photosWithTags.filter(({ photo }) => {
@@ -396,7 +403,7 @@ export function PhotoHistoryScreen({ onClose }: { onClose: () => void }) {
                           onPress={() => setEditingPhoto({ photo, derived })}
                           style={[styles.thumb, { borderColor: theme.border }]}>
                           <CroppedPhoto
-                            uri={resolvedUris[photo.id] ?? photo.uri}
+                            uri={resolvedUris[photo.id]}
                             cropBox={photo.cropBox}
                             style={styles.thumbImg}
                           />
