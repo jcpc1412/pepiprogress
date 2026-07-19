@@ -7,7 +7,7 @@ import { AccessibilityInfo, Animated, Dimensions, type LayoutChangeEvent, Modal,
 
 import { ConfidenceBadge } from '@/components/confidence-badge';
 import { LabeledInput, PrimaryButton, TextButton, SingleSelectChips } from '@/components/form';
-import { Card, Divider, EngravedLabel, Placeholder, Skeleton, StatusPill } from '@/components/surface';
+import { Card, Divider, EngravedLabel, Skeleton, StatusPill } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
 import { Radii, Spacing } from '@/constants/theme';
 import { PhotoCapture } from '@/features/photos/photo-capture';
@@ -37,7 +37,17 @@ import {
   sessionScientificKey,
 } from '@/lib/photo-cadence';
 import { daysBetween } from '@/lib/dates';
-import { CANONICAL_POSES, groupPhotosByPose, needsPoseConfirm, poseFromCapture, type CanonicalPose, type PoseKey } from '@/lib/photo-pose';
+import {
+  CANONICAL_POSES,
+  REQUIRED_POSES,
+  groupPhotosByPose,
+  needsPoseConfirm,
+  poseFromCapture,
+  sessionForPose,
+  viewForPose,
+  type CanonicalPose,
+  type PoseKey,
+} from '@/lib/photo-pose';
 import { copyPhotoToDocuments, syncPhotoRow, uploadPhotoToCloud, useResolvedUris } from '@/lib/photos';
 import { localDateKey, useStore, type PhotoEntry, type PhotoSession } from '@/lib/store';
 
@@ -230,13 +240,10 @@ function useThumbWidth() {
 // ─── Main component ──────────────────────────────────────────────────────────
 
 export function ProgressPhotos({
-  session,
-  onSessionChange,
   captureRef,
 }: {
-  session: PhotoSession;
-  onSessionChange: (s: PhotoSession) => void;
-  /** Parent sets this ref so its floating "Take a photo" button can trigger capture. */
+  /** Parent sets this ref so its floating "Take a photo" button can open the
+   *  capture chooser (guided check-in vs quick shot). */
   captureRef?: MutableRefObject<(() => void) | null>;
 }) {
   const { t, i18n } = useTranslation();
@@ -244,7 +251,27 @@ export function ProgressPhotos({
   const theme = useTheme();
   const { user } = useAuth();
   const { photos, entries, symptomEvents, protocolItems, profile, addPhoto, updatePhoto, setProfile } = useStore();
-  const [capturing, setCapturing] = useState(false);
+
+  // ── Reel-centric navigation (W6-26c, beta-notes §1.1/§1.3) ────────────────
+  // The reel (photos grouped by pose) is the spine. There is no upfront Face vs
+  // Body choice: the guided pose picker routes capture, and classification sorts
+  // casual shots. Tapping a required-pose reel group focuses that session track
+  // and reveals its compare / timeline / milestones / analysis below.
+  const [focused, setFocused] = useState<{ session: PhotoSession; part?: string } | null>(null);
+
+  // Capture flow: the floating button opens a chooser (guided check-in vs quick
+  // shot). Guided → a pose picker → the right camera; quick → the casual camera.
+  // `captureCfg` being non-null opens a camera; its shape decides which + how.
+  const [chooserOpen, setChooserOpen] = useState(false);
+  const [posePickerOpen, setPosePickerOpen] = useState(false);
+  const [captureCfg, setCaptureCfg] = useState<{
+    session: PhotoSession;
+    part?: string;
+    view: 'front' | 'side';
+    casual: boolean;
+  } | null>(null);
+  const [timer, setTimer] = useState<0 | 3 | 10>(0);
+
   const [analyzing, setAnalyzing] = useState(false);
   // Instant, deterministic quick readout shown while the deep analysis loads (§4A).
   const [quickNote, setQuickNote] = useState<{ id: string; readout: QuickReadout } | null>(null);
@@ -254,7 +281,6 @@ export function ProgressPhotos({
   const [aiError, setAiError] = useState<'network' | 'server' | null>(null);
   const [lastAiAction, setLastAiAction] = useState<'scientific' | 'encouragement' | null>(null);
   // ── PH-2 instant post-capture feedback ───────────────────────────────────
-  // A saved photo id waiting for its instant read (set by the capture onSaved).
   const [pendingSaveId, setPendingSaveId] = useState<string | null>(null);
   const processedSaves = useRef<Set<string>>(new Set());
   const [instantRead, setInstantRead] = useState<{
@@ -268,19 +294,15 @@ export function ProgressPhotos({
   // Celebration pulse on save (reduce-motion aware, mirrors instrument-background).
   const [reduceMotion, setReduceMotion] = useState(false);
   const [celebrate] = useState(() => new Animated.Value(0));
-  // Custom "problem area" sub-track within the body session (§4A). Undefined =
-  // the whole face/body track. Face has no sub-parts.
-  const [part, setPart] = useState<string | undefined>(undefined);
   const [addingPart, setAddingPart] = useState(false);
   const [partDraft, setPartDraft] = useState('');
   // Reel (W6-25): id of the photo whose pose is being assigned via the chip sheet.
   const [taggingId, setTaggingId] = useState<string | null>(null);
-  // Capture settings moved out of the camera (beta feedback): the angle + self-
-  // timer are chosen here and handed to PhotoCapture, keeping the camera clean.
-  const [view, setView] = useState<'front' | 'side'>('front');
-  const [timer, setTimer] = useState<0 | 3 | 10>(0);
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => setPart(undefined), [session]);
+
+  // The track the hooks below operate on: the live capture target while a camera
+  // is open (so the ghost matches what is being shot), else the focused track.
+  const trackSession: PhotoSession = captureCfg?.session ?? focused?.session ?? 'body';
+  const trackPart = captureCfg?.part ?? focused?.part;
 
   useEffect(() => {
     let mounted = true;
@@ -295,9 +317,9 @@ export function ProgressPhotos({
   const thumbW = useThumbWidth();
   const thumbH = Math.floor(thumbW * (4 / 3));
 
-  // Expose the capture trigger to the parent floating button.
+  // Expose the capture trigger to the parent floating button: open the chooser.
   useEffect(() => {
-    if (captureRef) captureRef.current = () => setCapturing(true);
+    if (captureRef) captureRef.current = () => setChooserOpen(true);
     return () => {
       if (captureRef) captureRef.current = null;
     };
@@ -305,7 +327,7 @@ export function ProgressPhotos({
 
   // Newest-first; [0] = latest, last = baseline. Scoped to the active track
   // (session + optional custom part), so each part has its own baseline/ghost.
-  const sessionPhotos = photos.filter((p) => p.session === session && (p.part ?? undefined) === part);
+  const sessionPhotos = photos.filter((p) => p.session === trackSession && (p.part ?? undefined) === trackPart);
   // Body sub-parts the user has created (from profile + any already-tagged photos).
   const bodyParts = useMemo(
     () =>
@@ -341,15 +363,15 @@ export function ProgressPhotos({
     }
     return map;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [photos, session, part, resolvedUris]);
+  }, [photos, trackSession, trackPart, resolvedUris]);
 
   // ── Compound group + cadence ─────────────────────────────────────────────
   const group = useMemo(() => getGroupForSlugs(profile.compoundSlugs), [profile.compoundSlugs]);
   const cadence = getCadence(group);
 
   // ── Milestone dates from profile ─────────────────────────────────────────
-  const nextEncouragementISO = profile[sessionEncouragementKey(session)];
-  const nextScientificISO = profile[sessionScientificKey(session)];
+  const nextEncouragementISO = profile[sessionEncouragementKey(trackSession)];
+  const nextScientificISO = profile[sessionScientificKey(trackSession)];
 
   const nextEncouragementLabel = useMemo(
     () => (nextEncouragementISO ? new Date(nextEncouragementISO).toLocaleDateString() : null),
@@ -363,19 +385,19 @@ export function ProgressPhotos({
   // ── Schedule milestones when the first photo for a session is saved ───────
   useEffect(() => {
     if (sessionPhotos.length === 0) return;
-    if (part) return; // custom parts share the base body cadence; no own schedule
-    const encKey = sessionEncouragementKey(session);
+    if (trackPart) return; // custom parts share the base body cadence; no own schedule
+    const encKey = sessionEncouragementKey(trackSession);
     if (profile[encKey]) return;
     if (cadence.encouragementDays === 0) return;
 
-    const sciKey = sessionScientificKey(session);
+    const sciKey = sessionScientificKey(trackSession);
     const iso = new Date().toISOString();
     setProfile({
       [encKey]: nextMilestoneISO(iso, cadence.encouragementDays),
       [sciKey]: nextMilestoneISO(iso, cadence.scientificDays),
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionPhotos.length, session]);
+  }, [sessionPhotos.length, trackSession]);
 
   // ── Upload new photos to cloud when signed in ────────────────────────────
   const uploadedIds = useRef<Set<string>>(new Set());
@@ -495,7 +517,7 @@ export function ProgressPhotos({
       const res = await analyzePhoto({
         uri: resolvedUris[latest.id] ?? latest.uri,
         baselineUri: resolvedUris[baseline.id] ?? baseline.uri,
-        session,
+        session: trackSession,
         locale: i18n.language,
         bodyTypeCalibration: bodyCalibration,
         cycleContext: cycleCtx,
@@ -513,7 +535,7 @@ export function ProgressPhotos({
         coverage: res.coverage,
       });
       setLastNote({ id: latest.id, analysis: res });
-      const sciKey = sessionScientificKey(session);
+      const sciKey = sessionScientificKey(trackSession);
       setProfile({ [sciKey]: nextMilestoneISO(new Date().toISOString(), cadence.scientificDays) });
     } catch (err) {
       const kind = aiErrorKind(err);
@@ -521,7 +543,7 @@ export function ProgressPhotos({
     } finally {
       setAnalyzing(false);
     }
-  }, [latest, baseline, analyzing, session, i18n.language, profile, entries, symptomEvents, protocolItems, updatePhoto, setProfile, cadence, resolvedUris]);
+  }, [latest, baseline, analyzing, trackSession, i18n.language, profile, entries, symptomEvents, protocolItems, updatePhoto, setProfile, cadence, resolvedUris]);
 
   // ── Encouragement check-in ───────────────────────────────────────────────
   const runEncouragementCheckin = useCallback(async () => {
@@ -561,7 +583,7 @@ export function ProgressPhotos({
         units: profile.units,
       });
       setEncouragementNote(res.message);
-      const encKey = sessionEncouragementKey(session);
+      const encKey = sessionEncouragementKey(trackSession);
       setProfile({ [encKey]: nextMilestoneISO(new Date().toISOString(), cadence.encouragementDays) });
     } catch (err) {
       const kind = aiErrorKind(err);
@@ -569,11 +591,9 @@ export function ProgressPhotos({
     } finally {
       setAnalyzing(false);
     }
-  }, [analyzing, entries, profile, group, lastNote, i18n.language, session, cadence, setProfile]);
+  }, [analyzing, entries, profile, group, lastNote, i18n.language, trackSession, cadence, setProfile]);
 
   // ── PH-2: instant post-capture read ──────────────────────────────────────
-  // Fired by the capture components after a shot lands in the store. Records the
-  // id; the effect below runs the read once the store reflects the new photo.
   const onPhotoSaved = useCallback((photoId: string) => {
     setPendingSaveId(photoId);
   }, []);
@@ -652,17 +672,23 @@ export function ProgressPhotos({
     const saved = photos.find((p) => p.id === pendingSaveId);
     if (!saved) return; // wait for the store to reflect the new photo
     processedSaves.current.add(pendingSaveId);
-    // In-app captures use the locked-pose flow (ghost + measurement), so their
-    // pose is derived from session+angle and they belong to the comparability
-    // (required) set. Only tag once, never overwrite a manual/imported pose.
+    // Guided (locked) captures already carry a derived pose; only backfill one if
+    // missing. Casual shots land pose-less and get background classification so
+    // they sort into the reel without forcing a comparability tag.
     if (saved.pose === undefined) {
-      updatePhoto(saved.id, { pose: poseFromCapture(saved.session, saved.view), isRequiredSet: true });
+      if (saved.isRequiredSet) {
+        updatePhoto(saved.id, { pose: poseFromCapture(saved.session, saved.view), isRequiredSet: true });
+      } else {
+        void classifyPose(resolvedUris[saved.id] ?? saved.uri).then((res) => {
+          if (res) updatePhoto(saved.id, { pose: res.pose, poseConfidence: res.confidence, session: sessionForPose(res.pose) });
+        });
+      }
     }
     // The read is async (first state update lands after a microtask); firing it
     // here is the intended "react to a saved photo" synchronization.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void runInstantRead(saved);
-  }, [pendingSaveId, photos, runInstantRead, updatePhoto]);
+  }, [pendingSaveId, photos, runInstantRead, updatePhoto, resolvedUris]);
 
   // ── Camera-roll dump import (W6-25) ──────────────────────────────────────
   // Multi-select: shoot or dump a pile of photos and let the reel catalogue
@@ -685,7 +711,7 @@ export function ProgressPhotos({
       const parsed = exifDate ? new Date(exifDate.replace(/^(\d{4}):(\d{2}):(\d{2})/, '$1-$2-$3')) : null;
       const takenAt = parsed && Number.isFinite(parsed.getTime()) ? parsed.toISOString() : new Date().toISOString();
       const persistentUri = await copyPhotoToDocuments(asset.uri);
-      const id = addPhoto({ session, part, uri: persistentUri, takenAt, isRequiredSet: false });
+      const id = addPhoto({ session: 'body', uri: persistentUri, takenAt, isRequiredSet: false });
       imported.push({ id, uri: persistentUri });
     }
     // Auto-classify in the background, sequentially so a big dump doesn't burst the
@@ -695,19 +721,50 @@ export function ProgressPhotos({
     void (async () => {
       for (const it of imported) {
         const res = await classifyPose(it.uri);
-        if (res) updatePhoto(it.id, { pose: res.pose, poseConfidence: res.confidence });
+        if (res) updatePhoto(it.id, { pose: res.pose, poseConfidence: res.confidence, session: sessionForPose(res.pose) });
       }
     })();
-  }, [session, part, addPhoto, updatePhoto]);
+  }, [addPhoto, updatePhoto]);
 
   // ── Reel (W6-25): every photo, grouped by pose ───────────────────────────
   const reelGroups = useMemo(() => groupPhotosByPose(photos), [photos]);
   const poseLabel = useCallback(
     (pose: PoseKey): string =>
-      t(`photos.pose_${pose}` as 'photos.pose_front_relaxed'),
+      pose === 'unsorted'
+        ? t('photos.pose_unsorted')
+        : t(`photos.pose_${pose}` as 'photos.pose_front_relaxed'),
     [t],
   );
   const taggingPhoto = taggingId ? photos.find((p) => p.id === taggingId) ?? null : null;
+
+  // Focus a required-pose reel group's session track (unsorted/other are triage
+  // only, so they never focus).
+  const focusPose = useCallback((pose: PoseKey) => {
+    if (pose === 'unsorted' || pose === 'other') return;
+    setSelectedId(null);
+    setLastNote(null);
+    setEncouragementNote(null);
+    setInstantRead(null);
+    setFocused({ session: sessionForPose(pose as CanonicalPose), part: undefined });
+  }, []);
+
+  // ── Capture entry actions ────────────────────────────────────────────────
+  const startGuided = useCallback((pose: CanonicalPose) => {
+    const session = sessionForPose(pose);
+    setFocused({ session, part: undefined });
+    setPosePickerOpen(false);
+    setCaptureCfg({ session, part: undefined, view: viewForPose(pose), casual: false });
+  }, []);
+
+  const startQuick = useCallback(() => {
+    setChooserOpen(false);
+    setCaptureCfg({ session: 'body', part: undefined, view: 'front', casual: true });
+  }, []);
+
+  const startPartCapture = useCallback(() => {
+    if (!focused?.part) return;
+    setCaptureCfg({ session: 'body', part: focused.part, view: 'front', casual: false });
+  }, [focused]);
 
   // ── Derived display ───────────────────────────────────────────────────────
   const note = lastNote && selected && lastNote.id === selected.id ? lastNote.analysis : null;
@@ -727,62 +784,14 @@ export function ProgressPhotos({
       </View>
     ) : null;
 
+  const useVisionCamera = captureCfg?.session === 'face' && !captureCfg.casual;
+  const trackLabel =
+    trackSession === 'face' ? t('photos.sessionFace') : trackPart ?? t('photos.sessionBody');
+
   return (
     <View style={styles.wrap}>
-      {/* Face / Body selector */}
-      <SingleSelectChips
-        options={[
-          { value: 'face', label: t('photos.sessionFace') },
-          { value: 'body', label: t('photos.sessionBody') },
-        ]}
-        value={session}
-        onChange={onSessionChange}
-      />
-
-      {/* Body sub-parts (custom "problem areas") — only within the body session. */}
-      {session === 'body' && (
-        <View style={styles.partRow}>
-          <PartChip label={t('photos.partWhole')} active={part === undefined} onPress={() => setPart(undefined)} />
-          {bodyParts.map((p) => (
-            <PartChip key={p} label={p} active={part === p} onPress={() => setPart(p)} />
-          ))}
-          <PartChip label={t('photos.addPart')} active={false} onPress={() => setAddingPart(true)} dashed />
-        </View>
-      )}
-
-      {/* Capture settings (angle + self-timer) — chosen here, applied in-camera.
-          Hidden until the track has a first photo (UX audit: four control rows
-          before a baseline exists was pre-capture overload). */}
-      {session === 'body' && sessionPhotos.length > 0 && (
-        <View style={styles.captureSettings}>
-          <View style={styles.settingCol}>
-            <EngravedLabel>{t('photos.angleLabel')}</EngravedLabel>
-            <SingleSelectChips
-              options={[
-                { value: 'front', label: t('photos.viewFront') },
-                { value: 'side', label: t('photos.viewSide') },
-              ]}
-              value={view}
-              onChange={setView}
-            />
-          </View>
-          <View style={styles.settingCol}>
-            <EngravedLabel>{t('photos.timerLabel')}</EngravedLabel>
-            <SingleSelectChips
-              options={[
-                { value: '0', label: t('photos.timerOff') },
-                { value: '3', label: t('photos.timer3') },
-                { value: '10', label: t('photos.timer10') },
-              ]}
-              value={String(timer)}
-              onChange={(v) => setTimer(Number(v) as 0 | 3 | 10)}
-            />
-          </View>
-        </View>
-      )}
-
-      {/* Photo display */}
-      {sessionPhotos.length === 0 ? (
+      {/* ── Empty state: no photos yet ── */}
+      {photos.length === 0 ? (
         <View style={styles.emptyBlock}>
           <ThemedText type="mono" themeColor="textMuted">
             {t('photos.empty')}
@@ -790,262 +799,315 @@ export function ProgressPhotos({
           <ThemedText type="monoSm" themeColor="textMuted" style={styles.clothingGuidance}>
             {t('photos.clothingGuidance')}
           </ThemedText>
-          {/* The empty state carries its own action (UX audit). */}
-          <TextButton label={t('photos.open')} onPress={() => setCapturing(true)} />
+          <TextButton label={t('photos.open')} onPress={() => setChooserOpen(true)} />
         </View>
-      ) : showWipe ? (
-        <WipeCompare
-          baselineUri={resolvedUris[baseline.id] ?? baseline.uri}
-          selectedUri={resolvedUris[selected.id] ?? selected.uri}
-          badge={selectedBadge}
-        />
       ) : (
-        <PhotoFrame uri={resolvedUris[baseline.id] ?? baseline.uri} caption={t('photos.baseline')} />
-      )}
-
-      {/* PH-2: instant post-capture read — appears right after a save. */}
-      {instantRead && sessionPhotos.some((p) => p.id === instantRead.id) && (
-        <Animated.View
-          style={{
-            opacity: celebrate,
-            transform: [{ scale: celebrate.interpolate({ inputRange: [0, 1], outputRange: [0.97, 1] }) }],
-          }}>
-          <Card style={styles.instantCard}>
-            <View style={styles.instantHeader}>
-              <EngravedLabel>{t('photos.savedTitle')}</EngravedLabel>
-              {instantRead.highscore && <StatusPill label={t('photos.qualityHighscore')} tone="good" />}
+        <>
+          {/* ── Reel: the spine. Every photo, grouped by pose; tapping a
+              required-pose group drills into its progress track. Unsorted/other
+              groups are triage (tap a photo to classify). ── */}
+          {!focused && (
+          <View style={styles.reel}>
+            <View style={styles.timelineHeader}>
+              <EngravedLabel>{t('photos.reelLabel')}</EngravedLabel>
+              <ThemedText type="monoSm" themeColor="textMuted">{t('photos.reelHint')}</ThemedText>
             </View>
-            {instantRead.baseline ? (
-              <ThemedText type="small" themeColor="textSecondary">
-                {t('photos.savedBaselineBody')}
-              </ThemedText>
-            ) : (
-              <>
-                <View style={styles.instantBadgeRow}>
-                  <StatusPill
-                    label={t(
-                      `photos.comparability_${instantRead.comparability}` as 'photos.comparability_comparable',
-                    )}
-                    tone={
-                      instantRead.comparability === 'comparable'
-                        ? 'good'
-                        : instantRead.comparability === 'partial'
-                          ? 'watch'
-                          : 'bad'
-                    }
-                  />
-                </View>
-                {instantRead.hint ? (
-                  <ThemedText type="mono" themeColor="textSecondary">
-                    {instantRead.hint}
-                  </ThemedText>
-                ) : null}
-                {instantRead.retake ? (
-                  <ThemedText type="monoSm" themeColor="signalBad">
-                    {t('photos.retakeHint')}
-                  </ThemedText>
-                ) : null}
-              </>
-            )}
-          </Card>
-        </Animated.View>
-      )}
-
-      {/* Timeline placeholder */}
-      {sessionPhotos.length <= 1 && (
-        <View>
-          <EngravedLabel>{t('photos.timelineLabel')}</EngravedLabel>
-          <Placeholder label={t('photos.timelinePlaceholder')} height={thumbH + Spacing.three}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.strip}>
-              {Array.from({ length: 4 }, (_, i) => (
-                <View key={i} style={[styles.thumb, { width: thumbW, height: thumbH, borderColor: theme.border, borderStyle: 'dashed' }]} />
-              ))}
-            </ScrollView>
-          </Placeholder>
-        </View>
-      )}
-
-      {/* Timeline strip — 4-wide thumbnails, scrollable for older shots */}
-      {sessionPhotos.length > 1 && (
-        <View>
-          <View style={styles.timelineHeader}>
-            <EngravedLabel>{t('photos.timelineLabel')}</EngravedLabel>
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => router.push('/photo-history')}
-              hitSlop={8}>
-              <ThemedText type="monoSm" themeColor="accent">{t('photos.history')}</ThemedText>
-            </Pressable>
-          </View>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.strip}>
-            {[...sessionPhotos].reverse().map((p, i, arr) => {
-              const isActive = p.id === (selected?.id ?? latest?.id);
-              const baselineDay = arr[0]?.takenAt;
-              const dayNum = baselineDay
-                ? daysBetween(localDateKey(new Date(baselineDay)), localDateKey(new Date(p.takenAt))) + 1
-                : i + 1;
+            {reelGroups.map((g) => {
+              const focusable = g.pose !== 'unsorted' && g.pose !== 'other';
               return (
-                <View key={p.id} style={styles.thumbCol}>
+                <View key={g.pose} style={styles.reelGroup}>
                   <Pressable
-                    accessibilityRole="button"
-                    onPress={() => setSelectedId(p.id)}
-                    style={({ pressed }) => [
-                      styles.thumb,
-                      { width: thumbW, height: thumbH, borderColor: isActive ? '#9A9590' : 'transparent' },
-                      pressed && styles.thumbPressed,
-                    ]}>
-                    <Image source={{ uri: resolvedUris[p.id] ?? p.uri }} style={styles.thumbImg} contentFit="cover" />
-                    <ComparabilityDot photo={p} />
+                    accessibilityRole={focusable ? 'button' : 'text'}
+                    accessibilityLabel={focusable ? t('photos.viewTrack', { pose: poseLabel(g.pose) }) : undefined}
+                    disabled={!focusable}
+                    onPress={() => focusPose(g.pose)}
+                    style={styles.reelGroupHead}>
+                    <ThemedText type="monoSm" themeColor={g.pose === 'unsorted' ? 'accent' : 'textMuted'}>
+                      {`${poseLabel(g.pose)} (${g.photos.length})`}
+                    </ThemedText>
+                    {focusable && (
+                      <ThemedText type="monoSm" themeColor="accent">
+                        {t('photos.viewLink')}
+                      </ThemedText>
+                    )}
                   </Pressable>
-                  <ThemedText type="monoSm" themeColor={isActive ? 'text' : 'textMuted'}>
-                    {t('photos.dayShort', { count: dayNum })}
-                  </ThemedText>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.strip}>
+                    {g.photos.map((p) => {
+                      const confirm = needsPoseConfirm(p);
+                      return (
+                        <Pressable
+                          key={p.id}
+                          accessibilityRole="button"
+                          accessibilityLabel={confirm ? t('photos.confirmPose') : t('photos.assignPose')}
+                          onPress={() => setTaggingId(p.id)}
+                          style={({ pressed }) => [
+                            styles.thumb,
+                            { width: thumbW, height: thumbH, borderColor: confirm ? theme.accent : 'transparent' },
+                            pressed && styles.thumbPressed,
+                          ]}>
+                          <Image source={{ uri: resolvedUris[p.id] ?? p.uri }} style={styles.thumbImg} contentFit="cover" />
+                          {confirm && <View style={[dotStyles.dot, { backgroundColor: theme.accent }]} />}
+                        </Pressable>
+                      );
+                    })}
+                  </ScrollView>
                 </View>
               );
             })}
-          </ScrollView>
-        </View>
-      )}
-
-      {/* Milestone section */}
-      {canCompare && (
-        <View style={styles.milestoneSection}>
-          <TextButton
-            label={t('photos.runDeepComparison', { days: cadence.scientificDays })}
-            onPress={runScientificAnalysis}
-            disabled={analyzing}
-          />
-          <View style={styles.milestoneRow}>
-            <TextButton
-              label={t('photos.runCheckin')}
-              onPress={runEncouragementCheckin}
-              disabled={analyzing}
-            />
-            {nextScientificLabel && (
-              <ThemedText type="monoSm" themeColor="textMuted">
-                {t('photos.nextDeepComparison', { date: nextScientificLabel })}
-              </ThemedText>
-            )}
           </View>
-        </View>
-      )}
+          )}
 
-      {analyzing &&
-        (lastAiAction === 'scientific' && quickNote ? (
-          <Card style={styles.quickCard}>
-            <EngravedLabel>{t('photos.quickReadTitle')}</EngravedLabel>
-            <ThemedText type="small" themeColor="text">
-              {t(`photos.comparability_${quickNote.readout.comparability}` as 'photos.comparability_comparable')}
-            </ThemedText>
-            {quickNote.readout.changes.map((c) => (
-              <ThemedText key={c.metricKey} type="mono" themeColor="textSecondary">
-                {`${t(c.metricKey as 'measurements.waist')} ${c.delta > 0 ? '+' : ''}${Math.round(c.delta * 10) / 10}${munit}`}
-              </ThemedText>
-            ))}
-            <ThemedText type="monoSm" themeColor="textMuted">
-              {t('photos.deepLoading')}
-            </ThemedText>
-            <Skeleton lines={2} />
-          </Card>
-        ) : (
-          <Skeleton lines={3} />
-        ))}
-      {aiError && (
-        <View style={styles.aiErrorRow}>
-          <ThemedText type="small" themeColor="textSecondary" style={styles.aiErrorText}>
-            {t(aiError === 'network' ? 'common.errorNetwork' : 'common.errorServer')}
-          </ThemedText>
-          <TextButton
-            label={t('common.retry')}
-            onPress={() =>
-              lastAiAction === 'scientific' ? runScientificAnalysis() : runEncouragementCheckin()
-            }
-          />
-        </View>
-      )}
-
-      {sessionPhotos.length === 1 && nextEncouragementLabel && (
-        <ThemedText type="monoSm" themeColor="textMuted">
-          {t('photos.baselineSet', { date: nextEncouragementLabel })}
-        </ThemedText>
-      )}
-
-      {(note || encouragementNote) && (
-        <Card>
-          {note?.change ? (
-            <>
-              <View style={styles.analysisHead}>
-                <EngravedLabel>{t('photos.analysisLabel')}</EngravedLabel>
-                <ConfidenceBadge level={photoReadLevel(note)} rationale={t(photoReadWhyKey(note))} />
+          {/* ── Focused track: compare + timeline + milestones + analysis.
+              Drills in over the reel; "close" returns to the reel. ── */}
+          {focused && (
+            <View style={styles.trackDetail}>
+              <View style={styles.trackHead}>
+                <EngravedLabel>{t('photos.trackLabel', { track: trackLabel })}</EngravedLabel>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={t('photos.closeTrack')}
+                  onPress={() => setFocused(null)}
+                  hitSlop={8}>
+                  <ThemedText type="monoSm" themeColor="textMuted">{t('common.close')}</ThemedText>
+                </Pressable>
               </View>
-              <ThemedText type="mono" themeColor="textSecondary">
-                {note.change}
-              </ThemedText>
-              {note.retake && (
-                <>
-                  <Divider />
-                  <ThemedText type="monoSm" themeColor="signalBad">
-                    {t('photos.retakeHint')}
+
+              {/* Body sub-parts (custom "problem areas") within the body track. */}
+              {trackSession === 'body' && (
+                <View style={styles.partRow}>
+                  <PartChip
+                    label={t('photos.partWhole')}
+                    active={trackPart === undefined}
+                    onPress={() => setFocused({ session: 'body', part: undefined })}
+                  />
+                  {bodyParts.map((p) => (
+                    <PartChip
+                      key={p}
+                      label={p}
+                      active={trackPart === p}
+                      onPress={() => setFocused({ session: 'body', part: p })}
+                    />
+                  ))}
+                  <PartChip label={t('photos.addPart')} active={false} onPress={() => setAddingPart(true)} dashed />
+                </View>
+              )}
+
+              {/* Capture into the selected custom part (the guided picker only
+                  covers the four whole-body/face poses). */}
+              {trackPart && (
+                <TextButton label={t('photos.capturePart', { part: trackPart })} onPress={startPartCapture} />
+              )}
+
+              {sessionPhotos.length === 0 ? (
+                <View style={styles.emptyBlock}>
+                  <ThemedText type="mono" themeColor="textMuted">
+                    {t('photos.empty')}
                   </ThemedText>
+                  <TextButton label={t('photos.open')} onPress={() => setChooserOpen(true)} />
+                </View>
+              ) : (
+                <>
+              {/* Photo display */}
+              {showWipe ? (
+                <WipeCompare
+                  baselineUri={resolvedUris[baseline.id] ?? baseline.uri}
+                  selectedUri={resolvedUris[selected.id] ?? selected.uri}
+                  badge={selectedBadge}
+                />
+              ) : (
+                <PhotoFrame uri={resolvedUris[baseline.id] ?? baseline.uri} caption={t('photos.baseline')} />
+              )}
+
+              {/* PH-2: instant post-capture read — appears right after a save. */}
+              {instantRead && sessionPhotos.some((p) => p.id === instantRead.id) && (
+                <Animated.View
+                  style={{
+                    opacity: celebrate,
+                    transform: [{ scale: celebrate.interpolate({ inputRange: [0, 1], outputRange: [0.97, 1] }) }],
+                  }}>
+                  <Card style={styles.instantCard}>
+                    <View style={styles.instantHeader}>
+                      <EngravedLabel>{t('photos.savedTitle')}</EngravedLabel>
+                      {instantRead.highscore && <StatusPill label={t('photos.qualityHighscore')} tone="good" />}
+                    </View>
+                    {instantRead.baseline ? (
+                      <ThemedText type="small" themeColor="textSecondary">
+                        {t('photos.savedBaselineBody')}
+                      </ThemedText>
+                    ) : (
+                      <>
+                        <View style={styles.instantBadgeRow}>
+                          <StatusPill
+                            label={t(
+                              `photos.comparability_${instantRead.comparability}` as 'photos.comparability_comparable',
+                            )}
+                            tone={
+                              instantRead.comparability === 'comparable'
+                                ? 'good'
+                                : instantRead.comparability === 'partial'
+                                  ? 'watch'
+                                  : 'bad'
+                            }
+                          />
+                        </View>
+                        {instantRead.hint ? (
+                          <ThemedText type="mono" themeColor="textSecondary">
+                            {instantRead.hint}
+                          </ThemedText>
+                        ) : null}
+                        {instantRead.retake ? (
+                          <ThemedText type="monoSm" themeColor="signalBad">
+                            {t('photos.retakeHint')}
+                          </ThemedText>
+                        ) : null}
+                      </>
+                    )}
+                  </Card>
+                </Animated.View>
+              )}
+
+              {/* Timeline strip — 4-wide thumbnails, scrollable for older shots */}
+              {sessionPhotos.length > 1 && (
+                <View>
+                  <View style={styles.timelineHeader}>
+                    <EngravedLabel>{t('photos.timelineLabel')}</EngravedLabel>
+                    <Pressable
+                      accessibilityRole="button"
+                      onPress={() => router.push('/photo-history')}
+                      hitSlop={8}>
+                      <ThemedText type="monoSm" themeColor="accent">{t('photos.history')}</ThemedText>
+                    </Pressable>
+                  </View>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.strip}>
+                    {[...sessionPhotos].reverse().map((p, i, arr) => {
+                      const isActive = p.id === (selected?.id ?? latest?.id);
+                      const baselineDay = arr[0]?.takenAt;
+                      const dayNum = baselineDay
+                        ? daysBetween(localDateKey(new Date(baselineDay)), localDateKey(new Date(p.takenAt))) + 1
+                        : i + 1;
+                      return (
+                        <View key={p.id} style={styles.thumbCol}>
+                          <Pressable
+                            accessibilityRole="button"
+                            onPress={() => setSelectedId(p.id)}
+                            style={({ pressed }) => [
+                              styles.thumb,
+                              { width: thumbW, height: thumbH, borderColor: isActive ? '#9A9590' : 'transparent' },
+                              pressed && styles.thumbPressed,
+                            ]}>
+                            <Image source={{ uri: resolvedUris[p.id] ?? p.uri }} style={styles.thumbImg} contentFit="cover" />
+                            <ComparabilityDot photo={p} />
+                          </Pressable>
+                          <ThemedText type="monoSm" themeColor={isActive ? 'text' : 'textMuted'}>
+                            {t('photos.dayShort', { count: dayNum })}
+                          </ThemedText>
+                        </View>
+                      );
+                    })}
+                  </ScrollView>
+                </View>
+              )}
+
+              {/* Milestone section */}
+              {canCompare && (
+                <View style={styles.milestoneSection}>
+                  <TextButton
+                    label={t('photos.runDeepComparison', { days: cadence.scientificDays })}
+                    onPress={runScientificAnalysis}
+                    disabled={analyzing}
+                  />
+                  <View style={styles.milestoneRow}>
+                    <TextButton
+                      label={t('photos.runCheckin')}
+                      onPress={runEncouragementCheckin}
+                      disabled={analyzing}
+                    />
+                    {nextScientificLabel && (
+                      <ThemedText type="monoSm" themeColor="textMuted">
+                        {t('photos.nextDeepComparison', { date: nextScientificLabel })}
+                      </ThemedText>
+                    )}
+                  </View>
+                </View>
+              )}
+
+              {analyzing &&
+                (lastAiAction === 'scientific' && quickNote ? (
+                  <Card style={styles.quickCard}>
+                    <EngravedLabel>{t('photos.quickReadTitle')}</EngravedLabel>
+                    <ThemedText type="small" themeColor="text">
+                      {t(`photos.comparability_${quickNote.readout.comparability}` as 'photos.comparability_comparable')}
+                    </ThemedText>
+                    {quickNote.readout.changes.map((c) => (
+                      <ThemedText key={c.metricKey} type="mono" themeColor="textSecondary">
+                        {`${t(c.metricKey as 'measurements.waist')} ${c.delta > 0 ? '+' : ''}${Math.round(c.delta * 10) / 10}${munit}`}
+                      </ThemedText>
+                    ))}
+                    <ThemedText type="monoSm" themeColor="textMuted">
+                      {t('photos.deepLoading')}
+                    </ThemedText>
+                    <Skeleton lines={2} />
+                  </Card>
+                ) : (
+                  <Skeleton lines={3} />
+                ))}
+              {aiError && (
+                <View style={styles.aiErrorRow}>
+                  <ThemedText type="small" themeColor="textSecondary" style={styles.aiErrorText}>
+                    {t(aiError === 'network' ? 'common.errorNetwork' : 'common.errorServer')}
+                  </ThemedText>
+                  <TextButton
+                    label={t('common.retry')}
+                    onPress={() =>
+                      lastAiAction === 'scientific' ? runScientificAnalysis() : runEncouragementCheckin()
+                    }
+                  />
+                </View>
+              )}
+
+              {sessionPhotos.length === 1 && nextEncouragementLabel && (
+                <ThemedText type="monoSm" themeColor="textMuted">
+                  {t('photos.baselineSet', { date: nextEncouragementLabel })}
+                </ThemedText>
+              )}
+
+              {(note || encouragementNote) && (
+                <Card>
+                  {note?.change ? (
+                    <>
+                      <View style={styles.analysisHead}>
+                        <EngravedLabel>{t('photos.analysisLabel')}</EngravedLabel>
+                        <ConfidenceBadge level={photoReadLevel(note)} rationale={t(photoReadWhyKey(note))} />
+                      </View>
+                      <ThemedText type="mono" themeColor="textSecondary">
+                        {note.change}
+                      </ThemedText>
+                      {note.retake && (
+                        <>
+                          <Divider />
+                          <ThemedText type="monoSm" themeColor="signalBad">
+                            {t('photos.retakeHint')}
+                          </ThemedText>
+                        </>
+                      )}
+                    </>
+                  ) : null}
+                  {note && encouragementNote && <Divider />}
+                  {encouragementNote ? (
+                    <>
+                      <EngravedLabel>{t('photos.checkinLabel')}</EngravedLabel>
+                      <ThemedText type="monoSm" themeColor="textSecondary" style={styles.encouragementNote}>
+                        {encouragementNote}
+                      </ThemedText>
+                    </>
+                  ) : null}
+                </Card>
+              )}
                 </>
               )}
-            </>
-          ) : null}
-          {note && encouragementNote && <Divider />}
-          {encouragementNote ? (
-            <>
-              <EngravedLabel>{t('photos.checkinLabel')}</EngravedLabel>
-              <ThemedText type="monoSm" themeColor="textSecondary" style={styles.encouragementNote}>
-                {encouragementNote}
-              </ThemedText>
-            </>
-          ) : null}
-        </Card>
-      )}
-
-      {!note && !encouragementNote && !analyzing && (
-        <Card>
-          <EngravedLabel>{t('photos.analysisLabel')}</EngravedLabel>
-          <Placeholder label={t('photos.analysisPlaceholder')} height={64} />
-        </Card>
-      )}
-
-      {/* Reel (W6-25): the whole library, grouped by pose. Spans every session
-          and part; untagged shots surface first for a one-tap classification. */}
-      {reelGroups.length > 0 && (
-        <View style={styles.reel}>
-          <View style={styles.timelineHeader}>
-            <EngravedLabel>{t('photos.reelLabel')}</EngravedLabel>
-            <ThemedText type="monoSm" themeColor="textMuted">{t('photos.reelHint')}</ThemedText>
-          </View>
-          {reelGroups.map((g) => (
-            <View key={g.pose} style={styles.reelGroup}>
-              <ThemedText type="monoSm" themeColor={g.pose === 'unsorted' ? 'accent' : 'textMuted'}>
-                {`${poseLabel(g.pose)} (${g.photos.length})`}
-              </ThemedText>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.strip}>
-                {g.photos.map((p) => {
-                  const confirm = needsPoseConfirm(p);
-                  return (
-                    <Pressable
-                      key={p.id}
-                      accessibilityRole="button"
-                      accessibilityLabel={confirm ? t('photos.confirmPose') : t('photos.assignPose')}
-                      onPress={() => setTaggingId(p.id)}
-                      style={({ pressed }) => [
-                        styles.thumb,
-                        { width: thumbW, height: thumbH, borderColor: confirm ? theme.accent : 'transparent' },
-                        pressed && styles.thumbPressed,
-                      ]}>
-                      <Image source={{ uri: resolvedUris[p.id] ?? p.uri }} style={styles.thumbImg} contentFit="cover" />
-                      {confirm && <View style={[dotStyles.dot, { backgroundColor: theme.accent }]} />}
-                    </Pressable>
-                  );
-                })}
-              </ScrollView>
             </View>
-          ))}
-        </View>
+          )}
+        </>
       )}
 
       <Pressable accessibilityRole="button" onPress={importFromLibrary} style={styles.importBtn}>
@@ -1054,26 +1116,83 @@ export function ProgressPhotos({
         </ThemedText>
       </Pressable>
 
-      {session === 'face' ? (
+      {/* ── Capture chooser: guided check-in vs quick shot ── */}
+      <Modal visible={chooserOpen} transparent animationType="fade" onRequestClose={() => setChooserOpen(false)}>
+        <Pressable style={styles.partModalBackdrop} onPress={() => setChooserOpen(false)}>
+          <View
+            style={[styles.partModalSheet, { backgroundColor: theme.surfaceRaised, borderColor: theme.border }]}
+            onStartShouldSetResponder={() => true}>
+            <EngravedLabel>{t('photos.chooseCaptureTitle')}</EngravedLabel>
+            <CaptureOption
+              title={t('photos.captureGuided')}
+              desc={t('photos.captureGuidedDesc')}
+              onPress={() => {
+                setChooserOpen(false);
+                setPosePickerOpen(true);
+              }}
+            />
+            <CaptureOption title={t('photos.captureQuick')} desc={t('photos.captureQuickDesc')} onPress={startQuick} />
+            <TextButton label={t('common.cancel')} onPress={() => setChooserOpen(false)} />
+          </View>
+        </Pressable>
+      </Modal>
+
+      {/* ── Guided pose picker: choose which canonical pose to capture ── */}
+      <Modal visible={posePickerOpen} transparent animationType="fade" onRequestClose={() => setPosePickerOpen(false)}>
+        <Pressable style={styles.partModalBackdrop} onPress={() => setPosePickerOpen(false)}>
+          <View
+            style={[styles.partModalSheet, { backgroundColor: theme.surfaceRaised, borderColor: theme.border }]}
+            onStartShouldSetResponder={() => true}>
+            <EngravedLabel>{t('photos.choosePoseTitle')}</EngravedLabel>
+            <View style={styles.partRow}>
+              {REQUIRED_POSES.map((p) => (
+                <PartChip
+                  key={p}
+                  label={t(`photos.pose_${p}` as 'photos.pose_front_relaxed')}
+                  active={false}
+                  onPress={() => startGuided(p)}
+                />
+              ))}
+            </View>
+            <View style={styles.settingCol}>
+              <EngravedLabel>{t('photos.timerLabel')}</EngravedLabel>
+              <SingleSelectChips
+                options={[
+                  { value: '0', label: t('photos.timerOff') },
+                  { value: '3', label: t('photos.timer3') },
+                  { value: '10', label: t('photos.timer10') },
+                ]}
+                value={String(timer)}
+                onChange={(v) => setTimer(Number(v) as 0 | 3 | 10)}
+              />
+            </View>
+            <TextButton label={t('common.cancel')} onPress={() => setPosePickerOpen(false)} />
+          </View>
+        </Pressable>
+      </Modal>
+
+      {/* ── Camera: vision-camera for guided face, expo-camera otherwise ── */}
+      {useVisionCamera ? (
         <VisionCameraCapture
-          session={session}
+          session="face"
           ghostUri={ghostUri}
           ghostByPose={ghostByPose}
           baseline={reference ?? baseline}
-          visible={capturing}
-          onClose={() => setCapturing(false)}
+          visible={captureCfg !== null}
+          onClose={() => setCaptureCfg(null)}
           onSaved={onPhotoSaved}
         />
       ) : (
         <PhotoCapture
-          session={session}
-          part={part}
-          view={view}
+          session={captureCfg?.session ?? 'body'}
+          part={captureCfg?.part}
+          view={captureCfg?.view ?? 'front'}
           timer={timer}
+          casual={captureCfg?.casual ?? false}
           ghostUri={ghostUri}
           ghostByPose={ghostByPose}
-          visible={capturing}
-          onClose={() => setCapturing(false)}
+          visible={captureCfg !== null}
+          onClose={() => setCaptureCfg(null)}
           onSaved={onPhotoSaved}
         />
       )}
@@ -1103,7 +1222,7 @@ export function ProgressPhotos({
                     if (!name) return;
                     const existing = profile.customPhotoParts ?? [];
                     if (!existing.includes(name)) setProfile({ customPhotoParts: [...existing, name] });
-                    setPart(name);
+                    setFocused({ session: 'body', part: name });
                     setPartDraft('');
                     setAddingPart(false);
                   }}
@@ -1144,7 +1263,8 @@ export function ProgressPhotos({
               onChange={(v: CanonicalPose) => {
                 // Any tap confirms: the pose is now ground truth, so drop the
                 // auto-classifier confidence that drove the "confirm?" prompt.
-                if (taggingId) updatePhoto(taggingId, { pose: v, poseConfidence: undefined });
+                // Keep the session tag consistent with the confirmed pose.
+                if (taggingId) updatePhoto(taggingId, { pose: v, poseConfidence: undefined, session: sessionForPose(v) });
                 setTaggingId(null);
               }}
             />
@@ -1153,6 +1273,30 @@ export function ProgressPhotos({
         </Pressable>
       </Modal>
     </View>
+  );
+}
+
+/** A capture-chooser option: a titled, described tappable row. */
+function CaptureOption({ title, desc, onPress }: { title: string; desc: string; onPress: () => void }) {
+  const theme = useTheme();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={title}
+      accessibilityHint={desc}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.captureOption,
+        { borderColor: theme.border, backgroundColor: theme.surfaceSunken },
+        pressed && styles.thumbPressed,
+      ]}>
+      <ThemedText type="label" themeColor="text">
+        {title}
+      </ThemedText>
+      <ThemedText type="monoSm" themeColor="textMuted" style={styles.captureOptionDesc}>
+        {desc}
+      </ThemedText>
+    </Pressable>
   );
 }
 
@@ -1190,7 +1334,7 @@ function PartChip({
 }
 
 const styles = StyleSheet.create({
-  wrap: { gap: Spacing.two },
+  wrap: { gap: Spacing.four },
   emptyBlock: { gap: Spacing.two },
   clothingGuidance: { lineHeight: 18 },
   badgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.one },
@@ -1211,7 +1355,6 @@ const styles = StyleSheet.create({
   instantHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.two },
   instantBadgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.one },
   partRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
-  captureSettings: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.four },
   settingCol: { gap: Spacing.one },
   partChip: {
     paddingHorizontal: Spacing.three,
@@ -1221,7 +1364,7 @@ const styles = StyleSheet.create({
   },
   partModalBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', alignItems: 'center' },
   partModalSheet: {
-    width: 280,
+    width: 300,
     borderRadius: Radii.panel,
     borderWidth: StyleSheet.hairlineWidth,
     padding: Spacing.three,
@@ -1229,6 +1372,13 @@ const styles = StyleSheet.create({
   },
   partModalActions: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.three },
   partModalSave: { minWidth: 120 },
+  captureOption: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: Radii.panel,
+    padding: Spacing.three,
+    gap: Spacing.half,
+  },
+  captureOptionDesc: { lineHeight: 16 },
   milestoneRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.two },
   aiErrorRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.two },
   aiErrorText: { flex: 1 },
@@ -1237,5 +1387,8 @@ const styles = StyleSheet.create({
   importText: { textDecorationLine: 'underline' },
   reel: { gap: Spacing.two },
   reelGroup: { gap: Spacing.half },
+  reelGroupHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.two },
+  trackDetail: { gap: Spacing.two },
+  trackHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.two },
   tagPreview: { width: '100%', aspectRatio: 3 / 4, borderRadius: Radii.chamfer },
 });

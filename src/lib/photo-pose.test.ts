@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import { groupPhotosByPose, needsPoseConfirm, poseFromCapture, type CanonicalPose } from './photo-pose';
+import {
+  groupPhotosByPose,
+  needsPoseConfirm,
+  poseFromCapture,
+  sessionForPose,
+  viewForPose,
+  type CanonicalPose,
+} from './photo-pose';
 import type { PhotoEntry } from './store';
 
 const photo = (id: string, takenAt: string, pose?: CanonicalPose): PhotoEntry =>
@@ -17,6 +24,37 @@ describe('poseFromCapture', () => {
     expect(poseFromCapture('body', 'front')).toBe('front_relaxed');
     expect(poseFromCapture('body', 'side')).toBe('side_relaxed');
     expect(poseFromCapture('body')).toBe('front_relaxed');
+  });
+});
+
+describe('sessionForPose', () => {
+  it('routes the two face poses to the face track', () => {
+    expect(sessionForPose('front_face')).toBe('face');
+    expect(sessionForPose('side_profile')).toBe('face');
+  });
+
+  it('routes relaxed + casual poses to the body track', () => {
+    expect(sessionForPose('front_relaxed')).toBe('body');
+    expect(sessionForPose('side_relaxed')).toBe('body');
+    expect(sessionForPose('other')).toBe('body');
+  });
+
+  it('round-trips with poseFromCapture', () => {
+    for (const s of ['face', 'body'] as const) {
+      for (const v of ['front', 'side'] as const) {
+        expect(sessionForPose(poseFromCapture(s, v))).toBe(s);
+      }
+    }
+  });
+});
+
+describe('viewForPose', () => {
+  it('reads the angle off the pose', () => {
+    expect(viewForPose('front_face')).toBe('front');
+    expect(viewForPose('side_profile')).toBe('side');
+    expect(viewForPose('front_relaxed')).toBe('front');
+    expect(viewForPose('side_relaxed')).toBe('side');
+    expect(viewForPose('other')).toBe('front');
   });
 });
 

@@ -40,6 +40,7 @@ export function PhotoCapture({
   onSaved,
   view = 'front',
   timer = 0,
+  casual = false,
 }: {
   session: PhotoSession;
   part?: string;
@@ -55,6 +56,11 @@ export function PhotoCapture({
   /** Capture angle + self-timer are chosen in the Photos tab now, not in-camera. */
   view?: 'front' | 'side';
   timer?: 0 | 3 | 10;
+  /** Quick-shot mode (W6-26c): shoot freely (back cam by default), no ghost lock,
+   *  no measurements. The shot lands casual (`isRequiredSet: false`) and its pose
+   *  is left to background classification, so it joins the reel for triage rather
+   *  than the comparability track. */
+  casual?: boolean;
 }) {
   const { t } = useTranslation();
   const { addPhoto, upsertCheckin, profile, entries } = useStore();
@@ -66,7 +72,7 @@ export function PhotoCapture({
   const [ghostLevelIdx, setGhostLevelIdx] = useState(0);
   const [fitResult, setFitResult] = useState<FitCheck | null>(null);
   const [fitChecking, setFitChecking] = useState(false);
-  const [facing, setFacing] = useState<'front' | 'back'>('front');
+  const [facing, setFacing] = useState<'front' | 'back'>(casual ? 'back' : 'front');
   const [countdown, setCountdown] = useState<number | null>(null);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -88,6 +94,9 @@ export function PhotoCapture({
   const [extraKey, setExtraKey] = useState<'chest' | 'arms' | 'thighs' | undefined>();
   const [extraVal, setExtraVal] = useState('');
   const isBody = session === 'body';
+  // Casual quick-shots skip the measurement step entirely (save + close), even in
+  // the body track — measurements belong to the guided comparability flow.
+  const collectMeasurements = isBody && !casual;
   const units = profile?.units ?? 'metric';
   const unitLabel = units === 'imperial' ? t('measurements.unitIn') : t('measurements.unitCm');
 
@@ -328,8 +337,11 @@ export function PhotoCapture({
         takenAt: new Date().toISOString(),
         tilt: shotTilt,
         qualityScore: quality?.score,
-        pose: part ? 'other' : detectedPose ?? poseFromCapture(session, view),
-        isRequiredSet: !part,
+        // Casual: leave the pose to background classification (undefined unless a
+        // live sample already resolved one) so the shot lands in the reel for
+        // triage. Guided: derive + lock to the comparability set.
+        pose: casual ? detectedPose ?? undefined : part ? 'other' : detectedPose ?? poseFromCapture(session, view),
+        isRequiredSet: casual ? false : !part,
       });
       savedIdRef.current = newId;
       onSaved?.(newId);
@@ -343,7 +355,7 @@ export function PhotoCapture({
   const onContinue = async () => {
     const ok = await saveShot();
     if (!ok) return;
-    if (isBody) setStep(2);
+    if (collectMeasurements) setStep(2);
     else close();
   };
 
@@ -367,7 +379,11 @@ export function PhotoCapture({
     close();
   };
 
-  const sessionLabel = session === 'face' ? t('photos.sessionFace') : t('photos.sessionBody');
+  const sessionLabel = casual
+    ? t('photos.quickShot')
+    : session === 'face'
+      ? t('photos.sessionFace')
+      : t('photos.sessionBody');
 
   // Ghost for the live view: prefer the reference of the pose being held
   // (detected live, else the manual angle chip); fall back to the chain ghost.
@@ -454,7 +470,7 @@ export function PhotoCapture({
             </Pressable>
             <View style={styles.saveBtn}>
               <PrimaryButton
-                label={isBody ? t('common.continue') : t('photos.save')}
+                label={collectMeasurements ? t('common.continue') : t('photos.save')}
                 onPress={() => void onContinue()}
               />
             </View>

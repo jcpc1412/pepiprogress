@@ -35,6 +35,22 @@ export function poseFromCapture(session: PhotoSession, view?: 'front' | 'side'):
 }
 
 /**
+ * The session track a pose belongs to — the inverse of {@link poseFromCapture}.
+ * Reel-centric capture (W6-26c) no longer asks Face vs Body upfront: the guided
+ * pose choice picks the camera, and a casual shot's classified pose decides which
+ * track it joins. Face poses → the face track; everything else → the body track
+ * (casual `other` shots are mirror/body pics by default).
+ */
+export function sessionForPose(pose: CanonicalPose): PhotoSession {
+  return pose === 'front_face' || pose === 'side_profile' ? 'face' : 'body';
+}
+
+/** The capture angle a pose implies (side profiles/relaxed → 'side'). */
+export function viewForPose(pose: CanonicalPose): 'front' | 'side' {
+  return pose === 'side_profile' || pose === 'side_relaxed' ? 'side' : 'front';
+}
+
+/**
  * Auto-classified poses at or above this confidence are treated as good and
  * apply silently; below it the reel asks the user to confirm (W6-26 §1.3
  * human-in-the-loop). A manually confirmed pose carries no `poseConfidence`.

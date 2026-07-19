@@ -14,7 +14,8 @@
     "errorServer": "Algo salió mal. Inténtalo de nuevo.",
     "back": "Atrás",
     "loading": "Cargando",
-    "noData": "Sin datos aún"
+    "noData": "Sin datos aún",
+    "close": "Cerrar"
   },
   "home": {
     "title": "Bienvenido a PepiProgress",
@@ -50,8 +51,7 @@
     "body_comp": "Composición corporal",
     "sleep": "Sueño",
     "recovery": "Recuperación",
-    "wellness": "Bienestar"
-  ,
+    "wellness": "Bienestar",
     "gender_transition": "Seguir mi transición"
   },
   "onboarding": {
@@ -301,11 +301,22 @@
     "measureTitle": "Medidas",
     "skipMeasurements": "Omitir",
     "tiltMeta": "Inclinación {{deg}}°",
-    "analysisAfterHint": "El análisis se ejecuta cuando termines."
-  ,
+    "analysisAfterHint": "El análisis se ejecuta cuando termines.",
     "confWhyHigh": "La iluminación y el encuadre coinciden con la referencia.",
     "confWhyMedium": "La iluminación o el encuadre cambiaron respecto a la referencia.",
-    "confWhyLow": "Demasiado distinta de la referencia para comparar con precisión."
+    "confWhyLow": "Demasiado distinta de la referencia para comparar con precisión.",
+    "quickShot": "Foto rápida",
+    "chooseCaptureTitle": "¿Cómo quieres capturar?",
+    "captureGuided": "Registro guiado",
+    "captureGuidedDesc": "Elige una pose y alinea la silueta guía. Sigue tu progreso.",
+    "captureQuick": "Foto rápida",
+    "captureQuickDesc": "Dispara libremente. Va a tu carrete para ordenar después.",
+    "choosePoseTitle": "¿Qué pose?",
+    "viewTrack": "Ver progreso de {{pose}}",
+    "viewLink": "Ver",
+    "trackLabel": "Progreso: {{track}}",
+    "closeTrack": "Cerrar vista de progreso",
+    "capturePart": "Capturar {{part}}"
   },
   "markers": {
     "hematocrit": "Hematocrito",
@@ -509,8 +520,7 @@
     "deleteConfirm": "Eliminar todo",
     "notMedicalAdvice": "PepiProgress no es un dispositivo médico y no proporciona asesoramiento médico. Consulta siempre a un profesional de la salud.",
     "delete": "Eliminar todos mis datos",
-    "pageTitle": "Privacidad y datos"
-  ,
+    "pageTitle": "Privacidad y datos",
     "transitionDataNote": "El seguimiento de transición se mantiene local por defecto y nunca se incluye en los agregados de la comunidad, sin importar la opción anterior."
   },
   "report": {
@@ -604,8 +614,7 @@
     "unitCm": "cm",
     "unitIn": "in",
     "neck": "Cuello",
-    "sameAsLast": "Igual que la última vez"
-  ,
+    "sameAsLast": "Igual que la última vez",
     "ffmi": "FFMI (índice de masa magra)",
     "ffmiRange": "{{low}} – {{high}}",
     "ffmiHedge": "Rango estimado a partir de tu banda de grasa corporal. No es una medida médica."
@@ -644,8 +653,6 @@
     "restoredBody": "Tus datos han sido cargados en este dispositivo.",
     "partialSync": "{{count}} elemento(s) no pudieron sincronizarse, tus datos locales están seguros.",
     "errorMissingFields": "Por favor ingresa tu email y contraseña.",
-    "continueApple": "Continuar con Apple",
-    "continueGoogle": "Continuar con Google",
     "orEmail": "o con correo"
   },
   "account": {
@@ -716,8 +723,7 @@
     "noTrends": "Sigue registrando para ver tendencias.",
     "unlockTitle": "Desbloquea el análisis con IA",
     "unlockBody": "El análisis encuentra patrones en tus registros: tendencias, correlaciones y respuestas sobre tus propios datos.",
-    "unlockProgress": "Registra {{count}} días más para desbloquear"
-  ,
+    "unlockProgress": "Registra {{count}} días más para desbloquear",
     "projected": "Línea punteada: tendencia proyectada a tu ritmo reciente, sombreada por la incertidumbre.",
     "projectedFlat": "Línea punteada: se mantiene cerca de tu peso actual a tu ritmo reciente."
   },
@@ -824,8 +830,7 @@
     "body_comp": "Composición",
     "sleep": "Recuperación",
     "recovery": "Reparación",
-    "wellness": "Vitalidad"
-  ,
+    "wellness": "Vitalidad",
     "gender_transition": "Identidad"
   },
   "compoundDetail": {
@@ -877,34 +882,88 @@
     "disclaimer": "Cronologías reportadas habitualmente, sin verificar. Cada persona responde distinto; la curva que importa es la tuya.",
     "phase": {
       "fat_loss": {
-        "onset": { "label": "El apetito se calma", "desc": "Lo primero que se suele reportar es menos apetito y saciedad temprana." },
-        "early_loss": { "label": "Pérdida inicial", "desc": "El mayor movimiento en la báscula se suele reportar en esta etapa." },
-        "continued": { "label": "Pérdida constante", "desc": "La pérdida suele continuar a un ritmo más lento y estable." },
-        "plateau": { "label": "Meseta", "desc": "Muchos reportan que el ritmo se aplana; aquí la constancia y la ingesta importan más." }
+        "onset": {
+          "label": "El apetito se calma",
+          "desc": "Lo primero que se suele reportar es menos apetito y saciedad temprana."
+        },
+        "early_loss": {
+          "label": "Pérdida inicial",
+          "desc": "El mayor movimiento en la báscula se suele reportar en esta etapa."
+        },
+        "continued": {
+          "label": "Pérdida constante",
+          "desc": "La pérdida suele continuar a un ritmo más lento y estable."
+        },
+        "plateau": {
+          "label": "Meseta",
+          "desc": "Muchos reportan que el ritmo se aplana; aquí la constancia y la ingesta importan más."
+        }
       },
       "healing": {
-        "onset": { "label": "Inicio", "desc": "Los primeros cambios en la zona objetivo se suelen reportar pronto." },
-        "peak": { "label": "Efecto máximo", "desc": "La recuperación más notable se suele reportar en esta etapa." },
-        "taper": { "label": "Mantenido", "desc": "Los beneficios suelen mantenerse y disminuir a medida que el tejido se estabiliza." }
+        "onset": {
+          "label": "Inicio",
+          "desc": "Los primeros cambios en la zona objetivo se suelen reportar pronto."
+        },
+        "peak": {
+          "label": "Efecto máximo",
+          "desc": "La recuperación más notable se suele reportar en esta etapa."
+        },
+        "taper": {
+          "label": "Mantenido",
+          "desc": "Los beneficios suelen mantenerse y disminuir a medida que el tejido se estabiliza."
+        }
       },
       "skin": {
-        "settling": { "label": "Adaptación", "desc": "Tan pronto se suele reportar poco cambio visible." },
-        "visible": { "label": "Cambio visible", "desc": "Los cambios de tono y textura de la piel se reportan más en esta etapa." },
-        "maintained": { "label": "Mantenido", "desc": "Los cambios suelen mantenerse con el uso continuado." }
+        "settling": {
+          "label": "Adaptación",
+          "desc": "Tan pronto se suele reportar poco cambio visible."
+        },
+        "visible": {
+          "label": "Cambio visible",
+          "desc": "Los cambios de tono y textura de la piel se reportan más en esta etapa."
+        },
+        "maintained": {
+          "label": "Mantenido",
+          "desc": "Los cambios suelen mantenerse con el uso continuado."
+        }
       },
       "gh_recovery": {
-        "sleep_recovery": { "label": "Sueño y recuperación", "desc": "Lo primero que se suele reportar es sueño más profundo y recuperación más rápida." },
-        "water": { "label": "Cambio de agua", "desc": "Se suele reportar algo de retención de agua o hinchazón al principio." },
-        "body_comp": { "label": "Composición corporal", "desc": "Los cambios lentos de composición corporal se reportan más adelante." },
-        "plateau": { "label": "Meseta", "desc": "Muchos reportan que los efectos se estabilizan por esta etapa." }
+        "sleep_recovery": {
+          "label": "Sueño y recuperación",
+          "desc": "Lo primero que se suele reportar es sueño más profundo y recuperación más rápida."
+        },
+        "water": {
+          "label": "Cambio de agua",
+          "desc": "Se suele reportar algo de retención de agua o hinchazón al principio."
+        },
+        "body_comp": {
+          "label": "Composición corporal",
+          "desc": "Los cambios lentos de composición corporal se reportan más adelante."
+        },
+        "plateau": {
+          "label": "Meseta",
+          "desc": "Muchos reportan que los efectos se estabilizan por esta etapa."
+        }
       },
       "sleep": {
-        "onset": { "label": "Inicio", "desc": "Los cambios en el sueño se suelen reportar en las primeras noches." },
-        "settled": { "label": "Estabilizado", "desc": "El efecto suele asentarse en un patrón constante." }
+        "onset": {
+          "label": "Inicio",
+          "desc": "Los cambios en el sueño se suelen reportar en las primeras noches."
+        },
+        "settled": {
+          "label": "Estabilizado",
+          "desc": "El efecto suele asentarse en un patrón constante."
+        }
       },
       "cognition": {
-        "onset": { "label": "Inicio", "desc": "Cambios sutiles en el enfoque o el ánimo se suelen reportar pronto." },
-        "settled": { "label": "Estabilizado", "desc": "El efecto suele asentarse en las semanas siguientes." }
+        "onset": {
+          "label": "Inicio",
+          "desc": "Cambios sutiles en el enfoque o el ánimo se suelen reportar pronto."
+        },
+        "settled": {
+          "label": "Estabilizado",
+          "desc": "El efecto suele asentarse en las semanas siguientes."
+        }
       }
     }
   },

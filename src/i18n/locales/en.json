@@ -14,7 +14,8 @@
     "errorServer": "Something went wrong. Please try again.",
     "back": "Back",
     "loading": "Loading",
-    "noData": "No data yet"
+    "noData": "No data yet",
+    "close": "Close"
   },
   "home": {
     "title": "Welcome to PepiProgress",
@@ -50,8 +51,7 @@
     "body_comp": "Body composition",
     "sleep": "Sleep",
     "recovery": "Recovery",
-    "wellness": "Wellness"
-  ,
+    "wellness": "Wellness",
     "gender_transition": "Track my transition"
   },
   "onboarding": {
@@ -301,11 +301,22 @@
     "measureTitle": "Measurements",
     "skipMeasurements": "Skip",
     "tiltMeta": "Tilt {{deg}}°",
-    "analysisAfterHint": "Analysis runs after you finish."
-  ,
+    "analysisAfterHint": "Analysis runs after you finish.",
     "confWhyHigh": "Lighting and framing match the baseline.",
     "confWhyMedium": "Lighting or framing drifted from the baseline.",
-    "confWhyLow": "Too different from the baseline to compare closely."
+    "confWhyLow": "Too different from the baseline to compare closely.",
+    "quickShot": "Quick shot",
+    "chooseCaptureTitle": "How do you want to capture?",
+    "captureGuided": "Guided check-in",
+    "captureGuidedDesc": "Pick a pose and match your ghost overlay. Tracks your progress.",
+    "captureQuick": "Quick shot",
+    "captureQuickDesc": "Shoot freely. It lands in your reel to sort later.",
+    "choosePoseTitle": "Which pose?",
+    "viewTrack": "View {{pose}} progress",
+    "viewLink": "View",
+    "trackLabel": "{{track}} progress",
+    "closeTrack": "Close progress view",
+    "capturePart": "Capture {{part}}"
   },
   "markers": {
     "hematocrit": "Hematocrit",
@@ -509,8 +520,7 @@
     "deleteConfirm": "Delete everything",
     "notMedicalAdvice": "PepiProgress is not a medical device and does not provide medical advice. Always consult a qualified healthcare professional before making decisions about your health.",
     "delete": "Delete all my data",
-    "pageTitle": "Privacy & data"
-  ,
+    "pageTitle": "Privacy & data",
     "transitionDataNote": "Transition tracking stays local-first and is never included in community aggregates, regardless of the toggle above."
   },
   "report": {
@@ -604,8 +614,7 @@
     "unitCm": "cm",
     "unitIn": "in",
     "neck": "Neck",
-    "sameAsLast": "Same as last time"
-  ,
+    "sameAsLast": "Same as last time",
     "ffmi": "FFMI (lean-mass index)",
     "ffmiRange": "{{low}} – {{high}}",
     "ffmiHedge": "Estimated range from your body-fat band. Not a medical measurement."
@@ -644,8 +653,6 @@
     "restoredBody": "Your data has been loaded onto this device.",
     "partialSync": "{{count}} item(s) could not sync, your local data is safe.",
     "errorMissingFields": "Please enter your email and password.",
-    "continueApple": "Continue with Apple",
-    "continueGoogle": "Continue with Google",
     "orEmail": "or with email"
   },
   "account": {
@@ -716,8 +723,7 @@
     "noTrends": "Keep logging to see trends.",
     "unlockTitle": "Unlock AI insights",
     "unlockBody": "Insights find patterns across your logs: trends, correlations, and answers about your own data.",
-    "unlockProgress": "Log {{count}} more check-ins to unlock"
-  ,
+    "unlockProgress": "Log {{count}} more check-ins to unlock",
     "projected": "Dotted line: projected trend at your recent pace, shaded by uncertainty.",
     "projectedFlat": "Dotted line: holding near your current weight at your recent pace."
   },
@@ -824,8 +830,7 @@
     "body_comp": "Composition",
     "sleep": "Recovery",
     "recovery": "Repair",
-    "wellness": "Vitality"
-  ,
+    "wellness": "Vitality",
     "gender_transition": "Identity"
   },
   "compoundDetail": {
@@ -877,34 +882,88 @@
     "disclaimer": "Commonly reported timelines, unverified. Everyone responds differently; yours is the curve that matters.",
     "phase": {
       "fat_loss": {
-        "onset": { "label": "Appetite settles", "desc": "Reduced appetite and early fullness are commonly reported first." },
-        "early_loss": { "label": "Early loss", "desc": "The steepest scale movement is often reported in this window." },
-        "continued": { "label": "Steady loss", "desc": "Loss commonly continues at a slower, steadier pace." },
-        "plateau": { "label": "Plateau", "desc": "Many report the rate flattening; adherence and intake matter most here." }
+        "onset": {
+          "label": "Appetite settles",
+          "desc": "Reduced appetite and early fullness are commonly reported first."
+        },
+        "early_loss": {
+          "label": "Early loss",
+          "desc": "The steepest scale movement is often reported in this window."
+        },
+        "continued": {
+          "label": "Steady loss",
+          "desc": "Loss commonly continues at a slower, steadier pace."
+        },
+        "plateau": {
+          "label": "Plateau",
+          "desc": "Many report the rate flattening; adherence and intake matter most here."
+        }
       },
       "healing": {
-        "onset": { "label": "Onset", "desc": "First changes in the target area are commonly reported early." },
-        "peak": { "label": "Peak effect", "desc": "The most noticeable recovery is often reported in this window." },
-        "taper": { "label": "Maintained", "desc": "Benefits commonly hold and taper as tissue settles." }
+        "onset": {
+          "label": "Onset",
+          "desc": "First changes in the target area are commonly reported early."
+        },
+        "peak": {
+          "label": "Peak effect",
+          "desc": "The most noticeable recovery is often reported in this window."
+        },
+        "taper": {
+          "label": "Maintained",
+          "desc": "Benefits commonly hold and taper as tissue settles."
+        }
       },
       "skin": {
-        "settling": { "label": "Settling in", "desc": "Little visible change is commonly reported this early." },
-        "visible": { "label": "Visible change", "desc": "Skin tone and texture changes are most commonly reported here." },
-        "maintained": { "label": "Maintained", "desc": "Changes commonly hold with continued use." }
+        "settling": {
+          "label": "Settling in",
+          "desc": "Little visible change is commonly reported this early."
+        },
+        "visible": {
+          "label": "Visible change",
+          "desc": "Skin tone and texture changes are most commonly reported here."
+        },
+        "maintained": {
+          "label": "Maintained",
+          "desc": "Changes commonly hold with continued use."
+        }
       },
       "gh_recovery": {
-        "sleep_recovery": { "label": "Sleep and recovery", "desc": "Deeper sleep and faster recovery are commonly reported first." },
-        "water": { "label": "Water shift", "desc": "Some early water retention or fullness is commonly reported." },
-        "body_comp": { "label": "Body composition", "desc": "Slow body-composition changes are more commonly reported later." },
-        "plateau": { "label": "Plateau", "desc": "Many report effects leveling off around here." }
+        "sleep_recovery": {
+          "label": "Sleep and recovery",
+          "desc": "Deeper sleep and faster recovery are commonly reported first."
+        },
+        "water": {
+          "label": "Water shift",
+          "desc": "Some early water retention or fullness is commonly reported."
+        },
+        "body_comp": {
+          "label": "Body composition",
+          "desc": "Slow body-composition changes are more commonly reported later."
+        },
+        "plateau": {
+          "label": "Plateau",
+          "desc": "Many report effects leveling off around here."
+        }
       },
       "sleep": {
-        "onset": { "label": "Onset", "desc": "Changes to sleep are commonly reported within the first nights." },
-        "settled": { "label": "Settled", "desc": "The effect commonly settles into a consistent pattern." }
+        "onset": {
+          "label": "Onset",
+          "desc": "Changes to sleep are commonly reported within the first nights."
+        },
+        "settled": {
+          "label": "Settled",
+          "desc": "The effect commonly settles into a consistent pattern."
+        }
       },
       "cognition": {
-        "onset": { "label": "Onset", "desc": "Subtle shifts in focus or mood are commonly reported early." },
-        "settled": { "label": "Settled", "desc": "The effect commonly settles over the following weeks." }
+        "onset": {
+          "label": "Onset",
+          "desc": "Subtle shifts in focus or mood are commonly reported early."
+        },
+        "settled": {
+          "label": "Settled",
+          "desc": "The effect commonly settles over the following weeks."
+        }
       }
     }
   },

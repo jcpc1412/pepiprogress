@@ -14,7 +14,8 @@
     "errorServer": "Une erreur s'est produite. Veuillez réessayer.",
     "back": "Retour",
     "loading": "Chargement",
-    "noData": "Pas encore de données"
+    "noData": "Pas encore de données",
+    "close": "Fermer"
   },
   "home": {
     "title": "Bienvenue sur PepiProgress",
@@ -50,8 +51,7 @@
     "body_comp": "Composition corporelle",
     "sleep": "Sommeil",
     "recovery": "Récupération",
-    "wellness": "Bien-être"
-  ,
+    "wellness": "Bien-être",
     "gender_transition": "Suivre ma transition"
   },
   "onboarding": {
@@ -301,11 +301,22 @@
     "measureTitle": "Mensurations",
     "skipMeasurements": "Passer",
     "tiltMeta": "Inclinaison {{deg}}°",
-    "analysisAfterHint": "L'analyse se lance une fois terminé."
-  ,
+    "analysisAfterHint": "L'analyse se lance une fois terminé.",
     "confWhyHigh": "L'éclairage et le cadrage correspondent à la référence.",
     "confWhyMedium": "L'éclairage ou le cadrage a changé par rapport à la référence.",
-    "confWhyLow": "Trop différente de la référence pour comparer précisément."
+    "confWhyLow": "Trop différente de la référence pour comparer précisément.",
+    "quickShot": "Photo rapide",
+    "chooseCaptureTitle": "Comment veux-tu capturer ?",
+    "captureGuided": "Prise guidée",
+    "captureGuidedDesc": "Choisis une pose et aligne le calque fantôme. Suit ta progression.",
+    "captureQuick": "Photo rapide",
+    "captureQuickDesc": "Photographie librement. Elle va dans ta pellicule à trier plus tard.",
+    "choosePoseTitle": "Quelle pose ?",
+    "viewTrack": "Voir la progression {{pose}}",
+    "viewLink": "Voir",
+    "trackLabel": "Progression : {{track}}",
+    "closeTrack": "Fermer la vue de progression",
+    "capturePart": "Capturer {{part}}"
   },
   "markers": {
     "hematocrit": "Hématocrite",
@@ -509,8 +520,7 @@
     "deleteConfirm": "Tout supprimer",
     "notMedicalAdvice": "PepiProgress n'est pas un dispositif médical et ne fournit pas de conseils médicaux. Consultez toujours un professionnel de santé qualifié.",
     "delete": "Supprimer toutes mes données",
-    "pageTitle": "Confidentialité et données"
-  ,
+    "pageTitle": "Confidentialité et données",
     "transitionDataNote": "Le suivi de transition reste local par défaut et n’est jamais inclus dans les agrégats communautaires, quel que soit le réglage ci-dessus."
   },
   "report": {
@@ -604,8 +614,7 @@
     "unitCm": "cm",
     "unitIn": "po",
     "neck": "Cou",
-    "sameAsLast": "Comme la dernière fois"
-  ,
+    "sameAsLast": "Comme la dernière fois",
     "ffmi": "FFMI (indice de masse maigre)",
     "ffmiRange": "{{low}} – {{high}}",
     "ffmiHedge": "Fourchette estimée à partir de ta plage de masse grasse. Pas une mesure médicale."
@@ -644,8 +653,6 @@
     "restoredBody": "Vos données ont été chargées sur cet appareil.",
     "partialSync": "{{count}} élément(s) n'ont pas pu être synchronisés, vos données locales sont sécurisées.",
     "errorMissingFields": "Veuillez entrer votre email et mot de passe.",
-    "continueApple": "Continuer avec Apple",
-    "continueGoogle": "Continuer avec Google",
     "orEmail": "ou par e-mail"
   },
   "account": {
@@ -716,8 +723,7 @@
     "noTrends": "Continuez à enregistrer pour voir les tendances.",
     "unlockTitle": "Débloquez l'analyse IA",
     "unlockBody": "L'analyse trouve des tendances dans vos enregistrements : évolutions, corrélations et réponses sur vos données.",
-    "unlockProgress": "Enregistrez {{count}} jours de plus pour débloquer"
-  ,
+    "unlockProgress": "Enregistrez {{count}} jours de plus pour débloquer",
     "projected": "Ligne pointillée : tendance projetée à ton rythme récent, ombrée selon l’incertitude.",
     "projectedFlat": "Ligne pointillée : se maintient près de ton poids actuel à ton rythme récent."
   },
@@ -824,8 +830,7 @@
     "body_comp": "Composition",
     "sleep": "Récupération",
     "recovery": "Réparation",
-    "wellness": "Vitalité"
-  ,
+    "wellness": "Vitalité",
     "gender_transition": "Identité"
   },
   "compoundDetail": {
@@ -877,34 +882,88 @@
     "disclaimer": "Chronologies couramment rapportées, non vérifiées. Chacun réagit différemment ; c'est votre courbe qui compte.",
     "phase": {
       "fat_loss": {
-        "onset": { "label": "L'appétit se calme", "desc": "On rapporte d'abord un appétit réduit et une satiété précoce." },
-        "early_loss": { "label": "Perte initiale", "desc": "La plus forte variation sur la balance est souvent rapportée à ce stade." },
-        "continued": { "label": "Perte régulière", "desc": "La perte se poursuit souvent à un rythme plus lent et régulier." },
-        "plateau": { "label": "Palier", "desc": "Beaucoup rapportent un ralentissement ; la régularité et l'apport comptent le plus ici." }
+        "onset": {
+          "label": "L'appétit se calme",
+          "desc": "On rapporte d'abord un appétit réduit et une satiété précoce."
+        },
+        "early_loss": {
+          "label": "Perte initiale",
+          "desc": "La plus forte variation sur la balance est souvent rapportée à ce stade."
+        },
+        "continued": {
+          "label": "Perte régulière",
+          "desc": "La perte se poursuit souvent à un rythme plus lent et régulier."
+        },
+        "plateau": {
+          "label": "Palier",
+          "desc": "Beaucoup rapportent un ralentissement ; la régularité et l'apport comptent le plus ici."
+        }
       },
       "healing": {
-        "onset": { "label": "Début", "desc": "Les premiers changements dans la zone ciblée sont souvent rapportés tôt." },
-        "peak": { "label": "Effet maximal", "desc": "La récupération la plus nette est souvent rapportée à ce stade." },
-        "taper": { "label": "Maintenu", "desc": "Les bénéfices se maintiennent souvent puis s'atténuent à mesure que les tissus se stabilisent." }
+        "onset": {
+          "label": "Début",
+          "desc": "Les premiers changements dans la zone ciblée sont souvent rapportés tôt."
+        },
+        "peak": {
+          "label": "Effet maximal",
+          "desc": "La récupération la plus nette est souvent rapportée à ce stade."
+        },
+        "taper": {
+          "label": "Maintenu",
+          "desc": "Les bénéfices se maintiennent souvent puis s'atténuent à mesure que les tissus se stabilisent."
+        }
       },
       "skin": {
-        "settling": { "label": "Adaptation", "desc": "Peu de changement visible est rapporté aussi tôt." },
-        "visible": { "label": "Changement visible", "desc": "Les changements de teint et de texture de la peau sont le plus rapportés ici." },
-        "maintained": { "label": "Maintenu", "desc": "Les changements se maintiennent souvent avec une utilisation continue." }
+        "settling": {
+          "label": "Adaptation",
+          "desc": "Peu de changement visible est rapporté aussi tôt."
+        },
+        "visible": {
+          "label": "Changement visible",
+          "desc": "Les changements de teint et de texture de la peau sont le plus rapportés ici."
+        },
+        "maintained": {
+          "label": "Maintenu",
+          "desc": "Les changements se maintiennent souvent avec une utilisation continue."
+        }
       },
       "gh_recovery": {
-        "sleep_recovery": { "label": "Sommeil et récupération", "desc": "On rapporte d'abord un sommeil plus profond et une récupération plus rapide." },
-        "water": { "label": "Rétention d'eau", "desc": "Une légère rétention d'eau ou une sensation de gonflement est souvent rapportée au début." },
-        "body_comp": { "label": "Composition corporelle", "desc": "Les changements lents de composition corporelle sont plus rapportés plus tard." },
-        "plateau": { "label": "Palier", "desc": "Beaucoup rapportent une stabilisation des effets vers ce stade." }
+        "sleep_recovery": {
+          "label": "Sommeil et récupération",
+          "desc": "On rapporte d'abord un sommeil plus profond et une récupération plus rapide."
+        },
+        "water": {
+          "label": "Rétention d'eau",
+          "desc": "Une légère rétention d'eau ou une sensation de gonflement est souvent rapportée au début."
+        },
+        "body_comp": {
+          "label": "Composition corporelle",
+          "desc": "Les changements lents de composition corporelle sont plus rapportés plus tard."
+        },
+        "plateau": {
+          "label": "Palier",
+          "desc": "Beaucoup rapportent une stabilisation des effets vers ce stade."
+        }
       },
       "sleep": {
-        "onset": { "label": "Début", "desc": "Les changements de sommeil sont souvent rapportés dès les premières nuits." },
-        "settled": { "label": "Stabilisé", "desc": "L'effet s'installe souvent selon un schéma régulier." }
+        "onset": {
+          "label": "Début",
+          "desc": "Les changements de sommeil sont souvent rapportés dès les premières nuits."
+        },
+        "settled": {
+          "label": "Stabilisé",
+          "desc": "L'effet s'installe souvent selon un schéma régulier."
+        }
       },
       "cognition": {
-        "onset": { "label": "Début", "desc": "De subtils changements de concentration ou d'humeur sont souvent rapportés tôt." },
-        "settled": { "label": "Stabilisé", "desc": "L'effet s'installe souvent au fil des semaines suivantes." }
+        "onset": {
+          "label": "Début",
+          "desc": "De subtils changements de concentration ou d'humeur sont souvent rapportés tôt."
+        },
+        "settled": {
+          "label": "Stabilisé",
+          "desc": "L'effet s'installe souvent au fil des semaines suivantes."
+        }
       }
     }
   },

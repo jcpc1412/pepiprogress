@@ -14,7 +14,8 @@
     "errorServer": "Etwas ist schiefgelaufen. Bitte versuche es erneut.",
     "back": "Zurück",
     "loading": "Laden",
-    "noData": "Noch keine Daten"
+    "noData": "Noch keine Daten",
+    "close": "Schließen"
   },
   "home": {
     "title": "Willkommen bei PepiProgress",
@@ -50,8 +51,7 @@
     "body_comp": "Körperzusammensetzung",
     "sleep": "Schlaf",
     "recovery": "Erholung",
-    "wellness": "Wohlbefinden"
-  ,
+    "wellness": "Wohlbefinden",
     "gender_transition": "Meine Transition verfolgen"
   },
   "onboarding": {
@@ -301,11 +301,22 @@
     "measureTitle": "Messwerte",
     "skipMeasurements": "Überspringen",
     "tiltMeta": "Neigung {{deg}}°",
-    "analysisAfterHint": "Die Analyse läuft, sobald du fertig bist."
-  ,
+    "analysisAfterHint": "Die Analyse läuft, sobald du fertig bist.",
     "confWhyHigh": "Licht und Bildausschnitt passen zur Ausgangsaufnahme.",
     "confWhyMedium": "Licht oder Bildausschnitt weichen von der Ausgangsaufnahme ab.",
-    "confWhyLow": "Zu verschieden von der Ausgangsaufnahme für einen genauen Vergleich."
+    "confWhyLow": "Zu verschieden von der Ausgangsaufnahme für einen genauen Vergleich.",
+    "quickShot": "Schnappschuss",
+    "chooseCaptureTitle": "Wie möchtest du aufnehmen?",
+    "captureGuided": "Geführte Aufnahme",
+    "captureGuidedDesc": "Wähle eine Pose und richte die Geistervorlage aus. Verfolgt deinen Fortschritt.",
+    "captureQuick": "Schnappschuss",
+    "captureQuickDesc": "Frei fotografieren. Es landet in deiner Übersicht zum späteren Sortieren.",
+    "choosePoseTitle": "Welche Pose?",
+    "viewTrack": "Fortschritt {{pose}} ansehen",
+    "viewLink": "Ansehen",
+    "trackLabel": "Fortschritt: {{track}}",
+    "closeTrack": "Fortschrittsansicht schließen",
+    "capturePart": "{{part}} aufnehmen"
   },
   "markers": {
     "hematocrit": "Hämatokrit",
@@ -509,8 +520,7 @@
     "deleteConfirm": "Alles löschen",
     "notMedicalAdvice": "PepiProgress ist kein Medizinprodukt und gibt keine medizinischen Ratschläge. Konsultiere immer einen qualifizierten Gesundheitsexperten.",
     "delete": "Alle meine Daten löschen",
-    "pageTitle": "Datenschutz & Daten"
-  ,
+    "pageTitle": "Datenschutz & Daten",
     "transitionDataNote": "Die Transitionsverfolgung bleibt standardmäßig lokal und fließt nie in Community-Aggregate ein, unabhängig von der Einstellung oben."
   },
   "report": {
@@ -604,8 +614,7 @@
     "unitCm": "cm",
     "unitIn": "Zoll",
     "neck": "Hals",
-    "sameAsLast": "Wie beim letzten Mal"
-  ,
+    "sameAsLast": "Wie beim letzten Mal",
     "ffmi": "FFMI (Magermasse-Index)",
     "ffmiRange": "{{low}} – {{high}}",
     "ffmiHedge": "Geschätzter Bereich aus deiner Körperfett-Spanne. Keine medizinische Messung."
@@ -620,8 +629,8 @@
   },
   "auth": {
     "or": "oder",
-    "continueApple": "Weiter mit Apple",
-    "continueGoogle": "Weiter mit Google",
+    "continueApple": "Mit Apple fortfahren",
+    "continueGoogle": "Mit Google fortfahren",
     "signUpLabel": "KONTO ERSTELLEN",
     "signInLabel": "ANMELDEN",
     "signUpTitle": "Daten sichern",
@@ -644,8 +653,6 @@
     "restoredBody": "Deine Daten wurden auf dieses Gerät geladen.",
     "partialSync": "{{count}} Element(e) konnten nicht synchronisiert werden, deine lokalen Daten sind sicher.",
     "errorMissingFields": "Bitte gib deine E-Mail und dein Passwort ein.",
-    "continueApple": "Mit Apple fortfahren",
-    "continueGoogle": "Mit Google fortfahren",
     "orEmail": "oder mit E-Mail"
   },
   "account": {
@@ -716,8 +723,7 @@
     "noTrends": "Logge weiter, um Trends zu sehen.",
     "unlockTitle": "KI-Einblicke freischalten",
     "unlockBody": "Einblicke finden Muster in deinen Einträgen: Trends, Zusammenhänge und Antworten zu deinen Daten.",
-    "unlockProgress": "Erfasse {{count}} weitere Check-ins zum Freischalten"
-  ,
+    "unlockProgress": "Erfasse {{count}} weitere Check-ins zum Freischalten",
     "projected": "Gepunktete Linie: projizierter Trend in deinem aktuellen Tempo, schattiert nach Unsicherheit.",
     "projectedFlat": "Gepunktete Linie: bleibt bei deinem aktuellen Tempo nahe deinem jetzigen Gewicht."
   },
@@ -824,8 +830,7 @@
     "body_comp": "Komposition",
     "sleep": "Erholung",
     "recovery": "Reparatur",
-    "wellness": "Vitalität"
-  ,
+    "wellness": "Vitalität",
     "gender_transition": "Identität"
   },
   "compoundDetail": {
@@ -877,34 +882,88 @@
     "disclaimer": "Häufig berichtete Zeitverläufe, unverifiziert. Jeder reagiert anders; deine Kurve ist die, die zählt.",
     "phase": {
       "fat_loss": {
-        "onset": { "label": "Appetit beruhigt sich", "desc": "Zuerst werden meist geringerer Appetit und frühe Sättigung berichtet." },
-        "early_loss": { "label": "Frühe Abnahme", "desc": "Die stärkste Veränderung auf der Waage wird oft in diesem Zeitraum berichtet." },
-        "continued": { "label": "Stetige Abnahme", "desc": "Die Abnahme geht meist langsamer und stetiger weiter." },
-        "plateau": { "label": "Plateauphase", "desc": "Viele berichten von einer Abflachung; Konsequenz und Zufuhr zählen hier am meisten." }
+        "onset": {
+          "label": "Appetit beruhigt sich",
+          "desc": "Zuerst werden meist geringerer Appetit und frühe Sättigung berichtet."
+        },
+        "early_loss": {
+          "label": "Frühe Abnahme",
+          "desc": "Die stärkste Veränderung auf der Waage wird oft in diesem Zeitraum berichtet."
+        },
+        "continued": {
+          "label": "Stetige Abnahme",
+          "desc": "Die Abnahme geht meist langsamer und stetiger weiter."
+        },
+        "plateau": {
+          "label": "Plateauphase",
+          "desc": "Viele berichten von einer Abflachung; Konsequenz und Zufuhr zählen hier am meisten."
+        }
       },
       "healing": {
-        "onset": { "label": "Beginn", "desc": "Erste Veränderungen im Zielbereich werden oft früh berichtet." },
-        "peak": { "label": "Maximale Wirkung", "desc": "Die deutlichste Erholung wird oft in diesem Zeitraum berichtet." },
-        "taper": { "label": "Gehalten", "desc": "Der Nutzen hält oft an und lässt nach, wenn sich das Gewebe stabilisiert." }
+        "onset": {
+          "label": "Beginn",
+          "desc": "Erste Veränderungen im Zielbereich werden oft früh berichtet."
+        },
+        "peak": {
+          "label": "Maximale Wirkung",
+          "desc": "Die deutlichste Erholung wird oft in diesem Zeitraum berichtet."
+        },
+        "taper": {
+          "label": "Gehalten",
+          "desc": "Der Nutzen hält oft an und lässt nach, wenn sich das Gewebe stabilisiert."
+        }
       },
       "skin": {
-        "settling": { "label": "Eingewöhnung", "desc": "So früh wird meist wenig sichtbare Veränderung berichtet." },
-        "visible": { "label": "Sichtbare Veränderung", "desc": "Veränderungen von Hautton und -struktur werden hier am häufigsten berichtet." },
-        "maintained": { "label": "Gehalten", "desc": "Veränderungen halten meist bei fortgesetzter Anwendung an." }
+        "settling": {
+          "label": "Eingewöhnung",
+          "desc": "So früh wird meist wenig sichtbare Veränderung berichtet."
+        },
+        "visible": {
+          "label": "Sichtbare Veränderung",
+          "desc": "Veränderungen von Hautton und -struktur werden hier am häufigsten berichtet."
+        },
+        "maintained": {
+          "label": "Gehalten",
+          "desc": "Veränderungen halten meist bei fortgesetzter Anwendung an."
+        }
       },
       "gh_recovery": {
-        "sleep_recovery": { "label": "Schlaf und Erholung", "desc": "Zuerst werden meist tieferer Schlaf und schnellere Erholung berichtet." },
-        "water": { "label": "Wassereinlagerung", "desc": "Etwas frühe Wassereinlagerung oder ein Völlegefühl wird häufig berichtet." },
-        "body_comp": { "label": "Körperzusammensetzung", "desc": "Langsame Veränderungen der Körperzusammensetzung werden eher später berichtet." },
-        "plateau": { "label": "Plateauphase", "desc": "Viele berichten, dass sich die Wirkung um diese Zeit einpendelt." }
+        "sleep_recovery": {
+          "label": "Schlaf und Erholung",
+          "desc": "Zuerst werden meist tieferer Schlaf und schnellere Erholung berichtet."
+        },
+        "water": {
+          "label": "Wassereinlagerung",
+          "desc": "Etwas frühe Wassereinlagerung oder ein Völlegefühl wird häufig berichtet."
+        },
+        "body_comp": {
+          "label": "Körperzusammensetzung",
+          "desc": "Langsame Veränderungen der Körperzusammensetzung werden eher später berichtet."
+        },
+        "plateau": {
+          "label": "Plateauphase",
+          "desc": "Viele berichten, dass sich die Wirkung um diese Zeit einpendelt."
+        }
       },
       "sleep": {
-        "onset": { "label": "Beginn", "desc": "Veränderungen des Schlafs werden oft schon in den ersten Nächten berichtet." },
-        "settled": { "label": "Eingependelt", "desc": "Die Wirkung pendelt sich meist zu einem konstanten Muster ein." }
+        "onset": {
+          "label": "Beginn",
+          "desc": "Veränderungen des Schlafs werden oft schon in den ersten Nächten berichtet."
+        },
+        "settled": {
+          "label": "Eingependelt",
+          "desc": "Die Wirkung pendelt sich meist zu einem konstanten Muster ein."
+        }
       },
       "cognition": {
-        "onset": { "label": "Beginn", "desc": "Feine Veränderungen bei Fokus oder Stimmung werden oft früh berichtet." },
-        "settled": { "label": "Eingependelt", "desc": "Die Wirkung pendelt sich meist über die folgenden Wochen ein." }
+        "onset": {
+          "label": "Beginn",
+          "desc": "Feine Veränderungen bei Fokus oder Stimmung werden oft früh berichtet."
+        },
+        "settled": {
+          "label": "Eingependelt",
+          "desc": "Die Wirkung pendelt sich meist über die folgenden Wochen ein."
+        }
       }
     }
   },
