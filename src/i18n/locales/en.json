@@ -253,7 +253,6 @@
     "historyTitle": "HISTORY",
     "filterBtn": "Filter",
     "filterTitle": "FILTER",
-    "filterSession": "Session",
     "filterCompound": "Compound",
     "filterAll": "All",
     "filterFrom": "From",
@@ -316,7 +315,8 @@
     "viewLink": "View",
     "trackLabel": "{{track}} progress",
     "closeTrack": "Close progress view",
-    "capturePart": "Capture {{part}}"
+    "capturePart": "Capture {{part}}",
+    "filterPose": "Pose"
   },
   "markers": {
     "hematocrit": "Hematocrit",

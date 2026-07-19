@@ -1,4 +1,3 @@
-import { Image } from 'expo-image';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -21,8 +20,10 @@ import { Fonts, MaxContentWidth, Radii, Spacing } from '@/constants/theme';
 import { compoundBySlug } from '@/data/compound-catalog';
 import { daysBetween } from '@/lib/dates';
 import { useTheme } from '@/hooks/use-theme';
+import { CroppedPhoto } from '@/components/cropped-photo';
+import { POSE_ORDER, type PoseKey } from '@/lib/photo-pose';
 import { useResolvedUris } from '@/lib/photos';
-import { localDateKey, useStore, type DoseEvent, type PhotoEntry, type PhotoSession, type ProtocolItem } from '@/lib/store';
+import { localDateKey, useStore, type DoseEvent, type PhotoEntry, type ProtocolItem } from '@/lib/store';
 
 // ─── Auto-tag derivation ─────────────────────────────────────────────────────
 
@@ -181,12 +182,12 @@ const modalStyles = StyleSheet.create({
 
 function FilterModal({
   visible,
-  session,
+  pose,
   filterFrom,
   filterTo,
   compoundSlugs,
   selectedCompounds,
-  onSessionChange,
+  onPoseChange,
   onFromChange,
   onToChange,
   onCompoundsChange,
@@ -194,12 +195,12 @@ function FilterModal({
   onClose,
 }: {
   visible: boolean;
-  session: PhotoSession | 'all';
+  pose: PoseKey | 'all';
   filterFrom: string | undefined;
   filterTo: string | undefined;
   compoundSlugs: string[];
   selectedCompounds: string[];
-  onSessionChange: (s: PhotoSession | 'all') => void;
+  onPoseChange: (p: PoseKey | 'all') => void;
   onFromChange: (v: string | undefined) => void;
   onToChange: (v: string | undefined) => void;
   onCompoundsChange: (slugs: string[]) => void;
@@ -226,14 +227,22 @@ function FilterModal({
             <TextButton label={t('photos.filterClear')} onPress={onClear} />
           </View>
 
-          <EngravedLabel>{t('photos.filterSession')}</EngravedLabel>
+          {/* Pose filters (W6-29). Mirrors the reel's grouping, including the
+              "unsorted" bucket so untagged dumps stay one tap away. */}
+          <EngravedLabel>{t('photos.filterPose')}</EngravedLabel>
           <View style={filterStyles.chips}>
-            {(['all', 'face', 'body'] as const).map((s) => (
+            {(['all', 'unsorted', ...POSE_ORDER] as const).map((p) => (
               <OptionChip
-                key={s}
-                label={s === 'all' ? t('photos.filterAll') : t(s === 'face' ? 'photos.sessionFace' : 'photos.sessionBody')}
-                selected={session === s}
-                onPress={() => onSessionChange(s)}
+                key={p}
+                label={
+                  p === 'all'
+                    ? t('photos.filterAll')
+                    : p === 'unsorted'
+                      ? t('photos.pose_unsorted')
+                      : t(`photos.pose_${p}` as 'photos.pose_front_relaxed')
+                }
+                selected={pose === p}
+                onPress={() => onPoseChange(p)}
               />
             ))}
           </View>
@@ -288,7 +297,7 @@ export function PhotoHistoryScreen({ onClose }: { onClose: () => void }) {
   const theme = useTheme();
   const { photos, doseEvents, protocolItems } = useStore();
 
-  const [filterSession, setFilterSession] = useState<PhotoSession | 'all'>('all');
+  const [filterPose, setFilterPose] = useState<PoseKey | 'all'>('all');
   const [filterCompounds, setFilterCompounds] = useState<string[]>([]);
   const [filterFrom, setFilterFrom] = useState<string | undefined>();
   const [filterTo, setFilterTo] = useState<string | undefined>();
@@ -313,7 +322,7 @@ export function PhotoHistoryScreen({ onClose }: { onClose: () => void }) {
 
   const filtered = useMemo(() => {
     return photosWithTags.filter(({ photo }) => {
-      if (filterSession !== 'all' && photo.session !== filterSession) return false;
+      if (filterPose !== 'all' && (photo.pose ?? 'unsorted') !== filterPose) return false;
       if (filterCompounds.length > 0) {
         const tags = photo.customTags ?? derivePhotoTags(photo, doseEvents, protocolItems);
         const hasCompound = filterCompounds.some((slug) => {
@@ -326,7 +335,7 @@ export function PhotoHistoryScreen({ onClose }: { onClose: () => void }) {
       if (filterTo && localDateKey(new Date(photo.takenAt)) > filterTo) return false;
       return true;
     });
-  }, [photosWithTags, filterSession, filterCompounds, filterFrom, filterTo, doseEvents, protocolItems]);
+  }, [photosWithTags, filterPose, filterCompounds, filterFrom, filterTo, doseEvents, protocolItems]);
 
   const byMonth = useMemo(() => {
     const groups: { key: string; label: string; items: typeof filtered }[] = [];
@@ -342,9 +351,9 @@ export function PhotoHistoryScreen({ onClose }: { onClose: () => void }) {
     return groups;
   }, [filtered, i18n.language]);
 
-  const hasFilters = filterSession !== 'all' || filterCompounds.length > 0 || !!filterFrom || !!filterTo;
+  const hasFilters = filterPose !== 'all' || filterCompounds.length > 0 || !!filterFrom || !!filterTo;
   const clearFilters = () => {
-    setFilterSession('all');
+    setFilterPose('all');
     setFilterCompounds([]);
     setFilterFrom(undefined);
     setFilterTo(undefined);
@@ -386,10 +395,18 @@ export function PhotoHistoryScreen({ onClose }: { onClose: () => void }) {
                           accessibilityLabel={t('photos.editTags')}
                           onPress={() => setEditingPhoto({ photo, derived })}
                           style={[styles.thumb, { borderColor: theme.border }]}>
-                          <Image source={{ uri: resolvedUris[photo.id] ?? photo.uri }} style={styles.thumbImg} contentFit="cover" />
+                          <CroppedPhoto
+                            uri={resolvedUris[photo.id] ?? photo.uri}
+                            cropBox={photo.cropBox}
+                            style={styles.thumbImg}
+                          />
+                          {/* Pose, not session (W6-29): the dump view speaks the
+                              same language as the reel. */}
                           <View style={[styles.sessionBadge, { backgroundColor: 'rgba(0,0,0,0.45)' }]}>
                             <ThemedText type="monoSm" style={styles.sessionText}>
-                              {photo.session === 'face' ? t('photos.sessionFace') : t('photos.sessionBody')}
+                              {photo.pose
+                                ? t(`photos.pose_${photo.pose}` as 'photos.pose_front_relaxed')
+                                : t('photos.pose_unsorted')}
                             </ThemedText>
                           </View>
                         </Pressable>
@@ -417,12 +434,12 @@ export function PhotoHistoryScreen({ onClose }: { onClose: () => void }) {
 
       <FilterModal
         visible={filterOpen}
-        session={filterSession}
+        pose={filterPose}
         filterFrom={filterFrom}
         filterTo={filterTo}
         compoundSlugs={allCompoundSlugs}
         selectedCompounds={filterCompounds}
-        onSessionChange={setFilterSession}
+        onPoseChange={setFilterPose}
         onFromChange={setFilterFrom}
         onToChange={setFilterTo}
         onCompoundsChange={setFilterCompounds}

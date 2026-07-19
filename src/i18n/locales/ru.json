@@ -253,7 +253,6 @@
     "historyTitle": "ИСТОРИЯ",
     "filterBtn": "Фильтр",
     "filterTitle": "ФИЛЬТР",
-    "filterSession": "Сессия",
     "filterCompound": "Препарат",
     "filterAll": "Все",
     "filterFrom": "С",
@@ -316,7 +315,8 @@
     "viewLink": "Открыть",
     "trackLabel": "Прогресс: {{track}}",
     "closeTrack": "Закрыть просмотр прогресса",
-    "capturePart": "Снять: {{part}}"
+    "capturePart": "Снять: {{part}}",
+    "filterPose": "Поза"
   },
   "markers": {
     "hematocrit": "Гематокрит",

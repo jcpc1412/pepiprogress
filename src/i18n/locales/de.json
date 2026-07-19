@@ -253,7 +253,6 @@
     "historyTitle": "VERLAUF",
     "filterBtn": "Filtern",
     "filterTitle": "FILTER",
-    "filterSession": "Sitzung",
     "filterCompound": "Verbindung",
     "filterAll": "Alle",
     "filterFrom": "Von",
@@ -316,7 +315,8 @@
     "viewLink": "Ansehen",
     "trackLabel": "Fortschritt: {{track}}",
     "closeTrack": "Fortschrittsansicht schließen",
-    "capturePart": "{{part}} aufnehmen"
+    "capturePart": "{{part}} aufnehmen",
+    "filterPose": "Körperhaltung"
   },
   "markers": {
     "hematocrit": "Hämatokrit",
