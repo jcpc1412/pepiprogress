@@ -371,6 +371,20 @@ the Roboto leak); (c) padding audit against the documented scale; (d) theme-toke
     enable R8 full mode / shrinking / ProGuard rules if available without an AGP 9
     jump. If blocked by the pin, it waits for the next Expo SDK bump — no ejecting.
     Play Console currently: optimization Low, obfuscation 1%.
+46. **Day-boundary staleness [S] (owner-reported 2026-07-19).** Not a performance
+    bug — filed here at owner's request, kept distinct so it isn't conflated with
+    44/45. The app never fully closes on Android/iOS, so a screen left open
+    overnight keeps rendering yesterday's "today": `localDateKey()` itself is pure
+    and always correct at call time (`src/lib/dates.ts`), but nothing forces
+    already-mounted screens (Home, check-in, doses) to re-render when the local
+    calendar day rolls over while backgrounded — the existing `AppState` listeners
+    (`integration-sync.tsx`, `notification-manager.tsx`) only refire their own
+    fetch/notification logic, not a general re-render. Fix: a shared day-boundary
+    watcher — on every foreground transition, compare the current
+    `localDateKey()` to the last-seen one and, if it changed, bump a shared
+    "today" value in the store so date-derived screens re-render onto the new
+    day. One hook, reused by the screens that call `localDateKey()` for "today"
+    rather than a fix per screen.
 
 ## Post-beta platform tracks (parallel, larger)
 
