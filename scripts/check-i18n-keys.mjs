@@ -51,7 +51,7 @@ const IDENTICAL_OK = new Set([
   'photos.comparable', 'photos.dayShort', 'photos.filterTitle', 'photos.heading', 'photos.partName',
   'photos.tagWeek', 'photos.timer3', 'photos.timer10', 'photos.timerOff',
   'protocol.dose', 'protocol.nominal',
-  'protocol.vialCount_one', 'report.date',
+  'protocol.vialCount_one', 'report.date', 'dose.date',
   'routes.im', 'routes.nasal', 'routes.oral',
   'settings.footer', 'sex.ftm', 'sex.mtf', 'symptoms.minutesShort', 'tabs.pepi', 'tabs.photos',
   'units.g', 'units.imperial', 'units.kcal', 'units.kg', 'units.lb',

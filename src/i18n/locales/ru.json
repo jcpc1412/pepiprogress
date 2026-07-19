@@ -1321,5 +1321,19 @@
     "settingsBody": "Выберите, ставить ли на изображения знак Pepi.",
     "watermarkCard": "Знак на карточках статистики",
     "watermarkPhoto": "Знак на фотографиях"
+  },
+  "dose": {
+    "drawerTitle": "ЗАПИСАТЬ ДОЗУ",
+    "amount": "Количество",
+    "amountWithUnit": "Количество ({{unit}})",
+    "amountPlaceholder": "Сколько?",
+    "amountInvalid": "Введите число больше нуля",
+    "date": "Дата",
+    "time": "Время",
+    "confirm": "Записать эту дозу",
+    "applyFutureBody": "Вы записали {{dose}}{{unit}} вместо обычных {{previous}}{{unit}}.",
+    "applyFutureNote": "Ранее записанные дозы останутся без изменений.",
+    "applyThisOnly": "Только эта доза",
+    "applyFuture": "Обновить и мой протокол"
   }
 }

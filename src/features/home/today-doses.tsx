@@ -9,6 +9,7 @@ import { ThemedText } from '@/components/themed-text';
 import { TextButton } from '@/components/form';
 import { Spacing } from '@/constants/theme';
 import { compoundBySlug } from '@/data/compound-catalog';
+import { DoseDrawer, type DoseDraftResult } from '@/features/protocol/dose-drawer';
 import { formatDateKey } from '@/lib/dates';
 import {
   anchorFor,
@@ -51,6 +52,9 @@ export function TodayDoses() {
   // P-04: a just-logged dose that landed off the schedule grid awaits the user's
   // call (counts-for-slot / restart-schedule / extra). Never decided silently.
   const [offSlot, setOffSlot] = useState<OffSlotPrompt | null>(null);
+  // W7-34: the item whose dose drawer is open. The drawer is now the default
+  // logging surface, so LOG opens it rather than writing immediately.
+  const [drafting, setDrafting] = useState<ProtocolItem | null>(null);
 
   // Per-item schedule inputs for the anchored grid (P-04).
   const dosesByItem = useMemo(() => {
@@ -110,26 +114,41 @@ export function TodayDoses() {
     [inventory],
   );
 
-  const onLog = (item: ProtocolItem) => {
+  /**
+   * Writes the dose the drawer drafted (W7-34). The schedule anchoring below is
+   * unchanged from the one-tap flow, but keys off the drafted date rather than
+   * today, since the drawer lets the user log a dose they took yesterday.
+   */
+  const commitDose = (item: ProtocolItem, draft: DoseDraftResult) => {
     const id = logDose({
       protocolItemId: item.id,
       compoundSlug: item.compoundSlug,
-      takenAt: new Date().toISOString(),
-      dose: item.dose,
-      doseUnit: item.doseUnit,
+      takenAt: draft.takenAt,
+      dose: draft.dose,
+      doseUnit: draft.doseUnit,
     });
     setUndoable((m) => ({ ...m, [item.id]: id }));
+
+    // Only when the user explicitly said "update my protocol too". Forward
+    // looking by construction: this patches the item, never logged history.
+    if (draft.applyToProtocol && draft.dose !== undefined) {
+      updateProtocolItem(item.id, { dose: draft.dose });
+    }
+
+    // The day the dose actually landed on, which is what the schedule grid cares
+    // about — not the day the user happened to open the drawer.
+    const doseDay = localDateKey(new Date(draft.takenAt));
 
     // P-04 anchoring: interval schedules get a persistent grid reference.
     const interval = item.doseDays === undefined ? intervalFor(item.frequency) : null;
     if (interval != null) {
       const doses = dosesByItem[item.id] ?? [];
-      const anchor = anchorFor(item, doses.map((d) => d.dateKey), today);
+      const anchor = anchorFor(item, doses.map((d) => d.dateKey), doseDay);
       if (anchor == null) {
-        // First ever dose: today starts the grid.
-        updateProtocolItem(item.id, { scheduleAnchor: today });
+        // First ever dose: it starts the grid.
+        updateProtocolItem(item.id, { scheduleAnchor: doseDay });
       } else {
-        const c = classifyDose(anchor, interval, today);
+        const c = classifyDose(anchor, interval, doseDay);
         if (!c.onSlot) {
           // Off the grid: ask, never silently re-anchor.
           setOffSlot({ itemId: item.id, doseId: id, slotKey: c.slotKey });
@@ -222,7 +241,7 @@ export function TodayDoses() {
             item={item}
             done={done}
             canUndo={done && item.id in undoable}
-            onLog={() => onLog(item)}
+            onLog={() => setDrafting(item)}
             onUndo={() => onUndo(item.id)}
           />
           {offSlot?.itemId === item.id ? (
@@ -244,6 +263,18 @@ export function TodayDoses() {
           ) : null}
         </View>
       ))}
+
+      <DoseDrawer
+        // Keyed so each open remounts with defaults drawn from that item.
+        key={drafting?.id ?? 'none'}
+        item={drafting}
+        visible={drafting !== null}
+        onCancel={() => setDrafting(null)}
+        onConfirm={(draft) => {
+          if (drafting) commitDose(drafting, draft);
+          setDrafting(null);
+        }}
+      />
     </Card>
   );
 }

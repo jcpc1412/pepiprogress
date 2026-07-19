@@ -1321,5 +1321,19 @@
     "settingsBody": "Defina se as imagens exportadas exibem a marca Pepi.",
     "watermarkCard": "Marca nos cartões de dados",
     "watermarkPhoto": "Marca nas imagens"
+  },
+  "dose": {
+    "drawerTitle": "REGISTRAR DOSE",
+    "amount": "Quantidade",
+    "amountWithUnit": "Quantidade ({{unit}})",
+    "amountPlaceholder": "Quanto?",
+    "amountInvalid": "Digite um número maior que zero",
+    "date": "Data",
+    "time": "Hora",
+    "confirm": "Registrar esta dose",
+    "applyFutureBody": "Você registrou {{dose}}{{unit}} em vez da sua {{previous}}{{unit}} habitual.",
+    "applyFutureNote": "As doses já registradas permanecem como estão.",
+    "applyThisOnly": "Somente esta dose",
+    "applyFuture": "Atualizar meu protocolo também"
   }
 }

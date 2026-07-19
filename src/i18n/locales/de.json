@@ -1321,5 +1321,19 @@
     "settingsBody": "Lege fest, ob exportierte Bilder die Wortmarke Pepi tragen.",
     "watermarkCard": "Wortmarke auf Statistikkarten",
     "watermarkPhoto": "Wortmarke auf Fotos"
+  },
+  "dose": {
+    "drawerTitle": "DOSIS ERFASSEN",
+    "amount": "Menge",
+    "amountWithUnit": "Menge ({{unit}})",
+    "amountPlaceholder": "Wie viel?",
+    "amountInvalid": "Gib eine Zahl größer als null ein",
+    "date": "Datum",
+    "time": "Uhrzeit",
+    "confirm": "Diese Dosis erfassen",
+    "applyFutureBody": "Du hast {{dose}}{{unit}} erfasst statt deiner üblichen {{previous}}{{unit}}.",
+    "applyFutureNote": "Bereits erfasste Dosen bleiben unverändert.",
+    "applyThisOnly": "Nur diese Dosis",
+    "applyFuture": "Auch mein Protokoll aktualisieren"
   }
 }

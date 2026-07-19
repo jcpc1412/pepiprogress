@@ -322,12 +322,20 @@ the perf runtime profile runs in parallel from the start.
 
 ### 7B. Dose drawer (notes §6)
 
-34. **Dose logging drawer [M].** Owner: option A — the drawer **replaces**
-    tap-to-confirm as the default dose-logging surface. Shows compound name; dose fully
-    editable; date/time editable via **native** pickers (day + hour/minute). Decided
-    defaults: the "apply to all future doses?" prompt appears only when the entered
-    dose differs from the protocol value, defaults to **this dose only**, and a "yes"
-    edits the protocol item forward only — already-logged history is never rewritten.
+34. **Dose logging drawer [M].** ✅ SHIPPED 2026-07-19. Owner: option A — the drawer
+    **replaces** tap-to-confirm as the default dose-logging surface. Compound name,
+    dose seeded from the protocol and fully editable, date + time via **native**
+    pickers (`@react-native-community/datetimepicker`, already a dep). Pure
+    `dose-draft.ts` (+20 tests): `parseDoseInput` (comma decimals, rejects `12mg`,
+    zero, negatives and `1e5`), `combineDateTime` (local-calendar anchored),
+    `clampToNow` (no future doses, mirrors the check-in rule), `protocolChangePrompt`.
+    The "apply to all future doses?" question is asked **in the drawer, only when the
+    typed amount actually differs**, defaults to **this dose only**, and a yes patches
+    the protocol item forward — logged history is never rewritten (stated in the copy
+    too). P-04 schedule anchoring now keys off the **drafted** dose day rather than
+    today, since a dose can be logged for yesterday. Browser-verified end to end:
+    prompt fires on 250→300, dose writes with the drafted timestamp, protocol updates
+    only on explicit choice.
 
 ### 7C. Design-system enforcement, screen by screen (notes §1, §2, §7, §8)
 

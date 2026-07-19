@@ -1321,5 +1321,19 @@
     "settingsBody": "Choose whether exported images carry the Pepi wordmark.",
     "watermarkCard": "Wordmark on stat cards",
     "watermarkPhoto": "Wordmark on photos"
+  },
+  "dose": {
+    "drawerTitle": "LOG DOSE",
+    "amount": "Amount",
+    "amountWithUnit": "Amount ({{unit}})",
+    "amountPlaceholder": "How much?",
+    "amountInvalid": "Enter a number greater than zero",
+    "date": "Date",
+    "time": "Time",
+    "confirm": "Log this dose",
+    "applyFutureBody": "You logged {{dose}}{{unit}} instead of your usual {{previous}}{{unit}}.",
+    "applyFutureNote": "Doses you already logged stay exactly as they are.",
+    "applyThisOnly": "Just this dose",
+    "applyFuture": "Update my protocol too"
   }
 }
