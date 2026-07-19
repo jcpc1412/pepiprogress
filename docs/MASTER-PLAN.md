@@ -258,13 +258,32 @@ the settings override + quieter-only silent adjustment shipped).
     in progress-photos. Offline/AI-off: fails open to manual chips. True native
     skeleton overlay stays a flagged future device-spike (revisit when the
     ecosystem ships a v5 pose plugin).
-27. **Share cards [S/M].** Branded stat card first, then photo export with watermark
-    toggle in settings (off for photos, on for stat card); offered contextually after
-    milestones/highscores. (beta-notes §1.4)
-28. **Auto-crop via analysis bbox [S/M].** Torso crop box returned by analyze_photo,
-    display-only, originals untouched. (beta-notes §1.2)
-29. **Reel phase 3 [M/L].** Full timeline dump view, pose filters, per-pose ghost
-    references. (beta-notes §1.3)
+27. **Share cards ✅ SHIPPED 2026-07-18** (commit 3ac0cba). Pure `share-card.ts`
+    (+14 tests) builds a consistency card: streak (one-day grace), days tracked,
+    photo count, signed weight delta; zero signals omitted, not shown as zeros.
+    **Privacy invariant:** compounds, doses, markers and symptoms are not
+    reachable from `ShareCardInput`, so a controlled-compound protocol cannot
+    leak in one tap; widening it is a product decision. `ShareSheet` rasterizes
+    the exact preview shown (react-native-view-shot 5.1.0, added so it rides the
+    pending auth rebuild) and hands off to the OS share sheet. Watermark defaults
+    split by surface: on for the card, off for photos, both in Privacy settings.
+    Offered on highscore, after a milestone read, and per-photo from the reel.
+    (beta-notes §1.4)
+28. **Auto-crop via analysis bbox ✅ SHIPPED 2026-07-18** (commit 86625d3).
+    `analyze_photo` returns a normalized subject box in the same call (no extra
+    cost). **Never destructive:** display crop only, original never re-encoded.
+    Pure `photo-crop.ts` (+14 tests) is conservative because LLM boxes are not
+    pixel-perfect: 0.6 confidence floor, 8% padding, edge clamping, fall back to
+    full frame on degenerate/no-op boxes. `CroppedPhoto` applies it to timeline +
+    reel thumbs and the baseline frame; the wipe compare is deliberately left
+    uncropped (independent crops would desync the two halves). Fails open, so it
+    is inert until deployed. ⚠️ **ai-service not yet deployed** (v24) and
+    `npm run eval:posture` must pass 4/4 after. (beta-notes §1.2)
+29. **Reel phase 3 ✅ SHIPPED 2026-07-18** (commit d82626a). Photo-history dump
+    view converted from stale Face/Body session filters to **pose filters**
+    (including the `unsorted` bucket), pose badges on thumbnails, and W6-28 crops
+    applied. `photos.filterSession` renamed to `photos.filterPose` ×6. Per-pose
+    ghost references, the third leg, already shipped with 26.5. (beta-notes §1.3)
 30. **Progress overlay prototype [M].** Exaggerated-interpretation overlay (lines /
     triangles / shading) rendered on progress photos. Blocked on owner sketches (see
     Blocked on owner); slots here once they land.
