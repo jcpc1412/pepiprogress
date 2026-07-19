@@ -466,6 +466,60 @@ mirror) plus the manual data-export file already cover the backup need; a second
 backup target adds integration surface without adding safety. Revisit only if a
 no-account-ever user segment materially asks for it.
 
+## Captured for discussion (2026-07-19) — NOT scoped, NOT decided
+
+Owner asked these to be recorded only, ahead of a usage-limit reset, explicitly
+**not** fleshed out yet. Every one of these needs full discussion before any
+implementation plan is written (standing rule). Listed here so the thread resumes
+cleanly; none of the framing below is a decision.
+
+### F1. EAS Android auto-submit: service account permission error despite Owner IAM role
+`eas submit`/`--auto-submit` reports the Play Console service account lacks
+permission, even though the owner granted it **Owner** in Google Cloud IAM. Owner
+IAM role is necessary but not sufficient for Play Console — the account also needs
+to be explicitly invited/granted access **inside Play Console's own Users &
+permissions**, which is a separate grant from Cloud IAM and commonly the actual gap.
+To discuss: walk through Play Console → Users & permissions (not Cloud IAM) and
+confirm the service account is invited there with Release permissions for the app;
+also confirm which key file `eas.json`'s `serviceAccountKeyPath` actually points at
+matches the account that was granted access.
+
+### F2. Free/OSS animation libraries for a paid app (design normalization track)
+Owner wants a survey of animation libraries usable in a paid/commercial app (license
+compatible with closed-source distribution — not just "free to use" but explicit
+permissive licensing e.g. MIT/Apache), covering: confirmation micro-interactions,
+screen/element transitions, possible undo affordances, and anything else that reads
+as polish. To discuss: where this plugs into the existing "impeccable" design-system
+work and the Wave 7 button/padding sweep (35–42) vs. being its own pass; whether
+`react-native-reanimated` (already a dep) covers most of it before reaching for a
+new library at all.
+
+### F3. Reduce AI-service calls for deterministic quick-logs (cost)
+Owner's example: "weight 120" doesn't need a Haiku parse call — it's a pattern a
+deterministic matcher could catch for free. To discuss: what fraction of real
+quick-log traffic is actually this simple (needs data, not a guess); a pre-parse
+deterministic layer in front of `parseQuickLog` that only escalates to AI on
+ambiguity, vs. false-negative risk (a deterministic miss silently logging the wrong
+field); where this sits relative to the existing `AUTO_APPLY_CONFIDENCE` gate in
+`quick-log-apply.ts`; whether it's purely a cost play or also a latency/offline win
+(a matched pattern logs instantly, no network wait).
+
+### F4. Detailed-log rework: separate from quick-log, becomes a passively-filled "day in review"
+Owner's sketch, paraphrased, not a spec: the detailed log currently sits unused
+(read as a chore) but already supports "continue filling it up throughout the day."
+Proposal: decouple it from quick-log entirely. New quick-log logic (post-F3, mostly
+deterministic) writes into the same day's detailed-log entity instead of being a
+separate, possibly-duplicate write. Chat (Pepi) also feeds it when something worth
+capturing comes up. Integrations passively fill fields as data arrives. The detailed
+log itself moves to a nested page (location TBD) framed as something like "a day in
+review" rather than a form to complete. Owner flagged as explicitly unresolved:
+where it lives in the nav, how to signal its existence/value to users, and exact UX.
+Owner also observed the existing **distillation** logic (check-in field
+customization / summarization, R2-E era) does something adjacent and floated
+reusing/condensing that logic with this rather than building a parallel system — to
+discuss whether that's the same concept wearing two names or genuinely separate
+concerns before merging any code.
+
 ## Standing gates (every wave)
 
 Green gate (typecheck / lint / i18n parity 6 locales / tests / web export); no
