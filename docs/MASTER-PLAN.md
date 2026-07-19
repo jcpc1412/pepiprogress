@@ -309,10 +309,16 @@ the perf runtime profile runs in parallel from the start.
     (owner: option A). On restore/sign-in, `cloudPath` → signed URL becomes the source
     of truth for any photo whose local URI does not resolve; download-on-demand with
     cached local copies. Fixes "7 photos, none render" on a second device.
-33. **Sign-out semantics [S].** Owner: option B. Sign-out ends the session and returns
-    to the signed-out state but **keeps local data** (the app is usable with no account
-    by design). No in-app erase option: wiping means deleting the app. No destructive
-    surprises.
+33. **Sign-out semantics [S].** ✅ SHIPPED 2026-07-19. Owner: option B. Audited the
+    existing session/store code first: `signOut()` already ended the Supabase session
+    (+ best-effort native Google sign-out) without touching local state, and
+    `AccountSection` already re-rendered to the signed-out card once `user` went null
+    — the underlying semantics were already correct, nothing to rebuild. What was
+    actually missing: the sign-out link had no confirmation (a mis-tap silently ended
+    the session) and no stated "your data stays" behavior, and a failed `signOut()`
+    call was swallowed with no feedback. Added an `Alert.alert` confirm (matching the
+    existing `privacy.deleteAll` pattern) stating local data is kept, plus an error
+    alert on failure. No in-app erase option: wiping means deleting the app.
 
 ### 7B. Dose drawer (notes §6)
 

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, View } from 'react-native';
+import { Alert, StyleSheet, View } from 'react-native';
 
 import { PrimaryButton } from '@/components/form';
 import { Card, Divider, EngravedLabel } from '@/components/surface';
@@ -23,6 +23,24 @@ export function AccountSection() {
 
   if (!isSupabaseConfigured) return null;
 
+  // W7-33: sign-out ends the cloud session but deliberately keeps local data
+  // (the app is usable with no account by design) — there is no in-app erase,
+  // that's what deleting the app is for. The confirm dialog exists so a
+  // mis-tap doesn't end the session by accident, and states the "your data
+  // stays" behavior up front rather than leaving it to be discovered.
+  const confirmSignOut = () => {
+    Alert.alert(t('account.signOutConfirmTitle'), t('account.signOutConfirmBody'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('account.signOut'),
+        style: 'destructive',
+        onPress: () => {
+          signOut().catch(() => Alert.alert(t('account.signOutError')));
+        },
+      },
+    ]);
+  };
+
   return (
     <>
       <EngravedLabel>{t('account.section')}</EngravedLabel>
@@ -34,13 +52,7 @@ export function AccountSection() {
           </ThemedText>
           <ThemedText type="label">{user.email}</ThemedText>
           <Divider />
-          <ThemedText
-            type="monoSm"
-            themeColor="signalBad"
-            style={styles.link}
-            onPress={async () => {
-              await signOut();
-            }}>
+          <ThemedText type="monoSm" themeColor="signalBad" style={styles.link} onPress={confirmSignOut}>
             {t('account.signOut')}
           </ThemedText>
         </Card>

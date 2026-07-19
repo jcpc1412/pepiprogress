@@ -666,7 +666,10 @@
     "benefit1": "Backup automático na nuvem",
     "benefit2": "Acesso em qualquer dispositivo",
     "benefit3": "Nunca perca seu progresso",
-    "saveData": "Salvar meus dados na nuvem"
+    "saveData": "Salvar meus dados na nuvem",
+    "signOutConfirmTitle": "Sair da conta?",
+    "signOutConfirmBody": "Seus dados permanecem neste dispositivo. Para removê-los completamente, exclua o aplicativo.",
+    "signOutError": "Não foi possível sair. Verifique sua conexão e tente novamente."
   },
   "lab": {
     "section": "VALORES LABORATORIAIS",

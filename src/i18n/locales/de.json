@@ -666,7 +666,10 @@
     "benefit1": "Automatische Cloud-Sicherung",
     "benefit2": "Zugriff von jedem Gerät",
     "benefit3": "Verliere nie deinen Fortschritt",
-    "saveData": "Meine Daten in der Cloud speichern"
+    "saveData": "Meine Daten in der Cloud speichern",
+    "signOutConfirmTitle": "Abmelden?",
+    "signOutConfirmBody": "Deine Daten bleiben auf diesem Gerät. Um sie vollständig zu entfernen, lösche die App.",
+    "signOutError": "Abmelden nicht möglich. Prüfe deine Verbindung und versuche es erneut."
   },
   "lab": {
     "section": "LABORWERTE",

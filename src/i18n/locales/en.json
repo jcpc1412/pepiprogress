@@ -666,7 +666,10 @@
     "benefit1": "Automatic cloud backup",
     "benefit2": "Access from any device",
     "benefit3": "Never lose your progress",
-    "saveData": "Save my data to cloud"
+    "saveData": "Save my data to cloud",
+    "signOutConfirmTitle": "Sign out?",
+    "signOutConfirmBody": "Your data stays on this device. To remove it completely, delete the app.",
+    "signOutError": "Could not sign out. Check your connection and try again."
   },
   "lab": {
     "section": "LAB VALUES",

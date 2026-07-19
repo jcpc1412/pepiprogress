@@ -666,7 +666,10 @@
     "benefit1": "Copia de seguridad automática",
     "benefit2": "Acceso desde cualquier dispositivo",
     "benefit3": "Nunca pierdas tu progreso",
-    "saveData": "Guardar mis datos en la nube"
+    "saveData": "Guardar mis datos en la nube",
+    "signOutConfirmTitle": "¿Cerrar sesión?",
+    "signOutConfirmBody": "Tus datos se quedan en este dispositivo. Para eliminarlos por completo, borra la app.",
+    "signOutError": "No se pudo cerrar sesión. Verifica tu conexión e inténtalo de nuevo."
   },
   "lab": {
     "section": "VALORES DE LABORATORIO",
