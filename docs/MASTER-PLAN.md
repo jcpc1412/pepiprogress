@@ -368,12 +368,25 @@ the Roboto leak); (c) padding audit against the documented scale; (d) theme-toke
 
 ### 7D. Pepi chat behavior (notes §10)
 
-43. **Suggestion pills + keyboard [S/M].** Pills hide on input focus **and** while a
-    conversation is actively going back and forth; a ~10s idle timer (user hasn't
-    replied) resurfaces them as suggestions; they return fully when input is empty and
-    blurred. Fix the Android keyboard: input must rise with the keyboard
-    (`KeyboardAvoidingView` / `softwareKeyboardLayoutMode` per current Expo SDK 56
-    guidance), and re-verify the previously-flagged iPhone behavior in the same pass.
+43. **Suggestion pills + keyboard [S/M].** ✅ SHIPPED 2026-07-19. Pure
+    `chat-pills.ts` (+11 tests): `shouldShowPills` (cold screen → show; any draft
+    text → hide; active exchange under `PILL_IDLE_MS` 10s → hide; quiet + empty →
+    show) and `msUntilPillsReturn`, so the screen schedules **one** wake-up at the
+    moment the pills fall due instead of polling. Chips that answer a question Pepi
+    just asked (micro check-in, anomaly mute, typical yes/no) are the interaction
+    itself and are exempt via `activeChipFlow`. The old `keyboardUp` gate is gone,
+    since visibility now follows the exchange rather than the keyboard. Decided
+    while building: a draft left sitting keeps the pills hidden however long the
+    silence, because that is someone composing, not someone stuck.
+    Browser-verified all four states incl. the real 10s timer.
+    **Android keyboard:** root cause was config, not the component. The Expo
+    keyboard guide states Android needs no `behavior` on `KeyboardAvoidingView`
+    (already correct) but that bottom-tab apps must set
+    `android.softwareKeyboardLayoutMode`, which was **unset** (defaulting to
+    `resize`, which does not lift the composer under edge-to-edge). Set to `"pan"`.
+    Also deduped the doubled CAMERA/RECORD_AUDIO permissions found in the same
+    block. ⚠️ **Needs the pending native rebuild + device check** (config change,
+    unverifiable on web); re-verify the previously-flagged iPhone behavior then too.
 
 ### 7E. Android performance, two independent tracks (notes §9, flag B)
 

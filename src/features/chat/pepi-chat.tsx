@@ -32,6 +32,7 @@ import { CHART_METRICS, type MetricSeries } from '@/lib/chart-series';
 import { executeQuery } from '@/lib/ask/execute';
 import { matchQuery, SUGGESTED_QUERIES } from '@/lib/ask/intent';
 import type { Aggregation, PepiAnswer, PepiQuery, QueryMetric, Timeframe, UnitTag } from '@/lib/ask/types';
+import { msUntilPillsReturn, shouldShowPills } from '@/lib/chat-pills';
 import { AUTO_APPLY_CONFIDENCE, isResolvable } from '@/lib/quick-log-apply';
 import { useCoachingLevel } from '@/lib/use-coaching-level';
 import { daysBetween, formatDateKey, localHour, shiftDateKey } from '@/lib/dates';
@@ -170,10 +171,9 @@ export function PepiChat() {
   const [undoneIds, setUndoneIds] = useState<Set<string>>(new Set());
   const undoMap = useRef<Map<string, () => void>>(new Map());
   const scrollRef = useRef<ScrollView>(null);
-  // Keyboard state (P-4): when the keyboard is up we hide the template chips (they
-  // would otherwise be shoved over the composer) and keep the thread pinned to the
-  // latest message so the composer never covers what you just sent.
-  const [keyboardUp, setKeyboardUp] = useState(false);
+  // Keyboard: the thread stays pinned to the latest message so the composer
+  // never covers what you just sent. Chip visibility no longer keys off the
+  // keyboard; it follows the pill rules (W7-43).
   // Enter-animation gate (P-5): disabled under reduce-motion.
   const [reduceMotion, setReduceMotion] = useState(false);
   // Session-close auto-clear (P-5 / OQ-1 option 1): the thread clears when the user
@@ -219,14 +219,41 @@ export function PepiChat() {
     return () => clearTimeout(id);
   }, [pepiMessages, pending]);
 
+  // Suggestion pills (W7-43): visible on a cold screen and after the exchange
+  // goes quiet, hidden while typing or mid-conversation. Held as state and
+  // decided inside an effect so the clock is never read during render.
+  const [showPills, setShowPills] = useState(true);
+  const lastMessageTs = pepiMessages.length ? pepiMessages[pepiMessages.length - 1].ts : undefined;
+  const draftLength = text.trim().length;
+  const hasConversation = pepiMessages.length > 0;
+  // Chips that answer a question Pepi just asked are the interaction itself, so
+  // they ignore the pill rules entirely.
+  const activeChipFlow = !!anomalyCapture || !!microFlow || typicalSetup?.step === 'confirm';
+
+  useEffect(() => {
+    const evaluate = (): number | null => {
+      const state = {
+        draftLength,
+        msSinceActivity: lastMessageTs ? Date.now() - new Date(lastMessageTs).getTime() : 0,
+        hasConversation,
+      };
+      setShowPills(shouldShowPills(state));
+      return msUntilPillsReturn(state);
+    };
+    const wait = evaluate();
+    if (wait === null) return;
+    // A single wake-up at the moment the pills fall due, rather than polling.
+    const id = setTimeout(evaluate, wait + 50);
+    return () => clearTimeout(id);
+  }, [draftLength, lastMessageTs, hasConversation]);
+
   useEffect(() => {
     const showEvt = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
     const hideEvt = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
     const showSub = Keyboard.addListener(showEvt, () => {
-      setKeyboardUp(true);
       setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 50);
     });
-    const hideSub = Keyboard.addListener(hideEvt, () => setKeyboardUp(false));
+    const hideSub = Keyboard.addListener(hideEvt, () => {});
     return () => {
       showSub.remove();
       hideSub.remove();
@@ -860,7 +887,9 @@ export function PepiChat() {
           ) : null}
         </ScrollView>
 
-        {!keyboardUp && (
+        {/* A flow's answer chips are the interaction itself and always show;
+            the suggestion pills come and go with shouldShowPills (W7-43). */}
+        {(activeChipFlow || showPills) && (
         <View style={styles.chips}>
           {anomalyCapture ? (
             // While waiting for the explanation: an instantly-available way out.
