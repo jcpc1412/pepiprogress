@@ -20,6 +20,29 @@ Per the standing working-style rule, the output of each discussion is a *decisio
 parking lot. Items carry hypotheses below to make the conversation faster, but **a hypothesis is
 not a decision** and none of them are approved.
 
+**✅ DISCLOSURE SATISFIED 2026-07-18: all 10 items discussed with the owner and decided.**
+The decisions are folded into `docs/MASTER-PLAN.md` → Wave 7 (items 31 to 45) + post-beta
+track E (Branding). Summary of the calls:
+
+1. Both: vendor social buttons (official Apple + Google) AND fix the contrast tokens.
+2. Audit + unify onboarding onto the main theme tokens; also remove the "optional" flag
+   from the sex selector.
+3. Fix the redirect bug now (native path + allow-list) and verify Apple's config in the same
+   pass; custom domain deferred into a dedicated **Branding round** (track E: domain + auth
+   email templates + website, one coordinated window per flag A). The leaked-token URL went
+   only to the owner; no revocation needed.
+4. Storage hardening pulled forward: `cloudPath` → signed URL as restore source of truth.
+5. Option B: sign-out keeps local data, no in-app erase (delete the app to wipe).
+6. Option A: the drawer replaces tap-to-confirm as the default dose-logging surface.
+   Defaults: "apply to future doses?" only when the dose differs, defaults to this-dose-only,
+   never rewrites history.
+7. Incremental, screen by screen across the whole app; one plan step per screen (Wave 7C).
+8. Folded into 7's per-screen checklist (padding audited per screen); padding architecture
+   documented in DESIGN.md.
+9. Both performance tracks now, runtime profile first.
+10. Pills hide on focus and during active back-and-forth; a ~10s idle timer resurfaces them;
+    keyboard fix on Android + iPhone re-check.
+
 ---
 
 ## 🚩 Flagged: two items that are bigger than they look

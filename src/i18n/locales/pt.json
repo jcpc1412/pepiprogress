@@ -81,7 +81,7 @@
     "skip": "Pular por agora",
     "sex": {
       "title": "Sobre você",
-      "subtitle": "Opcional. Ajuda a contextualizar seu progresso.",
+      "subtitle": "Ajuda a contextualizar seu progresso.",
       "other": "Outro"
     },
     "weight": {

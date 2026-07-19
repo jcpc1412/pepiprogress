@@ -81,7 +81,7 @@
     "skip": "Passer pour l'instant",
     "sex": {
       "title": "À votre sujet",
-      "subtitle": "Facultatif. Aide à contextualiser vos progrès.",
+      "subtitle": "Aide à contextualiser vos progrès.",
       "other": "Autre"
     },
     "weight": {

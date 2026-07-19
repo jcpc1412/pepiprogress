@@ -81,7 +81,7 @@
     "skip": "Skip for now",
     "sex": {
       "title": "About you",
-      "subtitle": "Optional. Helps contextualize your progress.",
+      "subtitle": "Helps contextualize your progress.",
       "other": "Other"
     },
     "weight": {

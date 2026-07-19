@@ -288,6 +288,90 @@ the settings override + quieter-only silent adjustment shipped).
     triangles / shading) rendered on progress photos. Blocked on owner sketches (see
     Blocked on owner); slots here once they land.
 
+## Wave 7: Android beta hardening (all 10 items decided with owner 2026-07-18)
+
+Source: `docs/notes/android-beta-notes-2026-07-18.md` (disclosure satisfied: every
+bullet discussed and decided). Ordering inside the wave: auth/sync first (blocks
+widening the tester pool), then the screen-by-screen design-system sweep, then chat;
+the perf runtime profile runs in parallel from the start.
+
+### 7A. Auth/sync hardening (notes §3, §4, §5)
+
+31. **Google sign-in return leg [S/M].** Fix the redirect dead-end (flow ends on
+    `http://localhost:3000/#access_token=...`): make the native `GoogleSignin` path the
+    one that actually runs on device (no redirect at all), fix the browser-fallback
+    deep-link return, and purge `localhost:3000` from the Supabase redirect allow-list.
+    While in there, **verify the Apple sign-in config end to end** (native bundle-id
+    path + web Services ID/secret) since it shares the same plumbing. Custom-domain
+    branding explicitly deferred to the Branding track (E) — owner accepts the
+    `supabase.co` leak during closed beta.
+32. **Cross-device photo restore [M].** Storage hardening pulled forward from backlog
+    (owner: option A). On restore/sign-in, `cloudPath` → signed URL becomes the source
+    of truth for any photo whose local URI does not resolve; download-on-demand with
+    cached local copies. Fixes "7 photos, none render" on a second device.
+33. **Sign-out semantics [S].** Owner: option B. Sign-out ends the session and returns
+    to the signed-out state but **keeps local data** (the app is usable with no account
+    by design). No in-app erase option: wiping means deleting the app. No destructive
+    surprises.
+
+### 7B. Dose drawer (notes §6)
+
+34. **Dose logging drawer [M].** Owner: option A — the drawer **replaces**
+    tap-to-confirm as the default dose-logging surface. Shows compound name; dose fully
+    editable; date/time editable via **native** pickers (day + hour/minute). Decided
+    defaults: the "apply to all future doses?" prompt appears only when the entered
+    dose differs from the protocol value, defaults to **this dose only**, and a "yes"
+    edits the protocol item forward only — already-logged history is never rewritten.
+
+### 7C. Design-system enforcement, screen by screen (notes §1, §2, §7, §8)
+
+Foundations first, then one step per screen. Each screen step applies the same
+checklist: (a) convert stray anchors/`Text` actions to `PrimaryButton`/`SecondaryButton`
+(primary = black on light / white on dark; secondary = near-background shade), text
+links legit only for inline navigation; (b) every string through `ThemedText` (kills
+the Roboto leak); (c) padding audit against the documented scale; (d) theme-token audit
+(no drifted colors, both themes checked on-device dark mode).
+
+35. **Foundations [M].** `PrimaryButton`/`SecondaryButton` components on the design
+    tokens; **padding architecture documented in DESIGN.md** (padding token set tied to
+    `Spacing`, per-component minimums, e.g. button text never touches a chamfer edge);
+    fix the permission-button padding as the reference implementation (notes §8).
+36. **Onboarding [M].** Owner: 1c + 2a. **Vendor social buttons** (Apple's official
+    `AppleAuthenticationButton` everywhere it renders, Google's official branded button
+    from `@react-native-google-signin`) replacing the custom `SocialButton`; fix the
+    dark-mode contrast tokens; unify onboarding onto the main theme tokens (audit for
+    drift); **remove the "optional" flag from the sex selector**. Then the standard
+    per-screen checklist.
+37. **Auth screen + shared dialogs [S].** The "log a photo" dialog (Roboto + anchor
+    Cancel) is the flagship fix; sweep all shared modals/dialogs. Checklist.
+38. **Home/Today (check-in + quick-log) [S/M].** Checklist.
+39. **Pepi chat [S].** Checklist (pairs with item 42).
+40. **Analysis [S].** Checklist.
+41. **Photos (reel, capture, review, history) [M].** Checklist.
+42. **Protocol + settings screens** (protocol, inventory, notification / privacy /
+    cycle / integration / typical-day settings) **[M].** Checklist. Closes the sweep;
+    a final pass verifies no screen was missed.
+
+### 7D. Pepi chat behavior (notes §10)
+
+43. **Suggestion pills + keyboard [S/M].** Pills hide on input focus **and** while a
+    conversation is actively going back and forth; a ~10s idle timer (user hasn't
+    replied) resurfaces them as suggestions; they return fully when input is empty and
+    blurred. Fix the Android keyboard: input must rise with the keyboard
+    (`KeyboardAvoidingView` / `softwareKeyboardLayoutMode` per current Expo SDK 56
+    guidance), and re-verify the previously-flagged iPhone behavior in the same pass.
+
+### 7E. Android performance, two independent tracks (notes §9, flag B)
+
+44. **Runtime track [M] — profile first.** React profiler + render-count audit on
+    device (Moto G60s class): store-context re-render storms, `useResolvedUris` over
+    all photos, unmemoized lists, instrument SVG/chamfer cost, navigation transitions.
+    Fix what the profile shows, nothing speculative. Starts in parallel with 7A.
+45. **Build track [S to blocked].** Determine what AGP Expo SDK 56 actually pins;
+    enable R8 full mode / shrinking / ProGuard rules if available without an AGP 9
+    jump. If blocked by the pin, it waits for the next Expo SDK bump — no ejecting.
+    Play Console currently: optimization Low, obfuscation 1%.
+
 ## Post-beta platform tracks (parallel, larger)
 
 - **A. Web workbench [L].** One codebase, capability-class responsive layouts (the
@@ -301,6 +385,17 @@ the settings override + quieter-only silent adjustment shipped).
   behavior decided when freemium comes off the backburner. (round-3 §9)
 - **D. HealthKit cycle read + Pepi cycle setup [M].** Category read to cycle metric;
   conversational setup for non-trackers. (beta-notes §1.7 steps 2-3)
+- **E. Branding round (owner-directed 2026-07-18).** One coordinated pass, before the
+  tester pool widens or at public launch at the latest, folding together everything
+  that carries the Pepi name outward: **custom domain in front of Supabase Auth** (paid
+  add-on; kills the `pjdbxnycrvibmebfumel.supabase.co` leak in Google's OAuth consent +
+  notification email), **auth email templates** (confirmation / magic-link / reset,
+  owner writes the copy), and the **website** (pairs with track A's web workbench; the
+  marketing site and the workbench share the domain). ⚠️ Carries android-notes flag A:
+  the domain switch changes the callback URL in Google Cloud console, the Apple
+  Services ID return URL (which likely forces regenerating the Apple client secret,
+  see memory `apple-oauth-secret-renewal`), and the Supabase redirect allow-list — all
+  must land in one window or sign-in breaks mid-beta.
 
 ## Deferred / backlog
 
