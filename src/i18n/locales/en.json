@@ -82,7 +82,8 @@
     "sex": {
       "title": "About you",
       "subtitle": "Helps contextualize your progress.",
-      "other": "Other"
+      "other": "Other",
+      "required": "Pick one to continue"
     },
     "weight": {
       "title": "Your starting weight",
@@ -653,7 +654,9 @@
     "restoredBody": "Your data has been loaded onto this device.",
     "partialSync": "{{count}} item(s) could not sync, your local data is safe.",
     "errorMissingFields": "Please enter your email and password.",
-    "orEmail": "or with email"
+    "orEmail": "or with email",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password"
   },
   "account": {
     "section": "ACCOUNT",

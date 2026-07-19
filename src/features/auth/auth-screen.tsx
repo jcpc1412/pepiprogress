@@ -172,6 +172,7 @@ export function AuthScreen({
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
+                revealToggle
               />
               {formError ? (
                 <ThemedText type="monoSm" themeColor="signalBad">

@@ -9,7 +9,9 @@
       "distribution": "internal",
       "env": {
         "EXPO_PUBLIC_SUPABASE_URL": "https://pjdbxnycrvibmebfumel.supabase.co",
-        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_SS9LQT-QfG1P0n2PdEZi6g_Rtn-BTUv"
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_SS9LQT-QfG1P0n2PdEZi6g_Rtn-BTUv",
+        "EXPO_PUBLIC_GOOGLE_CLIENT_ID": "1062784454416-un3rm91bmk5n71gsmjkl80rsbp0j4p7k.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "1062784454416-20t130tgnlbe0uv4dp4pk860a9vikau0.apps.googleusercontent.com"
       }
     },
     "preview": {
@@ -20,7 +22,9 @@
       "channel": "preview",
       "env": {
         "EXPO_PUBLIC_SUPABASE_URL": "https://pjdbxnycrvibmebfumel.supabase.co",
-        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_SS9LQT-QfG1P0n2PdEZi6g_Rtn-BTUv"
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_SS9LQT-QfG1P0n2PdEZi6g_Rtn-BTUv",
+        "EXPO_PUBLIC_GOOGLE_CLIENT_ID": "1062784454416-un3rm91bmk5n71gsmjkl80rsbp0j4p7k.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "1062784454416-20t130tgnlbe0uv4dp4pk860a9vikau0.apps.googleusercontent.com"
       }
     },
     "production": {
@@ -28,7 +32,9 @@
       "channel": "production",
       "env": {
         "EXPO_PUBLIC_SUPABASE_URL": "https://pjdbxnycrvibmebfumel.supabase.co",
-        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_SS9LQT-QfG1P0n2PdEZi6g_Rtn-BTUv"
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_SS9LQT-QfG1P0n2PdEZi6g_Rtn-BTUv",
+        "EXPO_PUBLIC_GOOGLE_CLIENT_ID": "1062784454416-un3rm91bmk5n71gsmjkl80rsbp0j4p7k.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "1062784454416-20t130tgnlbe0uv4dp4pk860a9vikau0.apps.googleusercontent.com"
       }
     }
   },

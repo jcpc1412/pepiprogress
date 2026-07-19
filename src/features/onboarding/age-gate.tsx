@@ -74,7 +74,7 @@ export function AgeGate({ onVerified }: { onVerified: (dobISO: string) => void }
   const is18 = dateValid && isAtLeast18(d, m, y);
   const computedAge = dateValid ? new Date().getFullYear() - y : 0;
 
-  const canSubmit = dateComplete;
+  const canSubmit = dateComplete && !!profile.sex;
 
   const submit = () => {
     if (!isValidDate(d, m, y)) { setError(t('ageGate.errorInvalid')); return; }
@@ -153,7 +153,7 @@ export function AgeGate({ onVerified }: { onVerified: (dobISO: string) => void }
         ))}
       </View>
 
-      {/* Sex (optional) */}
+      {/* Sex (required: it drives field surfacing and photo-analysis context) */}
       <EngravedLabel>{t('about.sex')}</EngravedLabel>
       <ThemedText type="monoSm" themeColor="textMuted">{t('onboarding.sex.subtitle')}</ThemedText>
       <View style={styles.chips}>
@@ -198,13 +198,23 @@ export function AgeGate({ onVerified }: { onVerified: (dobISO: string) => void }
         </View>
       )}
 
+      {!profile.sex && (
+        <ThemedText type="monoSm" themeColor="textMuted">
+          {t('onboarding.sex.required')}
+        </ThemedText>
+      )}
+
       {error ? (
         <ThemedText type="monoSm" themeColor="signalBad">
           {error}
         </ThemedText>
       ) : null}
 
-      <PrimaryButton label={t('ageGate.confirm')} onPress={submit} disabled={!canSubmit} />
+      <PrimaryButton
+        label={canSubmit ? t('ageGate.confirm') : t('onboarding.sex.required')}
+        onPress={submit}
+        disabled={!canSubmit}
+      />
 
       <ThemedText type="monoSm" themeColor="textMuted" style={styles.disclaimer}>
         {t('ageGate.whyWeAsk')}

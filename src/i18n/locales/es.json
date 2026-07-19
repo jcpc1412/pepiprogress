@@ -82,7 +82,8 @@
     "sex": {
       "title": "Sobre ti",
       "subtitle": "Ayuda a contextualizar tu progreso.",
-      "other": "Otro"
+      "other": "Otro",
+      "required": "Elige una para continuar"
     },
     "weight": {
       "title": "Tu peso inicial",
@@ -653,7 +654,9 @@
     "restoredBody": "Tus datos han sido cargados en este dispositivo.",
     "partialSync": "{{count}} elemento(s) no pudieron sincronizarse, tus datos locales están seguros.",
     "errorMissingFields": "Por favor ingresa tu email y contraseña.",
-    "orEmail": "o con correo"
+    "orEmail": "o con correo",
+    "showPassword": "Mostrar contraseña",
+    "hidePassword": "Ocultar contraseña"
   },
   "account": {
     "section": "CUENTA",

@@ -27,6 +27,16 @@ if (googleNativeConfigured) {
     webClientId: GOOGLE_WEB_CLIENT_ID,
     iosClientId: GOOGLE_IOS_CLIENT_ID,
   });
+} else if (Platform.OS !== 'web' && __DEV__) {
+  // W7-31: this is how the Android beta broke. Without the web client ID the
+  // native path is skipped and Google sign-in silently degrades to the browser
+  // flow, which dead-ends on the Supabase Site URL unless the app scheme is in
+  // the redirect allow-list. On a real build that reads as "sign-in is broken",
+  // so make the build misconfiguration loud in dev rather than let it hide.
+  console.warn(
+    '[auth] EXPO_PUBLIC_GOOGLE_CLIENT_ID is unset: native Google sign-in is off ' +
+      'and the browser fallback will be used. Check the build profile env in eas.json.',
+  );
 }
 
 /** OAuth providers offered in the UI. Provider config lives in Supabase Auth. */

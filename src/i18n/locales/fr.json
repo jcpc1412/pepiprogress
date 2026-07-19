@@ -82,7 +82,8 @@
     "sex": {
       "title": "À votre sujet",
       "subtitle": "Aide à contextualiser vos progrès.",
-      "other": "Autre"
+      "other": "Autre",
+      "required": "Choisissez une option pour continuer"
     },
     "weight": {
       "title": "Votre poids de départ",
@@ -653,7 +654,9 @@
     "restoredBody": "Vos données ont été chargées sur cet appareil.",
     "partialSync": "{{count}} élément(s) n'ont pas pu être synchronisés, vos données locales sont sécurisées.",
     "errorMissingFields": "Veuillez entrer votre email et mot de passe.",
-    "orEmail": "ou par e-mail"
+    "orEmail": "ou par e-mail",
+    "showPassword": "Afficher le mot de passe",
+    "hidePassword": "Masquer le mot de passe"
   },
   "account": {
     "section": "COMPTE",

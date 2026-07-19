@@ -1,4 +1,6 @@
+import { SymbolView } from 'expo-symbols';
 import { useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
 
 import { ChamferBox } from '@/components/chamfer';
@@ -149,44 +151,76 @@ export function ScaleSelector({
   );
 }
 
-/** Text input with label, focus ring, and error state. */
+/** Text input with label, focus ring, and error state.
+ *
+ *  Pass `revealToggle` on a `secureTextEntry` field to get an eye button that
+ *  flips the masking. Typing a password blind is the main cause of failed
+ *  sign-ins, so the toggle is offered rather than assumed: it only renders when
+ *  asked for, and it never leaves the value revealed across mounts. */
 export function LabeledInput({
   label,
   error,
   style,
   onFocus,
   onBlur,
+  revealToggle,
+  secureTextEntry,
   ...rest
-}: TextInputProps & { label?: string; error?: string }) {
+}: TextInputProps & { label?: string; error?: string; revealToggle?: boolean }) {
+  const { t } = useTranslation();
   const theme = useTheme();
   const [focused, setFocused] = useState(false);
+  const [revealed, setRevealed] = useState(false);
   const borderColor = error ? theme.signalBad : focused ? theme.accent : theme.border;
+  const showToggle = revealToggle && secureTextEntry;
   return (
     <View style={styles.field}>
       {label ? <ThemedText type="label">{label}</ThemedText> : null}
-      <TextInput
-        placeholderTextColor={theme.textMuted}
-        onFocus={(e) => {
-          setFocused(true);
-          onFocus?.(e);
-        }}
-        onBlur={(e) => {
-          setFocused(false);
-          onBlur?.(e);
-        }}
-        style={[
-          styles.input,
-          {
-            color: theme.text,
-            backgroundColor: theme.surfaceSunken,
-            borderColor,
-            // thicken to 1px on focus/error so the state reads against the hairline default
-            borderWidth: focused || error ? 1 : StyleSheet.hairlineWidth,
-          },
-          style,
-        ]}
-        {...rest}
-      />
+      <View>
+        <TextInput
+          placeholderTextColor={theme.textMuted}
+          secureTextEntry={secureTextEntry && !revealed}
+          onFocus={(e) => {
+            setFocused(true);
+            onFocus?.(e);
+          }}
+          onBlur={(e) => {
+            setFocused(false);
+            onBlur?.(e);
+          }}
+          style={[
+            styles.input,
+            {
+              color: theme.text,
+              backgroundColor: theme.surfaceSunken,
+              borderColor,
+              // thicken to 1px on focus/error so the state reads against the hairline default
+              borderWidth: focused || error ? 1 : StyleSheet.hairlineWidth,
+            },
+            showToggle && styles.inputWithToggle,
+            style,
+          ]}
+          {...rest}
+        />
+        {showToggle ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={revealed ? t('auth.hidePassword') : t('auth.showPassword')}
+            hitSlop={8}
+            onPress={() => setRevealed((v) => !v)}
+            style={({ pressed: p }) => [styles.revealButton, pressed(p)]}>
+            <SymbolView
+              name={
+                revealed
+                  ? { ios: 'eye.slash', android: 'visibility_off', web: 'visibility_off' }
+                  : { ios: 'eye', android: 'visibility', web: 'visibility' }
+              }
+              size={18}
+              tintColor={theme.textMuted}
+            />
+          </Pressable>
+        ) : null}
+      </View>
       {error ? (
         <ThemedText type="monoSm" themeColor="signalBad">
           {error}
@@ -341,6 +375,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   field: { gap: Spacing.one },
+  // Leaves room for the reveal button so long passwords never run under it.
+  inputWithToggle: { paddingRight: Spacing.five },
+  revealButton: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    bottom: 0,
+    width: Spacing.five,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   input: {
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radii.chamfer,
