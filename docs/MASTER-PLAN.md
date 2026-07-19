@@ -231,12 +231,20 @@ the settings override + quieter-only silent adjustment shipped).
     captures derive their pose (locked comparability set); imports land casual +
     untagged for one-tap classification. Required check-ins stay locked to the four
     relaxed poses; casual photos freeform. (beta-notes §1.3)
-26. **Reel phase 2 [M].** PART-SHIPPED 2026-07-18: Haiku auto-classification
+26. **Reel phase 2 [M].** ✅ SHIPPED 2026-07-18. Haiku auto-classification
     (`classify_pose`, ai-service v23, dump imports auto-classify sequentially,
     fails open) + confirm-chip flow (low-confidence reads surface an accent
-    confirm affordance; any tap becomes ground truth). REMAINING: session tabs
-    removed (blocked on the capture-entry split, see 26c note). (beta-notes
-    §1.1, §1.3)
+    confirm affordance; any tap becomes ground truth) + **session tabs removed
+    (26c, commit 77a8f48)**: owner chose the fully reel-centric shape, so the
+    reel is the spine and a required-pose group drills into that track's
+    compare/milestones ("close" returns). Capture split behind one chooser:
+    GUIDED = pick one of the four canonical poses, which routes the camera
+    (face → vision-camera, body → expo-camera + measurements), keeps the ghost,
+    locks `isRequiredSet: true`; QUICK = casual back-cam shot, no measurements,
+    pose left to background `classify_pose` so it lands in the reel for triage.
+    Pure `sessionForPose`/`viewForPose` (+5 tests) derive track + angle from a
+    pose. Custom parts stay reachable inside the focused body track. Device-
+    verified on Android (chooser + reel). (beta-notes §1.1, §1.3)
 26.5. **Live pose hybrid (inserted 2026-07-18, owner-decided).** ✅ SHIPPED
     (device test pending). No vision-camera-v5-compatible body-pose lib exists
     (mediapipe libs pin v4; mlkit plugin's pose is unreleased), so: FACE = real
