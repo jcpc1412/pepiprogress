@@ -14,8 +14,9 @@ import { getSignalLedger, type SignalLedgerResult } from '@/lib/ai';
 import { formatHeroValue, useVerdict, type TFn } from '@/features/home/use-verdict';
 import { daysBetween, formatDateKey, shiftDateKey } from '@/lib/dates';
 import { extractLedger, metricExplainerKey } from '@/lib/signal-ledger';
-import { localDateKey, useStore } from '@/lib/store';
+import { useStore } from '@/lib/store';
 import { metricHeroUnit, type SignalTone } from '@/lib/verdict-engine';
+import { useToday } from '@/lib/today';
 
 const TONE_COLOR: Record<SignalTone, ThemeColor> = {
   good: 'signalGood',
@@ -41,7 +42,7 @@ export function SignalDetail({ metricId, onClose }: { metricId: string; onClose:
   const labelKey = signal?.labelKey ?? `fields.${metricId}`;
   const name = t(labelKey as 'fields.weight');
 
-  const today = localDateKey();
+  const today = useToday();
   const windowStart = signal?.series.length ? signal.series[0].dateKey : shiftDateKey(today, -13);
   const windowEnd = signal?.series.length ? signal.series[signal.series.length - 1].dateKey : today;
 

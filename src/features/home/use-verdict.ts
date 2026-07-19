@@ -1,8 +1,9 @@
 import { useMemo } from 'react';
 
 import { selectVerdict } from '@/lib/data-facade';
-import { localDateKey, useStore } from '@/lib/store';
+import { useStore } from '@/lib/store';
 import { type HeroUnit, type Verdict } from '@/lib/verdict-engine';
+import { useToday } from '@/lib/today';
 
 /** Loose translate-fn signature for the verdict presentation helpers. Kept
  *  structural (not the full typed-key union) so the large i18n key set doesn't
@@ -13,9 +14,10 @@ export type TFn = (key: string, options?: Record<string, string | number>) => st
  *  by the Today screen and the decompose/reasoning screen so they never drift. */
 export function useVerdict(): Verdict {
   const { entries, metricReadings, protocolItems, photos, profile } = useStore();
+  const today = useToday();
   return useMemo(
-    () => selectVerdict({ entries, metricReadings, protocolItems, photos, profile }, localDateKey()),
-    [entries, metricReadings, protocolItems, photos, profile],
+    () => selectVerdict({ entries, metricReadings, protocolItems, photos, profile }, today),
+    [entries, metricReadings, protocolItems, photos, profile, today],
   );
 }
 

@@ -11,6 +11,7 @@ import { compoundBySlug } from '@/data/compound-catalog';
 import { useTheme } from '@/hooks/use-theme';
 import { localDateKey, useStore } from '@/lib/store';
 import { useQuickLogActivity } from '@/lib/quick-log-runner';
+import { useToday } from '@/lib/today';
 
 /**
  * Today's log recap + editable note (redesign — merged out of Home). This is the
@@ -24,7 +25,7 @@ export function TodayLog({ bare = false }: { bare?: boolean }) {
   const { entries, doseEvents, profile, upsertCheckin } = useStore();
   const quickLog = useQuickLogActivity();
 
-  const today = localDateKey();
+  const today = useToday();
   const todayEntry = entries[today];
   const loggedToday = !!todayEntry;
   const [editingNote, setEditingNote] = useState(false);

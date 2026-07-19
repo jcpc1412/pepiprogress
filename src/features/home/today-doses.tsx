@@ -23,6 +23,7 @@ import { itemNeedsAttention } from '@/lib/inventory';
 import { isDueOnDay } from '@/components/weekday-picker';
 import { useTheme } from '@/hooks/use-theme';
 import { localDateKey, useStore, type ProtocolItem } from '@/lib/store';
+import { useToday } from '@/lib/today';
 
 /** The off-slot prompt's pending state (P-04): which just-logged dose landed off
  *  the schedule grid, and which slot it most plausibly belongs to. */
@@ -44,7 +45,7 @@ export function TodayDoses() {
   const router = useRouter();
   const { protocolItems, doseEvents, inventory, logDose, updateDose, updateProtocolItem, deleteDose } =
     useStore();
-  const today = localDateKey();
+  const today = useToday();
 
   // Doses logged from this card in this session, so a fat-thumbed tap can be
   // reversed in place. itemId -> the dose event id the tap created.
@@ -78,7 +79,11 @@ export function TodayDoses() {
       }
     }
 
-    const todayDate = new Date();
+    // Derived from the shared `today` key rather than read from the clock, so
+    // the weekday-due check follows the day rollover instead of staying on the
+    // day this screen mounted (W7-46).
+    const [ty, tm, td] = today.split('-').map(Number);
+    const todayDate = new Date(ty, tm - 1, td);
 
     return protocolItems
       .map((p) => {

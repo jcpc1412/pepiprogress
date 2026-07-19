@@ -8,8 +8,8 @@ import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { computeAttributions, type MetricAttribution } from '@/lib/attribution';
 import { levelFromScore } from '@/lib/confidence';
-import { localDateKey } from '@/lib/dates';
 import { useStore } from '@/lib/store';
+import { useToday } from '@/lib/today';
 
 /** i18n label key per outcome metric (reuses the existing field/measurement keys). */
 const METRIC_LABEL = {
@@ -32,6 +32,7 @@ const BODY_METRICS = new Set<MetricAttribution['metricId']>(['weight', 'waist', 
 export function AttributionCard({ slug }: { slug: string }) {
   const { t, i18n } = useTranslation();
   const { entries, metricReadings, protocolItems, profile } = useStore();
+  const today = useToday();
   const unit = profile.units === 'imperial' ? 'lb' : 'kg';
   const lenUnit = profile.units === 'imperial' ? 'in' : 'cm';
 
@@ -40,10 +41,10 @@ export function AttributionCard({ slug }: { slug: string }) {
       entries,
       metricReadings,
       protocolItems: protocolItems.filter((p) => p.compoundSlug === slug),
-      today: localDateKey(),
+      today,
     });
     return all[0] ?? null;
-  }, [entries, metricReadings, protocolItems, slug]);
+  }, [entries, metricReadings, protocolItems, slug, today]);
 
   if (!attribution) return null;
 

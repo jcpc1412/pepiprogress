@@ -12,8 +12,9 @@ import { useVerdict } from '@/features/home/use-verdict';
 import { CHART_METRICS } from '@/lib/chart-series';
 import { selectChartSeries } from '@/lib/data-facade';
 import { daysBetween } from '@/lib/dates';
-import { localDateKey, useStore, type CheckinEntry } from '@/lib/store';
+import { useStore, type CheckinEntry } from '@/lib/store';
 import { projectSeries } from '@/lib/trajectory';
+import { useToday } from '@/lib/today';
 
 /** Min check-ins before the AI text features unlock (matches the Insights component). */
 export const MIN_CHECKINS = 4;
@@ -35,6 +36,7 @@ const CORE_METRICS = CHART_METRICS.filter((m) => m.checkinKey);
 export function SummaryCards() {
   const { t } = useTranslation();
   const { entries, protocolItems, profile } = useStore();
+  const today = useToday();
 
   const data = useMemo(() => {
     const list = Object.values(entries).sort((a, b) => a.date.localeCompare(b.date));
@@ -46,7 +48,7 @@ export function SummaryCards() {
     const since = starts[0]
       ? {
           compound: compoundBySlug(starts[0].compoundSlug)?.canonicalName ?? starts[0].compoundSlug,
-          weeks: Math.max(0, Math.floor(daysBetween(starts[0].startedAt!, localDateKey()) / 7)),
+          weeks: Math.max(0, Math.floor(daysBetween(starts[0].startedAt!, today) / 7)),
         }
       : null;
 
@@ -73,7 +75,7 @@ export function SummaryCards() {
     }
 
     return { count: list.length, since, biggest };
-  }, [entries, protocolItems, profile.goals]);
+  }, [entries, protocolItems, profile.goals, today]);
 
   const fmtDelta = (d: number) => `${d > 0 ? '+' : d < 0 ? '−' : ''}${Math.abs(d).toFixed(1)}`;
 
@@ -116,6 +118,7 @@ export function SummaryCards() {
 export function ChartsSection() {
   const { t } = useTranslation();
   const { entries, metricReadings, protocolItems, profile } = useStore();
+  const today = useToday();
   const verdict = useVerdict();
 
   // Default focus: top-3 verdict signals + weight. Falls back to "all" while the
@@ -142,10 +145,10 @@ export function ChartsSection() {
   // manual + integration + derived + estimated that every other surface reads.
   const { series, startKeys } = useMemo(
     () =>
-      selectChartSeries({ entries, metricReadings, protocolItems, profile }, localDateKey(), {
+      selectChartSeries({ entries, metricReadings, protocolItems, profile }, today, {
         selectedIds: active ? [...active] : undefined,
       }),
-    [entries, metricReadings, protocolItems, profile, active],
+    [entries, metricReadings, protocolItems, profile, active, today],
   );
 
   // Always render the chart frames — empty ones show a dashed placeholder axis.

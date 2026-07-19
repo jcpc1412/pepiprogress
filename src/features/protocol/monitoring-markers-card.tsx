@@ -6,9 +6,9 @@ import { StyleSheet, View } from 'react-native';
 import { Card, Divider, EngravedLabel, StatusPill } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
-import { localDateKey } from '@/lib/dates';
 import { selectCompoundMonitoring, type MarkerMonitoring } from '@/lib/lab-monitoring';
 import { useStore } from '@/lib/store';
+import { useToday } from '@/lib/today';
 
 /**
  * Bloodwork-to-compound monitoring mapping (spec §3 item 4, W4-16). Lists the
@@ -19,10 +19,11 @@ import { useStore } from '@/lib/store';
 export function MonitoringMarkersCard({ slug }: { slug: string }) {
   const { t, i18n } = useTranslation();
   const { entries } = useStore();
+  const today = useToday();
 
   const markers = useMemo(
-    () => selectCompoundMonitoring(slug, entries, localDateKey()),
-    [slug, entries],
+    () => selectCompoundMonitoring(slug, entries, today),
+    [slug, entries, today],
   );
   if (markers.length === 0) return null;
 

@@ -15,6 +15,7 @@ import { InstrumentBackground } from '@/components/instrument-background';
 import { AuthProvider } from '@/lib/auth';
 import { CloudSync } from '@/lib/cloud-sync';
 import { PhotoSync } from '@/lib/photo-sync';
+import { TodayProvider } from '@/lib/today';
 import { IntegrationSync } from '@/lib/integration-sync';
 import { HealthWriteBack } from '@/lib/health-writeback';
 import { LanguageSync } from '@/lib/language-sync';
@@ -52,37 +53,41 @@ function RootContent() {
       {/* Backfills photo uploads whenever signed in, so photos exist in the
           cloud regardless of which tab the user visits; renders nothing. */}
       <PhotoSync />
-      {/* Provides SyncStatus context + debounced cloud backup while signed in. */}
-      <CloudSync>
-        {/* Base canvas + the continuous breathing lattice, mounted once behind
-            the whole navigator (redesign §2.3). Screens with a transparent
-            container reveal it; opaque legacy screens simply cover it until
-            they are rebuilt. */}
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.background }]} pointerEvents="none">
-          <InstrumentBackground />
-        </View>
-        {/* Transparent content everywhere so the root breathing lattice shows
-            through on every page (R2-A). True modals still paint their own
-            opaque ThemedView, so they cover it while presented. */}
-        <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: 'transparent' } }}>
-          <Stack.Screen name="(tabs)" options={{ animation: 'none' }} />
-          {/* Action overlays — modal presentation (slide up, swipe-down to dismiss). */}
-          <Stack.Screen name="logging" options={{ presentation: 'modal' }} />
-          <Stack.Screen name="add-compound" options={{ presentation: 'modal' }} />
-          <Stack.Screen name="compound-detail" options={{ presentation: 'modal' }} />
-          {/* Settings + its nested pages — card presentation so they push/pop
-              with the native back gesture (settings → me → …). */}
-          <Stack.Screen name="settings" />
-          <Stack.Screen name="protocol" />
-          <Stack.Screen name="me" />
-          <Stack.Screen name="notifications-settings" />
-          <Stack.Screen name="privacy" />
-          <Stack.Screen name="photo-history" />
-          <Stack.Screen name="whatilog" />
-          <Stack.Screen name="typical-day" />
-          <Stack.Screen name="signal/[metricId]" />
-        </Stack>
-      </CloudSync>
+      {/* Keeps a shared "today" that actually changes at midnight, so screens
+          left open overnight stop rendering yesterday (W7-46). */}
+      <TodayProvider>
+        {/* Provides SyncStatus context + debounced cloud backup while signed in. */}
+        <CloudSync>
+          {/* Base canvas + the continuous breathing lattice, mounted once behind
+              the whole navigator (redesign §2.3). Screens with a transparent
+              container reveal it; opaque legacy screens simply cover it until
+              they are rebuilt. */}
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.background }]} pointerEvents="none">
+            <InstrumentBackground />
+          </View>
+          {/* Transparent content everywhere so the root breathing lattice shows
+              through on every page (R2-A). True modals still paint their own
+              opaque ThemedView, so they cover it while presented. */}
+          <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: 'transparent' } }}>
+            <Stack.Screen name="(tabs)" options={{ animation: 'none' }} />
+            {/* Action overlays — modal presentation (slide up, swipe-down to dismiss). */}
+            <Stack.Screen name="logging" options={{ presentation: 'modal' }} />
+            <Stack.Screen name="add-compound" options={{ presentation: 'modal' }} />
+            <Stack.Screen name="compound-detail" options={{ presentation: 'modal' }} />
+            {/* Settings + its nested pages — card presentation so they push/pop
+                with the native back gesture (settings → me → …). */}
+            <Stack.Screen name="settings" />
+            <Stack.Screen name="protocol" />
+            <Stack.Screen name="me" />
+            <Stack.Screen name="notifications-settings" />
+            <Stack.Screen name="privacy" />
+            <Stack.Screen name="photo-history" />
+            <Stack.Screen name="whatilog" />
+            <Stack.Screen name="typical-day" />
+            <Stack.Screen name="signal/[metricId]" />
+          </Stack>
+        </CloudSync>
+      </TodayProvider>
     </ThemeProvider>
   );
 }

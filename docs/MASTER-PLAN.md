@@ -385,7 +385,22 @@ the Roboto leak); (c) padding audit against the documented scale; (d) theme-toke
     enable R8 full mode / shrinking / ProGuard rules if available without an AGP 9
     jump. If blocked by the pin, it waits for the next Expo SDK bump — no ejecting.
     Play Console currently: optimization Low, obfuscation 1%.
-46. **Day-boundary staleness [S] (owner-reported 2026-07-19).** Not a performance
+46. **Day-boundary staleness [S] ✅ SHIPPED 2026-07-19.** Pure `day-boundary.ts`
+    (+7 tests: DST-safe via local date parts, month/year/leap-day rollover, always
+    positive so the timer cannot loop, under the setTimeout ceiling) + a
+    `TodayProvider`/`useToday()` in `src/lib/today.tsx` mounted in the root layout.
+    One watcher covers both paths: a rescheduling midnight timer (app open across
+    midnight) and an `AppState` foreground check (app suspended across midnight),
+    and it only moves the value when the day genuinely changed. 13 render-time
+    `localDateKey()` call sites migrated to `useToday()`, incl. memoized ones where
+    a stale day was baked into a `useMemo`. **Two clock reads a `localDateKey`
+    grep would have missed:** the Home eyebrow built its date from a raw
+    `new Date()` inside a memo (the visible symptom), and TodayDoses derived its
+    weekday-due check the same way, which would have shown yesterday's schedule.
+    Browser-verified: header goes 19 JUL → 20 JUL on foreground with the clock
+    advanced. Original note below.
+
+    Not a performance
     bug — filed here at owner's request, kept distinct so it isn't conflated with
     44/45. The app never fully closes on Android/iOS, so a screen left open
     overnight keeps rendering yesterday's "today": `localDateKey()` itself is pure

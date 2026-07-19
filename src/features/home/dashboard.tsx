@@ -19,7 +19,8 @@ import { TodayDoses } from '@/features/home/today-doses';
 import { formatHeroValue, resolveMsg, useVerdict, type TFn } from '@/features/home/use-verdict';
 import { daysBetween } from '@/lib/dates';
 import { useOverlay } from '@/lib/nav-overlay';
-import { localDateKey, useStore } from '@/lib/store';
+import { useStore } from '@/lib/store';
+import { useToday } from '@/lib/today';
 
 /**
  * Today — verdict-first (redesign §4.1). Conclusion before data: a condensed
@@ -40,11 +41,15 @@ export function Dashboard() {
   const tx = t as unknown as TFn;
   const hero = verdict.hero; // narrowed const so unions hold inside closures/JSX
 
-  const today = localDateKey();
+  const today = useToday();
 
   // Condensed mono eyebrow: DD MMM · TYPE · WEEK N (redesign §2.5).
   const eyebrow = useMemo(() => {
-    const date = new Date()
+    // Built from the shared `today` key, not `new Date()`: this memo only
+    // re-runs on its deps, so a raw clock read here would keep showing the day
+    // the screen was mounted on after midnight (W7-46).
+    const [y, m, d] = today.split('-').map(Number);
+    const date = new Date(y, m - 1, d)
       .toLocaleDateString(i18n.language, { day: 'numeric', month: 'short' })
       .toUpperCase();
     const goal = profile.goals[0];

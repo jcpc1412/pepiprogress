@@ -8,7 +8,8 @@ import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { buildInsightHistory } from '@/lib/data-facade';
 import { aiErrorKind, runInsights, type InsightMode } from '@/lib/ai';
-import { localDateKey, useStore } from '@/lib/store';
+import { useStore } from '@/lib/store';
+import { useToday } from '@/lib/today';
 
 /** Minimum logged check-ins before insights are worth offering. */
 const MIN_CHECKINS = 4;
@@ -21,6 +22,7 @@ const MIN_CHECKINS = 4;
 export function Insights() {
   const { t, i18n } = useTranslation();
   const { entries, doseEvents, symptomEvents, metricReadings, protocolItems, profile, photos } = useStore();
+  const today = useToday();
 
   const [busy, setBusy] = useState(false);
   const [answer, setAnswer] = useState('');
@@ -44,9 +46,9 @@ export function Insights() {
     () =>
       buildInsightHistory(
         { entries, doseEvents, symptomEvents, metricReadings, protocolItems, profile, photos },
-        localDateKey(),
+        today,
       ),
-    [entries, doseEvents, symptomEvents, metricReadings, protocolItems, profile, photos],
+    [entries, doseEvents, symptomEvents, metricReadings, protocolItems, profile, photos, today],
   );
 
   const ask = useCallback(

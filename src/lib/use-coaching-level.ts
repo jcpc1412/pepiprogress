@@ -1,5 +1,6 @@
-import { localDateKey, useStore } from '@/lib/store';
+import { useStore } from '@/lib/store';
 import { resolveCoachingLevel, type CoachingLevel } from '@/lib/coaching';
+import { useToday } from '@/lib/today';
 
 /**
  * The effective coaching level for the current user (W3-8): an explicit
@@ -8,6 +9,7 @@ import { resolveCoachingLevel, type CoachingLevel } from '@/lib/coaching';
  */
 export function useCoachingLevel(): CoachingLevel {
   const { entries, profile, protocolItems } = useStore();
+  const today = useToday();
   const entryDates = Object.keys(entries);
   return resolveCoachingLevel(profile.coachingLevel, {
     entryDates,
@@ -16,6 +18,6 @@ export function useCoachingLevel(): CoachingLevel {
       return e.waist !== undefined || e.hips !== undefined || e.neck !== undefined;
     }),
     protocolItemCount: protocolItems.length,
-    todayKey: localDateKey(),
+    todayKey: today,
   });
 }

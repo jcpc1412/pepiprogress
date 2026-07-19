@@ -17,6 +17,7 @@ import { applyFieldCustomization, partitionByTime, surfaceFields } from '@/lib/f
 import { bodyFatNavy, ffmiBand, usesFemaleFormula } from '@/lib/body-composition';
 import { compoundBySlug } from '@/data/compound-catalog';
 import { localDateKey, useStore, type CheckinEntry } from '@/lib/store';
+import { useToday } from '@/lib/today';
 import {
   baselineFor,
   currentTypicalLevel,
@@ -80,7 +81,7 @@ export function DetailedLog({ onDismiss }: { onDismiss?: () => void } = {}) {
     silentFillTypical,
   } = useStore();
 
-  const today = localDateKey();
+  const today = useToday();
   const [date, setDate] = useState(today);
   const [showDeferred, setShowDeferred] = useState(false);
   const [showExactNutrition, setShowExactNutrition] = useState(false);
