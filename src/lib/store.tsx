@@ -14,6 +14,7 @@ import { registerCustomCompounds, type CatalogCompound } from '@/data/compound-c
 import { localDateKey } from '@/lib/dates';
 import type { CheckinField, Goal } from '@/lib/field-surfacing';
 import type { CanonicalPose } from '@/lib/photo-pose';
+import type { CropBox } from '@/lib/photo-crop';
 import {
   baselineFor,
   buildTypicalReadings,
@@ -202,6 +203,10 @@ export type PhotoEntry = {
   /** The vision service's hedged change note (spec 04). Persisted so Pepi can see
    *  photo results (P-3) and the timeline can show the last read. */
   changeNote?: string;
+  /** Normalized subject box from the vision read, applied as a DISPLAY crop only
+   *  (W6-28, beta-notes §1.2 "never destructive"). The stored file is never
+   *  re-encoded, so a better box later can re-crop from the full frame. */
+  cropBox?: CropBox;
   // User-edited tags (overrides auto-derived compound+week tags in Photo History).
   customTags?: string[];
   // ── Photo reel (W6-25, beta-notes §1.3) ──────────────────────────────────

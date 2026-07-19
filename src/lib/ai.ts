@@ -7,6 +7,7 @@ import { COMPOUND_CATALOG, compoundBySlug, marketCategoryOf, type MarketCategory
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 import type { PhotoSession } from '@/lib/store';
 import type { CanonicalPose } from '@/lib/photo-pose';
+import type { CropBox } from '@/lib/photo-crop';
 
 /** One parsed entity from a natural-language quick-log (spec 13). */
 export type ParsedItem = {
@@ -41,6 +42,10 @@ export type PhotoAnalysis = {
   /** Clothing coverage of the NEW photo (PH-1 skin priority). Drives the
    *  quality-highscore reference promotion + the soft lock toward minimal cover. */
   coverage?: 'clothed' | 'partial' | 'minimal';
+  /** Normalized subject box for the DISPLAY crop (W6-28). Absent on a degraded
+   *  read, and ignored below the confidence floor: either way the full frame
+   *  renders. The stored original is never modified. */
+  cropBox?: CropBox;
 };
 
 export type FitCheck = {

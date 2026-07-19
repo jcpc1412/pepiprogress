@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { AccessibilityInfo, Animated, Dimensions, type LayoutChangeEvent, Modal, PanResponder, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { ConfidenceBadge } from '@/components/confidence-badge';
+import { CroppedPhoto } from '@/components/cropped-photo';
 import { LabeledInput, PrimaryButton, TextButton, SingleSelectChips } from '@/components/form';
 import { Card, Divider, EngravedLabel, Skeleton, StatusPill } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
@@ -28,6 +29,7 @@ import type { ConfidenceLevel } from '@/lib/confidence';
 import { hapticSuccess } from '@/lib/haptics';
 import { quickReadout, type Comparability, type QuickReadout } from '@/lib/photo-readout';
 import { isNewHighscore, pickReference } from '@/lib/photo-reference';
+import type { CropBox } from '@/lib/photo-crop';
 import { RETRY_THRESHOLD } from '@/lib/photo-quality';
 import { useAuth } from '@/lib/auth';
 import {
@@ -71,6 +73,13 @@ function photoReadWhyKey(a: PhotoAnalysis): 'photos.confWhyHigh' {
 
 // ─── Wipe/slider compare ────────────────────────────────────────────────────
 
+/**
+ * Deliberately NOT auto-cropped (W6-28). The wipe works by the two frames being
+ * in the same image space; cropping each to its own subject box would shift them
+ * independently and break the illusion the moment only one photo has a box. The
+ * crop is applied where it helps and cannot misalign: thumbnails and the single
+ * baseline frame.
+ */
 function WipeCompare({
   baselineUri,
   selectedUri,
@@ -202,11 +211,11 @@ const dotStyles = StyleSheet.create({
 
 // ─── Single photo frame ──────────────────────────────────────────────────────
 
-function PhotoFrame({ uri, caption }: { uri: string; caption: string }) {
+function PhotoFrame({ uri, caption, cropBox }: { uri: string; caption: string; cropBox?: CropBox }) {
   const theme = useTheme();
   return (
     <View style={[frameStyles.frame, { borderColor: theme.border, backgroundColor: theme.surfaceSunken }]}>
-      <Image source={{ uri }} style={frameStyles.img} contentFit="cover" />
+      <CroppedPhoto uri={uri} cropBox={cropBox} style={frameStyles.img} />
       <View style={frameStyles.cap}>
         <ThemedText type="monoSm" style={frameStyles.capText}>
           {caption}
@@ -538,6 +547,8 @@ export function ProgressPhotos({
         lighting: res.lighting,
         changeNote: res.change || undefined,
         coverage: res.coverage,
+        // Display-only framing box (W6-28); the original file is untouched.
+        cropBox: res.cropBox,
       });
       setLastNote({ id: latest.id, analysis: res });
       const sciKey = sessionScientificKey(trackSession);
@@ -869,7 +880,11 @@ export function ProgressPhotos({
                             { width: thumbW, height: thumbH, borderColor: confirm ? theme.accent : 'transparent' },
                             pressed && styles.thumbPressed,
                           ]}>
-                          <Image source={{ uri: resolvedUris[p.id] ?? p.uri }} style={styles.thumbImg} contentFit="cover" />
+                          <CroppedPhoto
+                            uri={resolvedUris[p.id] ?? p.uri}
+                            cropBox={p.cropBox}
+                            style={styles.thumbImg}
+                          />
                           {confirm && <View style={[dotStyles.dot, { backgroundColor: theme.accent }]} />}
                         </Pressable>
                       );
@@ -939,7 +954,11 @@ export function ProgressPhotos({
                   badge={selectedBadge}
                 />
               ) : (
-                <PhotoFrame uri={resolvedUris[baseline.id] ?? baseline.uri} caption={t('photos.baseline')} />
+                <PhotoFrame
+                  uri={resolvedUris[baseline.id] ?? baseline.uri}
+                  caption={t('photos.baseline')}
+                  cropBox={baseline.cropBox}
+                />
               )}
 
               {/* PH-2: instant post-capture read — appears right after a save. */}
@@ -1024,7 +1043,11 @@ export function ProgressPhotos({
                               { width: thumbW, height: thumbH, borderColor: isActive ? '#9A9590' : 'transparent' },
                               pressed && styles.thumbPressed,
                             ]}>
-                            <Image source={{ uri: resolvedUris[p.id] ?? p.uri }} style={styles.thumbImg} contentFit="cover" />
+                            <CroppedPhoto
+                              uri={resolvedUris[p.id] ?? p.uri}
+                              cropBox={p.cropBox}
+                              style={styles.thumbImg}
+                            />
                             <ComparabilityDot photo={p} />
                           </Pressable>
                           <ThemedText type="monoSm" themeColor={isActive ? 'text' : 'textMuted'}>

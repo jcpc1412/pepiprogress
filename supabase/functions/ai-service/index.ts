@@ -314,8 +314,23 @@ const ANALYZE_SCHEMA = {
       description:
         'Clothing coverage of the NEW photo. "minimal" = skin-exposed for maximum comparability (e.g. shirtless / underwear / swimwear); "partial" = fitted or partial clothing; "clothed" = loose or full clothing that obscures the body. Judge coverage only, never identity.',
     },
+    // W6-28: display-only framing box, same call, no extra cost.
+    cropBox: {
+      type: 'object',
+      additionalProperties: false,
+      description:
+        'Normalized bounding box (0..1, origin top-left) of the subject region worth showing in the NEW photo: torso for body shots, head for face shots. Used only to crop the DISPLAY thumbnail; the original is never modified. Set confidence low when unsure and the app will show the full frame.',
+      properties: {
+        x: { type: 'number', description: 'Left edge, 0..1.' },
+        y: { type: 'number', description: 'Top edge, 0..1.' },
+        w: { type: 'number', description: 'Width, 0..1.' },
+        h: { type: 'number', description: 'Height, 0..1.' },
+        confidence: { type: 'number', description: '0..1 confidence in this box.' },
+      },
+      required: ['x', 'y', 'w', 'h', 'confidence'],
+    },
   },
-  required: ['driftScore', 'comparable', 'lighting', 'framing', 'change', 'retake', 'coverage'],
+  required: ['driftScore', 'comparable', 'lighting', 'framing', 'change', 'retake', 'coverage', 'cropBox'],
 };
 
 const SIMPLE_SCHEMA = {
@@ -481,6 +496,7 @@ function visionSystemPrompt(
     '- lighting and framing: classify with the allowed enums.',
     '- retake: true when drift is high enough that the user should retake.',
     '- coverage: classify the NEW photo as clothed / partial / minimal by how much clothing obscures the body. Judge coverage only, never identity or appearance beyond that.',
+    '- cropBox: the subject region of the NEW photo worth showing (torso for body shots, head for face shots), normalized 0..1 from the top-left. This only crops the display thumbnail; the stored original is untouched. Prefer a slightly generous box, and set confidence below 0.6 whenever you are unsure so the app falls back to the full frame.',
     hasBaseline
       ? '- change: ONE short, hedged, observational sentence about any visible difference.'
       : '- change: return an empty string (no baseline to compare).',
@@ -727,6 +743,8 @@ Deno.serve(async (req: Request) => {
           change: '',
           retake: true,
           coverage: 'clothed',
+          // cropBox deliberately omitted: a degraded read must not crop the
+          // display. The client treats a missing box as "show the full frame".
         }),
         200,
       );
