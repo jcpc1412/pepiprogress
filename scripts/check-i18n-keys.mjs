@@ -59,6 +59,8 @@ const IDENTICAL_OK = new Set([
   'signal.source.manual', 'signal.event.symptom', 'signal.event.dose',
   'pepi.ansValue', 'pepi.ansCompare', 'pepi.ansExtremum', 'quicklog.tplDose',
   'photos.angleLabel', 'typical.group.nutrition', 'training.title', 'measurements.ffmiRange',
+  // Brand wordmark stamped on shared images (W6-27): a trademark, never translated.
+  'share.wordmark',
 ]);
 
 const load = (file) => JSON.parse(readFileSync(join(localesDir, file), 'utf8'));

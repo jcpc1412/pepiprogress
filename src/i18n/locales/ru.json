@@ -1297,5 +1297,23 @@
     "lab": "Анализ {{marker}}: {{value}}",
     "benchmark": "Норматив {{name}}: {{value}}",
     "strengthPr": "Новый рекорд в {{exercise}}: {{value}} {{unit}}"
+  },
+  "share": {
+    "action": "Поделиться",
+    "sharePhoto": "Поделиться этим фото",
+    "titleCard": "Поделитесь прогрессом",
+    "titlePhoto": "Поделиться этим фото",
+    "cardKicker": "РЕГУЛЯРНОСТЬ",
+    "wordmark": "PEPI",
+    "statStreak": "дней подряд",
+    "statDays": "дней записано",
+    "statPhotos": "фото",
+    "statWeight": "изменение веса",
+    "nothingYet": "Сначала запишите несколько дней, тогда будет чем поделиться.",
+    "failed": "Не удалось. Попробуйте снова.",
+    "settingsSection": "Публикация",
+    "settingsBody": "Выберите, ставить ли на изображения знак Pepi.",
+    "watermarkCard": "Знак на карточках статистики",
+    "watermarkPhoto": "Знак на фотографиях"
   }
 }

@@ -22,6 +22,43 @@ not a decision** and none of them are approved.
 
 ---
 
+## 🚩 Flagged: two items that are bigger than they look
+
+Both are buried inside bullets below, surfaced here because they carry dependencies that could
+reshape sequencing and cost. Neither is a decision yet.
+
+### A. The OAuth branding fix (item 3) is a paid add-on with a blast radius
+
+Removing `pjdbxnycrvibmebfumel.supabase.co` from Google's notification email and the OAuth
+consent screen requires putting a **custom domain in front of Supabase Auth**. That is:
+
+- A **paid Supabase add-on**, not a config toggle.
+- A **callback URL change everywhere it is registered**, and each one breaks auth if missed:
+  - Google Cloud console authorized redirect URIs (web client)
+  - Apple **Services ID** return URL
+  - the **Apple client secret JWT we generated 2026-07-18** (its `sub` is the Services ID; the
+    Services ID's registered return URL must match the new domain), so the secret likely needs
+    regenerating, see [[apple-oauth-secret-renewal]]
+  - Supabase redirect allow-list
+- Doing this *after* testers have accounts is fine for identity (the Supabase user IDs do not
+  change), but every provider config must land in the same window or sign-in breaks mid-beta.
+
+**Therefore:** decide this before, not after, we widen the tester pool. Doing it once, early, is
+cheap; doing it twice or mid-beta is not.
+
+### B. The performance round (item 9) may not be one workstream
+
+Play Console's advice is "upgrade to AGP 9 and use R8." But **Expo SDK 56 pins its own Android
+Gradle Plugin version**, so AGP 9 may not be freely selectable without either an Expo upgrade or
+ejecting from the managed toolchain. That is a build-system decision, not a perf tweak.
+
+**Therefore:** treat build-level (AGP/R8/shrinking/obfuscation) and runtime-level (our own render
+cost) as **two separate tracks that can proceed independently**. The runtime track needs a
+profile first and is not blocked on any toolchain decision; the build track may be blocked
+entirely until an Expo SDK bump. Do not bundle them into a single "optimization" estimate.
+
+---
+
 ## 1. Onboarding dark mode is too dark (buttons barely legible)
 
 Moto G60s, dark mode, onboarding. Buttons are close to unreadable against the background.

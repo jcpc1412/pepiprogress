@@ -1297,5 +1297,23 @@
     "lab": "Exame {{marker}}: {{value}}",
     "benchmark": "Marca {{name}}: {{value}}",
     "strengthPr": "Novo recorde em {{exercise}}: {{value}} {{unit}}"
+  },
+  "share": {
+    "action": "Enviar",
+    "sharePhoto": "Enviar esta foto",
+    "titleCard": "Divulgue seu progresso",
+    "titlePhoto": "Enviar esta foto",
+    "cardKicker": "DISCIPLINA",
+    "wordmark": "PEPI",
+    "statStreak": "dias consecutivos",
+    "statDays": "dias acompanhados",
+    "statPhotos": "imagens",
+    "statWeight": "variação de peso",
+    "nothingYet": "Acompanhe alguns dias antes e haverá algo que valha a pena mostrar.",
+    "failed": "Não foi possível concluir. Tente de novo.",
+    "settingsSection": "Compartilhamento",
+    "settingsBody": "Defina se as imagens exportadas exibem a marca Pepi.",
+    "watermarkCard": "Marca nos cartões de dados",
+    "watermarkPhoto": "Marca nas imagens"
   }
 }

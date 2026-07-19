@@ -12,6 +12,8 @@ import { ThemedText } from '@/components/themed-text';
 import { Radii, Spacing } from '@/constants/theme';
 import { PhotoCapture } from '@/features/photos/photo-capture';
 import { VisionCameraCapture } from '@/features/photos/vision-camera-capture';
+import { ShareSheet } from '@/features/share/share-sheet';
+import type { ShareCardInput } from '@/lib/share-card';
 import { useTheme } from '@/hooks/use-theme';
 import {
   aiErrorKind,
@@ -298,6 +300,9 @@ export function ProgressPhotos({
   const [partDraft, setPartDraft] = useState('');
   // Reel (W6-25): id of the photo whose pose is being assigned via the chip sheet.
   const [taggingId, setTaggingId] = useState<string | null>(null);
+  // Share (W6-27): offered contextually after a highscore or a milestone read.
+  const [shareCardOpen, setShareCardOpen] = useState(false);
+  const [sharePhotoUri, setSharePhotoUri] = useState<string | null>(null);
 
   // The track the hooks below operate on: the live capture target while a camera
   // is open (so the ghost matches what is being shot), else the focused track.
@@ -766,6 +771,25 @@ export function ProgressPhotos({
     setCaptureCfg({ session: 'body', part: focused.part, view: 'front', casual: false });
   }, [focused]);
 
+  // Share card input (W6-27). Consistency signals only: the builder's input type
+  // deliberately cannot carry compounds, doses, or markers (see share-card.ts).
+  const shareCardInput: ShareCardInput = useMemo(() => {
+    const weighed = Object.values(entries)
+      .filter((e) => e.weight !== undefined)
+      .sort((a, b) => a.date.localeCompare(b.date));
+    const first = weighed[0]?.weight;
+    const last = weighed[weighed.length - 1]?.weight;
+    return {
+      loggedDateKeys: Object.keys(entries),
+      photoCount: photos.length,
+      weightDelta:
+        weighed.length >= 2 && first !== undefined && last !== undefined ? last - first : undefined,
+      units: profile.units,
+      todayKey: localDateKey(),
+      watermark: profile.watermarkStatCard ?? true,
+    };
+  }, [entries, photos.length, profile.units, profile.watermarkStatCard]);
+
   // ── Derived display ───────────────────────────────────────────────────────
   const note = lastNote && selected && lastNote.id === selected.id ? lastNote.analysis : null;
   const munit = profile.units === 'imperial' ? t('measurements.unitIn') : t('measurements.unitCm');
@@ -962,6 +986,11 @@ export function ProgressPhotos({
                         ) : null}
                       </>
                     )}
+                    {/* Contextual share offer: a highscore is the moment worth
+                        celebrating, so that is where the card is surfaced. */}
+                    {instantRead.highscore && (
+                      <TextButton label={t('share.action')} onPress={() => setShareCardOpen(true)} />
+                    )}
                   </Card>
                 </Animated.View>
               )}
@@ -1101,6 +1130,9 @@ export function ProgressPhotos({
                       </ThemedText>
                     </>
                   ) : null}
+                  {/* Milestone read landed: the second contextual share moment. */}
+                  <Divider />
+                  <TextButton label={t('share.action')} onPress={() => setShareCardOpen(true)} />
                 </Card>
               )}
                 </>
@@ -1268,10 +1300,34 @@ export function ProgressPhotos({
                 setTaggingId(null);
               }}
             />
+            {/* Photo export (W6-27): watermark off by default, a photo is personal. */}
+            {taggingPhoto && (
+              <TextButton
+                label={t('share.sharePhoto')}
+                onPress={() => {
+                  setSharePhotoUri(resolvedUris[taggingPhoto.id] ?? taggingPhoto.uri);
+                  setTaggingId(null);
+                }}
+              />
+            )}
             <TextButton label={t('common.cancel')} onPress={() => setTaggingId(null)} />
           </View>
         </Pressable>
       </Modal>
+
+      {/* Share surfaces (W6-27). Nothing leaves the device until the user taps
+          share inside the sheet; the OS owns the destination. */}
+      <ShareSheet
+        visible={shareCardOpen}
+        onClose={() => setShareCardOpen(false)}
+        cardInput={shareCardInput}
+      />
+      <ShareSheet
+        visible={sharePhotoUri !== null}
+        onClose={() => setSharePhotoUri(null)}
+        photoUri={sharePhotoUri ?? undefined}
+        photoWatermark={profile.watermarkPhoto ?? false}
+      />
     </View>
   );
 }

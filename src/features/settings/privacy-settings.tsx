@@ -2,15 +2,37 @@ import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, StyleSheet, View } from 'react-native';
+import { Alert, StyleSheet, Switch, View } from 'react-native';
 
 import { PrimaryButton } from '@/components/form';
 import { Card, Divider, EngravedLabel } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 import { DriveSettings } from '@/features/settings/drive-settings';
 import { exportCoachReport } from '@/lib/report';
 import { useStore } from '@/lib/store';
+
+/** A labelled switch for the share-card watermark prefs (W6-27). */
+function WatermarkRow({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  const theme = useTheme();
+  return (
+    <View style={styles.watermarkRow}>
+      <ThemedText type="mono" themeColor="textSecondary" style={styles.watermarkLabel}>
+        {label}
+      </ThemedText>
+      <Switch value={value} onValueChange={onChange} trackColor={{ true: theme.signalGood, false: theme.border }} />
+    </View>
+  );
+}
 
 function ConsentRow({
   labelKey,
@@ -204,6 +226,25 @@ export function PrivacySettings() {
         />
       </Card>
 
+      {/* Share-card branding (W6-27) */}
+      <Card style={styles.section}>
+        <EngravedLabel>{t('share.settingsSection')}</EngravedLabel>
+        <ThemedText type="monoSm" themeColor="textSecondary">
+          {t('share.settingsBody')}
+        </ThemedText>
+        <Divider />
+        <WatermarkRow
+          label={t('share.watermarkCard')}
+          value={profile.watermarkStatCard ?? true}
+          onChange={(v) => setProfile({ watermarkStatCard: v })}
+        />
+        <WatermarkRow
+          label={t('share.watermarkPhoto')}
+          value={profile.watermarkPhoto ?? false}
+          onChange={(v) => setProfile({ watermarkPhoto: v })}
+        />
+      </Card>
+
       {/* Google Drive backup */}
       <Card style={styles.section}>
         <DriveSettings />
@@ -232,6 +273,8 @@ const styles = StyleSheet.create({
   consentRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
   consentLabel: { flex: 1, gap: 2 },
   consentToggle: { alignItems: 'flex-end' },
+  watermarkRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.three },
+  watermarkLabel: { flex: 1 },
   link: { textDecorationLine: 'underline' },
   legal: { lineHeight: 18, paddingBottom: Spacing.four },
   transitionNote: { fontStyle: 'italic' },

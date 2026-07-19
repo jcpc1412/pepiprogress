@@ -1297,5 +1297,23 @@
     "lab": "Blutwert {{marker}}: {{value}}",
     "benchmark": "Richtwert {{name}}: {{value}}",
     "strengthPr": "Neue Bestleistung bei {{exercise}}: {{value}} {{unit}}"
+  },
+  "share": {
+    "action": "Teilen",
+    "sharePhoto": "Dieses Foto teilen",
+    "titleCard": "Teile deinen Fortschritt",
+    "titlePhoto": "Dieses Foto teilen",
+    "cardKicker": "BESTÄNDIGKEIT",
+    "wordmark": "PEPI",
+    "statStreak": "Tage in Folge",
+    "statDays": "Tage erfasst",
+    "statPhotos": "Fotos",
+    "statWeight": "Gewichtsänderung",
+    "nothingYet": "Erfasse zuerst ein paar Tage, dann gibt es etwas zum Teilen.",
+    "failed": "Das hat nicht geklappt. Versuche es erneut.",
+    "settingsSection": "Teilen von Inhalten",
+    "settingsBody": "Lege fest, ob exportierte Bilder die Wortmarke Pepi tragen.",
+    "watermarkCard": "Wortmarke auf Statistikkarten",
+    "watermarkPhoto": "Wortmarke auf Fotos"
   }
 }

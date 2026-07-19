@@ -1297,5 +1297,23 @@
     "lab": "Bloodwork {{marker}}: {{value}}",
     "benchmark": "Benchmark {{name}}: {{value}}",
     "strengthPr": "New best on {{exercise}}: {{value}} {{unit}}"
+  },
+  "share": {
+    "action": "Share",
+    "sharePhoto": "Share this photo",
+    "titleCard": "Share your progress",
+    "titlePhoto": "Share this photo",
+    "cardKicker": "CONSISTENCY",
+    "wordmark": "PEPI",
+    "statStreak": "day streak",
+    "statDays": "days tracked",
+    "statPhotos": "photos",
+    "statWeight": "weight change",
+    "nothingYet": "Log a few days first, then there will be something worth sharing.",
+    "failed": "That did not go through. Try again.",
+    "settingsSection": "Sharing",
+    "settingsBody": "Choose whether exported images carry the Pepi wordmark.",
+    "watermarkCard": "Wordmark on stat cards",
+    "watermarkPhoto": "Wordmark on photos"
   }
 }

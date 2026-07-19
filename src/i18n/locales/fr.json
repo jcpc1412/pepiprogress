@@ -1297,5 +1297,23 @@
     "lab": "Analyse {{marker}} : {{value}}",
     "benchmark": "Référence {{name}} : {{value}}",
     "strengthPr": "Nouveau record sur {{exercise}} : {{value}} {{unit}}"
+  },
+  "share": {
+    "action": "Partager",
+    "sharePhoto": "Partager cette photo",
+    "titleCard": "Partage ta progression",
+    "titlePhoto": "Partager cette photo",
+    "cardKicker": "RÉGULARITÉ",
+    "wordmark": "PEPI",
+    "statStreak": "jours d affilée",
+    "statDays": "jours suivis",
+    "statPhotos": "clichés",
+    "statWeight": "variation de poids",
+    "nothingYet": "Enregistre quelques jours d abord, il y aura alors de quoi partager.",
+    "failed": "Cela n a pas abouti. Réessaie.",
+    "settingsSection": "Partage",
+    "settingsBody": "Choisis si les images exportées portent la marque Pepi.",
+    "watermarkCard": "Marque sur les cartes de stats",
+    "watermarkPhoto": "Marque sur les photos"
   }
 }

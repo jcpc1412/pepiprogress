@@ -312,6 +312,11 @@ export type LocalProfile = {
   estimatedMetricsMode?: 'off' | 'fill' | 'always';
   /** Dismissed the "add your first compound" soft prompt (O-04). */
   dismissedAddCompoundPrompt?: boolean;
+  /** Share-card branding (W6-27). The stat card carries the wordmark by default
+   *  (it is promotional); an exported photo does not (it is personal). Both are
+   *  user-overridable in settings. */
+  watermarkStatCard?: boolean;
+  watermarkPhoto?: boolean;
   /** End-of-day macro reminder (H-05). */
   notifyMacrosEnabled?: boolean;
   notifyMacroTime?: string; // default "20:00"
