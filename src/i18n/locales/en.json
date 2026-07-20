@@ -1335,5 +1335,14 @@
     "applyFutureNote": "Doses you already logged stay exactly as they are.",
     "applyThisOnly": "Just this dose",
     "applyFuture": "Update my protocol too"
+  },
+  "quicklogAlias": {
+    "calories": "cals,kcal",
+    "protein": "prot",
+    "sleep_quality": "sleep",
+    "soreness": "soreness,recovery",
+    "weight": "wt",
+    "wellness": "mood",
+    "workout_effort": "workout,training"
   }
 }

@@ -1335,5 +1335,14 @@
     "applyFutureNote": "Les doses déjà enregistrées restent inchangées.",
     "applyThisOnly": "Cette dose uniquement",
     "applyFuture": "Mettre à jour mon protocole aussi"
+  },
+  "quicklogAlias": {
+    "calories": "kcal",
+    "protein": "prot,protéines",
+    "sleep_quality": "sommeil",
+    "soreness": "courbatures",
+    "weight": "poids",
+    "wellness": "humeur",
+    "workout_effort": "entraînement,entrainement"
   }
 }

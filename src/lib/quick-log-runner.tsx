@@ -1,8 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { AppState } from 'react-native';
 
 import { aiErrorKind, parseQuickLog } from '@/lib/ai';
 import { applyParsedItems } from '@/lib/quick-log-apply';
+import { parseDeterministic } from '@/lib/quick-log-deterministic';
+import { buildQuickLogVocab } from '@/lib/quick-log-vocab';
 import { useStore, type QuickLogJob } from '@/lib/store';
 
 /** How long a finished job lingers so the dashboard can show its confirmation. */
@@ -31,8 +34,19 @@ function isRetryable(job: QuickLogJob, now: number): boolean {
  * network. Finished jobs self-clear after a short display window.
  */
 export function QuickLogRunner() {
-  const { ready, quickLogJobs, updateQuickLogJob, removeQuickLogJob, upsertCheckin, addSymptomEvent, logDose } =
-    useStore();
+  const {
+    ready,
+    quickLogJobs,
+    protocolItems,
+    updateQuickLogJob,
+    removeQuickLogJob,
+    recordQuickLogPath,
+    upsertCheckin,
+    addSymptomEvent,
+    logDose,
+  } = useStore();
+  const { t } = useTranslation();
+  const vocab = useMemo(() => buildQuickLogVocab(t, protocolItems), [t, protocolItems]);
   const inFlight = useRef<Set<string>>(new Set());
   const doneTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   const [tick, setTick] = useState(0);
@@ -61,16 +75,27 @@ export function QuickLogRunner() {
       inFlight.current.add(job.id);
       void (async () => {
         try {
-          const result = await parseQuickLog(job.text, job.locale);
-          const { applied, skipped } = applyParsedItems(result.items ?? [], {
+          // Try to understand it locally first (F3). A match is free, instant,
+          // and works offline; anything not fully understood falls through to
+          // the AI with the text untouched.
+          const local = parseDeterministic(job.text, vocab);
+          let items = local;
+          let reply = '';
+          if (!items) {
+            const result = await parseQuickLog(job.text, job.locale);
+            items = result.items ?? [];
+            reply = result.reply ?? '';
+          }
+          const { applied, skipped } = applyParsedItems(items, {
             today: job.dateKey,
             upsertCheckin,
             addSymptomEvent,
             logDose,
           });
+          recordQuickLogPath(local ? 'deterministic' : 'ai');
           updateQuickLogJob(job.id, {
             status: 'done',
-            summary: result.reply ?? '',
+            summary: reply,
             appliedCount: applied,
             skippedCount: skipped,
           });
@@ -93,7 +118,18 @@ export function QuickLogRunner() {
         }
       })();
     }
-  }, [quickLogJobs, tick, ready, updateQuickLogJob, removeQuickLogJob, upsertCheckin, addSymptomEvent, logDose]);
+  }, [
+    quickLogJobs,
+    tick,
+    ready,
+    vocab,
+    updateQuickLogJob,
+    removeQuickLogJob,
+    recordQuickLogPath,
+    upsertCheckin,
+    addSymptomEvent,
+    logDose,
+  ]);
 
   // Clear any pending removal timers on unmount.
   useEffect(() => {

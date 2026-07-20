@@ -408,6 +408,10 @@ export type PersistedState = {
   /** Strength sessions + benchmarks (training log, W5-21). */
   strengthSessions: StrengthSession[];
   benchmarks: Benchmark[];
+  /** How many quick-logs each parse path handled (F3). Diagnostic only: it tells
+   *  us what share of real traffic the free local matcher covers, so the AI-call
+   *  budget is measured rather than guessed. Never shown to the user. */
+  quickLogPathCounts?: { deterministic: number; ai: number };
 };
 
 /** Manual check-in nutrition field → its canonical metric (for precedence cleanup). */
@@ -487,6 +491,8 @@ type StoreContextValue = {
   enqueueQuickLog: (text: string, locale: string) => string;
   updateQuickLogJob: (id: string, patch: Partial<QuickLogJob>) => void;
   removeQuickLogJob: (id: string) => void;
+  /** Tally which parse path handled a quick-log (F3 diagnostic, never shown). */
+  recordQuickLogPath: (path: 'deterministic' | 'ai') => void;
   /** Append a Pepi chat turn (trimmed to the last N); returns its id (R2-F). */
   addPepiMessage: (msg: Omit<PepiMessage, 'id' | 'ts'>) => string;
   clearPepiMessages: () => void;
@@ -958,6 +964,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setState((s) => ({ ...s, quickLogJobs: s.quickLogJobs.filter((j) => j.id !== id) }));
   }, []);
 
+  const recordQuickLogPath = useCallback<StoreContextValue['recordQuickLogPath']>((path) => {
+    setState((s) => {
+      const counts = s.quickLogPathCounts ?? { deterministic: 0, ai: 0 };
+      return { ...s, quickLogPathCounts: { ...counts, [path]: counts[path] + 1 } };
+    });
+  }, []);
+
   const addPepiMessage = useCallback<StoreContextValue['addPepiMessage']>((msg) => {
     const id = uid();
     const full: PepiMessage = { ...msg, id, ts: new Date().toISOString() };
@@ -990,6 +1003,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       enqueueQuickLog,
       updateQuickLogJob,
       removeQuickLogJob,
+      recordQuickLogPath,
       addPepiMessage,
       clearPepiMessages,
       setProfile,
@@ -1034,6 +1048,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       enqueueQuickLog,
       updateQuickLogJob,
       removeQuickLogJob,
+      recordQuickLogPath,
       addPepiMessage,
       clearPepiMessages,
       setProfile,

@@ -1335,5 +1335,14 @@
     "applyFutureNote": "Bereits erfasste Dosen bleiben unverändert.",
     "applyThisOnly": "Nur diese Dosis",
     "applyFuture": "Auch mein Protokoll aktualisieren"
+  },
+  "quicklogAlias": {
+    "calories": "kcal",
+    "protein": "eiweiß,eiweiss",
+    "sleep_quality": "schlaf",
+    "soreness": "muskelkater",
+    "weight": "gewicht",
+    "wellness": "stimmung",
+    "workout_effort": "training"
   }
 }

@@ -1335,5 +1335,14 @@
     "applyFutureNote": "Ранее записанные дозы останутся без изменений.",
     "applyThisOnly": "Только эта доза",
     "applyFuture": "Обновить и мой протокол"
+  },
+  "quicklogAlias": {
+    "calories": "ккал",
+    "protein": "белки",
+    "sleep_quality": "сон",
+    "soreness": "крепатура",
+    "weight": "вес",
+    "wellness": "настроение",
+    "workout_effort": "тренировка"
   }
 }
