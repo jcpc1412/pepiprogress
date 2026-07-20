@@ -508,7 +508,13 @@ gesture-handler MIT) is safe for a paid closed-source app; moti skipped as
 unnecessary sugar. Includes the **`docs/ARCHITECTURE.md` inventory** deliverable
 (see item 35).
 
-### F3. Deterministic quick-log pre-parse ✅ DECIDED — build as its own item
+### F3. Deterministic quick-log pre-parse ✅ SHIPPED 2026-07-26
+`src/lib/quick-log-deterministic.ts` (pure, 33 tests) + `quick-log-vocab.ts`
+(i18n/protocol-driven vocabulary) + runner wiring + hidden path tally in the
+store. Browser-verified both paths: a mixed weight/scale/dose message applied
+three items with no network call; prose escalated to Haiku untouched. Built to
+the decisions below.
+
 Owner decisions (2026-07-26):
 - Pure lib `quick-log-deterministic.ts` (fully tested) running **before**
   `parseQuickLog`. **Strict whole-message matching only**: the entire input must
