@@ -350,6 +350,22 @@ the Roboto leak); (c) padding audit against the documented scale; (d) theme-toke
     tokens; **padding architecture documented in DESIGN.md** (padding token set tied to
     `Spacing`, per-component minimums, e.g. button text never touches a chamfer edge);
     fix the permission-button padding as the reference implementation (notes §8).
+    **+ Motion foundations (F2, owner decision 2026-07-26):** motion is first-class
+    across the whole app, applied during this sweep so each screen is visited once.
+    Motion tokens (durations, easings, standard enter/exit/layout patterns) in
+    `theme.ts`; `expo-haptics` feedback paired with confirmation moments;
+    `react-native-reanimated` (already a dep) is the engine for transitions/undo/most
+    micro-interactions; **`lottie-react-native` approved** for designer-made
+    confirmation animations (Apache-2.0; native rebuild required, batch with the next
+    device build).
+    **+ Architecture inventory (owner request 2026-07-26):** create
+    `docs/ARCHITECTURE.md` during this pass, a census of every reusable thing:
+    components, stores, pure libs, hooks, motion/haptic patterns, one line each on
+    what it is and who uses it. Purpose: cheap context loading for future sessions,
+    prevent stray duplicates (reuse existing stores/components/buttons), and feed the
+    optimization pass (item 44). Items 36-42 update it as they sweep each screen; then
+    it becomes a **standing gate**: any new reusable thing adds its line in the same
+    commit.
 36. **Onboarding [M].** Owner: 1c + 2a. **Vendor social buttons** (Apple's official
     `AppleAuthenticationButton` everywhere it renders, Google's official branded button
     from `@react-native-google-signin`) replacing the custom `SocialButton`; fix the
@@ -466,59 +482,74 @@ mirror) plus the manual data-export file already cover the backup need; a second
 backup target adds integration surface without adding safety. Revisit only if a
 no-account-ever user segment materially asks for it.
 
-## Captured for discussion (2026-07-19) — NOT scoped, NOT decided
+## F items (captured 2026-07-19, scoped with owner 2026-07-26)
 
-Owner asked these to be recorded only, ahead of a usage-limit reset, explicitly
-**not** fleshed out yet. Every one of these needs full discussion before any
-implementation plan is written (standing rule). Listed here so the thread resumes
-cleanly; none of the framing below is a decision.
+Discussion held 2026-07-26. F2 and F3 are **decided** (detail below and, for F2,
+folded into item 35). F4 is decided at the architecture level but its **UX/nav is
+explicitly open** and needs a dedicated mock-up session before any implementation.
+F1 is pending an owner retry.
 
-### F1. EAS Android auto-submit: service account permission error despite Owner IAM role
-`eas submit`/`--auto-submit` reports the Play Console service account lacks
-permission, even though the owner granted it **Owner** in Google Cloud IAM. Owner
-IAM role is necessary but not sufficient for Play Console — the account also needs
-to be explicitly invited/granted access **inside Play Console's own Users &
-permissions**, which is a separate grant from Cloud IAM and commonly the actual gap.
-To discuss: walk through Play Console → Users & permissions (not Cloud IAM) and
-confirm the service account is invited there with Release permissions for the app;
-also confirm which key file `eas.json`'s `serviceAccountKeyPath` actually points at
-matches the account that was granted access.
+### F1. EAS Android auto-submit permission error — pending owner retry
+Root cause identified: Google Cloud IAM Owner role is not sufficient; Play Console
+has its own Users & permissions grant. Owner added the service account to **both**
+consoles on 2026-07-19. Next step (owner, minutes): `eas submit -p android --latest`
+to test without a new build. Note: Play Console grants can take up to 24h to
+propagate. If it still fails: verify the key EAS holds (`eas credentials` vs a local
+`serviceAccountKeyPath`) belongs to the invited account, and that the Play Console
+grant is app-level with Release permissions (view-only is not enough).
 
-### F2. Free/OSS animation libraries for a paid app (design normalization track)
-Owner wants a survey of animation libraries usable in a paid/commercial app (license
-compatible with closed-source distribution — not just "free to use" but explicit
-permissive licensing e.g. MIT/Apache), covering: confirmation micro-interactions,
-screen/element transitions, possible undo affordances, and anything else that reads
-as polish. To discuss: where this plugs into the existing "impeccable" design-system
-work and the Wave 7 button/padding sweep (35–42) vs. being its own pass; whether
-`react-native-reanimated` (already a dep) covers most of it before reaching for a
-new library at all.
+### F2. Motion + animation ✅ DECIDED — folded into Wave 7 item 35
+Owner decisions (2026-07-26): motion is **first-class, applied everywhere** with
+haptics, done during the 35-42 sweep so every screen is visited once; add
+**lottie-react-native** (Apache-2.0) for confirmation animations; everything else on
+the already-installed `react-native-reanimated` + `expo-haptics`. Licensing survey
+result: the whole candidate set (reanimated MIT, moti MIT, lottie Apache-2.0,
+gesture-handler MIT) is safe for a paid closed-source app; moti skipped as
+unnecessary sugar. Includes the **`docs/ARCHITECTURE.md` inventory** deliverable
+(see item 35).
 
-### F3. Reduce AI-service calls for deterministic quick-logs (cost)
-Owner's example: "weight 120" doesn't need a Haiku parse call — it's a pattern a
-deterministic matcher could catch for free. To discuss: what fraction of real
-quick-log traffic is actually this simple (needs data, not a guess); a pre-parse
-deterministic layer in front of `parseQuickLog` that only escalates to AI on
-ambiguity, vs. false-negative risk (a deterministic miss silently logging the wrong
-field); where this sits relative to the existing `AUTO_APPLY_CONFIDENCE` gate in
-`quick-log-apply.ts`; whether it's purely a cost play or also a latency/offline win
-(a matched pattern logs instantly, no network wait).
+### F3. Deterministic quick-log pre-parse ✅ DECIDED — build as its own item
+Owner decisions (2026-07-26):
+- Pure lib `quick-log-deterministic.ts` (fully tested) running **before**
+  `parseQuickLog`. **Strict whole-message matching only**: the entire input must
+  match a known pattern (field keyword + number + optional unit); any leftover words
+  escalate to AI untouched. Kills false-positive risk ("weight felt heavy today"
+  never matches).
+- **Locale-aware**: keyword tables for all 6 locales, driven from the i18n catalog
+  so parity is enforced; comma decimals supported (pattern already solved in
+  `dose-draft.ts`).
+- **Scope v1**: weight, measurements (waist/hips), simple 1-5 scale logs
+  ("sleep 4"), **and doses** via exact whole-message match against the user's own
+  protocol item names + bundled catalog names + a small alias table ("sema",
+  "tirz", "bpc"...). Dose/unit must match the protocol or be explicitly stated.
+  Anything ambiguous (unknown word, two candidate items, odd unit) escalates to AI.
+  Rationale for strictness: a wrong dose match has a big blast radius (dose event +
+  wrong-vial inventory decrement + P-04 schedule anchoring).
+- **UX parity**: matched logs get the identical undo toast; the user never knows
+  which path ran. Bonus: matched patterns log instantly and work offline.
+- **Hidden telemetry counter** (deterministic vs AI path) in the local store, not
+  user-visible, to measure real coverage instead of guessing.
 
-### F4. Detailed-log rework: separate from quick-log, becomes a passively-filled "day in review"
-Owner's sketch, paraphrased, not a spec: the detailed log currently sits unused
-(read as a chore) but already supports "continue filling it up throughout the day."
-Proposal: decouple it from quick-log entirely. New quick-log logic (post-F3, mostly
-deterministic) writes into the same day's detailed-log entity instead of being a
-separate, possibly-duplicate write. Chat (Pepi) also feeds it when something worth
-capturing comes up. Integrations passively fill fields as data arrives. The detailed
-log itself moves to a nested page (location TBD) framed as something like "a day in
-review" rather than a form to complete. Owner flagged as explicitly unresolved:
-where it lives in the nav, how to signal its existence/value to users, and exact UX.
-Owner also observed the existing **distillation** logic (check-in field
-customization / summarization, R2-E era) does something adjacent and floated
-reusing/condensing that logic with this rather than building a parallel system — to
-discuss whether that's the same concept wearing two names or genuinely separate
-concerns before merging any code.
+### F4. "Day in review" — architecture DECIDED, UX/nav OPEN (mock-ups required first)
+Architecture (owner-confirmed 2026-07-26): the detailed log stops being a second
+write surface and becomes a **read/edit view over the day's existing entities**
+(checkin + doses + symptoms + metric readings + photos). Quick-log (post-F3), Pepi
+chat, and integrations already write those entities, so the review page shows the
+day assembled and nothing is ever logged twice, by construction. Distillation stays
+what it is (the AI prose summary) and becomes the review page's header; they are
+complementary, not duplicates. The review page **inherits the day-stepper/backfill
+role and becomes the history browser** (lets the check-in's history list simplify).
+
+Explicitly OPEN, needs a dedicated design/mock-up session before any code
+(owner, 2026-07-26): where it lives (tap-through from the Home distillation card was
+floated but owner flagged that UX as frail; alternatives include redoing the Home
+page, adding a tab, or reshuffling tabs), how to signal its existence without making
+it read as a required chore ("it's there, but integrations/Pepi/quick-log populate
+it for you"), and what replaces the current detailed-log entry point (it leaves the
+log screen; destination TBD). **Do not implement until mock-ups + flows are agreed.**
+
+**Agreed sequencing:** F1 (owner retry) → F3 → F2 inside the 35-42 sweep → F4
+design session, then F4 implementation.
 
 ## Standing gates (every wave)
 
