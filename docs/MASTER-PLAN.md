@@ -366,6 +366,15 @@ the Roboto leak); (c) padding audit against the documented scale; (d) theme-toke
     optimization pass (item 44). Items 36-42 update it as they sweep each screen; then
     it becomes a **standing gate**: any new reusable thing adds its line in the same
     commit.
+    **+ Journal primitives (F4 merge, owner decision 2026-07-21):** the Journal
+    screen (item 41b) introduces four reusable components; build them here so the
+    Journal is normalized by construction and other screens can adopt them:
+    **source badge** (HEALTH / PEPI / QUICK / TYPICAL / TAP provenance chip),
+    **completeness dot-meter** (filled/empty dots, "N of M areas" — no percentages,
+    no streaks, spec-03 no-shame), **week strip** (7-day nav, green dot = logged /
+    empty ring = no log), and **value-row-with-badge** (label · value · source).
+    Item 35 → the Journal is a hard dependency (it both consumes foundations and
+    contributes these primitives).
 36. **Onboarding [M].** Owner: 1c + 2a. **Vendor social buttons** (Apple's official
     `AppleAuthenticationButton` everywhere it renders, Google's official branded button
     from `@react-native-google-signin`) replacing the custom `SocialButton`; fix the
@@ -374,13 +383,34 @@ the Roboto leak); (c) padding audit against the documented scale; (d) theme-toke
     per-screen checklist.
 37. **Auth screen + shared dialogs [S].** The "log a photo" dialog (Roboto + anchor
     Cancel) is the flagship fix; sweep all shared modals/dialogs. Checklist.
-38. **Home/Today (check-in + quick-log) [S/M].** Checklist.
+38. **Home/Today (check-in + quick-log) [S/M].** Checklist. **+ F4 Today changes
+    (merged in so Today is visited once):** add the one-line **"Today's record"
+    strip** (distillation line + completeness dot-meter + chevron → Journal tab),
+    placed **above** Today's Doses (owner 2026-07-21); drop the **Quick/Detailed
+    toggle** on the Log screen (Log becomes quick-only; "detailed" is now inline
+    editing on the Journal). The `building` verdict state is unchanged.
 39. **Pepi chat [S].** Checklist (pairs with item 42).
 40. **Analysis [S].** Checklist.
 41. **Photos (reel, capture, review, history) [M].** Checklist.
+41b. **Journal — new screen (F4 build, merged into the sweep) [M].** Build on the
+    item-35 foundations, so it is normalized by construction and needs no second
+    pass. Fifth tab, **order: Today · Pepi · Photos · Analysis · Journal** (owner
+    2026-07-21). A read/edit view over the day's existing entities (checkin + doses
+    + symptoms + photos; metric readings shown, snapshot-sourced), assembled — never
+    a second write surface, so nothing is logged twice. Sections: **week strip**
+    (history nav; green=logged / empty=no log), **"the day, distilled"** header (the
+    AI prose summary; degrades gracefully when sparse, describes what IS there, never
+    scolds what isn't), an **F5 photo-read** card (discovery lives here too, giving a
+    reason to open that isn't data entry), **check-in / doses / symptoms / photos**
+    rows with **source badges** + quiet `add` links, one understated "+ add to this
+    day". **Inherits the day-stepper/backfill role and becomes the history browser**,
+    letting the check-in's separate history list dissolve. Deep-link target for
+    notifications + Pepi's "I noticed" + post-quick-log confirmations (F5/Q5). Anti-
+    chore framing: everything reads as already done for you (source provenance,
+    completeness dots, no streaks). Live mock: `.preview-mockup/journal.html`.
 42. **Protocol + settings screens** (protocol, inventory, notification / privacy /
     cycle / integration / typical-day settings) **[M].** Checklist. Closes the sweep;
-    a final pass verifies no screen was missed.
+    a final pass verifies no screen was missed (incl. the new Journal).
 
 ### 7D. Pepi chat behavior (notes §10)
 
@@ -543,23 +573,42 @@ Owner decisions (2026-07-26):
 - **Hidden telemetry counter** (deterministic vs AI path) in the local store, not
   user-visible, to measure real coverage instead of guessing.
 
-### F4. "Day in review" — architecture DECIDED, UX/nav OPEN (mock-ups required first)
+### F4. "Journal" (day in review) — design session DONE, merged into the 35-42 sweep
 Architecture (owner-confirmed 2026-07-26): the detailed log stops being a second
 write surface and becomes a **read/edit view over the day's existing entities**
 (checkin + doses + symptoms + metric readings + photos). Quick-log (post-F3), Pepi
-chat, and integrations already write those entities, so the review page shows the
-day assembled and nothing is ever logged twice, by construction. Distillation stays
-what it is (the AI prose summary) and becomes the review page's header; they are
-complementary, not duplicates. The review page **inherits the day-stepper/backfill
-role and becomes the history browser** (lets the check-in's history list simplify).
+chat, and integrations already write those entities, so the page shows the day
+assembled and nothing is ever logged twice, by construction. Distillation stays what
+it is (the AI prose summary) and becomes the page's header. Inherits the
+day-stepper/backfill role and becomes the history browser (the check-in's separate
+history list dissolves).
 
-Explicitly OPEN, needs a dedicated design/mock-up session before any code
-(owner, 2026-07-26): where it lives (tap-through from the Home distillation card was
-floated but owner flagged that UX as frail; alternatives include redoing the Home
-page, adding a tab, or reshuffling tabs), how to signal its existence without making
-it read as a required chore ("it's there, but integrations/Pepi/quick-log populate
-it for you"), and what replaces the current detailed-log entry point (it leaves the
-log screen; destination TBD). **Do not implement until mock-ups + flows are agreed.**
+**Design session ✅ DONE 2026-07-21** (live mock `.preview-mockup/journal.html`).
+Resolved decisions:
+- **It's a fifth tab named "Journal"** (not a tap-through from a Home card — owner
+  flagged that as frail, confirmed by code: the distillation currently hides inside
+  the "see the reasoning" screen). No floating chat widget: a persistent tab bar
+  already is an always-one-tap surface, a bubble only occludes the photo reel and
+  fights the instrument design language. Pepi stays a full page.
+- **Tab order: Today · Pepi · Photos · Analysis · Journal** (journal last; Photos
+  keeps its slot). 5 tabs read fine in the mock; owner will confirm on-device.
+- **History nav: week strip** (green dot = logged day, empty ring = no log), not the
+  stepper arrows.
+- **On Today:** one-line "Today's record" strip **above** Today's Doses. Today is
+  otherwise unchanged now; a fuller Today rework is deferred (owner, later).
+- **Anti-chore signaling:** source badges (HEALTH/PEPI/QUICK/TYPICAL/TAP),
+  completeness dots ("N of M areas", no percentages/streaks), F5 discoveries surface
+  here. The `building` **verdict stays a Today concept**; the Journal never says
+  "baseline", it describes the day and degrades gracefully when sparse.
+- **Home-becomes-review rejected** (would double-purpose Today and bury the verdict);
+  configurable/modular Home rejected for beta (curation over configuration).
+
+**No longer a separate phase — merged into the design sweep to avoid double work**
+(owner 2026-07-21): item 35 builds the four new primitives (source badge,
+completeness dot-meter, week strip, value-row-with-badge); the Today record strip +
+Log-screen toggle removal ride **item 38** (Home visited once); the Journal is built
+as **item 41b** on the foundations (normalized by construction, no second pass).
+Every screen incl. the new Journal is touched exactly once.
 
 ### F5. Crown-jewel photo analysis ✅ SHIPPED 2026-07-26 (ai-service v25)
 Owner direction (via an external product-architect review the owner endorsed): the
@@ -667,9 +716,11 @@ Implementation shape (from the schema audit, 2026-07-21):
   Option-B machinery).
 - Pure JS + one migration; no native rebuild.
 
-**Agreed sequencing:** F1 ✅ → F3 ✅ → F5 ✅ → **F6 (normalized mirror)** → F2
-inside the 35-42 sweep → F4 design session, then F4 implementation. F5 landed
-before F4 so the day-in-review can surface discoveries from day one.
+**Agreed sequencing:** F1 ✅ → F3 ✅ → F5 ✅ → F4 design session ✅ →
+**F6 (normalized mirror)** → the 35-42 sweep, which now carries F2 (motion) *and*
+F4 (Today record strip in item 38, Journal as item 41b) so nothing is built then
+re-normalized. F4 no longer has a separate implementation phase; it lives inside
+the sweep. F5 landed before the Journal so it can surface discoveries from day one.
 
 ## Standing gates (every wave)
 
