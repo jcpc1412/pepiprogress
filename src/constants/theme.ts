@@ -155,5 +155,30 @@ export const Chamfer = {
   hero: 10,
 } as const;
 
+/**
+ * Motion tokens (Wave 7 item 35, F2). One vocabulary for durations + easing so
+ * every screen animates on the same rhythm. Curves are ease-OUT (decelerating):
+ * no bounce, no elastic — the instrument register is precise, not playful.
+ * Durations are milliseconds; `easing` values are cubic-bezier control points
+ * `[x1, y1, x2, y2]` consumed by `src/lib/motion.ts` (reanimated `Easing.bezier`).
+ * Do not animate layout props directly — use the reanimated presets built on these.
+ */
+export const Motion = {
+  duration: {
+    instant: 90, // micro-feedback: press scale, chip select
+    fast: 160, // small elements entering/leaving, toasts
+    base: 240, // standard transitions + layout shifts (the default)
+    slow: 360, // large surfaces, screen-level reveals
+  },
+  /** cubic-bezier control points [x1, y1, x2, y2]. */
+  easing: {
+    standard: [0.22, 1, 0.36, 1], // ease-out-quint — the default decelerate
+    decelerate: [0.16, 1, 0.3, 1], // ease-out-expo — big entrances land softly
+    exit: [0.4, 0, 1, 1], // ease-in — leaving elements accelerate away
+  },
+  /** Press-down scale for tappable surfaces (centralizes the ad-hoc 0.97). */
+  pressScale: 0.97,
+} as const;
+
 export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
 export const MaxContentWidth = 800;

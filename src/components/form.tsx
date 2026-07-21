@@ -8,9 +8,8 @@ import { CheckIcon } from '@/components/icons';
 import { ThemedText } from '@/components/themed-text';
 import { Chamfer, Fonts, Radii, Spacing, type ThemeColor } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-
-/** Subtle press feedback — the instrument "settling" when touched (Emil: ~0.97). */
-const pressed = (isPressed: boolean) => ({ transform: [{ scale: isPressed ? 0.97 : 1 }] });
+// Subtle press feedback — the instrument "settling" when touched (~0.97, Motion token).
+import { pressScale as pressed } from '@/lib/motion';
 
 /** A toggleable option — monochrome: selected = filled accent, idle = sunken. */
 export function OptionChip({
