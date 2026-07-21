@@ -118,7 +118,7 @@ export function ProtocolScreen({ onClose }: { onClose?: () => void } = {}) {
           <Divider />
           <View style={styles.buttons}>
             <View style={styles.buttonHalf}>
-              <PrimaryButton label={t('protocol.logDose')} onPress={() => openLogging('quick', undefined, true)} />
+              <PrimaryButton label={t('protocol.logDose')} onPress={() => openLogging('quick')} />
             </View>
             <View style={styles.buttonHalf}>
               <PrimaryButton

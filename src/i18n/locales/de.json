@@ -1372,6 +1372,8 @@
     "doseGeneric": "Dosis",
     "prevWeek": "Vorherige Woche",
     "nextWeek": "Nächste Woche",
-    "hadSymptoms": "Symptome notiert"
+    "hadSymptoms": "Symptome notiert",
+    "todayRecord": "HEUTIGER EINTRAG",
+    "emptyToday": "Heute noch nichts erfasst."
   }
 }

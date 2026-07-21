@@ -16,6 +16,7 @@ import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { ConfidenceBadge } from '@/components/confidence-badge';
 import { MeasureNextNudge } from '@/features/home/measure-next-nudge';
 import { TodayDoses } from '@/features/home/today-doses';
+import { TodayRecordStrip } from '@/features/home/today-record-strip';
 import { formatHeroValue, resolveMsg, useVerdict, type TFn } from '@/features/home/use-verdict';
 import { daysBetween } from '@/lib/dates';
 import { useOverlay } from '@/lib/nav-overlay';
@@ -281,6 +282,10 @@ export function Dashboard() {
 
           {/* Log — medium-weight, encourages logging (§7 open item resolved). */}
           <PrimaryButton label={t('dashboard.log')} onPress={() => openLogging('quick')} />
+
+          {/* Today's record (F4, item 38) — a one-line window into the day-in-
+              review, above the doses (owner 2026-07-21). */}
+          <TodayRecordStrip />
 
           {/* One-tap dose logging (the MyTherapy-style checklist). Today's log
               recap + note moved to the reasoning screen (merged with the "why"). */}

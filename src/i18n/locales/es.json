@@ -1372,6 +1372,8 @@
     "doseGeneric": "Dosis",
     "prevWeek": "Semana anterior",
     "nextWeek": "Semana siguiente",
-    "hadSymptoms": "síntomas anotados"
+    "hadSymptoms": "síntomas anotados",
+    "todayRecord": "REGISTRO DE HOY",
+    "emptyToday": "Aún no has registrado nada hoy."
   }
 }

@@ -261,7 +261,7 @@ export function JournalScreen() {
 
           {isEmpty ? <Placeholder label={t('journal.emptyDay')} height={72} /> : null}
 
-          <TextButton label={t('journal.addToDay')} onPress={() => openLogging('detailed', undefined, false, selected)} />
+          <TextButton label={t('journal.addToDay')} onPress={() => openLogging('detailed', undefined, selected)} />
         </ScrollView>
       </SafeAreaView>
     </ThemedView>
