@@ -34,7 +34,8 @@
     "photos": "Фото",
     "insights": "Аналитика",
     "pepi": "Pepi",
-    "analysis": "Анализ"
+    "analysis": "Анализ",
+    "journal": "Журнал"
   },
   "units": {
     "metric": "Метрическая",
@@ -1359,6 +1360,18 @@
     "areas": "{{filled}} из {{total}} зон",
     "logged": "записано",
     "noLog": "не записано",
-    "loggedVia": "Записано через {{source}}"
+    "loggedVia": "Записано через {{source}}",
+    "emptyDay": "Нет записей за этот день.",
+    "checkin": "ОТМЕТКА",
+    "doses": "ДОЗЫ",
+    "symptoms": "СИМПТОМЫ",
+    "photos": "ФОТО",
+    "photoRead": "АНАЛИЗ ФОТО",
+    "addToDay": "+ добавить в этот день",
+    "scaleValue": "{{v}} / 5",
+    "doseGeneric": "Доза",
+    "prevWeek": "Предыдущая неделя",
+    "nextWeek": "Следующая неделя",
+    "hadSymptoms": "отмечены симптомы"
   }
 }

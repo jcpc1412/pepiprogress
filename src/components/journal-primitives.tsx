@@ -5,6 +5,9 @@ import { ChamferBox } from '@/components/chamfer';
 import { ThemedText } from '@/components/themed-text';
 import { Chamfer, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import type { LogSource } from '@/lib/journal-day';
+
+export type { LogSource };
 
 /**
  * Journal primitives (Wave 7 item 35, F4). Four reusable presentational pieces
@@ -16,9 +19,6 @@ import { useTheme } from '@/hooks/use-theme';
  * Anti-chore framing (spec 03, no shame): completeness is dots + "N of M areas",
  * never a percentage or a streak; a no-log day is an empty ring, never a scold.
  */
-
-/** Provenance of a logged value — who or what wrote it. Drives the SourceBadge. */
-export type LogSource = 'health' | 'pepi' | 'quick' | 'typical' | 'tap';
 
 /** One descriptor per day in the WeekStrip; the caller formats + resolves each. */
 export type WeekDay = {

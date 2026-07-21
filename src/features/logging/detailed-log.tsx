@@ -65,7 +65,7 @@ const TEXT_FIELDS: TextField[] = ['skin_notes', 'measurements', 'note'];
  * check-in. Surfaced fields, day-stepper backfill, customize, history, symptoms.
  * The conversational quick-log is the sibling Quick mode.
  */
-export function DetailedLog({ onDismiss }: { onDismiss?: () => void } = {}) {
+export function DetailedLog({ onDismiss, initialDate }: { onDismiss?: () => void; initialDate?: string } = {}) {
   const { t, i18n } = useTranslation();
   const theme = useTheme();
   const router = useRouter();
@@ -82,7 +82,8 @@ export function DetailedLog({ onDismiss }: { onDismiss?: () => void } = {}) {
   } = useStore();
 
   const today = useToday();
-  const [date, setDate] = useState(today);
+  // Opened from the Journal on a specific day (item 41b backfill); else today.
+  const [date, setDate] = useState(initialDate ?? today);
   const [showDeferred, setShowDeferred] = useState(false);
   const [showExactNutrition, setShowExactNutrition] = useState(false);
   const [weightError, setWeightError] = useState<string | undefined>(undefined);

@@ -5,10 +5,11 @@ import type { LoggingMode } from '@/lib/nav-overlay';
 
 export default function LoggingRoute() {
   const router = useRouter();
-  const { mode, seedPrompt, quickOnly } = useLocalSearchParams<{
+  const { mode, seedPrompt, quickOnly, date } = useLocalSearchParams<{
     mode?: string;
     seedPrompt?: string;
     quickOnly?: string;
+    date?: string;
   }>();
   return (
     <LoggingScreen
@@ -16,6 +17,7 @@ export default function LoggingRoute() {
       initialMode={(mode as LoggingMode) ?? 'quick'}
       seedPrompt={seedPrompt === 'macros' ? 'macros' : undefined}
       quickOnly={quickOnly === '1'}
+      initialDate={typeof date === 'string' ? date : undefined}
     />
   );
 }

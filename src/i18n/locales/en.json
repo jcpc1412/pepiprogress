@@ -34,7 +34,8 @@
     "photos": "Photos",
     "insights": "Insights",
     "pepi": "Pepi",
-    "analysis": "Analysis"
+    "analysis": "Analysis",
+    "journal": "Journal"
   },
   "units": {
     "metric": "Metric",
@@ -1359,6 +1360,18 @@
     "areas": "{{filled}} of {{total}} areas",
     "logged": "logged",
     "noLog": "no log",
-    "loggedVia": "Logged via {{source}}"
+    "loggedVia": "Logged via {{source}}",
+    "emptyDay": "No entries for this day.",
+    "checkin": "CHECK-IN",
+    "doses": "DOSES",
+    "symptoms": "SYMPTOMS",
+    "photos": "PHOTOS",
+    "photoRead": "PHOTO READ",
+    "addToDay": "+ add to this day",
+    "scaleValue": "{{v}} / 5",
+    "doseGeneric": "Dose",
+    "prevWeek": "Previous week",
+    "nextWeek": "Next week",
+    "hadSymptoms": "symptoms noted"
   }
 }

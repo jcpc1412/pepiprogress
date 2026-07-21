@@ -61,6 +61,23 @@ export function HomeIcon({ size = 22, color }: IconProps) {
   );
 }
 
+/** Ledger glyph (a bound page with entry lines) — the Journal tab. */
+export function JournalIcon({ size = 22, color }: IconProps) {
+  const stroke = useStroke(color);
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M6 3h11a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"
+        stroke={stroke}
+        strokeWidth={1.5}
+        strokeLinejoin="round"
+      />
+      <Path d="M8 3v18" stroke={stroke} strokeWidth={1.5} strokeLinecap="round" />
+      <Path d="M11 8h4M11 12h4" stroke={stroke} strokeWidth={1.5} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
 /** Pulse / line-chart glyph — the Insights tab. */
 export function InsightsIcon({ size = 22, color }: IconProps) {
   const stroke = useStroke(color);

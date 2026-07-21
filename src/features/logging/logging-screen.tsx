@@ -17,6 +17,7 @@ export function LoggingScreen({
   initialMode,
   seedPrompt,
   quickOnly,
+  initialDate,
 }: {
   onClose: () => void;
   initialMode: LoggingMode;
@@ -24,6 +25,8 @@ export function LoggingScreen({
   /** When true (e.g. opened from Protocol's Log Dose), hide the Quick/Detailed
    * toggle and stay in quick mode. */
   quickOnly?: boolean;
+  /** Day (YYYY-MM-DD) to open the detailed log on — the Journal backfill path. */
+  initialDate?: string;
 }) {
   const { t } = useTranslation();
   const [mode, setMode] = useState<LoggingMode>(initialMode);
@@ -51,7 +54,7 @@ export function LoggingScreen({
             {mode === 'quick' ? (
               <QuickLog seedPrompt={seedPrompt} onDismiss={onClose} />
             ) : (
-              <DetailedLog onDismiss={onClose} />
+              <DetailedLog onDismiss={onClose} initialDate={initialDate} />
             )}
           </ScrollView>
         </SafeAreaView>

@@ -10,7 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { CameraIcon, ChatIcon, HomeIcon, InsightsIcon } from '@/components/icons';
+import { CameraIcon, ChatIcon, HomeIcon, InsightsIcon, JournalIcon } from '@/components/icons';
 import { ThemedText } from '@/components/themed-text';
 import { MaxContentWidth, Spacing, type ThemeColor } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -57,6 +57,10 @@ export default function AppTabs() {
               trends. Route id stays `insights` for stability. */}
           <TabTrigger name="insights" href="/insights" asChild>
             <TabButton icon={InsightsIcon} label={t('tabs.analysis')} />
+          </TabTrigger>
+          {/* Journal (F4, item 41b) — day-in-review, last per owner 2026-07-21. */}
+          <TabTrigger name="journal" href="/journal" asChild>
+            <TabButton icon={JournalIcon} label={t('tabs.journal')} />
           </TabTrigger>
         </View>
       </TabList>

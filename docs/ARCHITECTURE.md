@@ -227,7 +227,7 @@ exists.
 ### Pure libs (`src/lib/*.ts`, deterministic + unit-tested)
 - **Verdict / insights:** `verdict-engine`, `derived-metrics`, `signal-ledger`, `sparkline`, `chart-series`, `trajectory` (recency-weighted projection), `energy-balance` (TDEE), `anomaly`, `measure-next`, `confidence`, `narrative`, `attribution`, `expectation-timeline`.
 - **Photos:** `photo-quality`, `photo-cadence`, `photo-observations` (F5 ledger), `analysis-context` (F5 fusion), `photo-crop`, `photo-pose`, `pose-live`, `photo-readout`, `photo-reference`.
-- **Logging / quick-log:** `quick-log-deterministic` (F3), `quick-log-vocab`, `quick-log-apply`, `dose-draft`, `dose-schedule` (P-04), `micro-checkin`, `chat-pills`, `coaching`, `typical-day`.
+- **Logging / quick-log:** `quick-log-deterministic` (F3), `quick-log-vocab`, `quick-log-apply`, `dose-draft`, `dose-schedule` (P-04), `micro-checkin`, `chat-pills`, `coaching`, `typical-day`, `journal-day` (F4 — per-day entity assembly + source resolution for the Journal).
 - **Compounds / protocol:** `field-surfacing` (goals ∪ effect ∪ monitoring), `reconstitution`, `inventory`, `lab-monitoring`, `body-composition`, `strength`.
 - **Platform / motion:** `dates`, `day-boundary`, `haptics` (hapticTap/hapticSuccess), `motion` (presets), `notifications`, `report` (PDF), `merge-states`, `data-facade`.
 - **Backend I/O (not pure):** `ai`, `supabase`, `sync`, `photos`, `photo-cloud`, `drive-backup`.

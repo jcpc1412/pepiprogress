@@ -51,7 +51,10 @@ const IDENTICAL_OK = new Set([
   'photos.comparable', 'photos.dayShort', 'photos.filterTitle', 'photos.heading', 'photos.partName',
   'photos.tagWeek', 'photos.timer3', 'photos.timer10', 'photos.timerOff',
   'protocol.dose', 'protocol.nominal',
-  'protocol.vialCount_one', 'report.date', 'dose.date', 'journal.source.pepi',
+  'protocol.vialCount_one', 'report.date', 'dose.date', 'journal.source.pepi', 'journal.scaleValue',
+  // Journal cognates that legitimately equal English in some locales (fr/pt "doses"/"dose",
+  // fr "Journal"/"photos", de "Check-in").
+  'tabs.journal', 'journal.checkin', 'journal.doses', 'journal.photos', 'journal.doseGeneric',
   'routes.im', 'routes.nasal', 'routes.oral',
   'settings.footer', 'sex.ftm', 'sex.mtf', 'symptoms.minutesShort', 'tabs.pepi', 'tabs.photos',
   'units.g', 'units.imperial', 'units.kcal', 'units.kg', 'units.lb',

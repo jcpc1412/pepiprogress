@@ -14,13 +14,15 @@ export function useOverlay() {
   const router = useRouter();
   return {
     openSettings: () => router.push('/settings'),
-    openLogging: (mode: LoggingMode = 'quick', seedPrompt?: 'macros', quickOnly?: boolean) =>
+    openLogging: (mode: LoggingMode = 'quick', seedPrompt?: 'macros', quickOnly?: boolean, date?: string) =>
       router.push({
         pathname: '/logging',
         params: {
           mode,
           ...(seedPrompt ? { seedPrompt } : {}),
           quickOnly: quickOnly ? '1' : '0',
+          // The Journal (item 41b) backfills a past day: open the log already on it.
+          ...(date ? { date } : {}),
         },
       }),
     openAddCompound: () => router.push('/add-compound'),
