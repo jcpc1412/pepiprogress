@@ -3,7 +3,8 @@
 //
 // Actions:
 //   parse_log       - Haiku; parses NL quick-log text into structured entities.
-//   analyze_photo   - Sonnet vision; drift score + hedged change note.
+//   analyze_photo   - Sonnet vision; comparability + region observations, cross-signal
+//                     hypothesis and watch-next over the observation ledger (F5).
 //   check_fit       - Haiku vision; pre-capture fit check (position / angle / distance).
 //   classify_pose   - Haiku vision; sorts a reel photo into the canonical pose set (framing only).
 //   simple_analysis - Haiku text-only; encouraging weekly check-in message.
@@ -60,6 +61,23 @@ type ParseLogRequest = {
   catalog?: CatalogEntry[];
 };
 
+/** One prior analysis of the same track (F5 observation ledger). */
+type PriorAnalysis = {
+  at: string;
+  observations: { region: string; direction: string; note: string }[];
+  hypothesis?: string;
+  watchNext?: string;
+};
+
+/** Pre-digested numeric context from the user's logs (F5 context fusion). */
+type AnalysisDataContext = {
+  windowDays: number;
+  weight?: { start: number; end: number; delta: number };
+  nutrition?: { avgProtein?: number; avgCalories?: number; daysLogged: number };
+  avgSleepQuality?: number;
+  recentDoses?: { label: string; hoursBefore: number }[];
+};
+
 type AnalyzePhotoRequest = {
   action: 'analyze_photo';
   session: 'face' | 'body';
@@ -76,6 +94,12 @@ type AnalyzePhotoRequest = {
    *  when the user selected the gender_transition goal AND their sex is mtf/ftm
    *  — the goal is the intent signal, sex alone never implies it. */
   transitionContext?: 'mtf' | 'ftm';
+  /** Recent prior findings for this track, newest first (F5). */
+  priorAnalyses?: PriorAnalysis[];
+  /** Numeric log context over the photo window (F5). */
+  dataContext?: AnalysisDataContext;
+  /** Display label of the track (custom part name or the session), for framing. */
+  poseLabel?: string;
 };
 
 type ParseLabRequest = {
@@ -106,6 +130,9 @@ type SimpleAnalysisRequest = {
   cycleContext?: 'luteal' | 'follicular';
   locale?: string;
   units?: 'metric' | 'imperial';
+  /** Findings from recent scientific analyses (F5) so the note can reference a
+   *  real discovery instead of generic warmth. */
+  recentDiscoveries?: string[];
 };
 
 type InsightHistory = {
@@ -305,7 +332,49 @@ const ANALYZE_SCHEMA = {
     change: {
       type: 'string',
       description:
-        'ONE short, hedged, observational sentence about any visible difference between baseline and new. Empty string when there is no baseline. Never a medical claim or diagnosis.',
+        'ONE short, hedged sentence capturing the single most interesting finding — the headline. Empty string when there is no baseline. Never a medical claim or diagnosis.',
+    },
+    // F5: region-level findings — the discovery layer.
+    observations: {
+      type: 'array',
+      maxItems: 5,
+      description:
+        'Region-level findings comparing baseline to new (empty array when there is no baseline or nothing is honestly visible). Only regions where something is actually worth saying.',
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          region: {
+            type: 'string',
+            description: "Short region label in the user's locale (e.g. waist, jawline, shoulders).",
+          },
+          note: {
+            type: 'string',
+            description: 'One hedged, observational sentence about this region.',
+          },
+          direction: {
+            type: 'string',
+            enum: ['gain', 'loss', 'stable', 'unclear'],
+            description: 'Apparent direction of change in this region (size/fullness up = gain).',
+          },
+          confidence: {
+            type: 'number',
+            description:
+              '0..1 confidence from the photo evidence alone. Lighting/angle differences cap this at 0.5.',
+          },
+        },
+        required: ['region', 'note', 'direction', 'confidence'],
+      },
+    },
+    hypothesis: {
+      type: 'string',
+      description:
+        'ONE cross-signal hypothesis connecting the visual observations to the data context, phrased as a hypothesis ("consistent with", "may reflect"), never a conclusion. Empty string when visuals and data do not honestly connect.',
+    },
+    watchNext: {
+      type: 'string',
+      description:
+        'ONE concrete, specific thing to look for in the next photo of this track. Empty string when nothing specific suggests itself.',
     },
     retake: { type: 'boolean', description: 'true if drift is high enough to recommend a retake.' },
     coverage: {
@@ -330,7 +399,19 @@ const ANALYZE_SCHEMA = {
       required: ['x', 'y', 'w', 'h', 'confidence'],
     },
   },
-  required: ['driftScore', 'comparable', 'lighting', 'framing', 'change', 'retake', 'coverage', 'cropBox'],
+  required: [
+    'driftScore',
+    'comparable',
+    'lighting',
+    'framing',
+    'change',
+    'observations',
+    'hypothesis',
+    'watchNext',
+    'retake',
+    'coverage',
+    'cropBox',
+  ],
 };
 
 const SIMPLE_SCHEMA = {
@@ -481,33 +562,96 @@ function visionSystemPrompt(
     cycleWeek?: number;
     units?: 'metric' | 'imperial';
     transitionContext?: 'mtf' | 'ftm';
+    priorAnalyses?: PriorAnalysis[];
+    dataContext?: AnalysisDataContext;
+    poseLabel?: string;
   },
 ): string {
   const unitLabel = ctx?.units === 'imperial' ? 'in' : 'cm';
+  const regionGuide =
+    session === 'face'
+      ? 'jawline, cheek fullness, under-eye area, neck, overall puffiness vs definition'
+      : 'waist, midsection definition, chest, shoulders/delts, arms, back and legs when visible, overall fullness vs dryness';
   const lines = [
-    `You assess progress photos for a health tracker. Session type: ${session}.`,
+    `You are the progress-reading engine of a body-tracking instrument. Session type: ${session}.${ctx?.poseLabel ? ` Track: ${ctx.poseLabel}.` : ''}`,
     hasBaseline
       ? 'You are given a BASELINE photo and a NEW photo. Compare them.'
       : 'You are given a single NEW photo with no baseline yet.',
     '',
-    'Judge COMPARABILITY: lighting, distance/framing, and camera angle.',
+    'Your one job: surface something TRUE and SPECIFIC the user could not have seen alone.',
+    'The user reads this to discover, not to be complimented. If nothing visibly changed,',
+    'say exactly that — a clean "no visible change yet at this cadence" beats invented',
+    'progress every time. Never pad with praise.',
+    '',
+    'Layer 1 — COMPARABILITY (lighting, distance/framing, camera angle):',
     '- driftScore: 0 = same framing/lighting/angle, 1 = very different.',
     '- comparable: true if similar enough for an honest before/after (false with no baseline).',
     '- lighting and framing: classify with the allowed enums.',
     '- retake: true when drift is high enough that the user should retake.',
     '- coverage: classify the NEW photo as clothed / partial / minimal by how much clothing obscures the body. Judge coverage only, never identity or appearance beyond that.',
     '- cropBox: the subject region of the NEW photo worth showing (torso for body shots, head for face shots), normalized 0..1 from the top-left. This only crops the display thumbnail; the stored original is untouched. Prefer a slightly generous box, and set confidence below 0.6 whenever you are unsure so the app falls back to the full frame.',
+    '',
+    'Layer 2 — DISCOVERY (why the user is here):',
+    `- observations: compare region by region (${regionGuide}). Report ONLY regions where something is honestly worth saying, 0-5 entries. Each: a short region label in the user's locale, one hedged sentence, a direction, and a confidence from the photo evidence alone. Different lighting or angle caps confidence at 0.5 — name the limit in the note.`,
+    '- hypothesis: ONE sentence connecting what you see to the DATA CONTEXT below, when they genuinely relate ("waist appears tighter while weight held steady, consistent with recomposition or water shift rather than fat loss alone"). Always a hypothesis, never a conclusion; never state a mechanism as fact. Empty string when visuals and data do not honestly connect.',
+    '- watchNext: ONE concrete thing to look for in the next photo of this track, tied to what the data suggests should move next. Empty string when nothing specific suggests itself.',
     hasBaseline
-      ? '- change: ONE short, hedged, observational sentence about any visible difference.'
-      : '- change: return an empty string (no baseline to compare).',
+      ? '- change: ONE short, hedged sentence with the single most interesting finding (the headline).'
+      : '- change: return an empty string (no baseline to compare); observations must also be empty.',
     '',
     'HARD RULES (non-negotiable):',
     '- Observational ONLY. Never diagnose, never give medical advice, never claim a health outcome.',
     '- Hedge everything ("appears", "may", "slightly"). Never definitive.',
     "- Do NOT identify or describe the person's identity. Judge framing/lighting/visible change only.",
-    `- Write the "change" sentence in this locale: ${locale}.`,
+    '- Uncertainty beats overclaiming: one wrong confident read costs more trust than ten honest "unclear"s.',
+    `- Write every user-facing string (change, observation notes and region labels, hypothesis, watchNext) in this locale: ${locale}.`,
     `- The user's unit system is ${ctx?.units ?? 'metric'}. Report any measurement or weight in ${ctx?.units === 'imperial' ? 'imperial (in / lb)' : 'metric (cm / kg)'}. Do NOT default to imperial.`,
   ];
+
+  if (ctx?.dataContext) {
+    const d = ctx.dataContext;
+    const wUnit = ctx?.units === 'imperial' ? 'lb' : 'kg';
+    const parts: string[] = [`window: ${d.windowDays} days between baseline and new photo`];
+    if (d.weight) {
+      parts.push(
+        `weight: ${d.weight.start}${wUnit} -> ${d.weight.end}${wUnit} (${d.weight.delta > 0 ? '+' : ''}${d.weight.delta}${wUnit})`,
+      );
+    }
+    if (d.nutrition) {
+      const n: string[] = [];
+      if (d.nutrition.avgProtein !== undefined) n.push(`avg protein ${d.nutrition.avgProtein}g`);
+      if (d.nutrition.avgCalories !== undefined) n.push(`avg calories ${d.nutrition.avgCalories}kcal`);
+      parts.push(`nutrition over last 14d: ${n.join(', ')} (${d.nutrition.daysLogged} days logged)`);
+    }
+    if (d.avgSleepQuality !== undefined) parts.push(`avg sleep quality last 14d: ${d.avgSleepQuality}/5`);
+    if (d.recentDoses?.length) {
+      parts.push(
+        `doses before this photo: ${d.recentDoses.map((x) => `${x.label} ${x.hoursBefore}h before`).join(', ')}`,
+      );
+    }
+    lines.push(
+      '',
+      'DATA CONTEXT (from the user\'s own logs — use for the hypothesis, cite specifics):',
+      ...parts.map((p) => `- ${p}`),
+    );
+  }
+
+  if (ctx?.priorAnalyses?.length) {
+    lines.push(
+      '',
+      'YOUR PRIOR FINDINGS on this track (newest first — your memory, not the user\'s words):',
+      ...ctx.priorAnalyses.map((p) => {
+        const obs = p.observations.map((o) => `${o.region} (${o.direction}): ${o.note}`).join('; ');
+        const extra = [p.hypothesis ? `hypothesis: ${p.hypothesis}` : '', p.watchNext ? `watching: ${p.watchNext}` : '']
+          .filter(Boolean)
+          .join(' | ');
+        return `- ${p.at.slice(0, 10)}: ${obs || 'no region findings'}${extra ? ` | ${extra}` : ''}`;
+      }),
+      'Confirm, extend, or quietly drop these — reference at most one or two, and only when the',
+      'new photo actually supports it. If a prior watch-item can now be checked, address it.',
+      'Never invent continuity the photos do not show.',
+    );
+  }
 
   if (ctx?.bodyTypeCalibration) {
     lines.push('', `Body type context: ${ctx.bodyTypeCalibration}. Factor this into your assessment.`);
@@ -623,6 +767,8 @@ function simpleSystemPrompt(locale: string, units?: 'metric' | 'imperial'): stri
     'Write one encouraging paragraph based on the user\'s recent log data and their progress photo journey.',
     'Reference specific data points if available (weight trend, wellness scores, last photo comparison).',
     'Be genuine, not generic. Acknowledge the specific compound group they are tracking.',
+    'When recent photo-analysis findings are provided, anchor the note to one of them — a real,',
+    'specific observation lands harder than any compliment. Without findings, lean on the data.',
     '',
     'HARD RULES:',
     '- Never give dosing or medical advice of any kind.',
@@ -720,7 +866,8 @@ Deno.serve(async (req: Request) => {
 
       const message = await client.messages.create({
         model: VISION_MODEL,
-        max_tokens: 512,
+        // F5: the discovery layer (region observations + hypothesis) needs room.
+        max_tokens: 1024,
         system: visionSystemPrompt(body.session, hasBaseline, locale, {
           measurementDelta: body.measurementDelta,
           cycleContext: body.cycleContext,
@@ -729,6 +876,9 @@ Deno.serve(async (req: Request) => {
           cycleWeek: body.cycleWeek,
           units: body.units,
           transitionContext: body.transitionContext,
+          priorAnalyses: body.priorAnalyses,
+          dataContext: body.dataContext,
+          poseLabel: body.poseLabel,
         }),
         ...structured(ANALYZE_SCHEMA),
         // deno-lint-ignore no-explicit-any
@@ -741,6 +891,9 @@ Deno.serve(async (req: Request) => {
           lighting: 'different',
           framing: 'off_angle',
           change: '',
+          observations: [],
+          hypothesis: '',
+          watchNext: '',
           retake: true,
           coverage: 'clothed',
           // cropBox deliberately omitted: a degraded read must not crop the
@@ -772,9 +925,16 @@ Deno.serve(async (req: Request) => {
         ? 'The user may be in their luteal phase. If weight or bloating ticked up, attribute it in a hedged register ("some water retention is consistent with this point in your cycle") and never frame it as regression or lost progress.'
         : '';
 
+      // F5: hand the note real discoveries so it can reference something
+      // specific instead of generic warmth.
+      const discoveries = body.recentDiscoveries?.length
+        ? `Recent findings from photo analyses (reference ONE if it fits naturally, hedged):\n${body.recentDiscoveries.map((d) => `- ${d}`).join('\n')}`
+        : '';
+
       const userContext = [
         `Tracking focus: ${body.compoundGroup.replace('_', ' ')}.`,
         lastPhoto,
+        discoveries,
         cycleNote,
         '',
         'Recent check-ins (newest first):',

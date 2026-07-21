@@ -24,8 +24,16 @@ import {
   runEncouragementAnalysis,
   type PhotoAnalysis,
 } from '@/lib/ai';
+import { compoundBySlug } from '@/data/compound-catalog';
+import { buildAnalysisContext } from '@/lib/analysis-context';
 import { bodyFatNavy, inferBodyComposition, usesFemaleFormula } from '@/lib/body-composition';
 import type { ConfidenceLevel } from '@/lib/confidence';
+import {
+  recentDiscoveries,
+  recentForTrack,
+  sanitizeObservations,
+  toPriorPayload,
+} from '@/lib/photo-observations';
 import { hapticSuccess } from '@/lib/haptics';
 import { quickReadout, type Comparability, type QuickReadout } from '@/lib/photo-readout';
 import { isNewHighscore, pickReference } from '@/lib/photo-reference';
@@ -266,7 +274,19 @@ export function ProgressPhotos({
   const router = useRouter();
   const theme = useTheme();
   const { user } = useAuth();
-  const { photos, entries, symptomEvents, protocolItems, profile, addPhoto, updatePhoto, setProfile } = useStore();
+  const {
+    photos,
+    entries,
+    symptomEvents,
+    protocolItems,
+    doseEvents,
+    analysisLedger,
+    addAnalysisRecord,
+    profile,
+    addPhoto,
+    updatePhoto,
+    setProfile,
+  } = useStore();
 
   // ── Reel-centric navigation (W6-26c, beta-notes §1.1/§1.3) ────────────────
   // The reel (photos grouped by pose) is the spine. There is no upfront Face vs
@@ -518,6 +538,17 @@ export function ProgressPhotos({
         if (bf) bodyCalibration = inferBodyComposition(bf.pct, female);
       }
 
+      // F5 context fusion: the numeric story of the window, pre-digested.
+      const dataContext = buildAnalysisContext({
+        entries: Object.values(entries),
+        doses: doseEvents.map((d) => ({
+          label: d.compoundSlug ? (compoundBySlug(d.compoundSlug)?.canonicalName ?? d.compoundSlug) : '',
+          takenAt: d.takenAt,
+        })).filter((d) => d.label),
+        photoAt: latest.takenAt,
+        baselineAt: baseline.takenAt,
+      });
+
       const res = await analyzePhoto({
         uri: resolvedUris[latest.id] ?? latest.uri,
         baselineUri: resolvedUris[baseline.id] ?? baseline.uri,
@@ -530,6 +561,10 @@ export function ProgressPhotos({
         cycleWeek,
         units: profile.units,
         transitionContext: transitionCtx,
+        // F5: the model's own memory of this track + the data story.
+        priorAnalyses: toPriorPayload(recentForTrack(analysisLedger, trackSession, trackPart)),
+        dataContext,
+        poseLabel: trackPart,
       });
       updatePhoto(latest.id, {
         driftScore: res.driftScore,
@@ -540,6 +575,17 @@ export function ProgressPhotos({
         // Display-only framing box (W6-28); the original file is untouched.
         cropBox: res.cropBox,
       });
+      // F5: persist the findings so the next analysis of this track remembers.
+      addAnalysisRecord({
+        session: trackSession,
+        part: trackPart,
+        photoId: latest.id,
+        at: new Date().toISOString(),
+        observations: sanitizeObservations(res.observations),
+        hypothesis: res.hypothesis || undefined,
+        watchNext: res.watchNext || undefined,
+        change: res.change || undefined,
+      });
       setLastNote({ id: latest.id, analysis: res });
       const sciKey = sessionScientificKey(trackSession);
       setProfile({ [sciKey]: nextMilestoneISO(new Date().toISOString(), cadence.scientificDays) });
@@ -549,7 +595,7 @@ export function ProgressPhotos({
     } finally {
       setAnalyzing(false);
     }
-  }, [latest, baseline, analyzing, trackSession, i18n.language, profile, entries, symptomEvents, protocolItems, updatePhoto, setProfile, cadence, resolvedUris]);
+  }, [latest, baseline, analyzing, trackSession, trackPart, i18n.language, profile, entries, doseEvents, analysisLedger, addAnalysisRecord, symptomEvents, protocolItems, updatePhoto, setProfile, cadence, resolvedUris]);
 
   // ── Encouragement check-in ───────────────────────────────────────────────
   const runEncouragementCheckin = useCallback(async () => {
@@ -587,6 +633,9 @@ export function ProgressPhotos({
         cycleContext: cycleCtx,
         locale: i18n.language,
         units: profile.units,
+        // F5: the encouragement tier inherits the ledger so its note can
+        // reference a real discovery instead of generic warmth.
+        recentDiscoveries: recentDiscoveries(analysisLedger),
       });
       setEncouragementNote(res.message);
       const encKey = sessionEncouragementKey(trackSession);
@@ -597,7 +646,7 @@ export function ProgressPhotos({
     } finally {
       setAnalyzing(false);
     }
-  }, [analyzing, entries, profile, group, lastNote, i18n.language, trackSession, cadence, setProfile]);
+  }, [analyzing, entries, profile, group, lastNote, analysisLedger, i18n.language, trackSession, cadence, setProfile]);
 
   // ── PH-2: instant post-capture read ──────────────────────────────────────
   const onPhotoSaved = useCallback((photoId: string) => {
@@ -1124,6 +1173,46 @@ export function ProgressPhotos({
                       <ThemedText type="mono" themeColor="textSecondary">
                         {note.change}
                       </ThemedText>
+                      {/* F5 discovery layer: region readout + hypothesis + watch-next. */}
+                      {(() => {
+                        const obs = sanitizeObservations(note.observations);
+                        if (obs.length === 0) return null;
+                        return (
+                          <>
+                            <Divider />
+                            <EngravedLabel>{t('photos.regionsLabel')}</EngravedLabel>
+                            {obs.map((o) => (
+                              <View key={o.region} style={styles.obsRow}>
+                                <ThemedText type="monoSm" themeColor="textMuted" style={styles.obsGlyph}>
+                                  {o.direction === 'gain' ? '▲' : o.direction === 'loss' ? '▼' : o.direction === 'stable' ? '◇' : '?'}
+                                </ThemedText>
+                                <View style={styles.obsBody}>
+                                  <ThemedText type="monoSm" themeColor="text">
+                                    {o.region}
+                                  </ThemedText>
+                                  <ThemedText type="small" themeColor="textSecondary">
+                                    {o.note}
+                                  </ThemedText>
+                                </View>
+                              </View>
+                            ))}
+                          </>
+                        );
+                      })()}
+                      {note.hypothesis ? (
+                        <>
+                          <Divider />
+                          <EngravedLabel>{t('photos.hypothesisLabel')}</EngravedLabel>
+                          <ThemedText type="small" themeColor="text">
+                            {note.hypothesis}
+                          </ThemedText>
+                        </>
+                      ) : null}
+                      {note.watchNext ? (
+                        <ThemedText type="monoSm" themeColor="textMuted">
+                          {t('photos.watchNext', { hint: note.watchNext })}
+                        </ThemedText>
+                      ) : null}
                       {note.retake && (
                         <>
                           <Divider />
@@ -1408,6 +1497,9 @@ const styles = StyleSheet.create({
   clothingGuidance: { lineHeight: 18 },
   badgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.one },
   analysisHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.one },
+  obsRow: { flexDirection: 'row', gap: Spacing.one, alignItems: 'flex-start' },
+  obsGlyph: { width: 16, textAlign: 'center', marginTop: 1 },
+  obsBody: { flex: 1, gap: 1 },
   timelineHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: Spacing.one },
   strip: { gap: Spacing.two, paddingVertical: Spacing.one },
   thumbCol: { alignItems: 'center', gap: Spacing.half },

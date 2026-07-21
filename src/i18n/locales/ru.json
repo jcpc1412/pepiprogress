@@ -317,7 +317,10 @@
     "trackLabel": "Прогресс: {{track}}",
     "closeTrack": "Закрыть просмотр прогресса",
     "capturePart": "Снять: {{part}}",
-    "filterPose": "Поза"
+    "filterPose": "Поза",
+    "regionsLabel": "Показания по зонам",
+    "hypothesisLabel": "Рабочая гипотеза",
+    "watchNext": "В следующий раз обратите внимание: {{hint}}"
   },
   "markers": {
     "hematocrit": "Гематокрит",

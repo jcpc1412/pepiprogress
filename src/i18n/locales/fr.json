@@ -317,7 +317,10 @@
     "trackLabel": "Progression : {{track}}",
     "closeTrack": "Fermer la vue de progression",
     "capturePart": "Capturer {{part}}",
-    "filterPose": "Posture"
+    "filterPose": "Posture",
+    "regionsLabel": "Lecture par zones",
+    "hypothesisLabel": "Hypothèse de travail",
+    "watchNext": "La prochaine fois, surveillez : {{hint}}"
   },
   "markers": {
     "hematocrit": "Hématocrite",

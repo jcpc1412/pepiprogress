@@ -13,6 +13,7 @@ import {
 import { registerCustomCompounds, type CatalogCompound } from '@/data/compound-catalog';
 import { localDateKey } from '@/lib/dates';
 import type { CheckinField, Goal } from '@/lib/field-surfacing';
+import { appendToLedger, type AnalysisRecord } from '@/lib/photo-observations';
 import type { CanonicalPose } from '@/lib/photo-pose';
 import type { CropBox } from '@/lib/photo-crop';
 import {
@@ -412,6 +413,10 @@ export type PersistedState = {
    *  us what share of real traffic the free local matcher covers, so the AI-call
    *  budget is measured rather than guessed. Never shown to the user. */
   quickLogPathCounts?: { deterministic: number; ai: number };
+  /** Observation ledger (F5): structured findings from each scientific photo
+   *  analysis, per track — the analysis's longitudinal memory. Local-first +
+   *  snapshot sync like everything else; never in community aggregates. */
+  analysisLedger?: AnalysisRecord[];
 };
 
 /** Manual check-in nutrition field → its canonical metric (for precedence cleanup). */
@@ -493,6 +498,10 @@ type StoreContextValue = {
   removeQuickLogJob: (id: string) => void;
   /** Tally which parse path handled a quick-log (F3 diagnostic, never shown). */
   recordQuickLogPath: (path: 'deterministic' | 'ai') => void;
+  /** Observation ledger (F5), oldest → newest. */
+  analysisLedger: AnalysisRecord[];
+  /** Persist one scientific analysis's findings; returns the record id. */
+  addAnalysisRecord: (record: Omit<AnalysisRecord, 'id'>) => string;
   /** Append a Pepi chat turn (trimmed to the last N); returns its id (R2-F). */
   addPepiMessage: (msg: Omit<PepiMessage, 'id' | 'ts'>) => string;
   clearPepiMessages: () => void;
@@ -971,6 +980,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const addAnalysisRecord = useCallback<StoreContextValue['addAnalysisRecord']>((record) => {
+    const id = uid();
+    setState((s) => ({
+      ...s,
+      analysisLedger: appendToLedger(s.analysisLedger ?? [], { ...record, id }),
+    }));
+    return id;
+  }, []);
+
   const addPepiMessage = useCallback<StoreContextValue['addPepiMessage']>((msg) => {
     const id = uid();
     const full: PepiMessage = { ...msg, id, ts: new Date().toISOString() };
@@ -1000,6 +1018,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       pepiMessages: state.pepiMessages,
       strengthSessions: state.strengthSessions,
       benchmarks: state.benchmarks,
+      analysisLedger: state.analysisLedger ?? [],
+      addAnalysisRecord,
       enqueueQuickLog,
       updateQuickLogJob,
       removeQuickLogJob,
@@ -1045,6 +1065,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [
       ready,
       state,
+      addAnalysisRecord,
       enqueueQuickLog,
       updateQuickLogJob,
       removeQuickLogJob,

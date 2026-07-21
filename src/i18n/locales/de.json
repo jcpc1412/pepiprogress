@@ -317,7 +317,10 @@
     "trackLabel": "Fortschritt: {{track}}",
     "closeTrack": "Fortschrittsansicht schließen",
     "capturePart": "{{part}} aufnehmen",
-    "filterPose": "Körperhaltung"
+    "filterPose": "Körperhaltung",
+    "regionsLabel": "Zonen-Messwerte",
+    "hypothesisLabel": "Arbeitshypothese",
+    "watchNext": "Beim nächsten Mal beachten: {{hint}}"
   },
   "markers": {
     "hematocrit": "Hämatokrit",

@@ -4,6 +4,8 @@ import { FunctionsFetchError, FunctionsRelayError } from '@supabase/supabase-js'
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { COMPOUND_CATALOG, compoundBySlug, marketCategoryOf, type MarketCategory } from '@/data/compound-catalog';
+import type { AnalysisDataContext } from '@/lib/analysis-context';
+import type { PriorAnalysisPayload } from '@/lib/photo-observations';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 import type { PhotoSession } from '@/lib/store';
 import type { CanonicalPose } from '@/lib/photo-pose';
@@ -38,6 +40,12 @@ export type PhotoAnalysis = {
   lighting: 'ok' | 'too_dark' | 'too_bright' | 'different';
   framing: 'ok' | 'closer' | 'farther' | 'off_angle';
   change?: string;
+  /** F5 discovery layer: region-level findings (raw; sanitize before storing). */
+  observations?: unknown;
+  /** F5: one cross-signal hypothesis connecting visuals to the data context. */
+  hypothesis?: string;
+  /** F5: one concrete thing to look for in the next photo of this track. */
+  watchNext?: string;
   retake: boolean;
   /** Clothing coverage of the NEW photo (PH-1 skin priority). Drives the
    *  quality-highscore reference promotion + the soft lock toward minimal cover. */
@@ -176,14 +184,19 @@ export async function parseQuickLog(text: string, locale: string): Promise<Parse
   return data;
 }
 
-/** Downscale to 768px wide JPEG before sending to vision — reduces cost. */
-async function toBase64(uri: string): Promise<string> {
+/** Downscale to a JPEG before sending to vision. The default 768px suits the
+ *  cheap calls; the scientific compare sends 1536px (F5 quality-over-cost,
+ *  owner decision 2026-07-26) so region-level detail survives the resize. */
+async function toBase64(uri: string, width: number = 768): Promise<string> {
   const ctx = ImageManipulator.manipulate(uri);
-  ctx.resize({ width: 768 });
+  ctx.resize({ width });
   const rendered = await ctx.renderAsync();
   const out = await rendered.saveAsync({ format: SaveFormat.JPEG, base64: true });
   return out.base64 ?? '';
 }
+
+/** Image width for the scientific analyze_photo call. */
+const ANALYZE_WIDTH = 1536;
 
 /** On-demand photo analysis: drift score + comparability + hedged change note (spec 04/05). */
 export async function analyzePhoto(opts: {
@@ -204,12 +217,18 @@ export async function analyzePhoto(opts: {
   /** Direction-aware transition-tracking framing (beta-notes §1.9). Pass only
    *  when the user selected the gender_transition goal AND sex is mtf/ftm. */
   transitionContext?: 'mtf' | 'ftm';
+  /** F5: recent prior findings for this track (observation ledger). */
+  priorAnalyses?: PriorAnalysisPayload[];
+  /** F5: pre-digested numeric log context over the photo window. */
+  dataContext?: AnalysisDataContext;
+  /** F5: display label of the track (custom part name), for prompt framing. */
+  poseLabel?: string;
 }): Promise<PhotoAnalysis> {
   if (!isSupabaseConfigured) throw new AiNotConfiguredError();
 
   const [newImage, baselineImage] = await Promise.all([
-    toBase64(opts.uri),
-    opts.baselineUri ? toBase64(opts.baselineUri) : Promise.resolve(undefined),
+    toBase64(opts.uri, ANALYZE_WIDTH),
+    opts.baselineUri ? toBase64(opts.baselineUri, ANALYZE_WIDTH) : Promise.resolve(undefined),
   ]);
 
   const { data, error } = await supabase.functions.invoke<PhotoAnalysis>('ai-service', {
@@ -226,6 +245,9 @@ export async function analyzePhoto(opts: {
       cycleWeek: opts.cycleWeek,
       units: opts.units,
       transitionContext: opts.transitionContext,
+      priorAnalyses: opts.priorAnalyses,
+      dataContext: opts.dataContext,
+      poseLabel: opts.poseLabel,
     },
   });
 
@@ -364,6 +386,8 @@ export async function runEncouragementAnalysis(opts: {
   cycleContext?: 'luteal' | 'follicular';
   locale: string;
   units?: 'metric' | 'imperial';
+  /** F5: recent ledger findings so the note references a real discovery. */
+  recentDiscoveries?: string[];
 }): Promise<EncouragementResult> {
   if (!isSupabaseConfigured) throw new AiNotConfiguredError();
 
