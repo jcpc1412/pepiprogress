@@ -128,3 +128,68 @@ When N consecutive scheduled doses are missed (threshold TBD in spec; likely 2�
 ---
 
 _All issues ready to spec. Start wherever._
+
+---
+
+# Beta Round 3 (device testing, added 2026-07-21)
+
+First on-device test of the Wave-7 build (v0.0.33) on Android. Bugs from the owner.
+
+**B3-01: Camera quality score locked (now 30, regardless of the shot)**
+The capture score no longer varies with what's photographed (was pinned at 67 before
+the `checkFit` confidence fix; now pinned at 30). Root: the hand-built quality score
+(ghost comparability + tilt) is fragile — with framing now correctly excluded when the
+ghost can't be read, only tilt drives the number, and it isn't moving. Bigger picture:
+the from-scratch capture chrome + custom numeric score is the fragile part. See the
+**camera-rework** note below. Needs device investigation + likely a rework, not another
+point patch. DEVICE.
+
+**B3-02: Journal week strip not rendering on native (Android)**
+The chamfered day cells collapse on device — only the logged dots + the completeness
+row show; no weekday labels, day numbers, or cell boxes (see owner screenshot). Web
+renders correctly, so this is a native ChamferBox flex-sizing bug: `dayFill: {flex:1}`
+passed to ChamferBox doesn't get a measured height on native, so the SVG polygon +
+content collapse. Fix: give the WeekStrip cells an explicit height (or aspectRatio) so
+ChamferBox measures reliably. `src/components/journal-primitives.tsx`. Fixable now
+(reasoned), verify on next build.
+
+**B3-03: Health Connect data-source row crashes the app (Android)**
+Tapping the Health Connect entry in Settings → Data sources crashes the app. Likely the
+Health Connect native module isn't installed/available (only Apple Health is registered;
+`nativeReady: false`) and a native call throws unguarded — or the tap invokes something
+that assumes a provider that isn't present. Owner had the iOS Health plugged into an
+iPhone at the time (probably unrelated — an Android tap shouldn't reach iOS HealthKit).
+Needs a guard + device investigation. `src/features/settings/integration-settings.tsx`.
+DEVICE.
+
+**B3-04: Journal empty-state + log-action placement**
+Three tweaks to the Journal: (1) when a day has no data, render placeholder/skeleton
+rows so it looks intentional instead of a bare box; (2) move the log action to a **button
+above the check-in header** instead of the bottom anchor; (3) relabel to "add to this
+day" or similar. `src/features/journal/journal-screen.tsx`. Fixable now (web-verifiable).
+
+**B3-05: Journal missing the settings gear (top-right)**
+Other tabs carry a settings gear top-right (see Today's header); the Journal doesn't.
+Add it, matching the placement/opener the other tabs use (`openSettings`).
+`src/features/journal/journal-screen.tsx`. Fixable now (web-verifiable).
+
+**B3-06: Sign-out (Android) doesn't return to an auth screen**
+After signing out, the user stays inside the app; they expect to land on a login/sign-up
+page. Tension to resolve: the app is **local-first** (usable with no account), so item 33
+kept the user in-app on sign-out *by design* ("your data stays"). The owner expects a
+normal logout that exits to an auth gate. PRODUCT DECISION: does sign-out route to the
+auth screen (with a "continue without account" escape), or is the current stay-in-app
+correct and only the messaging is off? Decide before coding.
+
+**Camera-rework (owner question 2026-07-21): reuse a library's capabilities, not a
+from-scratch capture UX.** The app already ships the capable camera lib
+(`react-native-vision-camera`, used for the face session) but the capture *chrome* is
+hand-built, so it lacks pinch-to-zoom and volume-button shutter, and the custom quality
+score is brittle (B3-01). Direction to evaluate: consolidate both sessions onto
+vision-camera (retire the expo-camera body path), wire its native **zoom** (prop + pinch
+via the already-installed gesture-handler) and a **volume-button shutter** (a small
+listener lib), and replace the fragile numeric score with something robust or lean on
+vision-camera's own focus/exposure signals — the ghost overlay (the real consistency USP)
+and the AI prompt stay. Caveat: vision-camera@5.0.11 has the known native-config
+fragility noted in CLAUDE.md (no `app.plugin.js`; frame-processor flags need device-build
+enablement), so this is a native rebuild + device-test effort.
