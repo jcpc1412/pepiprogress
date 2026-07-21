@@ -295,6 +295,20 @@ bullet discussed and decided). Ordering inside the wave: auth/sync first (blocks
 widening the tester pool), then the screen-by-screen design-system sweep, then chat;
 the perf runtime profile runs in parallel from the start.
 
+**Sweep status (2026-07-21):** The design sweep found the app already largely on the
+system, so several checklist items were satisfied or near-satisfied. Done + shipped:
+**35** (foundations: motion tokens/presets, padding architecture, 4 Journal primitives,
+ARCHITECTURE census, lottie), **41b** (the Journal tab), **38** (Today's record strip +
+logging-toggle removal), **37** (dialog anchor-Cancels → buttons; the Roboto-leak class
+was already clean — no raw `<Text>` anywhere but the `ThemedText` wrapper), **40**
+(signal-detail chip border tokenized). Audited, no code change needed: **36** (sex
+selector already required; onboarding has zero hardcoded colors), **39/41/42** (already
+tokened; the camera/photo overlays keep fixed light-on-black *by design* — they sit over
+a live feed/photos, not the instrument surface). **Still owed, device-blocked:** the
+Google official branded button (native `@react-native-google-signin` component, item 36),
+the on-device dark-mode verification pass (checklist step d), and **44** (runtime perf
+profiling, needs the Moto G60s-class device). These need the native rebuild.
+
 ### 7A. Auth/sync hardening (notes §3, §4, §5)
 
 31. **Google sign-in return leg [S/M].** Fix the redirect dead-end (flow ends on
