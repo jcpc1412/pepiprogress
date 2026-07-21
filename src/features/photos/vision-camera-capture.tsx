@@ -30,7 +30,7 @@ import {
 import { useFaceDetectorOutput } from 'react-native-vision-camera-face-detector';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
-import { PrimaryButton } from '@/components/form';
+import { PrimaryButton, SecondaryButton } from '@/components/form';
 import { FlipCameraIcon } from '@/components/icons';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
@@ -238,11 +238,7 @@ export function VisionCameraCapture({
               {t('photos.permission')}
             </ThemedText>
             <PrimaryButton label={t('photos.enableCamera')} onPress={requestPermission} />
-            <Pressable accessibilityRole="button" onPress={close}>
-              <ThemedText type="mono" themeColor="textSecondary">
-                {t('common.cancel')}
-              </ThemedText>
-            </Pressable>
+            <SecondaryButton label={t('common.cancel')} onPress={close} />
           </SafeAreaView>
         ) : shot ? (
           // ── Review ──

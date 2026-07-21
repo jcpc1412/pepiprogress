@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
-import { LabeledInput, PrimaryButton, SingleSelectChips } from '@/components/form';
+import { LabeledInput, PrimaryButton, SecondaryButton, SingleSelectChips } from '@/components/form';
 import { FlipCameraIcon } from '@/components/icons';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
@@ -407,11 +407,7 @@ export function PhotoCapture({
               {t('photos.permission')}
             </ThemedText>
             <PrimaryButton label={t('photos.enableCamera')} onPress={requestPermission} />
-            <Pressable accessibilityRole="button" onPress={close}>
-              <ThemedText type="mono" themeColor="textSecondary">
-                {t('common.cancel')}
-              </ThemedText>
-            </Pressable>
+            <SecondaryButton label={t('common.cancel')} onPress={close} />
           </SafeAreaView>
         ) : shot && step === 1 ? (
           // ── Step 1: the shot + big quality score, fixed footer (§1.5) ──

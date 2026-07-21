@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, View } from 'react-native';
 
-import { LabeledInput, PrimaryButton } from '@/components/form';
+import { LabeledInput, PrimaryButton, TextButton } from '@/components/form';
 import { Card, EngravedLabel } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -260,13 +260,9 @@ export function AuthScreen({
           )}
 
           {phase === 'form' && (
-            <ThemedText
-              type="monoSm"
-              themeColor="textMuted"
-              style={styles.dismiss}
-              onPress={handleClose}>
-              {t('common.cancel')}
-            </ThemedText>
+            <View style={styles.dismiss}>
+              <TextButton label={t('common.cancel')} onPress={handleClose} />
+            </View>
           )}
         </KeyboardAvoidingView>
       </ThemedView>
@@ -309,5 +305,5 @@ const styles = StyleSheet.create({
   toggleLink: { textDecorationLine: 'underline' },
   centered: { gap: Spacing.three, alignItems: 'center', flex: 1, justifyContent: 'center' },
   syncLabel: { marginTop: Spacing.two },
-  dismiss: { textAlign: 'center', textDecorationLine: 'underline' },
+  dismiss: { alignItems: 'center' },
 });
