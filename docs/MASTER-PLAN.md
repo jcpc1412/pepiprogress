@@ -479,9 +479,45 @@ the Roboto leak); (c) padding audit against the documented scale; (d) theme-toke
 - **A. Web workbench [L].** One codebase, capability-class responsive layouts (the
   "Xbox test"), calendar-primary navigation, detailed-sheet retro editing incl. photo
   upload, custom chart builder with pinned sync to phone. (round-3 §1, §9)
-- **B. Connectors [L].** One MCP server, OAuth 2.1/PKCE via Supabase Auth, two-way v1
-  (reads + connector_event inbox writes), straight at both directories, photos excluded.
-  (CONNECTORS-PLAN.md)
+- **B. Connectors [L].** One remote MCP server serving both ChatGPT apps and Claude
+  connectors (both converged on MCP): one OAuth 2.1/PKCE flow via Supabase Auth, two
+  thin platform skins, no fork. Placement decided post-beta; the beta batch directly
+  improves what the connector exposes (verdict, doses, check-in, compound info). Detail
+  spec: `CONNECTORS-PLAN.md`. Phased:
+  - **B0. Server + auth + inbox [M/L].** Remote MCP server (first choice: a Supabase
+    Edge Function on MCP streamable-HTTP, same Deno infra as `ai-service`; fall back to
+    a small dedicated Deno host if the transport fights edge functions). Supabase Auth
+    as the OAuth 2.1/PKCE provider so **owner-only RLS does all data scoping for free**;
+    the server never hand-rolls access control. RLS-scoped read path. **`connector_event`
+    inbox table + app-side foreground merge** (append-only, device is the merger, so
+    writes are conflict-safe without touching the snapshot the next device mirror would
+    clobber) — on the critical path because v1 is two-way, and the same primitive remote
+    push will later need. No new gates: auth + cloud sync already exist (M1).
+  - **B1. Tool surface, two-way [M].** Reads: `get_today`, `get_verdict`,
+    `get_recent_logs`, `get_protocol`, `get_compound_info`. Writes via the inbox:
+    `log_dose`, `log_checkin`, `log_symptom`, `log_weight` (same entities the quick-log
+    parser writes; the platform model formulates the structured call, so this costs us
+    no AI tokens). **Posture gate rides along:** outputs are `market_category`-gated
+    exactly like `ai-service` — reuse/extend the shared `_shared/posture.ts` module
+    (shipped item 12) so the edge function and the MCP server import one gate;
+    controlled = track-only, OTC = hedged + contraindication pointer. **Photos excluded,
+    full stop** (text-only; never leave the hardened bucket to third-party models).
+    Tool descriptions state the last-app-open freshness limit so the assistant can't
+    report stale data as live. Validate in ChatGPT developer mode + Claude custom
+    connector as the **test harness**. Gate: the spec-05 eval suite gains a fifth
+    boundary (connector tool outputs) before exposure.
+  - **B2. Directory launch [M].** Both submissions at once — OpenAI identity/business
+    verification + review, Anthropic connector-directory review. The peptide-app review
+    scrutiny ("is this a steroid app?", same as App Store review) is on the critical
+    path here; the `market_category` posture gates are the defense, review readiness is
+    the gate. Custom connector stays as the rejection fallback, not the primary channel.
+  - **B3. Widgets [M].** ChatGPT Apps SDK components — a Today card and a Verdict card,
+    matching the instrument design language where their component system allows.
+
+  Pairs with track F (sync engine): the `connector_event` inbox is the pragmatic v1
+  writer; when F lands, connectors become just another writer and the inbox folds into
+  it. Re-verify the young SDK docs (developers.openai.com/apps-sdk, Claude custom-
+  connector guide) at build time.
 - **C. Monetization implementation.** Paid-only: auto-converting trial (StoreKit iOS /
   Stripe web), $19/mo + annual anchor; reconcile spec 12 + CLAUDE.md; trial-lapse
   behavior decided when freemium comes off the backburner. (round-3 §9)
