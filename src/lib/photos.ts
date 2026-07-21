@@ -73,14 +73,17 @@ export async function uploadPhotoToCloud(
   // cloudPath never made it into the synced snapshot (see photo-cloud.ts).
   const path = cloudPathFor(userId, photoId);
   const uploadUri = await compressForUpload(localUri);
-  const response = await fetch(uploadUri);
-  const blob = await response.blob();
-  if (blob.size > UPLOAD_MAX_BYTES) {
-    throw new Error(`photo exceeds upload cap (${blob.size} > ${UPLOAD_MAX_BYTES} bytes)`);
+  // Read the file's bytes directly rather than `fetch(uri).blob()`: on React
+  // Native (Android especially) fetching a file:// URI and calling .blob()
+  // often yields an empty or unusable Blob, so the upload silently failed and
+  // no photo ever reached the bucket. A Uint8Array is what storage-js wants.
+  const bytes = await new File(uploadUri).bytes();
+  if (bytes.byteLength > UPLOAD_MAX_BYTES) {
+    throw new Error(`photo exceeds upload cap (${bytes.byteLength} > ${UPLOAD_MAX_BYTES} bytes)`);
   }
   const { error } = await supabase.storage
     .from(BUCKET)
-    .upload(path, blob, { contentType: 'image/jpeg', upsert: true });
+    .upload(path, bytes, { contentType: 'image/jpeg', upsert: true });
   if (error) throw error;
   return path;
 }
