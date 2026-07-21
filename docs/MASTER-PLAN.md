@@ -554,8 +554,68 @@ it read as a required chore ("it's there, but integrations/Pepi/quick-log popula
 it for you"), and what replaces the current detailed-log entry point (it leaves the
 log screen; destination TBD). **Do not implement until mock-ups + flows are agreed.**
 
-**Agreed sequencing:** F1 (owner retry) → F3 → F2 inside the 35-42 sweep → F4
-design session, then F4 implementation.
+### F5. Crown-jewel photo analysis: discovery over encouragement (scoped 2026-07-26)
+Owner direction (via an external product-architect review the owner endorsed): the
+photo analysis should make people "addicted to discovering something new," not to
+praise. Encouragement gets old; discovery doesn't. Current reality confirmed in
+code: `analyze_photo` is stateless (two 768px images + a few scalars, one hedged
+sentence out, no memory), the cheap Haiku tier ironically receives more history
+than the expensive Sonnet tier, and custom/casual poses are locked out of analysis
+entirely (`photo-pose.ts`).
+
+**North star (owner-locked 2026-07-26):** every analysis surfaces a true, specific
+thing about the user's body they couldn't have seen alone, connected to what they
+did. If an output can't clear that bar, it says so honestly instead of padding
+with praise. The register is always hypothesis, never conclusion ("consistent
+with", "may suggest") — this is the same posture as the standing
+bias-toward-uncertainty rule, so the crown-jewel direction and the safety gate
+point the same way. Honest capability line: region-level relative observations and
+cross-signal reasoning are real; pixel-precise claims (vascularity detail) and
+water-vs-fat-vs-glycogen certainty are not, and stay hypothesis-framed forever.
+
+Owner decisions (2026-07-26):
+1. **Goal statement locked** (above) — confidence-in-actions and
+   seeing-the-unseen are the same thing at this altitude.
+2. **Pepi may proactively open a chat** with a discovery ("I noticed…"), reusing
+   the local-notification + deep-link pattern (as typical-day does). Where
+   discoveries also surface in the day-in-review is settled in the F4 design
+   session, not twice.
+3. **Observation ledger privacy:** local-first store + `user_state` snapshot sync
+   like everything else; never in community aggregates. No photo-bucket-grade
+   hardening needed (observations are derived text, not images).
+4. **Quality over cost:** the scientific tier gets bigger images, more context,
+   richer output, and the capable model; corners get cut elsewhere, never here.
+   Cadence caps already bound total spend.
+
+Architecture (four pieces, dependency order):
+- **A. Structured observations:** output schema grows from `change: string` to
+  per-region observations (region, apparent change, direction, confidence) + one
+  cross-signal hypothesis + one "what to watch next time." Observations become
+  data, renderable as discovery and storable.
+- **B. Observation ledger:** persist each analysis's observations per pose track;
+  every new call receives the last N for its track, so the model can confirm,
+  extend, or drop earlier hypotheses. The single highest-leverage piece — it's
+  what makes Pepi appear to know *this* user's body, with zero training. "This is
+  the pose where X changes first" later becomes a query over this ledger.
+- **C. Context fusion:** the same call gets weight trend over the window,
+  protein/calorie adherence, dose timing vs photo, sleep, cycle phase — the
+  "abs sharper despite stable weight" connections are impossible without this and
+  nearly automatic with it.
+- **D. Custom poses join analysis:** a user can promote a custom pose to a
+  *tracked* pose (ghost + consistency machinery like canonical poses); tracked
+  custom poses get their own ledger thread. The "best angle" dopamine lands here.
+
+Implementation defaults (flag before changing): scientific-tier image resolution
+raised (~1536px) per decision 4; vision model stays behind `AI_VISION_MODEL` with
+a bake-off once the eval set exists; the Haiku encouragement tier survives as the
+short-cadence touchpoint but inherits the ledger so its notes reference real past
+discoveries instead of generic warmth; **a fixed photo-pair eval set is built
+before hard prompt iteration** (bias-toward-uncertainty gate: changes must be
+provably better, not just different).
+
+**Agreed sequencing:** F1 (owner retry) → F3 ✅ → F2 inside the 35-42 sweep → F5
+(crown-jewel analysis) → F4 design session, then F4 implementation. F5 lands
+before F4 so the day-in-review can surface discoveries from day one.
 
 ## Standing gates (every wave)
 
