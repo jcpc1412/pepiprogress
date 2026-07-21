@@ -554,7 +554,7 @@ it read as a required chore ("it's there, but integrations/Pepi/quick-log popula
 it for you"), and what replaces the current detailed-log entry point (it leaves the
 log screen; destination TBD). **Do not implement until mock-ups + flows are agreed.**
 
-### F5. Crown-jewel photo analysis: discovery over encouragement (scoped 2026-07-26)
+### F5. Crown-jewel photo analysis ✅ SHIPPED 2026-07-26 (ai-service v25)
 Owner direction (via an external product-architect review the owner endorsed): the
 photo analysis should make people "addicted to discovering something new," not to
 praise. Encouragement gets old; discovery doesn't. Current reality confirmed in
