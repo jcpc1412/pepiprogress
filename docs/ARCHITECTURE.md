@@ -16,9 +16,9 @@ Cards now sit **lighter than the background** (light theme) / **lighter elevatio
 ### Color tokens (`src/constants/theme.ts`)
 | token | light | dark | role |
 |---|---|---|---|
-| `background` | `#EDEBE7` | `#121110` | screen base |
-| `surfaceRaised` | `#FBFAF8` | `#232220` | cards (lift above bg) |
-| `surfaceSunken` | `#DBD9D4` | `#0C0B0A` | inset wells, inputs |
+| `background` | `#EDEBE7` | `#0A0B0C` | screen base (dark = near-black canvas) |
+| `surfaceRaised` | `#FBFAF8` | `#14171A` | cards (lift above bg) |
+| `surfaceSunken` | `#DBD9D4` | `#070809` | inset wells, inputs |
 | `text` | `#1A1918` | `#E4E1DB` | primary copy |
 | `textSecondary` | `#5A5752` | `#9C9892` | secondary (~6:1) |
 | `textMuted` | `#66625D` | `#837F79` | quiet (~4.7:1 AA) |
@@ -26,9 +26,13 @@ Cards now sit **lighter than the background** (light theme) / **lighter elevatio
 | `numeral` | `#3A3834` | `#B0ACA6` | metric ink |
 | `accent` | `#2A2825` | `#E8E5DF` | solid control / selected / chart line |
 | `onAccent` | `#FBFAF8` | `#131210` | text on accent |
-| `border` | `rgba(0,0,0,.14)` | `rgba(255,255,255,.10)` | carved groove (shadow side) |
-| `borderHighlight` | `rgba(255,255,255,.85)` | `rgba(0,0,0,.50)` | groove lit side |
-| `signalGood` / `signalBad` | green / red | green / red | **data semantics only** |
+| `border` | `rgba(0,0,0,.12)` | `rgba(255,255,255,.10)` | carved groove (shadow side) |
+| `borderHighlight` | `rgba(255,255,255,.80)` | `rgba(0,0,0,.50)` | groove lit side |
+| `signalGood` / `signalWatch` / `signalBad` | green / amber / red | green / amber / red | **data semantics only** (verdict 3-state) |
+
+**Motion** (`Motion` in `theme.ts`, presets in `src/lib/motion.ts`): durations
+`instant 90 / fast 160 / base 240 / slow 360` (ms); ease-out bezier curves only, no
+bounce/elastic; `pressScale 0.97`. See the census (§9) for the reusable presets.
 
 Theme is resolved by `lib/theme-provider.tsx` from `profile.themePreference` (`light`/`dark`/`auto`) + device scheme. `useTheme()` returns the palette; `useResolvedScheme()` returns the name.
 
@@ -46,31 +50,40 @@ Theme is resolved by `lib/theme-provider.tsx` from `profile.themePreference` (`l
 Fonts: Inter (sans) + IBM Plex Mono (mono). Spacing scale `Spacing` = 2/4/8/16/24/32/64. Corners are tight (`Radii` = 2–3px) by design.
 
 ### Primitives (`src/components/surface.tsx`)
-`Card` (raised panel) · `Sunken` (inset) · `Divider` (carved hairline = shadow line over highlight line) · `EngravedLabel` (uppercase mono w/ highlight text-shadow) · `Metric` (big numeral + unit) · `SignalText` (good/bad/neutral value) · `StatusPill` (chamfered status chip) · `Skeleton` (pulsing load bars).
-Form primitives (`src/components/form.tsx`): `OptionChip`, `SingleSelectChips`, `ScaleSelector` (1–5 segmented), `LabeledInput`, `PrimaryButton` (variant `secondary`), `TextButton`.
-Icons (`src/components/icons.tsx`, SVG, 1.5px stroke): `GearIcon`, `BackIcon`, `CameraIcon`. Charts: `LineChart` (`src/components/line-chart.tsx`).
+`Card` (raised panel) · `Sunken` (inset) · `Divider` (carved hairline = shadow line over highlight line) · `EngravedLabel` (uppercase mono w/ highlight text-shadow) · `Metric` (big numeral + unit) · `SignalText` (good/bad/neutral value) · `StatusPill` (chamfered status chip) · `Placeholder` · `Skeleton` (pulsing load bars).
+Form primitives (`src/components/form.tsx`): `OptionChip`, `SingleSelectChips`, `SegmentedControl`, `ScaleSelector` (1–5 segmented), `LabeledInput`, `PrimaryButton` (variant `secondary`) + `SecondaryButton`, `TextButton`.
+Instrument shell: `ChamferBox` (octagonal SVG surface — the core treatment), `ConfidenceBadge` (3-dot meter), the four Journal primitives (`SourceBadge`/`CompletenessDots`/`WeekStrip`/`ValueRow`), `HeroFigure`, `InstrumentBackground`, `CroppedPhoto`, `SyncStatus`, `OverlayHeader`. See the full census in §9.
+Icons (`src/components/icons.tsx`, SVG, 1.5px stroke). Charts: `LineChart` (`src/components/line-chart.tsx`).
 
 ---
 
 ## 2. Information architecture
 
 ```
-Root (_layout.tsx)
+Root (src/app/(tabs)/_layout.tsx)
 ├─ if !onboarded → Onboarding (FULLSCREEN, no tab bar)
-└─ if onboarded → 3 native tabs + full-screen overlays
+└─ if onboarded → 4 tabs (app-tabs.tsx) + full-screen pages/overlays
 
-  TABS (bottom):
-    1. Today      (src/app/index.tsx → features/home/dashboard.tsx)
-    2. Photos     (src/app/photos.tsx → features/photos/…)
-    3. Protocol   (src/app/explore.tsx → features/protocol/protocol-screen.tsx)
+  TABS (bottom, app-tabs.tsx):
+    1. Today      (src/app/(tabs)/index.tsx)     — verdict + check-in + quick-log
+    2. Pepi       (src/app/(tabs)/pepi.tsx)       — conversational companion (full page)
+    3. Photos     (src/app/(tabs)/photos.tsx)     — reel, capture, compare, analysis
+    4. Analysis   (src/app/(tabs)/insights.tsx)   — trends, trajectory, narrative
+    (5. Journal   — coming as item 41b: day-in-review; order becomes
+        Today · Pepi · Photos · Analysis · Journal)
 
-  OVERLAYS (full-screen Modals over the tab bar, via lib/nav-overlay.tsx):
-    • Settings     ← gear icon (Today + Protocol headers)
-    • Logging      ← two buttons on Today (Quick | Detailed)
-    • Add compound ← button on Protocol
+  PAGES / OVERLAYS (src/app/*.tsx, presented over the tabs):
+    • protocol.tsx  — protocol items, inventory, reconstitution (one-time setup)
+    • logging.tsx   — the detailed/quick log surface
+    • me.tsx / settings.tsx / privacy.tsx / notifications-settings.tsx /
+      typical-day.tsx / whatilog.tsx — settings + config pages
+    • add-compound.tsx, compound-detail.tsx, photo-history.tsx,
+      signal/[metricId].tsx — drill-ins
 ```
 
-**Why overlays, not pushed routes:** the app uses a flat native-tabs layout with no root stack, so Settings/Logging/Add-compound are presented as full-screen RN `<Modal>`s (reliable cover of the native tab bar, cross-platform). Each overlay screen takes an `onClose` prop and renders an `OverlayHeader` (back chevron + title).
+**Protocol is not a tab** — it is a nested setup page reached from Settings. Full-screen
+overlays use `lib/nav-overlay.tsx` (RN `<Modal>`, reliable cover of the native tab bar);
+each takes an `onClose` prop and renders an `OverlayHeader` (back chevron + title).
 
 ---
 
@@ -175,3 +188,58 @@ src/
 - **Logging** — Quick (chat) vs Detailed (form) should feel like two faces of one tool, equally polished.
 - **Empty states** — first-run (no data/photos) should still feel intentional, not barren.
 - Keep it monochrome, engraved, tabular; data-only color. Bold and precise, not loud.
+
+---
+
+## 9. Reusable inventory (census)
+
+Seeded in Wave 7 item 35. Purpose: cheap context loading + preventing stray duplicates
+(reuse the store/component/lib below before adding a new one). **Standing gate:** any new
+reusable component / pure lib / hook / motion-haptic pattern adds its line here in the same
+commit; items 36-42 extend the per-screen "used by" notes as they sweep. Screen-level detail
+in §3 lags the current UI until each screen is swept, so trust this census over §3 for what
+exists.
+
+### Components (`src/components/`)
+| file | exports | what / used by |
+|---|---|---|
+| `surface.tsx` | Card, Sunken, Divider, EngravedLabel, Metric, SignalText, StatusPill, Placeholder, Skeleton | the instrument surface kit; everywhere |
+| `form.tsx` | OptionChip, SingleSelectChips, SegmentedControl, ScaleSelector, LabeledInput, PrimaryButton, SecondaryButton, TextButton | all forms/inputs; press-scale via `motion.pressScale` |
+| `chamfer.tsx` | ChamferBox | octagonal SVG surface (fill + hairline); buttons, chips, cards, badges |
+| `themed-text.tsx` | ThemedText | the type scale; every text node |
+| `themed-view.tsx` | ThemedView | themed container |
+| `confidence-badge.tsx` | ConfidenceBadge | 3-dot confidence meter; every AI conclusion |
+| `journal-primitives.tsx` | SourceBadge, CompletenessDots, WeekStrip, ValueRow | day-in-review kit; Journal (41b) + Today strip (38) |
+| `line-chart.tsx` | LineChart | series + projected/band/goal line; Analysis, Today |
+| `hero-figure.tsx` | HeroFigure | the big verdict figure; Today |
+| `instrument-background.tsx` | InstrumentBackground | animated molecular-lattice backdrop; app shell |
+| `cropped-photo.tsx` | CroppedPhoto | analysis-bbox display crop; reel/timeline thumbs |
+| `animated-icon.tsx` (+`.web`) | AnimatedIcon | reanimated confirmation icon |
+| `overlay-header.tsx` | OverlayHeader | back-chevron + title; every overlay/page |
+| `settings-page.tsx` | SettingsPage | settings sub-page scaffold |
+| `sync-status.tsx` | SyncStatus | cloud-sync status row |
+| `hint-row.tsx` | HintRow | inline hint/nudge row |
+| `date-picker.tsx` / `weekday-picker.tsx` | pickers | dose drawer + schedule |
+| `app-tabs.tsx` | AppTabs | bottom tab bar (expo-router/ui) |
+| `icons.tsx` | SVG icon set | everywhere |
+| `external-link.tsx` | ExternalLink | opens URLs |
+
+### Pure libs (`src/lib/*.ts`, deterministic + unit-tested)
+- **Verdict / insights:** `verdict-engine`, `derived-metrics`, `signal-ledger`, `sparkline`, `chart-series`, `trajectory` (recency-weighted projection), `energy-balance` (TDEE), `anomaly`, `measure-next`, `confidence`, `narrative`, `attribution`, `expectation-timeline`.
+- **Photos:** `photo-quality`, `photo-cadence`, `photo-observations` (F5 ledger), `analysis-context` (F5 fusion), `photo-crop`, `photo-pose`, `pose-live`, `photo-readout`, `photo-reference`.
+- **Logging / quick-log:** `quick-log-deterministic` (F3), `quick-log-vocab`, `quick-log-apply`, `dose-draft`, `dose-schedule` (P-04), `micro-checkin`, `chat-pills`, `coaching`, `typical-day`.
+- **Compounds / protocol:** `field-surfacing` (goals ∪ effect ∪ monitoring), `reconstitution`, `inventory`, `lab-monitoring`, `body-composition`, `strength`.
+- **Platform / motion:** `dates`, `day-boundary`, `haptics` (hapticTap/hapticSuccess), `motion` (presets), `notifications`, `report` (PDF), `merge-states`, `data-facade`.
+- **Backend I/O (not pure):** `ai`, `supabase`, `sync`, `photos`, `photo-cloud`, `drive-backup`.
+
+### Providers / stores (`src/lib/*.tsx`, mounted in the root layout)
+`store` (`useStore`, the local-first repository) · `auth` · `theme-provider` (`useTheme`) · `today` (`useToday`, day-boundary) · `cloud-sync` · `photo-sync` · `integration-sync` · `health-writeback` · `language-sync` · `notification-manager` · `macro-reminder-handler` · `quick-log-runner` · `nav-overlay`.
+
+### Hooks (`src/hooks/`)
+`use-theme` · `use-color-scheme` (+`.web`) · plus `use-coaching-level` (`src/lib/`).
+
+### Motion + haptic patterns
+- **Tokens:** `Motion` in `theme.ts` (durations + ease-out beziers + `pressScale`).
+- **Presets:** `src/lib/motion.ts` — `easings`, `timing.{instant,fast,base,slow}`, `enterFade`/`exitFade`/`enterRise`/`exitSink`, `layout` (LinearTransition), `pressScale`.
+- **Haptics:** `src/lib/haptics.ts` — `hapticTap` (routine confirm), `hapticSuccess` (milestone).
+- **Adoption:** form buttons use `pressScale`; screens 36-42 adopt the enter/exit + layout presets and pair haptics with confirmation moments during the sweep.
