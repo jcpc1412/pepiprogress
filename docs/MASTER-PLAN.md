@@ -468,6 +468,15 @@ the Roboto leak); (c) padding audit against the documented scale; (d) theme-toke
   Services ID return URL (which likely forces regenerating the Apple client secret,
   see memory `apple-oauth-secret-renewal`), and the Supabase redirect allow-list — all
   must land in one window or sign-in breaks mid-beta.
+- **F. Full per-entity sync engine (spec 10 "Option B") [L] — paired with track A.**
+  Owner decision 2026-07-21: F6's one-way mirror ships first; this is the eventual
+  bidirectional engine (field-level conflict resolution, tombstones, SQLite/MMKV)
+  that replaces the snapshot as the merge mechanism. Why it pairs with track A:
+  the snapshot's last-write-wins merge handles *sequential* multi-device fine
+  (phone morning, desktop evening), but clobbers changes under *concurrent*
+  editing — and the web workbench is exactly what makes phone + desktop open
+  simultaneously a normal pattern. When A ships, F becomes a priority; F6's
+  `client_id`/`updated_at` schema work is the prerequisite and carries over.
 
 ## Deferred / backlog
 
@@ -611,8 +620,55 @@ discoveries instead of generic warmth; **a fixed photo-pair eval set is built
 before hard prompt iteration** (bias-toward-uncertainty gate: changes must be
 provably better, not just different).
 
-**Agreed sequencing:** F1 (owner retry) → F3 ✅ → F2 inside the 35-42 sweep → F5
-(crown-jewel analysis) → F4 design session, then F4 implementation. F5 lands
+### F6. Normalized cloud mirror (scoped with owner 2026-07-21) — next infra item
+Found during the all-tables sanity check: every normalized table is empty except
+`user_profile` + the seed catalog, because `migrateToCloud` runs exactly once at
+sign-up (owner's account was empty then) and everything since flows only to the
+`user_state` snapshot. Data is safe (snapshot restore works); but community
+aggregates have nothing to read and the only cloud copy is one JSON blob. Owner's
+"why now" (Q6): **verify the community pipeline works end-to-end before spending
+money on marketing.**
+
+Owner decisions (2026-07-21):
+1. **Option A: one-way normalized mirror.** Snapshot stays the source of truth
+   for restore/merge (unchanged). The client additionally mirrors changed
+   entities up into the normalized tables: best-effort, debounced, idempotent
+   upserts, never flowing back down (so no conflict resolution needed). Option B
+   (full per-entity sync engine, spec 10) stays deferred — see the note under
+   post-beta tracks; A's schema work is B's prerequisite, nothing is thrown away.
+2. **Metric readings excluded from v1** — snapshot keeps carrying them; the
+   typical-day community exclusion ("metricReadings never migrate to normalized
+   tables") stays intact. Wearable data in community insights would be its own
+   consent conversation.
+3. **Entity scope v1:** check-ins (`log_entry`), doses, symptoms,
+   protocol + items, inventory. Snapshot-only (unchanged): metric readings, Pepi
+   chat, observation ledger, strength/benchmarks, context notes, quick-log queue.
+   Photos already have their own per-entity path (`PhotoSync` → `photo` row).
+4. **Consent gate stays at aggregation**, not storage: rows are owner-only RLS,
+   the mirror always runs, `consentCommunity` gates what aggregation may read.
+   Matches the "stored, not trained on" messaging.
+5. **Sequencing:** next item after the device-fix verification (photo upload +
+   quality score), before the 35-42 sweep continues.
+
+Implementation shape (from the schema audit, 2026-07-21):
+- **Migration:** `client_id` (local id, unique per user) on `dose_event`,
+  `symptom_event`, `inventory_item`, `protocol_item` for idempotent upserts +
+  delete-by-id; `updated_at` where missing. `log_entry` keeps its natural key
+  (`user_id, date`).
+- **Schema gap-fill:** `log_entry` += protein, calories, structured measurements
+  (waist/hips/neck/chest/arms/thighs + extra); `dose_event` += `slot_key`,
+  `extra`; `protocol_item` += `dose_days`, `started_at`, `schedule_anchor`,
+  `concentration`. Without these, community aggregation over nutrition/schedules
+  is impossible.
+- **Mirror module:** pure diff core (hash-based dirty detection, `writtenHashes`
+  pattern) + a `NormalizedMirror` component beside `CloudSync` reusing its
+  debounce/AppState pattern. First pass mirrors the whole backlog, then
+  incremental. Local deletes hard-delete by `client_id` (tombstones are
+  Option-B machinery).
+- Pure JS + one migration; no native rebuild.
+
+**Agreed sequencing:** F1 ✅ → F3 ✅ → F5 ✅ → **F6 (normalized mirror)** → F2
+inside the 35-42 sweep → F4 design session, then F4 implementation. F5 landed
 before F4 so the day-in-review can surface discoveries from day one.
 
 ## Standing gates (every wave)
