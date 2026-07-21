@@ -1347,5 +1347,18 @@
     "weight": "gewicht",
     "wellness": "stimmung",
     "workout_effort": "training"
+  },
+  "journal": {
+    "source": {
+      "health": "GESUNDHEIT",
+      "pepi": "PEPI",
+      "quick": "SCHNELL",
+      "typical": "TYPISCH",
+      "tap": "TIPPEN"
+    },
+    "areas": "{{filled}} von {{total}} Bereichen",
+    "logged": "erfasst",
+    "noLog": "nicht erfasst",
+    "loggedVia": "Erfasst über {{source}}"
   }
 }

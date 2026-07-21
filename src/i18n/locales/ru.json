@@ -1347,5 +1347,18 @@
     "weight": "вес",
     "wellness": "настроение",
     "workout_effort": "тренировка"
+  },
+  "journal": {
+    "source": {
+      "health": "ЗДОРОВЬЕ",
+      "pepi": "PEPI",
+      "quick": "БЫСТРО",
+      "typical": "ОБЫЧНО",
+      "tap": "КАСАНИЕ"
+    },
+    "areas": "{{filled}} из {{total}} зон",
+    "logged": "записано",
+    "noLog": "не записано",
+    "loggedVia": "Записано через {{source}}"
   }
 }

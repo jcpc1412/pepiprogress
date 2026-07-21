@@ -1347,5 +1347,18 @@
     "weight": "poids",
     "wellness": "humeur",
     "workout_effort": "entraînement,entrainement"
+  },
+  "journal": {
+    "source": {
+      "health": "SANTÉ",
+      "pepi": "PEPI",
+      "quick": "RAPIDE",
+      "typical": "HABITUEL",
+      "tap": "APPUI"
+    },
+    "areas": "{{filled}} sur {{total}} zones",
+    "logged": "enregistré",
+    "noLog": "non enregistré",
+    "loggedVia": "Enregistré via {{source}}"
   }
 }
