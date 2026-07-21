@@ -489,14 +489,12 @@ folded into item 35). F4 is decided at the architecture level but its **UX/nav i
 explicitly open** and needs a dedicated mock-up session before any implementation.
 F1 is pending an owner retry.
 
-### F1. EAS Android auto-submit permission error — pending owner retry
-Root cause identified: Google Cloud IAM Owner role is not sufficient; Play Console
-has its own Users & permissions grant. Owner added the service account to **both**
-consoles on 2026-07-19. Next step (owner, minutes): `eas submit -p android --latest`
-to test without a new build. Note: Play Console grants can take up to 24h to
-propagate. If it still fails: verify the key EAS holds (`eas credentials` vs a local
-`serviceAccountKeyPath`) belongs to the invited account, and that the Play Console
-grant is app-level with Release permissions (view-only is not enough).
+### F1. EAS Android auto-submit permission error ✅ RESOLVED, owner-verified 2026-07-26
+Root cause: Google Cloud IAM Owner role is not sufficient; Play Console has its
+own separate Users & permissions grant. Owner added the service account to
+**both** consoles on 2026-07-19; a subsequent production build with
+`--auto-submit` completed successfully. `eas build --platform android --profile
+production --auto-submit` is confirmed working end-to-end for future releases.
 
 ### F2. Motion + animation ✅ DECIDED — folded into Wave 7 item 35
 Owner decisions (2026-07-26): motion is **first-class, applied everywhere** with
