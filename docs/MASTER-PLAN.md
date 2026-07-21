@@ -474,17 +474,16 @@ the Roboto leak); (c) padding audit against the documented scale; (d) theme-toke
     day. One hook, reused by the screens that call `localDateKey()` for "today"
     rather than a fix per screen.
 
-## Post-beta platform tracks (parallel, larger)
+## Wave 8: connectors (moved into beta 2026-07-21)
 
-- **A. Web workbench [L].** One codebase, capability-class responsive layouts (the
-  "Xbox test"), calendar-primary navigation, detailed-sheet retro editing incl. photo
-  upload, custom chart builder with pinned sync to phone. (round-3 §1, §9)
-- **B. Connectors [L].** One remote MCP server serving both ChatGPT apps and Claude
-  connectors (both converged on MCP): one OAuth 2.1/PKCE flow via Supabase Auth, two
-  thin platform skins, no fork. Placement decided post-beta; the beta batch directly
-  improves what the connector exposes (verdict, doses, check-in, compound info). Detail
-  spec: `CONNECTORS-PLAN.md`. Phased:
-  - **B0. Server + auth + inbox [M/L].** Remote MCP server (first choice: a Supabase
+One remote MCP server serving both ChatGPT apps and Claude connectors (both converged
+on MCP): one OAuth 2.1/PKCE flow via Supabase Auth, two thin platform skins, no fork.
+Detail spec: `CONNECTORS-PLAN.md`. **Backend-only — depends on nothing in the 35-42
+sweep** (it reads the verdict engine + store entities that already exist), so B0/B1
+can run in parallel with the sweep; placed here for one-thing-at-a-time sequencing, but
+free to interleave. B2's directory review is the long pole.
+
+47. **B0. Server + auth + inbox [M/L].** Remote MCP server (first choice: a Supabase
     Edge Function on MCP streamable-HTTP, same Deno infra as `ai-service`; fall back to
     a small dedicated Deno host if the transport fights edge functions). Supabase Auth
     as the OAuth 2.1/PKCE provider so **owner-only RLS does all data scoping for free**;
@@ -493,7 +492,7 @@ the Roboto leak); (c) padding audit against the documented scale; (d) theme-toke
     writes are conflict-safe without touching the snapshot the next device mirror would
     clobber) — on the critical path because v1 is two-way, and the same primitive remote
     push will later need. No new gates: auth + cloud sync already exist (M1).
-  - **B1. Tool surface, two-way [M].** Reads: `get_today`, `get_verdict`,
+48. **B1. Tool surface, two-way [M].** Reads: `get_today`, `get_verdict`,
     `get_recent_logs`, `get_protocol`, `get_compound_info`. Writes via the inbox:
     `log_dose`, `log_checkin`, `log_symptom`, `log_weight` (same entities the quick-log
     parser writes; the platform model formulates the structured call, so this costs us
@@ -506,18 +505,26 @@ the Roboto leak); (c) padding audit against the documented scale; (d) theme-toke
     report stale data as live. Validate in ChatGPT developer mode + Claude custom
     connector as the **test harness**. Gate: the spec-05 eval suite gains a fifth
     boundary (connector tool outputs) before exposure.
-  - **B2. Directory launch [M].** Both submissions at once — OpenAI identity/business
+49. **B2. Directory launch [M].** Both submissions at once — OpenAI identity/business
     verification + review, Anthropic connector-directory review. The peptide-app review
     scrutiny ("is this a steroid app?", same as App Store review) is on the critical
     path here; the `market_category` posture gates are the defense, review readiness is
     the gate. Custom connector stays as the rejection fallback, not the primary channel.
-  - **B3. Widgets [M].** ChatGPT Apps SDK components — a Today card and a Verdict card,
+50. **B3. Widgets [M].** ChatGPT Apps SDK components — a Today card and a Verdict card,
     matching the instrument design language where their component system allows.
 
-  Pairs with track F (sync engine): the `connector_event` inbox is the pragmatic v1
-  writer; when F lands, connectors become just another writer and the inbox folds into
-  it. Re-verify the young SDK docs (developers.openai.com/apps-sdk, Claude custom-
-  connector guide) at build time.
+Pairs with track F (sync engine): the `connector_event` inbox is the pragmatic v1
+writer; when F lands, connectors become just another writer and the inbox folds into
+it. Re-verify the young SDK docs (developers.openai.com/apps-sdk, Claude custom-
+connector guide) at build time.
+
+## Post-beta platform tracks (parallel, larger)
+
+- **A. Web workbench [L].** One codebase, capability-class responsive layouts (the
+  "Xbox test"), calendar-primary navigation, detailed-sheet retro editing incl. photo
+  upload, custom chart builder with pinned sync to phone. (round-3 §1, §9)
+- **B. Connectors** — **moved into the beta sequence as Wave 8** (owner 2026-07-21).
+  See that wave for the B0-B3 phasing.
 - **C. Monetization implementation.** Paid-only: auto-converting trial (StoreKit iOS /
   Stripe web), $19/mo + annual anchor; reconcile spec 12 + CLAUDE.md; trial-lapse
   behavior decided when freemium comes off the backburner. (round-3 §9)
