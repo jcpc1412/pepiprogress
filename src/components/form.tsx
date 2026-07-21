@@ -397,6 +397,11 @@ const styles = StyleSheet.create({
   button: {
     minHeight: 50,
     paddingVertical: Spacing.three,
+    // Horizontal padding so the label never touches the chamfer edge when the
+    // button sizes to its content (e.g. centered on the camera-permission screen).
+    // Matches DESIGN.md button spec (16px 24px); harmless when the button is
+    // stretched full-width. Reference impl for the padding architecture (item 35).
+    paddingHorizontal: Spacing.four,
     alignItems: 'center',
     justifyContent: 'center',
   },

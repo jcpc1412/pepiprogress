@@ -260,7 +260,9 @@ highlight. Do not stack text shadows or attempt a bevel.
   with a mono-small message below.
 
 ### Navigation
-- **Pattern:** bottom tab bar. Today / Photos / Protocol (3 tabs). Labels always shown, never icon-only.
+- **Pattern:** bottom tab bar, **Today / Pepi / Photos / Analysis / Journal** (5 tabs; Journal
+  lands with Wave 7 item 41b). Labels always shown, never icon-only. Protocol is not a tab: it
+  is a one-time-setup page nested in Settings.
 - **States:** active tab uses primary ink, inactive uses secondary ink.
 
 ### Signature Components
@@ -272,6 +274,38 @@ highlight. Do not stack text shadows or attempt a bevel.
   signal.
 - **ScaleSelector:** the 1-5 rating row, the most-touched control: each segment is a >=44px tap target
   that fills with Instrument Ink up to the chosen value.
+
+## 5b. Padding architecture (the spacing contract)
+
+All padding derives from the `Spacing` scale (`half:2, one:4, two:8, three:16, four:24,
+five:32, six:64`) — never a raw pixel literal. This is the contract every screen in the
+Wave 7 sweep is audited against.
+
+### Per-component minimums
+| Surface | Vertical | Horizontal | Note |
+|---|---|---|---|
+| Button (primary/secondary) | `three` (16) | `four` (24) | Horizontal is a **minimum**, not optional — the label must clear the chamfer edge even when the button sizes to its content. |
+| Input / field | `two` (8) | `three` (16) | 44px min height regardless. |
+| Chip (idle/selected) | `two` (8) | `three` (16) | Pill corner; tap target still >= 44px via min height. |
+| Status pill | `half` (2) | `two` (8) | Tiny by design; it is signage, not a control. |
+| Card / raised panel | `three` (16) | `three` (16) | Uniform interior. Never nest cards. |
+| Sunken well (quick-log, notes) | `three` (16) | `three` (16) | Matches card so nested content aligns. |
+| Screen gutter (scroll containers) | — | `four` (24) | The outer horizontal margin every screen shares. |
+
+### Named rules
+**The Chamfer-Clearance Rule.** Any text or icon inside a chamfered surface keeps at least
+`Spacing.three` (16) of horizontal padding, so content never collides with the 6-8px corner
+cut (`Chamfer.button/card`). This is why the button carries `paddingHorizontal: four` in the
+component itself rather than relying on the parent to stretch it. Reference implementation:
+`styles.button` in `src/components/form.tsx`.
+
+**The Stack-Rhythm Rule.** Vertical gaps between siblings come from `gap`, not margins:
+`Spacing.three` (16) between cards/sections, `Spacing.two` (8) between rows inside a group,
+`Spacing.one` (4) between a label and its value. One rhythm per nesting level, no ad-hoc margins.
+
+**The Derive-From-Spacing Rule.** No raw pixel padding in a `StyleSheet`. If a value isn't on
+the `Spacing` scale, either it's wrong or the scale needs a token (add it to `theme.ts`, don't
+inline it).
 
 ## 6. Do's and Don'ts
 
