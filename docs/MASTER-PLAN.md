@@ -480,9 +480,9 @@ the Roboto leak); (c) padding audit against the documented scale; (d) theme-toke
 
 ## Deferred / backlog
 
-Vial scan (AI vision; split from lab parsing, which is now item 16), normalized
-per-entity sync engine + storage hardening, Terra (~500 users), storage quotas
-(pricing-model dependent),
+Vial scan (AI vision; split from lab parsing, which is now item 16), storage
+hardening (the sync engine itself graduated: one-way mirror = F6, full engine =
+post-beta track F), Terra (~500 users), storage quotas (pricing-model dependent),
 community cohort insights (needs aggregates + N thresholds), reptides/peptidebase
 outreach (held), per-region posture overrides (data mechanism reserved, unused).
 
