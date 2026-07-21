@@ -284,7 +284,11 @@ export function PhotoCapture({
           checkFit(pic.uri, liveGhostUri).then((r) => {
             setFitResult(r);
             setFitChecking(false);
-            setQuality(computeQuality({ tiltDeg: tiltNow, fit: r.fit }));
+            // Only let framing move the score when the check actually ran
+            // (confidence 0 = couldn't compare, e.g. an unreadable ghost). An
+            // unchecked frame is unknown, not perfect, so the score reflects
+            // tilt alone rather than a fake top framing mark.
+            setQuality(computeQuality({ tiltDeg: tiltNow, fit: r.confidence > 0 ? r.fit : undefined }));
           });
         } else {
           // First baseline shot (no ghost): score on level alone.

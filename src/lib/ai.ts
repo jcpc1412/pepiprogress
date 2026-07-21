@@ -262,15 +262,23 @@ export async function analyzePhoto(opts: {
  * Fails open (returns good fit) when AI is unconfigured or the call errors.
  */
 export async function checkFit(newUri: string, baselineUri?: string): Promise<FitCheck> {
-  if (!isSupabaseConfigured || !baselineUri) return { fit: 'good', confidence: 1 };
+  // No baseline to compare against: there is genuinely no framing to judge, so
+  // this is "not checked" (confidence 0), NOT a perfect fit. The quality score
+  // treats confidence 0 as unknown and excludes framing, rather than rewarding
+  // an un-checkable shot with a top framing mark.
+  if (!isSupabaseConfigured || !baselineUri) return { fit: 'good', confidence: 0 };
   try {
     const [newImage, baselineImage] = await Promise.all([toBase64(newUri), toBase64(baselineUri)]);
     const { data } = await supabase.functions.invoke<FitCheck>('ai-service', {
       body: { action: 'check_fit', newImage, baselineImage },
     });
-    return data ?? { fit: 'good', confidence: 1 };
+    // A real answer carries its own confidence; a null response never checked.
+    return data ?? { fit: 'good', confidence: 0 };
   } catch {
-    return { fit: 'good', confidence: 1 };
+    // Encode failure (e.g. a dead ghost URI after a cross-device restore) or a
+    // network error. Failing open to a perfect 'good' is what made a floor shot
+    // score like a real one — report "not checked" instead.
+    return { fit: 'good', confidence: 0 };
   }
 }
 

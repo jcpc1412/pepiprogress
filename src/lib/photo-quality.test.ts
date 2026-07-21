@@ -44,4 +44,14 @@ describe('computeQuality', () => {
     const dark = computeQuality({ tiltDeg: 1, fit: 'good', luma: 0.05 });
     expect(dark.criteria.light).toBe('bad');
   });
+
+  it('reflects tilt alone when framing was never checked, instead of a fake-good constant', () => {
+    // Regression: when the fit check could not run (unreadable ghost), framing
+    // used to fail open to 'good', so a tilted floor shot and a level shot both
+    // landed on the same score. With framing excluded, tilt must move the score.
+    const floor = computeQuality({ tiltDeg: 40 }); // fit omitted = not checked
+    const level = computeQuality({ tiltDeg: 1 });
+    expect(floor.criteria.framing).toBe('unknown');
+    expect(floor.score).toBeLessThan(level.score);
+  });
 });
