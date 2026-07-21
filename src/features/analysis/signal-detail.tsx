@@ -10,6 +10,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing, type ThemeColor } from '@/constants/theme';
 import { compoundBySlug } from '@/data/compound-catalog';
+import { useTheme } from '@/hooks/use-theme';
 import { getSignalLedger, type SignalLedgerResult } from '@/lib/ai';
 import { formatHeroValue, useVerdict, type TFn } from '@/features/home/use-verdict';
 import { daysBetween, formatDateKey, shiftDateKey } from '@/lib/dates';
@@ -34,6 +35,7 @@ const TONE_COLOR: Record<SignalTone, ThemeColor> = {
  */
 export function SignalDetail({ metricId, onClose }: { metricId: string; onClose: () => void }) {
   const { t, i18n } = useTranslation();
+  const theme = useTheme();
   const tx = t as unknown as TFn;
   const { entries, symptomEvents, doseEvents, profile } = useStore();
   const verdict = useVerdict();
@@ -133,7 +135,7 @@ export function SignalDetail({ metricId, onClose }: { metricId: string; onClose:
           <View style={styles.block}>
             <EngravedLabel>{t('signal.sourcesLabel')}</EngravedLabel>
             <View style={styles.chips}>
-              <View style={styles.chip}>
+              <View style={[styles.chip, { borderColor: theme.border }]}>
                 <ThemedText type="monoSm" themeColor="textSecondary">
                   {t('signal.source.manual')}
                 </ThemedText>
@@ -233,7 +235,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.two,
     borderRadius: 2,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(128,128,128,0.4)',
+    // borderColor applied inline from theme.border (token-drift fix, item 40).
   },
   ledger: { gap: Spacing.one },
   rowDivider: { marginVertical: Spacing.one },
