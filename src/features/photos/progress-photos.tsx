@@ -25,7 +25,8 @@ import {
   type PhotoAnalysis,
 } from '@/lib/ai';
 import { compoundBySlug } from '@/data/compound-catalog';
-import { buildAnalysisContext } from '@/lib/analysis-context';
+import { buildAnalysisContext, type ContextEntry } from '@/lib/analysis-context';
+import { resolveMetricSeries } from '@/lib/data-facade';
 import { bodyFatNavy, inferBodyComposition, usesFemaleFormula } from '@/lib/body-composition';
 import type { ConfidenceLevel } from '@/lib/confidence';
 import {
@@ -277,6 +278,7 @@ export function ProgressPhotos({
   const {
     photos,
     entries,
+    metricReadings,
     symptomEvents,
     protocolItems,
     doseEvents,
@@ -539,8 +541,23 @@ export function ProgressPhotos({
       }
 
       // F5 context fusion: the numeric story of the window, pre-digested.
+      // Weight is resolved through the canonical merge (manual ∪ integration) so a
+      // wearable-only weigh-in still anchors the window; before, a Health scale
+      // reading with no manual check-in was invisible here (Track B).
+      const weightByDay = new Map(
+        resolveMetricSeries({ entries, metricReadings, profile }, 'weight', localDateKey(new Date())).map(
+          (p) => [p.dateKey, p.value] as const,
+        ),
+      );
+      const ctxByDay = new Map<string, ContextEntry>();
+      for (const e of Object.values(entries)) ctxByDay.set(e.date, { ...e });
+      for (const [day, w] of weightByDay) {
+        const existing = ctxByDay.get(day);
+        if (existing) existing.weight = w;
+        else ctxByDay.set(day, { date: day, weight: w });
+      }
       const dataContext = buildAnalysisContext({
-        entries: Object.values(entries),
+        entries: Array.from(ctxByDay.values()),
         doses: doseEvents.map((d) => ({
           label: d.compoundSlug ? (compoundBySlug(d.compoundSlug)?.canonicalName ?? d.compoundSlug) : '',
           takenAt: d.takenAt,
@@ -595,7 +612,7 @@ export function ProgressPhotos({
     } finally {
       setAnalyzing(false);
     }
-  }, [latest, baseline, analyzing, trackSession, trackPart, i18n.language, profile, entries, doseEvents, analysisLedger, addAnalysisRecord, symptomEvents, protocolItems, updatePhoto, setProfile, cadence, resolvedUris]);
+  }, [latest, baseline, analyzing, trackSession, trackPart, i18n.language, profile, entries, metricReadings, doseEvents, analysisLedger, addAnalysisRecord, symptomEvents, protocolItems, updatePhoto, setProfile, cadence, resolvedUris]);
 
   // ── Encouragement check-in ───────────────────────────────────────────────
   const runEncouragementCheckin = useCallback(async () => {
