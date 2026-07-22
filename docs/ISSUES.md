@@ -220,3 +220,25 @@ turns the value into an editable field. (Complements B3-04's log-button + placeh
 
 **Data architecture:** full audit + chart→source catalog + Analysis-bug root causes +
 proposed fix tracks A/B/C in `docs/notes/data-audit-2026-07-21.md`.
+
+## Beta Round 3 — resolution status (2026-07-22)
+
+Data-architecture tracks (see the audit doc for detail):
+- **Track A ✅** — recovery up-good, body-fat source chain, sleep-stage clinical norms.
+- **Track B ✅** — canonical metric resolver + per-module migration; also fixed a
+  latent imperial weight unit bug (kg vs lbs) across charts / anomaly / attribution.
+- **Track C ✅** — relevance-filtered "what moved it" (doses by effect tag, lifestyle
+  by responsiveness), integration movers (cardio / step spike), goal-aware "about
+  this", real data-source chips.
+
+Device bugs:
+- **B3-02 ✅** Journal week-strip cell height (native ChamferBox collapse).
+- **B3-04 ✅** Journal log button above the check-in header + empty-day placeholders.
+- **B3-05 ✅** Journal settings gear.
+- **B3-06 ✅** Sign-out → auth splash with "continue without account".
+- **B3-07 ✅** Detailed log stages edits (no insta-save) + pinned Save bar + preload.
+- **B3-08 ✅** Journal inline tap-to-edit. (All web-verified.)
+- **B3-03 ⚠️** Health Connect crash — defensive connect/sync guards landed; full
+  root-cause still wants device investigation. DEVICE.
+- **B3-01 ⏳** Camera quality score locked — tied to the camera rework. DEVICE.
+- **Camera zoom / volume-button shutter ⏳** — native rebuild + device. DEVICE.
