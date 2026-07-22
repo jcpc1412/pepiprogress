@@ -1,12 +1,14 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { PrimaryButton } from '@/components/form';
 import { OverlayHeader } from '@/components/overlay-header';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { QuickLog } from '@/features/chat/quick-log';
-import { DetailedLog } from '@/features/logging/detailed-log';
+import { DetailedLog, type SaveBar } from '@/features/logging/detailed-log';
 import type { LoggingMode } from '@/lib/nav-overlay';
 
 /**
@@ -28,6 +30,10 @@ export function LoggingScreen({
   initialDate?: string;
 }) {
   const { t } = useTranslation();
+  // Pinned Save bar state, reported up by DetailedLog (B3-07): it lives outside the
+  // ScrollView so it stays on screen while the form scrolls, and only appears when
+  // there are unsaved changes.
+  const [saveBar, setSaveBar] = useState<SaveBar | null>(null);
 
   return (
     <ThemedView style={styles.container}>
@@ -42,9 +48,14 @@ export function LoggingScreen({
             {initialMode === 'quick' ? (
               <QuickLog seedPrompt={seedPrompt} onDismiss={onClose} />
             ) : (
-              <DetailedLog onDismiss={onClose} initialDate={initialDate} />
+              <DetailedLog onDismiss={onClose} initialDate={initialDate} onSaveBarChange={setSaveBar} />
             )}
           </ScrollView>
+          {initialMode === 'detailed' && saveBar?.dirty ? (
+            <View style={styles.saveBar}>
+              <PrimaryButton label={t('checkin.saveLog')} onPress={saveBar.onSave} />
+            </View>
+          ) : null}
         </SafeAreaView>
       </KeyboardAvoidingView>
     </ThemedView>
@@ -64,4 +75,5 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   scroll: { gap: Spacing.four, paddingTop: Spacing.three, paddingBottom: Spacing.six },
+  saveBar: { paddingVertical: Spacing.two },
 });

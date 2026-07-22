@@ -65,7 +65,21 @@ const TEXT_FIELDS: TextField[] = ['skin_notes', 'measurements', 'note'];
  * check-in. Surfaced fields, day-stepper backfill, customize, history, symptoms.
  * The conversational quick-log is the sibling Quick mode.
  */
-export function DetailedLog({ onDismiss, initialDate }: { onDismiss?: () => void; initialDate?: string } = {}) {
+/** A pending, unsaved check-in the parent (LoggingScreen) renders a pinned Save
+ *  bar from (B3-07). Null clears the bar. */
+export type SaveBar = { dirty: boolean; onSave: () => void };
+
+export function DetailedLog({
+  onDismiss,
+  initialDate,
+  onSaveBarChange,
+}: {
+  onDismiss?: () => void;
+  initialDate?: string;
+  /** Report dirty state + a save handler so the screen can pin the Save button
+   *  outside the scroll list (B3-07). */
+  onSaveBarChange?: (bar: SaveBar | null) => void;
+} = {}) {
   const { t, i18n } = useTranslation();
   const theme = useTheme();
   const router = useRouter();
@@ -84,6 +98,57 @@ export function DetailedLog({ onDismiss, initialDate }: { onDismiss?: () => void
   const today = useToday();
   // Opened from the Journal on a specific day (item 41b backfill); else today.
   const [date, setDate] = useState(initialDate ?? today);
+
+  // ── Draft buffer (B3-07) ───────────────────────────────────────────────────
+  // Editing a check-in field stages the change here instead of writing straight
+  // to the store; it lands only when the user taps the pinned Save. Scoped to the
+  // check-in scalar fields — discrete event logs (symptoms/training/labs) and the
+  // passive integration autofill stay immediate, since those aren't form "ticks".
+  const [draft, setDraft] = useState<Partial<CheckinEntry>>({});
+  const draftRef = useRef(draft);
+  const dateRef = useRef(date);
+  const dirty = Object.keys(draft).length > 0;
+
+  const setField = (patch: Partial<CheckinEntry>) => setDraft((d) => ({ ...d, ...patch }));
+
+  const flush = (targetDate: string, d: Partial<CheckinEntry>) => {
+    if (Object.keys(d).length > 0) upsertCheckin(targetDate, d);
+  };
+  // Persist any pending edits before moving to another day, so stepping the day
+  // never silently drops changes; then reset the buffer for the new day.
+  const changeDate = (next: string) => {
+    flush(dateRef.current, draftRef.current);
+    setDraft({});
+    setDate(next);
+  };
+  const save = () => {
+    flush(dateRef.current, draftRef.current);
+    setDraft({});
+    silentFillTypical(dateRef.current);
+    onDismiss?.();
+  };
+  const saveRef = useRef(save);
+
+  // Keep the imperative refs in sync after each render (ref writes aren't allowed
+  // during render under the React Compiler). Event handlers + the save bar read
+  // these, so they always see the latest draft/date/handler.
+  useEffect(() => {
+    draftRef.current = draft;
+    dateRef.current = date;
+    saveRef.current = save;
+  });
+
+  // Report dirty state up so the screen can pin the Save bar outside the scroll
+  // (B3-07). The handler reads refs, so a stable wrapper stays current.
+  useEffect(() => {
+    onSaveBarChange?.({ dirty, onSave: () => saveRef.current() });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dirty]);
+  useEffect(
+    () => () => onSaveBarChange?.(null),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
   const [showDeferred, setShowDeferred] = useState(false);
   const [showExactNutrition, setShowExactNutrition] = useState(false);
   const [weightError, setWeightError] = useState<string | undefined>(undefined);
@@ -257,7 +322,7 @@ export function DetailedLog({ onDismiss, initialDate }: { onDismiss?: () => void
   );
 
   const weightDelta = useMemo<{ text: string; tone: DeltaTone } | undefined>(() => {
-    const cur = entry?.weight;
+    const cur = 'weight' in draft ? draft.weight : entry?.weight;
     if (typeof cur !== 'number') return undefined;
     const prevKey = Object.keys(entries)
       .filter((k) => k < date && typeof entries[k]?.weight === 'number')
@@ -274,12 +339,19 @@ export function DetailedLog({ onDismiss, initialDate }: { onDismiss?: () => void
       tone = goodDirection ? 'good' : 'bad';
     }
     return { text, tone };
-  }, [entries, date, entry?.weight, profile.goals]);
+  }, [entries, date, entry?.weight, draft, profile.goals]);
 
-  const num = (key: keyof CheckinEntry) =>
-    typeof entry?.[key] === 'number' ? (entry[key] as number) : undefined;
-  const str = (key: keyof CheckinEntry) =>
-    typeof entry?.[key] === 'string' ? (entry[key] as string) : '';
+  // Merged read: a staged draft value wins over the stored entry (B3-07). `key in
+  // draft` distinguishes a staged clear (undefined) from an untouched field.
+  const merged = (key: keyof CheckinEntry) => (key in draft ? draft[key] : entry?.[key]);
+  const num = (key: keyof CheckinEntry) => {
+    const v = merged(key);
+    return typeof v === 'number' ? v : undefined;
+  };
+  const str = (key: keyof CheckinEntry) => {
+    const v = merged(key);
+    return typeof v === 'string' ? v : '';
+  };
 
   const scaleFields = SCALE_FIELDS.filter((f) => fields.includes(f));
   // Time-aware ordering (R2-E): morning scales lead in the morning, evening ones
@@ -304,11 +376,12 @@ export function DetailedLog({ onDismiss, initialDate }: { onDismiss?: () => void
             const raw = e.nativeEvent.text.trim().replace(',', '.');
             // A manual edit takes the field out of autoFilled tracking so the
             // user's value is never overwritten by a later sync.
-            const manualAuto = (entry?.autoFilled ?? []).filter((f) => f !== n.field);
+            const curAuto = ('autoFilled' in draft ? draft.autoFilled : entry?.autoFilled) ?? [];
+            const manualAuto = curAuto.filter((f) => f !== n.field);
             if (raw === '') {
               setNutritionError((p) => ({ ...p, [n.field]: undefined }));
               clearedRef.current.add(`${date}-${n.field}`);
-              upsertCheckin(date, { [n.field]: undefined, autoFilled: manualAuto });
+              setField({ [n.field]: undefined, autoFilled: manualAuto });
               return;
             }
             const v = parseFloat(raw);
@@ -317,20 +390,18 @@ export function DetailedLog({ onDismiss, initialDate }: { onDismiss?: () => void
               return;
             }
             setNutritionError((p) => ({ ...p, [n.field]: undefined }));
-            upsertCheckin(date, { [n.field]: v, autoFilled: manualAuto });
+            setField({ [n.field]: v, autoFilled: manualAuto });
           }}
         />
         {synced !== undefined && num(n.field) !== synced && (
           <Pressable
             accessibilityRole="button"
-            onPress={() =>
+            onPress={() => {
               // Applying the synced value re-enters autoFilled tracking: the user
               // chose "whatever Health says", so later re-syncs keep it fresh.
-              upsertCheckin(date, {
-                [n.field]: synced,
-                autoFilled: [...(entry?.autoFilled ?? []).filter((f) => f !== n.field), n.field],
-              })
-            }
+              const curAuto = ('autoFilled' in draft ? draft.autoFilled : entry?.autoFilled) ?? [];
+              setField({ [n.field]: synced, autoFilled: [...curAuto.filter((f) => f !== n.field), n.field] });
+            }}
           >
             <ThemedText type="monoSm" themeColor="textSecondary" style={styles.autofill}>
               {t(n.autofillKey, { value: synced })}
@@ -348,7 +419,7 @@ export function DetailedLog({ onDismiss, initialDate }: { onDismiss?: () => void
         <ThemedText type="mono">{t(`fields.${f}` as const)}</ThemedText>
         <ScaleSelector
           value={num(f as keyof CheckinEntry)}
-          onChange={(v) => upsertCheckin(date, { [f]: v })}
+          onChange={(v) => setField({ [f]: v })}
         />
       </View>
     </View>
@@ -357,7 +428,7 @@ export function DetailedLog({ onDismiss, initialDate }: { onDismiss?: () => void
   return (
     <View style={styles.wrap}>
       <View style={styles.stepper}>
-        <Pressable accessibilityRole="button" onPress={() => setDate((d) => shiftDateKey(d, -1))}>
+        <Pressable accessibilityRole="button" onPress={() => changeDate(shiftDateKey(date, -1))}>
           <ThemedText type="mono" themeColor="textSecondary">
             {t('checkin.prevDay')}
           </ThemedText>
@@ -368,7 +439,7 @@ export function DetailedLog({ onDismiss, initialDate }: { onDismiss?: () => void
         <Pressable
           accessibilityRole="button"
           disabled={isToday}
-          onPress={() => setDate((d) => shiftDateKey(d, 1))}>
+          onPress={() => changeDate(shiftDateKey(date, 1))}>
           <ThemedText type="mono" themeColor={isToday ? 'surfaceSunken' : 'textSecondary'}>
             {t('checkin.nextDay')}
           </ThemedText>
@@ -395,7 +466,7 @@ export function DetailedLog({ onDismiss, initialDate }: { onDismiss?: () => void
                 const raw = e.nativeEvent.text.trim().replace(',', '.');
                 if (raw === '') {
                   setWeightError(undefined);
-                  upsertCheckin(date, { weight: undefined });
+                  setField({ weight: undefined });
                   return;
                 }
                 const v = parseFloat(raw);
@@ -404,7 +475,7 @@ export function DetailedLog({ onDismiss, initialDate }: { onDismiss?: () => void
                   return;
                 }
                 setWeightError(undefined);
-                upsertCheckin(date, { weight: v });
+                setField({ weight: v });
               }}
             />
             <View style={styles.weightSide}>
@@ -425,7 +496,7 @@ export function DetailedLog({ onDismiss, initialDate }: { onDismiss?: () => void
             const synced = weightInUnits(reading.value, profile.units);
             if (num('weight') === synced) return null;
             return (
-              <Pressable accessibilityRole="button" onPress={() => upsertCheckin(date, { weight: synced })}>
+              <Pressable accessibilityRole="button" onPress={() => setField({ weight: synced })}>
                 <ThemedText type="monoSm" themeColor="textSecondary" style={styles.autofill}>
                   {t('checkin.autofillWeight', { value: synced })}
                 </ThemedText>
@@ -487,7 +558,7 @@ export function DetailedLog({ onDismiss, initialDate }: { onDismiss?: () => void
                   const raw = e.nativeEvent.text.trim().replace(',', '.');
                   if (raw === '') {
                     setMeasurementError((p) => ({ ...p, [field]: undefined }));
-                    upsertCheckin(date, { [field]: undefined });
+                    setField({ [field]: undefined });
                     return;
                   }
                   const v = parseFloat(raw);
@@ -496,7 +567,7 @@ export function DetailedLog({ onDismiss, initialDate }: { onDismiss?: () => void
                     return;
                   }
                   setMeasurementError((p) => ({ ...p, [field]: undefined }));
-                  upsertCheckin(date, { [field]: v });
+                  setField({ [field]: v });
                 }}
               />
             </View>
@@ -513,7 +584,7 @@ export function DetailedLog({ onDismiss, initialDate }: { onDismiss?: () => void
                   const raw = e.nativeEvent.text.trim().replace(',', '.');
                   if (raw === '') {
                     setMeasurementError((p) => ({ ...p, extra: undefined }));
-                    upsertCheckin(date, { extraMeasurementValue: undefined });
+                    setField({ extraMeasurementValue: undefined });
                     return;
                   }
                   const v = parseFloat(raw);
@@ -522,7 +593,7 @@ export function DetailedLog({ onDismiss, initialDate }: { onDismiss?: () => void
                     return;
                   }
                   setMeasurementError((p) => ({ ...p, extra: undefined }));
-                  upsertCheckin(date, { extraMeasurementValue: v });
+                  setField({ extraMeasurementValue: v });
                 }}
               />
             </View>
@@ -573,7 +644,7 @@ export function DetailedLog({ onDismiss, initialDate }: { onDismiss?: () => void
           <LabeledInput
             multiline
             defaultValue={str(f as keyof CheckinEntry)}
-            onEndEditing={(e) => upsertCheckin(date, { [f]: e.nativeEvent.text })}
+            onEndEditing={(e) => setField({ [f]: e.nativeEvent.text })}
           />
         </Sunken>
       ))}
@@ -618,7 +689,7 @@ export function DetailedLog({ onDismiss, initialDate }: { onDismiss?: () => void
           </ThemedText>
         ) : (
           history.map((d) => (
-            <Pressable key={d} accessibilityRole="button" onPress={() => setDate(d)}>
+            <Pressable key={d} accessibilityRole="button" onPress={() => changeDate(d)}>
               <ThemedText type="mono" themeColor={d === date ? 'text' : 'textSecondary'}>
                 {d === today ? t('checkin.today') : formatDateKey(d, i18n.language)}
               </ThemedText>
@@ -627,17 +698,12 @@ export function DetailedLog({ onDismiss, initialDate }: { onDismiss?: () => void
         )}
       </View>
 
-      {/* Fields persist on blur; SAVE LOG confirms + closes the overlay (mockup).
-          Saving is a check-in interaction, so silently fill "usual" for any enabled
-          typical group left untouched that day (spec 15 §UX.3). */}
-      {onDismiss && (
-        <PrimaryButton
-          label={t('checkin.saveLog')}
-          onPress={() => {
-            silentFillTypical(date);
-            onDismiss();
-          }}
-        />
+      {/* Save is staged then committed (B3-07): edits buffer in `draft` and land on
+          Save, which also silently fills "usual" for any untouched enabled typical
+          group (spec 15 §UX.3). The screen pins the Save bar outside the scroll; the
+          inline button is only a fallback when no parent is pinning it. */}
+      {onDismiss && !onSaveBarChange && (
+        <PrimaryButton label={t('checkin.saveLog')} onPress={save} />
       )}
     </View>
   );
