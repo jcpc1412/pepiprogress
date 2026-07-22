@@ -24,9 +24,13 @@ type Phase = 'form' | 'syncing' | 'done' | 'error';
 export function AuthScreen({
   visible,
   onClose,
+  dismissLabel,
 }: {
   visible: boolean;
   onClose: () => void;
+  /** Label for the bottom dismiss action. Defaults to "cancel"; the post-sign-out
+   *  splash passes "continue without account" (B3-06). */
+  dismissLabel?: string;
 }) {
   const { t } = useTranslation();
   const {
@@ -261,7 +265,7 @@ export function AuthScreen({
 
           {phase === 'form' && (
             <View style={styles.dismiss}>
-              <TextButton label={t('common.cancel')} onPress={handleClose} />
+              <TextButton label={dismissLabel ?? t('common.cancel')} onPress={handleClose} />
             </View>
           )}
         </KeyboardAvoidingView>

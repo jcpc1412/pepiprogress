@@ -12,6 +12,7 @@ import { StyleSheet, View } from 'react-native';
 import '@/i18n';
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { InstrumentBackground } from '@/components/instrument-background';
+import { AuthGate } from '@/features/auth/auth-gate';
 import { AuthProvider } from '@/lib/auth';
 import { CloudSync } from '@/lib/cloud-sync';
 import { PhotoSync } from '@/lib/photo-sync';
@@ -40,6 +41,8 @@ function RootContent() {
     <ThemeProvider value={scheme === 'dark' ? DarkTheme : DefaultTheme}>
       {/* Covers the screen until fonts + store are ready. */}
       <AnimatedSplashOverlay />
+      {/* Post-sign-out auth splash (B3-06); renders nothing until sign-out. */}
+      <AuthGate />
       {/* Fires local notifications; renders nothing. */}
       <NotificationManager />
       {/* Applies the saved language preference on launch; renders nothing. */}

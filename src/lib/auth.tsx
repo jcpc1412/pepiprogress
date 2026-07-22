@@ -67,6 +67,12 @@ type AuthContextValue = {
   /** True when the native Google button should be shown (mobile + web client configured). */
   googleAuthAvailable: boolean;
   signOut: () => Promise<void>;
+  /** True when signing out should present the auth splash (B3-06). Cleared by a
+   *  successful sign-in or by "continue without account". */
+  authGateVisible: boolean;
+  /** Dismiss the auth splash and stay in the local-first app ("continue without
+   *  account"). */
+  dismissAuthGate: () => void;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -81,6 +87,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   // When Supabase isn't configured there's nothing to restore, so we're not initializing.
   const [initializing, setInitializing] = useState(isSupabaseConfigured);
+  // Auth splash after sign-out (B3-06): the owner expects a normal logout to land
+  // on a login/sign-up screen, with a "continue without account" escape that keeps
+  // the local-first model. Cleared when a session arrives (successful sign-in).
+  const [authGateVisible, setAuthGateVisible] = useState(false);
+  const dismissAuthGate = useCallback(() => setAuthGateVisible(false), []);
 
   useEffect(() => {
     // Local-first with no credentials yet: nothing to restore, don't call out.
@@ -98,6 +109,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       setSession(nextSession);
+      // A session arriving means a successful sign-in — leave the auth splash.
+      if (nextSession) setAuthGateVisible(false);
     });
 
     return () => {
@@ -207,6 +220,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (googleNativeConfigured) await GoogleSignin.signOut().catch(() => {});
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
+    setAuthGateVisible(true);
   }, []);
 
   // Native Apple button: iOS only, and only when the module is actually linked
@@ -236,6 +250,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signInWithGoogle,
       googleAuthAvailable: googleNativeConfigured,
       signOut,
+      authGateVisible,
+      dismissAuthGate,
     }),
     [
       session,
@@ -247,6 +263,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       appleAuthAvailable,
       signInWithGoogle,
       signOut,
+      authGateVisible,
+      dismissAuthGate,
     ],
   );
 

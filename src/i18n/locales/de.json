@@ -660,7 +660,8 @@
     "errorMissingFields": "Bitte gib deine E-Mail und dein Passwort ein.",
     "orEmail": "oder mit E-Mail",
     "showPassword": "Passwort anzeigen",
-    "hidePassword": "Passwort verbergen"
+    "hidePassword": "Passwort verbergen",
+    "continueWithout": "Ohne Konto fortfahren"
   },
   "account": {
     "section": "KONTO",

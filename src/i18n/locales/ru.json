@@ -660,7 +660,8 @@
     "errorMissingFields": "Пожалуйста, введите email и пароль.",
     "orEmail": "или по эл. почте",
     "showPassword": "Показать пароль",
-    "hidePassword": "Скрыть пароль"
+    "hidePassword": "Скрыть пароль",
+    "continueWithout": "Продолжить без аккаунта"
   },
   "account": {
     "section": "АККАУНТ",
