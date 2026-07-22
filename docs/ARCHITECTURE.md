@@ -1,6 +1,6 @@
 # PepiProgress — App Architecture (for design)
 
-A daily peptide-tracking journal: subjective check-ins + consistent progress photos → a personal timeline, plus anonymized community aggregates. Omniplatform (iOS / Android / web), local-first, 6 languages. This doc describes the **current** structure and visual system so a design pass can work against real screens, IA, and tokens.
+A daily progress-tracking journal: subjective check-ins and consistent progress photos become a personal timeline, plus anonymized community aggregates. Peptide and compound protocols are one tracked domain, alongside general wellness goals (sleep, recovery, body composition). Omniplatform (iOS / Android / web), local-first, 6 languages. This doc describes the **current** structure and visual system so a design pass can work against real screens, IA, and tokens.
 
 > Stack: Expo SDK 56 + Expo Router, React Native + react-native-web, TypeScript, local-first store (AsyncStorage today). Charts/diagrams use `react-native-svg`. Backend is Supabase (auth, storage, edge AI) but the app runs fully offline pre-account.
 

@@ -2,7 +2,7 @@
 
 # PepiProgress (Pepi) — project guide
 
-A daily peptide-tracking journal that turns subjective check-ins + consistent photos into a personal progress timeline — and aggregates anonymized data into a community knowledge base. Omniplatform (iOS/Android/web), lightweight, 6 languages.
+A daily progress-tracking journal that turns subjective check-ins and consistent photos into a personal timeline, and aggregates anonymized data into a community knowledge base. Peptide and compound protocols are one of the domains it tracks, alongside general wellness goals (sleep, recovery, body composition). Omniplatform (iOS/Android/web), lightweight, 6 languages.
 
 > ⚠️ See `AGENTS.md` (imported above): **Expo SDK 56 is bleeding-edge — read the versioned docs at https://docs.expo.dev/versions/v56.0.0/ before writing Expo code.** APIs differ from training data.
 

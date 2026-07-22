@@ -1,6 +1,6 @@
 # PepiProgress — Product Spec (Index)
 
-> **One-liner:** A daily peptide-tracking journal that turns subjective check-ins + consistent photos into a personal progress timeline — and aggregates anonymized data into a community knowledge base on what actually works.
+> **One-liner:** A daily progress-tracking journal that turns subjective check-ins and consistent photos into a personal timeline, and aggregates anonymized data into a community knowledge base on what actually works. Peptide and compound protocols are one of the domains it tracks, alongside general wellness goals like sleep, recovery, and body composition.
 
 In-app nickname: **Pepi**. Public/store name: **PepiProgress** (`pepiprogress.com`).
 

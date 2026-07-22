@@ -10,9 +10,11 @@ register: product
 
 ## Product purpose
 
-A daily peptide-tracking journal that turns subjective check-ins plus consistent
+A daily progress-tracking journal that turns subjective check-ins plus consistent
 progress photos into a personal timeline, and aggregates anonymized data into a
-community knowledge base. Omniplatform (iOS / Android / web), lightweight, six
+community knowledge base. Peptide and compound protocols are one of the domains it
+tracks, alongside general wellness goals (sleep, recovery, body composition).
+Omniplatform (iOS / Android / web), lightweight, six
 languages. The photo pipeline (consistent capture + hedged AI comparison over
 time) is the USP.
 
