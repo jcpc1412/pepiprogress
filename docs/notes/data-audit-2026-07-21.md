@@ -132,3 +132,71 @@ to fat). And it uses **zero integration data** (no steps/cardio/deficit). Fixes:
 volume-button shutter (then scope the vision-camera consolidation).
 
 Nothing here is built yet — this is the map.
+
+---
+
+## 6. Source-of-truth: full consumer inventory (owner ask, 2026-07-21)
+
+Every module that reads metric-shaped data, so nothing is missed when we build the
+resolver. **A facade already exists** — `src/lib/data-facade.ts` ("the single selector
+layer every surface reads," beta-feedback A-4). It exposes `selectVerdict`,
+`selectMetricDirections`, `selectChartSeries`, `selectProtocolContext`,
+`selectPhotoDigest`, `buildInsightHistory`. The source-of-truth work is **extending this
+facade with a per-metric resolver and routing the stragglers through it** — not building a
+new thing.
+
+### 6a. Already centralized (good) — go through `selectChartSeries`
+The merge of manual + integration + derived is shared by both surfaces that plot/verdict:
+- **`chart-series.ts` `selectChartSeries`** — the merge point itself (entries +
+  `metricReadings` + `deriveMetrics` + Navy body-fat).
+- **`verdict-engine.ts`** — reads `CHART_METRICS`/`selectChartSeries` for signal values,
+  so charts and the verdict already agree on the series. (Its *direction/tone* table is
+  where the recovery bug lives — Track A.)
+- **`insights-screen.tsx`, `pepi-chat.tsx`, `use-verdict.ts`** — import the facade.
+
+### 6b. Metric-value consumers that BYPASS the facade (must route through the resolver)
+Each reads the store raw and derives independently — this is where "computed here,
+invisible there" lives:
+
+| Consumer | Reads raw | Derives | Resolver fix |
+|---|---|---|---|
+| `signal-ledger.ts` (`extractLedger`) | entries, doses, symptoms | "what moved it" | relevance-filter + integration movers (Track C) |
+| `attribution.ts` | entries, `metricReadings`, protocol | pre/post-start means | resolve the outcome metric via the chain |
+| `energy-balance.ts` | entries, `metricReadings` | TDEE, intake, active-energy | resolve weight/intake/active-energy |
+| `anomaly.ts` | entries, `metricReadings` | deviation detectors | resolve values + baselines |
+| `measure-next.ts` | entries, labs, photos | evidence gaps | must see body-fat presence (Track A2) |
+| `analysis-context.ts` | entries, doses | AI photo context (weight/nutrition/sleep) | resolve the numeric context |
+| `narrative.ts` | entries, labs, strength | first-reading milestones | resolve "first value" per metric |
+| `derived-metrics.ts` | `metricReadings` | the 1-5 estimates + **recovery** | fix recovery label (Track A1) |
+
+### 6c. Body-fat computed in FOUR places (unify into `resolveBodyFat`)
+The clearest duplication. All independently call `bodyFatNavy`:
+- `chart-series.ts` (the chart — Navy only, the empty-chart bug)
+- `detailed-log.tsx` (form display)
+- `photo-capture.tsx` (review step)
+- `progress-photos.tsx` (compare)
+- `integrations/health-writeback.ts` (write-back)
+→ One `resolveBodyFat(day) → { value, source: 'measured'|'navy'|'baseline' }` with the
+priority chain (Health `body.fat_pct` → Navy if neck present → `profile.bodyFatPct`),
+consumed everywhere. This is Track A2 and the first concrete piece of the resolver.
+
+### 6d. Legitimately raw (leave as-is — NOT metric-value resolution)
+These read/write specific entities on purpose, not "the resolved value of a metric":
+`detailed-log.tsx` (the edit form), `journal-day.ts` + `journal-screen.tsx` (day
+assembly), `today-record-strip.tsx` (day distillation), `quick-log-deterministic.ts`
+(parse), `report.ts` (export), `typical-day.ts`, `lab-monitoring.ts`, the integration
+`providers/*` + `integration-sync.tsx` + `health-writeback.tsx` (they *write* raw
+readings), `notification-manager.tsx`.
+
+### 6e. Resolver shape (the B1 target, for reference)
+Extend `data-facade.ts` with:
+`resolveMetric(metricId, dayKey, input) → { value, source: 'measured'|'derived'|'computed'|'manual'|'baseline', confidence }`
+— one priority chain per metric, reused by 6b + 6c. Provenance ties into the F4
+source-badges. Charts/verdict keep `selectChartSeries` (which becomes a thin batch caller
+of `resolveMetric` over the window).
+
+**Wiring conclusion:** the spine exists (facade + `selectChartSeries`); the fix is (1) a
+`resolveMetric`/`resolveBodyFat` in the facade, (2) point 6b's eight modules at it, (3)
+retire the four duplicate body-fat calls. Track A does the three correctness bugs on top
+of the current wiring first (they're independent and high-trust); Track B then lands the
+resolver so C's attribution has a clean base.
