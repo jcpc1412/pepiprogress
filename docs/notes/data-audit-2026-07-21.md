@@ -130,15 +130,27 @@ to fat). And it uses **zero integration data** (no steps/cardio/deficit). Fixes:
       unify — they legitimately want Navy-from-measurements (health-writeback *produces*
       the value it writes; photo-capture wants a live typed estimate). Only the chart
       wanted the chain, and A2 already fixed that. So no `resolveBodyFat` extraction.
-- B2. ⏳ **Per-module migration (incremental, remaining).** Point each bypassing consumer
-      at `resolveMetricSeries` instead of re-reading raw `entries`/`metricReadings`. Each
-      is delicate (changes the module's inputs + its tests), so do them one at a time with
-      verification. Priority by real inconsistency:
-      - `analysis-context` caller (progress-photos): AI photo context reads manual-only
-        weight → misses a wearable weight. Overlay resolved weight.
-      - `energy-balance`: TDEE from weight/intake — confirm it sees integration weight.
-      - `anomaly`, `narrative`, `attribution`: resolve their outcome values.
-      - `signal-ledger`: events, not values → handled in Track C, not here.
+- B2. ✅ **Per-module migration DONE.** Pointed every metric-value consumer at
+      `resolveMetricSeries` (one merge, one unit). Doing so surfaced a **latent
+      unit bug**: the chart/resolver merge plotted manual weight (display units)
+      next to Health `body.weight` (canonically kg) with NO conversion — wrong for
+      every imperial user with a wearable weigh-in. Fixed in `buildMetricSeries`
+      (kg→display before merge), which fixes the imperial weight chart too.
+      - `analysis-context` (progress-photos): ✅ overlays resolved weight, so a
+        wearable-only weigh-in now anchors the photo-analysis window.
+      - `energy-balance`: ✅ confirmed already correct — it merges manual ∪ Health
+        weight and converts to kg (it needs kg; the resolver returns display units),
+        so it keeps its kg-native path deliberately (noted in-code).
+      - `anomaly`: ✅ weight-jump baseline resolved (was mixing kg + lbs → phantom
+        jumps for imperial users). Regression test added.
+      - `attribution`: ✅ weight outcome series resolved (was *averaging* kg + lbs
+        per day → corrupt deltas for imperial users). Regression test added.
+      - `narrative`: N/A — assembles discrete milestone events (protocol starts,
+        symptom onsets, lab/benchmark/PR firsts), never metric-value series.
+      - `measure-next`: N/A — detects evidence-gap *presence* (bloodwork recency,
+        photo cadence), not metric values.
+      - `derived-metrics`: recovery label = Track A1 (done).
+      - `signal-ledger`: events, not values → Track C.
 
 **Track C — attribution rework (4e, the "what moved it" fix):**
 - C1. Metric-relevance filter on the ledger (effect-tag match for doses; responsive-metric
