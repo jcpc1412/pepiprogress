@@ -193,3 +193,30 @@ vision-camera's own focus/exposure signals — the ghost overlay (the real consi
 and the AI prompt stay. Caveat: vision-camera@5.0.11 has the known native-config
 fragility noted in CLAUDE.md (no `app.plugin.js`; frame-processor flags need device-build
 enablement), so this is a native rebuild + device-test effort.
+
+---
+
+## Beta Round 3 — decisions + new requests (2026-07-21, cont.)
+
+**B3-06 DECIDED:** sign-out routes to an **auth splash** (login/sign-up) with a
+"continue without account" escape — not stay-in-app. The local-first model is preserved
+via the escape hatch.
+
+**Camera DECIDED:** wire pinch-**zoom** + **volume-button shutter** onto the current
+camera first (smaller step), then scope the full vision-camera consolidation.
+
+**B3-07: Detailed-logging behavior (owner 2026-07-21).** The detailed log should behave
+like an editable form, not an auto-saving stream:
+- Ticking/adding any field does **not** fire an API/save immediately — changes stay
+  **unsaved (dirty)** until the user taps Save.
+- A **persistent Save button pinned to the bottom of the screen** (not the scroll list)
+  appears whenever there are unsaved changes, and stays visible on scroll.
+- Opening the log via the Journal's "add to this day" **pre-loads the day's existing
+  data** so it reads as an *update/modify*, not a blank new entry.
+
+**B3-08: Journal inline edit (owner 2026-07-21).** In the Journal, any data element
+outside the log (e.g. a `protein` row) should be **tap-to-edit inline** — tapping the row
+turns the value into an editable field. (Complements B3-04's log-button + placeholders.)
+
+**Data architecture:** full audit + chart→source catalog + Analysis-bug root causes +
+proposed fix tracks A/B/C in `docs/notes/data-audit-2026-07-21.md`.
