@@ -309,6 +309,16 @@ Google official branded button (native `@react-native-google-signin` component, 
 the on-device dark-mode verification pass (checklist step d), and **44** (runtime perf
 profiling, needs the Moto G60s-class device). These need the native rebuild.
 
+**Sweep tail closed (2026-07-22):** item 36's Google branded button shipped in code
+(`GoogleSigninButton` from `@react-native-google-signin`, Wide/Light, replaces the
+custom Google `SocialButton` when `googleAuthAvailable`; the custom outlined button
+stays as the web/unconfigured browser-OAuth fallback) — renders on the next native
+build. Web dark-mode audit pass done (auth, onboarding, Today, Journal, Settings, both
+schemes): no token drift or hardcoded-colour leaks; both co-equal themes invert
+correctly. Tab-order slip fixed (Pepi moved before Photos, owner-confirmed). **Still
+device-only:** on-device OLED dark-mode confirmation + **44** (perf profiling) — both
+need the native build.
+
 ### 7A. Auth/sync hardening (notes §3, §4, §5)
 
 31. **Google sign-in return leg [S/M].** Fix the redirect dead-end (flow ends on
@@ -647,8 +657,10 @@ Resolved decisions:
   the "see the reasoning" screen). No floating chat widget: a persistent tab bar
   already is an always-one-tap surface, a bubble only occludes the photo reel and
   fights the instrument design language. Pepi stays a full page.
-- **Tab order: Today · Pepi · Photos · Analysis · Journal** (journal last; Photos
-  keeps its slot). 5 tabs read fine in the mock; owner will confirm on-device.
+- **Tab order: Today · Pepi · Photos · Analysis · Journal** (journal last).
+  Confirmed by owner 2026-07-22 during the 35-42 sweep tail: the code had shipped
+  Photos before Pepi (a slip when the Journal tab was appended); reordered to put
+  Pepi in slot 2 to match this decision.
 - **History nav: week strip** (green dot = logged day, empty ring = no log), not the
   stepper arrows.
 - **On Today:** one-line "Today's record" strip **above** Today's Doses. Today is

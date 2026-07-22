@@ -47,11 +47,11 @@ export default function AppTabs() {
           <TabTrigger name="index" href="/" asChild>
             <TabButton icon={HomeIcon} label={t('tabs.today')} />
           </TabTrigger>
-          <TabTrigger name="photos" href="/photos" asChild>
-            <TabButton icon={CameraIcon} label={t('tabs.photos')} />
-          </TabTrigger>
           <TabTrigger name="pepi" href="/pepi" asChild>
             <TabButton icon={ChatIcon} label={t('tabs.pepi')} />
+          </TabTrigger>
+          <TabTrigger name="photos" href="/photos" asChild>
+            <TabButton icon={CameraIcon} label={t('tabs.photos')} />
           </TabTrigger>
           {/* Analysis (R2-C C4) — replaces Insights: hosts the verdict decompose +
               trends. Route id stays `insights` for stability. */}

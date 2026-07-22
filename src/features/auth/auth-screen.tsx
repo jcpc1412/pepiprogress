@@ -1,3 +1,4 @@
+import { GoogleSigninButton } from '@react-native-google-signin/google-signin';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -228,12 +229,23 @@ export function AuthScreen({
                   onPress={() => handleSocial(() => signInWithProvider('apple'))}
                 />
               )}
-              <SocialButton
-                label={t('auth.continueGoogle')}
-                onPress={() =>
-                  handleSocial(googleAuthAvailable ? signInWithGoogle : () => signInWithProvider('google'))
-                }
-              />
+              {googleAuthAvailable ? (
+                // Google's official branded button (item 36). Google localizes
+                // its own label + owns the mark, so it takes no custom text; the
+                // Light variant reads on the dark auth surface like the WHITE
+                // Apple button above.
+                <GoogleSigninButton
+                  size={GoogleSigninButton.Size.Wide}
+                  color={GoogleSigninButton.Color.Light}
+                  onPress={() => handleSocial(signInWithGoogle)}
+                  style={styles.googleButton}
+                />
+              ) : (
+                <SocialButton
+                  label={t('auth.continueGoogle')}
+                  onPress={() => handleSocial(() => signInWithProvider('google'))}
+                />
+              )}
             </View>
           )}
 
@@ -296,6 +308,7 @@ const styles = StyleSheet.create({
   orRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two, paddingVertical: Spacing.one },
   orLine: { flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: Colors.dark.border },
   appleButton: { height: 48, width: '100%' },
+  googleButton: { height: 48, width: '100%' },
   socialButton: {
     height: 48,
     borderRadius: Radii.chamfer,
