@@ -812,7 +812,9 @@
     "offSlotExtra": "Dosis extra",
     "dosesSetup": "Configura tu protocolo",
     "stockFlag": "Los suministros requieren atención",
-    "dosesManage": "Gestionar protocolo"
+    "dosesManage": "Gestionar protocolo",
+    "dosesNoneToday": "No hay dosis programadas para hoy",
+    "manage": "Gestionar"
   },
   "addCompound": {
     "title": "Añadir compuesto",

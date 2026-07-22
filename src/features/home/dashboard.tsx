@@ -18,7 +18,7 @@ import { MeasureNextNudge } from '@/features/home/measure-next-nudge';
 import { TodayDoses } from '@/features/home/today-doses';
 import { TodayRecordStrip } from '@/features/home/today-record-strip';
 import { formatHeroValue, resolveMsg, useVerdict, type TFn } from '@/features/home/use-verdict';
-import { daysBetween } from '@/lib/dates';
+import { daysBetween, formatDateKey } from '@/lib/dates';
 import { useOverlay } from '@/lib/nav-overlay';
 import { useStore } from '@/lib/store';
 import { useToday } from '@/lib/today';
@@ -271,6 +271,17 @@ export function Dashboard() {
                 data={heroSignal.series.map((p): ChartPoint => ({ label: p.dateKey.slice(5), value: p.value }))}
                 emptyLabel={t('common.noData')}
               />
+              {/* Time span at the chart (critique P3): the sparkline alone didn't
+                  say what window it covered; the trend-window label lives up in
+                  the hero subline, spatially apart from the chart. */}
+              {heroSignal.series.length > 1 ? (
+                <ThemedText type="monoSm" themeColor="textMuted" style={styles.chartSpan}>
+                  {`${formatDateKey(heroSignal.series[0].dateKey, i18n.language)} – ${formatDateKey(
+                    heroSignal.series[heroSignal.series.length - 1].dateKey,
+                    i18n.language,
+                  )}`}
+                </ThemedText>
+              ) : null}
             </View>
           ) : verdict.state === 'building' ? (
             <View style={styles.evidence}>
@@ -317,6 +328,7 @@ const styles = StyleSheet.create({
   rule: { marginVertical: -Spacing.two },
   reconcile: { fontStyle: 'italic' },
   evidence: { gap: Spacing.two },
+  chartSpan: { textAlign: 'right', marginTop: -Spacing.one },
   compareRow: { flexDirection: 'row', gap: Spacing.two },
   compareCol: { flex: 1, gap: Spacing.one, alignItems: 'center' },
   photo: { width: '100%', aspectRatio: 3 / 4, borderRadius: 2 },

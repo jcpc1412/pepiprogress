@@ -51,3 +51,6 @@ example
 
 # Local design mock (throwaway)
 .preview-mockup/
+
+# impeccable critique snapshots (local audit backlog)
+.impeccable/

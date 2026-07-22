@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
-import { GearIcon } from '@/components/icons';
 import { Card, Divider, EngravedLabel, Placeholder, StatusPill } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
 import { TextButton } from '@/components/form';
@@ -202,29 +201,39 @@ export function TodayDoses() {
   const header = (
     <View style={styles.headerRow}>
       <EngravedLabel>{t('dashboard.dosesTitle')}</EngravedLabel>
-      {/* Config gear -> Protocol. Protocol is set up once and rarely touched
-          (UX audit: not a tab), so its front door is a quiet gear on the card
-          the user actually looks at daily, not a header-level icon. */}
+      {/* Front door to Protocol (set up once, rarely touched). A labeled text
+          link, not a gear: the screen already has a header gear for Settings, and
+          two identical gears to different destinations was a recognition tax
+          (critique P3). "Manage" says where it goes. */}
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={t('dashboard.dosesManage')}
         onPress={() => router.push('/protocol')}
         hitSlop={8}>
-        <GearIcon size={18} color="textMuted" />
+        <ThemedText type="monoSm" themeColor="textSecondary" style={styles.manageLink}>
+          {t('dashboard.manage')}
+        </ThemedText>
       </Pressable>
     </View>
   );
 
   // Always show the section — an empty state signals where doses appear and
-  // carries its own action (UX audit: empty states must act).
+  // carries its own action (UX audit: empty states must act). Two distinct empty
+  // states, never conflated: no protocol yet (teach + set up) vs a protocol that
+  // simply has nothing due today, e.g. a weekly compound on an off day (neutral,
+  // no nag — never tell a user with an active protocol to "add a protocol").
   if (rows.length === 0) {
+    const hasProtocol = protocolItems.length > 0;
     return (
       <Card style={styles.card}>
         {header}
-        <Placeholder label={t('dashboard.dosesPlaceholder')} height={64} />
-        {protocolItems.length === 0 ? (
+        <Placeholder
+          label={hasProtocol ? t('dashboard.dosesNoneToday') : t('dashboard.dosesPlaceholder')}
+          height={64}
+        />
+        {hasProtocol ? null : (
           <TextButton label={t('dashboard.dosesSetup')} onPress={() => router.push('/protocol')} />
-        ) : null}
+        )}
       </Card>
     );
   }
@@ -351,6 +360,7 @@ function DoseRow({
 const styles = StyleSheet.create({
   card: { gap: Spacing.two },
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  manageLink: { textTransform: 'uppercase', textDecorationLine: 'underline', letterSpacing: 0.5 },
   flagged: { textTransform: 'uppercase' },
   rowDivider: { marginVertical: 0 },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.two, paddingVertical: Spacing.two },

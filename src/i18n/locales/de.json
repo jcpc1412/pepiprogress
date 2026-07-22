@@ -812,7 +812,9 @@
     "offSlotExtra": "Zusätzliche Dosis",
     "dosesSetup": "Protokoll einrichten",
     "stockFlag": "Vorräte brauchen Aufmerksamkeit",
-    "dosesManage": "Protokoll verwalten"
+    "dosesManage": "Protokoll verwalten",
+    "dosesNoneToday": "Heute sind keine Dosen geplant",
+    "manage": "Verwalten"
   },
   "addCompound": {
     "title": "Wirkstoff hinzufügen",
