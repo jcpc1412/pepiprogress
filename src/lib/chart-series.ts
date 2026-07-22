@@ -194,13 +194,23 @@ export function buildMetricSeries(opts: {
     }
 
     // Primary = manual (wins) ∪ integration, over the union of their dates.
+    // Integration weight is canonically kg (see apple-health provider); manual
+    // weight is stored in the user's display unit. Convert the reading to display
+    // units before merging so an imperial user's chart (and every resolver
+    // consumer) never mixes lbs and kg on one axis.
+    const readingToDisplay =
+      m.canonicalMetric === 'body.weight' && profile.units === 'imperial'
+        ? (kg: number) => kg * 2.20462
+        : (v: number) => v;
     const dateSet = new Set<string>(entryDates);
     if (byDate) for (const d of byDate.keys()) dateSet.add(d);
     const primary: DatedPoint[] = [];
     for (const d of dateSet) {
       if (!inWindow(d)) continue;
       const manual = m.checkinKey ? entries[d]?.[m.checkinKey] : undefined;
-      const value = typeof manual === 'number' ? manual : byDate?.get(d);
+      const reading = byDate?.get(d);
+      const value =
+        typeof manual === 'number' ? manual : typeof reading === 'number' ? readingToDisplay(reading) : undefined;
       if (typeof value === 'number') primary.push({ dateKey: d, value });
     }
     primary.sort(byDateAsc);

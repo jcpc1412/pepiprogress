@@ -68,6 +68,19 @@ describe('resolveMetric (Track B canonical value)', () => {
     expect(resolveMetricOnDay(input, 'weight', '2026-07-21', today)).toBe(82);
   });
 
+  it('normalizes integration weight (kg) to the user display unit (imperial → lbs)', () => {
+    const input = {
+      entries: {},
+      metricReadings: [
+        { id: 'w1', metric: 'body.weight', value: 82, ts: '2026-07-21T07:00:00Z', sourceProvider: 'apple_health' },
+      ] as MetricReading[],
+      profile: profile({ units: 'imperial', height: 71 }),
+      contextNotes: [],
+    };
+    // 82 kg → ~180.8 lbs, not a raw 82 mixed onto a lbs axis.
+    expect(resolveMetricOnDay(input, 'weight', '2026-07-21', today)).toBeCloseTo(180.78, 1);
+  });
+
   it('manual entry wins over integration on the same day', () => {
     const input = {
       entries: { '2026-07-21': entry('2026-07-21', { weight: 83 }) },

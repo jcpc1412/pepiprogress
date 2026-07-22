@@ -71,7 +71,10 @@ function basalMetabolicRate(weightKg: number, heightCm: number, age: number, fem
 }
 
 /** Per-day weight in kg over the window (manual check-in weight preferred, else a
- *  Health `body.weight` reading). Manual weight is stored in the user's unit. */
+ *  Health `body.weight` reading). Manual weight is stored in the user's unit.
+ *  Kept kg-native on purpose: this TDEE math needs kilograms, whereas the canonical
+ *  resolver (resolveMetricSeries) returns weight in display units. The merge rule
+ *  here (manual wins, else integration) matches the resolver's. */
 function weightSeriesKg(
   entries: Record<string, CheckinEntry>,
   metricReadings: MetricReading[],
