@@ -1157,7 +1157,7 @@
       "hips": "Hüftumfang. Er spiegelt Fett und Muskeln an Hüfte und Gesäß wider und ändert sich in anderem Tempo als die Taille.",
       "energy": "Deine gefühlte Energie des Tages. Schlaf, Trainingslast, Ernährung und Stress heben oder senken sie.",
       "sleep_quality": "Wie erholt du dich gefühlt hast. Regelmäßiger Schlaf hebt sie; späte Nächte, Alkohol und Stress senken sie.",
-      "soreness": "Muskelkater. Hartes oder neues Training steigert ihn; Ruhetage und leichtere Einheiten senken ihn.",
+      "soreness": "Wie erholt du dich fühlst. Ruhe und Schlaf steigern ihn; hartes oder neues Training senkt ihn vorübergehend.",
       "default": "Ein erfasstes Signal in deinem Log. Sein Trend wird über den jüngsten Zeitraum an deinem Ziel gemessen."
     }
   },

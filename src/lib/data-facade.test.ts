@@ -42,7 +42,7 @@ describe('selectMetricDirections (A-1: shared goal-direction rule)', () => {
     expect(dirs.weight).toBe('down_good');
     expect(dirs.caloric_balance).toBe('down_good');
     expect(dirs.energy).toBe('up_good');
-    expect(dirs.soreness).toBe('down_good');
+    expect(dirs.soreness).toBe('up_good'); // `soreness` id = Recovery, up_good (A1)
   });
 
   it('no goals: context metrics are neutral (no decisive intent)', () => {

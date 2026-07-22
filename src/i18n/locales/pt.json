@@ -1157,7 +1157,7 @@
       "hips": "Circunferência da anca. Reflete gordura e músculo nas ancas e glúteos, e muda a um ritmo diferente da cintura.",
       "energy": "A tua energia subjetiva do dia. Sono, carga de treino, nutrição e stress fazem-na subir ou descer.",
       "sleep_quality": "Quão descansado te sentiste. Sono regular e a horas melhora-a; noites tardias, álcool e stress baixam-na.",
-      "soreness": "Dores musculares. Treino intenso ou novo aumenta-as; dias de descanso e sessões leves reduzem-nas.",
+      "soreness": "O quão recuperado te sentes. O descanso e o sono aumentam-no; treino intenso ou novo baixa-o temporariamente.",
       "default": "Um sinal registado no teu diário. A sua tendência é lida face ao teu objetivo no período recente."
     }
   },

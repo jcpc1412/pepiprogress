@@ -50,8 +50,9 @@ describe('contextual signal tone (R2-C C2)', () => {
   it('reads absolute level: up-good high vs down-good inverts', () => {
     expect(levelBand('energy', 4.2, 'up_good')).toBe('high');
     expect(levelBand('energy', 2.0, 'up_good')).toBe('low');
-    expect(levelBand('soreness', 4.2, 'down_good')).toBe('low'); // very sore = bad place
-    expect(levelBand('soreness', 1.5, 'down_good')).toBe('high');
+    // `soreness` id = Recovery (up_good): high = well-recovered = good place (A1).
+    expect(levelBand('soreness', 4.2, 'up_good')).toBe('high');
+    expect(levelBand('soreness', 1.5, 'up_good')).toBe('low');
     expect(levelBand('weight', 80, 'down_good')).toBe('none'); // no absolute band
   });
 
@@ -291,11 +292,12 @@ describe('computeVerdict — state & confidence tiers', () => {
 });
 
 describe('computeVerdict — reconciliation', () => {
-  it('explains rising soreness by recent heavy training instead of counting it as failure', () => {
+  it('explains a recovery dip by recent heavy training instead of counting it as failure', () => {
     const entries = entriesOf(6, (o) => ({
       weight: 79 + o * 0.3, // good, drives an overall-positive verdict
       energy: 4.6 - o * 0.25, // good
-      soreness: 4.6 - o * 0.25, // today highest → up; soreness up = bad (drags)
+      // `soreness` id = Recovery (up_good): today lowest → falling → drags (A1).
+      soreness: 4.0 + o * 0.25,
       workout_effort: o < 3 ? 5 : 2, // hard sessions in the last 3 days
     }));
     const v = computeVerdict(makeInput({ entries, profile: { goals: ['recovery', 'weight_loss'], units: 'metric' } }));

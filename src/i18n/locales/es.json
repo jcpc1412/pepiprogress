@@ -1157,7 +1157,7 @@
       "hips": "Circunferencia de la cadera. Refleja grasa y músculo en caderas y glúteos, y cambia a un ritmo distinto al de la cintura.",
       "energy": "Tu energía subjetiva del día. El sueño, la carga de entrenamiento, la nutrición y el estrés la suben o bajan.",
       "sleep_quality": "Qué tan descansado te sentiste. Un sueño constante y a buenas horas la sube; las noches tardías, el alcohol y el estrés la bajan.",
-      "soreness": "Dolor muscular. El entrenamiento intenso o nuevo lo aumenta; los días de descanso y las sesiones suaves lo bajan.",
+      "soreness": "Qué tan recuperado te sientes. El descanso y el sueño lo suben; el entrenamiento duro o nuevo lo baja temporalmente.",
       "default": "Una señal registrada en tu diario. Su tendencia se interpreta según tu objetivo en el periodo reciente."
     }
   },

@@ -143,7 +143,10 @@ const METRIC_DIRECTION: Record<string, Direction> = {
   hips: 'context',
   energy: 'up_good',
   sleep_quality: 'up_good',
-  soreness: 'down_good',
+  // `soreness` is a legacy id: the metric is RECOVERY (label `fields.soreness` =
+  // "Recovery", derived from HRV/RHR/ACWR). High = well-recovered = good, so it is
+  // up_good — the prior down_good made a 5/5 recovery read red (B3, Track A1).
+  soreness: 'up_good',
   sleep_deep_pct: 'up_good',
   sleep_rem_pct: 'up_good',
   protein_adequacy: 'up_good',

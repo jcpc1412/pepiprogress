@@ -53,7 +53,10 @@ export function metricExplainerKey(metricId: string): string {
  */
 const IMPACT: Record<string, Partial<Record<LedgerEventKind, number>>> = {
   energy: { workout: -1, rest: 0.5, poor_sleep: -1.5, symptom: -0.5 },
-  soreness: { workout: 1.5, rest: -1 }, // higher soreness = worse
+  // `soreness` id = the Recovery metric (up_good): hard training temporarily lowers
+  // recovery, rest raises it (mirrors energy). Signs flipped from the legacy
+  // soreness polarity (Track A1).
+  soreness: { workout: -1.5, rest: 1 },
   cv_strain: { workout: 1, rest: -0.5 },
   sleep_quality: { poor_sleep: -1.5, symptom: -0.5 },
   inflammation: { workout: 0.5, symptom: 0.5 },
