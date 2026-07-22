@@ -110,6 +110,10 @@ function ProviderRow({ provider }: { provider: IntegrationProvider }) {
       } else if (error) {
         setConnectError(error);
       }
+    } catch (e) {
+      // A missing/unavailable native module (e.g. Health Connect not installed)
+      // must surface as an error, never crash the app (B3-03).
+      setConnectError(e instanceof Error ? e.message : String(e));
     } finally {
       setBusy(false);
     }
@@ -122,6 +126,8 @@ function ProviderRow({ provider }: { provider: IntegrationProvider }) {
       addMetricReadings(readings);
       setSyncResult(t('integrations.imported', { count: readings.length }));
       setIntegration(provider.id, { lastSyncAt: new Date().toISOString() });
+    } catch (e) {
+      setSyncResult(t('integrations.connectError', { reason: e instanceof Error ? e.message : String(e) }));
     } finally {
       setBusy(false);
     }
