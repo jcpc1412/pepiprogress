@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import {
   buildInsightHistory,
+  resolveMetricOnDay,
+  resolveMetricSeries,
   selectMetricDirections,
   selectPhotoDigest,
   selectProtocolContext,
@@ -43,6 +45,55 @@ describe('selectMetricDirections (A-1: shared goal-direction rule)', () => {
     expect(dirs.caloric_balance).toBe('down_good');
     expect(dirs.energy).toBe('up_good');
     expect(dirs.soreness).toBe('up_good'); // `soreness` id = Recovery, up_good (A1)
+  });
+});
+
+describe('resolveMetric (Track B canonical value)', () => {
+  const today = '2026-07-21';
+  const entry = (date: string, over: Partial<CheckinEntry> = {}): CheckinEntry => ({
+    date,
+    updatedAt: `${date}T20:00:00.000Z`,
+    ...over,
+  });
+
+  it('merges manual + integration for a metric (weight from Health with no manual entry)', () => {
+    const input = {
+      entries: {},
+      metricReadings: [
+        { id: 'w1', metric: 'body.weight', value: 82, ts: '2026-07-21T07:00:00Z', sourceProvider: 'apple_health' },
+      ] as MetricReading[],
+      profile: profile({ height: 180 }),
+      contextNotes: [],
+    };
+    expect(resolveMetricOnDay(input, 'weight', '2026-07-21', today)).toBe(82);
+  });
+
+  it('manual entry wins over integration on the same day', () => {
+    const input = {
+      entries: { '2026-07-21': entry('2026-07-21', { weight: 83 }) },
+      metricReadings: [
+        { id: 'w1', metric: 'body.weight', value: 82, ts: '2026-07-21T07:00:00Z', sourceProvider: 'apple_health' },
+      ] as MetricReading[],
+      profile: profile(),
+      contextNotes: [],
+    };
+    expect(resolveMetricOnDay(input, 'weight', '2026-07-21', today)).toBe(83);
+  });
+
+  it('returns null when no source has a value for the day', () => {
+    const input = { entries: {}, metricReadings: [], profile: profile(), contextNotes: [] };
+    expect(resolveMetricOnDay(input, 'weight', '2026-07-21', today)).toBeNull();
+    expect(resolveMetricSeries(input, 'weight', today)).toEqual([]);
+  });
+
+  it('resolves body_fat_pct from the onboarding baseline when nothing else exists', () => {
+    const input = {
+      entries: { '2026-07-21': entry('2026-07-21') },
+      metricReadings: [],
+      profile: profile({ bodyFatPct: 19 }),
+      contextNotes: [],
+    };
+    expect(resolveMetricOnDay(input, 'body_fat_pct', '2026-07-21', today)).toBe(19);
   });
 
   it('no goals: context metrics are neutral (no decisive intent)', () => {

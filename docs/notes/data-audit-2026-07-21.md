@@ -121,10 +121,24 @@ to fat). And it uses **zero integration data** (no steps/cardio/deficit). Fixes:
       so a low REM reads yellow while adequate deep reads green (consistent).
 
 **Track B — the source-of-truth layer (the real fix for the whole thesis):**
-- B1. A single `resolveMetric(metricId, day)` that every surface (charts, verdict, ledger,
-      AI context, Journal) reads, with an explicit **priority chain per metric** (measured
-      > derived > computed > baseline) and a `provenance` tag. Kills the "computed here,
-      invisible there" class of bug for good. Pairs with the source-badge work (F4).
+- B1. ✅ **Foundation landed.** The canonical accessor is in the facade:
+      `resolveMetricSeries(input, metricId, today, opts)` and `resolveMetricOnDay(...)`
+      return a metric's value(s) using the SAME merge as the charts (manual ∪ integration
+      ∪ derived ∪ computed), plus `toChartProfile()` (the one LocalProfile→ChartProfile
+      conversion). Tested. This is what every consumer should read.
+      **Body-fat reframe:** the 4 non-chart `bodyFatNavy` sites are NOT duplication to
+      unify — they legitimately want Navy-from-measurements (health-writeback *produces*
+      the value it writes; photo-capture wants a live typed estimate). Only the chart
+      wanted the chain, and A2 already fixed that. So no `resolveBodyFat` extraction.
+- B2. ⏳ **Per-module migration (incremental, remaining).** Point each bypassing consumer
+      at `resolveMetricSeries` instead of re-reading raw `entries`/`metricReadings`. Each
+      is delicate (changes the module's inputs + its tests), so do them one at a time with
+      verification. Priority by real inconsistency:
+      - `analysis-context` caller (progress-photos): AI photo context reads manual-only
+        weight → misses a wearable weight. Overlay resolved weight.
+      - `energy-balance`: TDEE from weight/intake — confirm it sees integration weight.
+      - `anomaly`, `narrative`, `attribution`: resolve their outcome values.
+      - `signal-ledger`: events, not values → handled in Track C, not here.
 
 **Track C — attribution rework (4e, the "what moved it" fix):**
 - C1. Metric-relevance filter on the ledger (effect-tag match for doses; responsive-metric

@@ -16,6 +16,7 @@ import {
   CHART_METRICS,
   DEFAULT_CHART_METRIC_IDS,
   type ChartProfile,
+  type DatedPoint,
   type MetricSeries,
 } from '@/lib/chart-series';
 import { usesFemaleFormula } from '@/lib/body-composition';
@@ -107,31 +108,11 @@ export function selectChartSeries(
     windowStart = startKeys[0];
   }
 
-  // LocalProfile → ChartProfile: derive the fields Navy needs (heightCm, female)
-  // + the body-fat baseline. Previously the raw LocalProfile was passed, so
-  // heightCm was always undefined and the Navy body-fat series never computed
-  // (Track A2 — this is why the chart was empty even with measurements).
-  const p = input.profile;
-  const chartProfile: ChartProfile = {
-    dobISO: p.dobISO,
-    sex: p.sex,
-    units: p.units,
-    estimatedMetricsMode: p.estimatedMetricsMode,
-    female: usesFemaleFormula(p.sex),
-    heightCm:
-      typeof p.height === 'number'
-        ? p.units === 'imperial'
-          ? p.height * 2.54
-          : p.height
-        : undefined,
-    bodyFatPct: p.bodyFatPct,
-  };
-
   const series = buildMetricSeries({
     selectedIds,
     entries: input.entries,
     metricReadings: input.metricReadings,
-    profile: chartProfile,
+    profile: toChartProfile(input.profile),
     windowStart,
     windowEnd: today,
     excludeDates: input.contextNotes?.length
@@ -144,6 +125,71 @@ export function selectChartSeries(
 function shiftBack(dateKey: string, days: number): string {
   const t = new Date(`${dateKey}T00:00:00.000Z`).getTime() - days * 24 * 60 * 60 * 1000;
   return new Date(t).toISOString().slice(0, 10);
+}
+
+/**
+ * LocalProfile → ChartProfile: derive the fields the series builder needs that
+ * aren't stored directly (heightCm from height+units, female from sex) + carry the
+ * body-fat baseline. The one place this conversion lives, so every metric read
+ * agrees on height/sex (Track A2 fixed the bug where the raw profile was passed
+ * and heightCm was always undefined).
+ */
+export function toChartProfile(p: LocalProfile): ChartProfile {
+  return {
+    dobISO: p.dobISO,
+    sex: p.sex,
+    units: p.units,
+    estimatedMetricsMode: p.estimatedMetricsMode,
+    female: usesFemaleFormula(p.sex),
+    heightCm:
+      typeof p.height === 'number' ? (p.units === 'imperial' ? p.height * 2.54 : p.height) : undefined,
+    bodyFatPct: p.bodyFatPct,
+  };
+}
+
+/** Store slice the metric resolver reads. */
+export type ResolverInput = Pick<FacadeInput, 'entries' | 'metricReadings' | 'profile' | 'contextNotes'>;
+
+/**
+ * THE canonical value of a metric over a window (Track B). Every surface that
+ * needs "what did metric X do" should read this instead of re-deriving from raw
+ * `entries`/`metricReadings`, so charts, verdict, AI context, and insights can
+ * never disagree. Merges manual ∪ integration ∪ derived ∪ computed exactly as the
+ * charts do (it IS `buildMetricSeries` for one metric).
+ */
+export function resolveMetricSeries(
+  input: ResolverInput,
+  metricId: string,
+  today: string,
+  opts?: { windowDays?: number },
+): DatedPoint[] {
+  const windowStart = opts?.windowDays ? shiftBack(today, opts.windowDays - 1) : undefined;
+  const series = buildMetricSeries({
+    selectedIds: [metricId],
+    entries: input.entries,
+    metricReadings: input.metricReadings,
+    profile: toChartProfile(input.profile),
+    windowStart,
+    windowEnd: today,
+    excludeDates: input.contextNotes?.length
+      ? new Set(input.contextNotes.map((n) => n.dateKey))
+      : undefined,
+  });
+  return series[0]?.primary ?? [];
+}
+
+/**
+ * The canonical value of a metric on a specific day, or null when no source has a
+ * value for it that day. Thin per-day read over {@link resolveMetricSeries}.
+ */
+export function resolveMetricOnDay(
+  input: ResolverInput,
+  metricId: string,
+  dayKey: string,
+  today: string,
+): number | null {
+  const pt = resolveMetricSeries(input, metricId, today).find((p) => p.dateKey === dayKey);
+  return pt ? pt.value : null;
 }
 
 /** Compact protocol context: earliest start, weeks-in, and the active compounds. */
