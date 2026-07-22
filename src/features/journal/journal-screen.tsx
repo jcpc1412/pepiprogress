@@ -6,15 +6,16 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { TextButton } from '@/components/form';
-import { ChevronRightIcon } from '@/components/icons';
+import { ChevronRightIcon, GearIcon } from '@/components/icons';
 import {
   CompletenessDots,
   SourceBadge,
   ValueRow,
   WeekStrip,
+  type RowEdit,
   type WeekDay,
 } from '@/components/journal-primitives';
-import { Card, Divider, EngravedLabel, Placeholder } from '@/components/surface';
+import { Card, Divider, EngravedLabel } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
@@ -45,8 +46,8 @@ import { useToday } from '@/lib/today';
 export function JournalScreen() {
   const { t, i18n } = useTranslation();
   const router = useRouter();
-  const { openLogging } = useOverlay();
-  const { entries, doseEvents, symptomEvents, photos, profile } = useStore();
+  const { openLogging, openSettings } = useOverlay();
+  const { entries, doseEvents, symptomEvents, photos, profile, upsertCheckin } = useStore();
 
   const today = useToday();
   const dayKeyOf = (iso: string) => localDateKey(new Date(iso));
@@ -97,32 +98,71 @@ export function JournalScreen() {
     [profile.goals, profile.compoundSlugs],
   );
   const comp = completeness(entry, trackedFields);
+  // First few tracked fields, for the empty-day placeholder rows (B3-04).
+  const placeholderFields = useMemo(() => trackedFields.slice(0, 5), [trackedFields]);
 
   const unit = profile.units === 'imperial' ? t('units.lb') : t('units.kg');
   const munit = profile.units === 'imperial' ? t('measurements.unitIn') : t('measurements.unitCm');
 
   // Check-in rows: show what's actually there (calm — missing fields aren't listed).
+  // Numeric + text fields are tap-to-edit inline (B3-08): committing writes straight
+  // to the day's check-in via upsertCheckin.
   const rows = useMemo(() => {
-    const out: { key: string; label: string; value: string; source?: LogSource }[] = [];
+    const out: { key: string; label: string; value: string; source?: LogSource; edit?: RowEdit }[] = [];
     if (!entry) return out;
     const src = (f: string) => checkinFieldSource(entry, f);
-    if (typeof entry.weight === 'number') out.push({ key: 'weight', label: t('fields.weight'), value: `${entry.weight} ${unit}`, source: src('weight') });
+    const write = (field: string, v: number | string) =>
+      upsertCheckin(selected, { [field]: v } as Partial<typeof entry>);
+    const numEdit = (field: string, label: string, raw: number, unitStr?: string, scale?: boolean): RowEdit => ({
+      raw: String(raw),
+      unit: unitStr,
+      numeric: true,
+      a11yLabel: t('journal.editField', { field: label }),
+      onCommit: (next) => {
+        const n = Number(next);
+        if (!next || Number.isNaN(n)) return;
+        write(field, scale ? Math.max(1, Math.min(5, Math.round(n))) : n);
+      },
+    });
+    const textEdit = (field: string, label: string, raw: string): RowEdit => ({
+      raw,
+      numeric: false,
+      a11yLabel: t('journal.editField', { field: label }),
+      onCommit: (next) => write(field, next),
+    });
+
+    if (typeof entry.weight === 'number') {
+      const l = t('fields.weight');
+      out.push({ key: 'weight', label: l, value: `${entry.weight} ${unit}`, source: src('weight'), edit: numEdit('weight', l, entry.weight, unit) });
+    }
     const scales: CheckinField[] = ['sleep_quality', 'wellness', 'appetite', 'energy', 'soreness', 'workout_effort', 'libido'];
     for (const s of scales) {
       const v = entry[s as keyof typeof entry];
-      if (typeof v === 'number') out.push({ key: s, label: t(`fields.${s}` as 'fields.energy'), value: t('journal.scaleValue', { v }), source: src(s) });
+      if (typeof v === 'number') {
+        const l = t(`fields.${s}` as 'fields.energy');
+        out.push({ key: s, label: l, value: t('journal.scaleValue', { v }), source: src(s), edit: numEdit(s, l, v, undefined, true) });
+      }
     }
-    if (typeof entry.protein === 'number') out.push({ key: 'protein', label: t('fields.protein'), value: `${entry.protein} ${t('units.g')}`, source: src('protein') });
-    if (typeof entry.calories === 'number') out.push({ key: 'calories', label: t('fields.calories'), value: `${entry.calories} ${t('units.kcal')}`, source: src('calories') });
+    if (typeof entry.protein === 'number') {
+      const l = t('fields.protein');
+      out.push({ key: 'protein', label: l, value: `${entry.protein} ${t('units.g')}`, source: src('protein'), edit: numEdit('protein', l, entry.protein, t('units.g')) });
+    }
+    if (typeof entry.calories === 'number') {
+      const l = t('fields.calories');
+      out.push({ key: 'calories', label: l, value: `${entry.calories} ${t('units.kcal')}`, source: src('calories'), edit: numEdit('calories', l, entry.calories, t('units.kcal')) });
+    }
     const measures: ('waist' | 'hips' | 'neck' | 'chest' | 'arms' | 'thighs')[] = ['waist', 'hips', 'neck', 'chest', 'arms', 'thighs'];
     for (const m of measures) {
       const v = entry[m];
-      if (typeof v === 'number') out.push({ key: m, label: t(`measurements.${m}` as 'measurements.waist'), value: `${v} ${munit}`, source: src(m) });
+      if (typeof v === 'number') {
+        const l = t(`measurements.${m}` as 'measurements.waist');
+        out.push({ key: m, label: l, value: `${v} ${munit}`, source: src(m), edit: numEdit(m, l, v, munit) });
+      }
     }
-    if (entry.skin_notes) out.push({ key: 'skin_notes', label: t('fields.skin_notes'), value: entry.skin_notes });
-    if (entry.note) out.push({ key: 'note', label: t('fields.note'), value: entry.note });
+    if (entry.skin_notes) out.push({ key: 'skin_notes', label: t('fields.skin_notes'), value: entry.skin_notes, edit: textEdit('skin_notes', t('fields.skin_notes'), entry.skin_notes) });
+    if (entry.note) out.push({ key: 'note', label: t('fields.note'), value: entry.note, edit: textEdit('note', t('fields.note'), entry.note) });
     return out;
-  }, [entry, unit, munit, t]);
+  }, [entry, unit, munit, t, upsertCheckin, selected]);
 
   // Deterministic distillation, matching the Today recap (no per-view AI call).
   const distillation = useMemo(() => {
@@ -147,6 +187,13 @@ export function JournalScreen() {
       <SafeAreaView style={styles.safe} edges={['top']}>
         <View style={styles.header}>
           <EngravedLabel>{t('tabs.journal')}</EngravedLabel>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t('settings.title')}
+            onPress={openSettings}
+            hitSlop={8}>
+            <GearIcon />
+          </Pressable>
         </View>
 
         {/* Week pager + strip */}
@@ -190,6 +237,10 @@ export function JournalScreen() {
             </Card>
           ) : null}
 
+          {/* Log action — above the check-in header (B3-04), routes to the detailed
+              log seeded with this day's existing data (reads as update, not blank). */}
+          <TextButton label={t('journal.addToDay')} onPress={() => openLogging('detailed', undefined, selected)} />
+
           {/* Check-in */}
           {rows.length ? (
             <View style={styles.section}>
@@ -198,7 +249,27 @@ export function JournalScreen() {
                 {rows.map((r, i) => (
                   <View key={r.key}>
                     {i > 0 ? <Divider /> : null}
-                    <ValueRow label={r.label} value={r.value} source={r.source} />
+                    <ValueRow label={r.label} value={r.value} source={r.source} edit={r.edit} />
+                  </View>
+                ))}
+              </View>
+            </View>
+          ) : isEmpty ? (
+            /* Empty day: placeholder rows so it reads as intentional, not a bare box
+               (B3-04). Each is a quiet add link into the log for this day. */
+            <View style={styles.section}>
+              <EngravedLabel>{t('journal.checkin')}</EngravedLabel>
+              <View>
+                {placeholderFields.map((f, i) => (
+                  <View key={f}>
+                    {i > 0 ? <Divider /> : null}
+                    <ValueRow
+                      label={t(`fields.${f}` as 'fields.energy')}
+                      value=""
+                      empty
+                      onAdd={() => openLogging('detailed', undefined, selected)}
+                      addLabel={t('journal.addValue')}
+                    />
                   </View>
                 ))}
               </View>
@@ -259,9 +330,6 @@ export function JournalScreen() {
             </Pressable>
           ) : null}
 
-          {isEmpty ? <Placeholder label={t('journal.emptyDay')} height={72} /> : null}
-
-          <TextButton label={t('journal.addToDay')} onPress={() => openLogging('detailed', undefined, selected)} />
         </ScrollView>
       </SafeAreaView>
     </ThemedView>

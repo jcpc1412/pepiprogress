@@ -1382,6 +1382,8 @@
     "nextWeek": "Next week",
     "hadSymptoms": "symptoms noted",
     "todayRecord": "TODAY'S RECORD",
-    "emptyToday": "Nothing logged yet today."
+    "emptyToday": "Nothing logged yet today.",
+    "editField": "Edit {{field}}",
+    "addValue": "add"
   }
 }

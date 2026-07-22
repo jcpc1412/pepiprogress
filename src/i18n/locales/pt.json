@@ -1382,6 +1382,8 @@
     "nextWeek": "Semana seguinte",
     "hadSymptoms": "sintomas registados",
     "todayRecord": "REGISTO DE HOJE",
-    "emptyToday": "Ainda nada registado hoje."
+    "emptyToday": "Ainda nada registado hoje.",
+    "editField": "Editar {{field}}",
+    "addValue": "adicionar"
   }
 }

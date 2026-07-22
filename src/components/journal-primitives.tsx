@@ -1,9 +1,10 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { ChamferBox } from '@/components/chamfer';
 import { ThemedText } from '@/components/themed-text';
-import { Chamfer, Spacing } from '@/constants/theme';
+import { Chamfer, Fonts, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import type { LogSource } from '@/lib/journal-day';
 
@@ -146,10 +147,22 @@ export function WeekStrip({
   );
 }
 
+/** Inline-edit config for a ValueRow (B3-08): tapping the value turns it into a
+ *  field seeded with `raw`; committing calls `onCommit` with the new text. `unit`
+ *  is a fixed suffix shown beside the field but not edited. */
+export type RowEdit = {
+  raw: string;
+  unit?: string;
+  numeric?: boolean;
+  onCommit: (next: string) => void;
+  a11yLabel: string;
+};
+
 /**
  * One "label · value · source" row for the day-in-review. When `empty` + `onAdd`
  * are supplied, the value slot becomes a quiet underlined add link instead — the
- * only nudge the Journal ever makes.
+ * only nudge the Journal ever makes. When `edit` is supplied, tapping the value
+ * turns it into an inline editable field (B3-08).
  */
 export function ValueRow({
   label,
@@ -158,6 +171,7 @@ export function ValueRow({
   empty,
   onAdd,
   addLabel,
+  edit,
 }: {
   label: string;
   value: string;
@@ -165,7 +179,25 @@ export function ValueRow({
   empty?: boolean;
   onAdd?: () => void;
   addLabel?: string;
+  edit?: RowEdit;
 }) {
+  const theme = useTheme();
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState('');
+
+  // Safe reads (no non-null assertion): React Compiler can hoist a `edit!.raw`
+  // dependency and evaluate it at render, which throws for rows without `edit`.
+  const editRaw = edit?.raw ?? '';
+  const begin = () => {
+    setDraft(editRaw);
+    setEditing(true);
+  };
+  const commit = () => {
+    setEditing(false);
+    const next = draft.trim();
+    if (edit && next !== editRaw.trim()) edit.onCommit(next);
+  };
+
   return (
     <View style={styles.row}>
       <ThemedText type="body" themeColor="textSecondary" style={styles.rowKey}>
@@ -177,6 +209,36 @@ export function ValueRow({
             <ThemedText type="monoSm" themeColor="textMuted" style={styles.add}>
               {addLabel}
             </ThemedText>
+          </Pressable>
+        ) : editing && edit ? (
+          <>
+            <TextInput
+              value={draft}
+              onChangeText={setDraft}
+              onBlur={commit}
+              onSubmitEditing={commit}
+              autoFocus
+              selectTextOnFocus
+              keyboardType={edit.numeric ? 'numeric' : 'default'}
+              accessibilityLabel={edit.a11yLabel}
+              style={[styles.input, { color: theme.text, borderColor: theme.accent }]}
+            />
+            {edit.unit ? (
+              <ThemedText type="mono" themeColor="textMuted">
+                {edit.unit}
+              </ThemedText>
+            ) : null}
+          </>
+        ) : edit ? (
+          <Pressable
+            onPress={begin}
+            accessibilityRole="button"
+            accessibilityLabel={edit.a11yLabel}
+            style={styles.rowVal}>
+            <ThemedText type="mono" themeColor={empty ? 'textMuted' : 'text'}>
+              {value}
+            </ThemedText>
+            {source ? <SourceBadge source={source} /> : null}
           </Pressable>
         ) : (
           <>
@@ -200,12 +262,15 @@ const styles = StyleSheet.create({
   dot: { width: 5, height: 5, borderRadius: 2.5, borderWidth: StyleSheet.hairlineWidth },
   cap: { marginLeft: Spacing.one, letterSpacing: 0.5 },
 
-  // WeekStrip
+  // WeekStrip. An explicit cell height is required: ChamferBox sizes its SVG from
+  // the measured box, and a bare `flex:1` gives the cell no intrinsic height on
+  // native, so the chamfer + content collapsed to nothing (B3-02, Android). A fixed
+  // height makes the measurement deterministic on every platform.
   week: { flexDirection: 'row', gap: Spacing.one + 1 },
   dayPress: { flex: 1 },
-  dayFill: { flex: 1 },
+  dayFill: { flex: 1, height: 56 },
   pressed: { opacity: 0.6 },
-  day: { alignItems: 'center', paddingVertical: Spacing.two - 1 },
+  day: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: Spacing.one },
   future: { opacity: 0.3 },
   dayNum: { marginTop: 3 },
   dayDot: { width: 6, height: 6, borderRadius: 3, marginTop: 5, borderWidth: StyleSheet.hairlineWidth },
@@ -215,4 +280,13 @@ const styles = StyleSheet.create({
   rowKey: { flexShrink: 1 },
   rowVal: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
   add: { textDecorationLine: 'underline', letterSpacing: 0.6 },
+  input: {
+    minWidth: 64,
+    paddingVertical: 2,
+    paddingHorizontal: Spacing.one,
+    borderBottomWidth: 1,
+    textAlign: 'right',
+    fontFamily: Fonts.mono,
+    fontSize: 15,
+  },
 });

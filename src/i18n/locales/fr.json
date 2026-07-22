@@ -1382,6 +1382,8 @@
     "nextWeek": "Semaine suivante",
     "hadSymptoms": "symptômes notés",
     "todayRecord": "RELEVÉ DU JOUR",
-    "emptyToday": "Rien enregistré aujourd'hui pour le moment."
+    "emptyToday": "Rien enregistré aujourd'hui pour le moment.",
+    "editField": "Modifier {{field}}",
+    "addValue": "ajouter"
   }
 }
