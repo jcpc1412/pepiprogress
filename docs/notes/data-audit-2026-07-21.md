@@ -110,11 +110,15 @@ to fat). And it uses **zero integration data** (no steps/cardio/deficit). Fixes:
 
 ## 5. Proposed fix order (for owner sign-off)
 
-**Track A — correctness bugs (small, high-trust, do first):**
-- A1. Recovery mislabel (4b) — new `recovery` metric id, up_good. ~1 screen + engine + i18n.
-- A2. Body-fat source chain (4a) — Health `body.fat_pct` → Navy → profile baseline.
-- A3. Sleep-stage norm-band coloring (4c) — score deep/rem % against clinical bands, add
-      a "watch" (yellow) state; guard the suspicious raw values.
+**Track A — correctness bugs (small, high-trust, do first): ✅ DONE + browser-verified.**
+- A1. ✅ Recovery reads up_good (was down_good under the `soreness` id → 5/5 rendered
+      red; now green). Rename of the id deferred (touches store schema).
+- A2. ✅ Body-fat source chain — Health `body.fat_pct` → Navy (heightCm now derived; it
+      was always undefined, so the Navy path had been dead) → profile baseline. Chart
+      populates instead of always-empty.
+- A3. ✅ Sleep stages output the real % (not a 1-5 z-score shown as "%") and color
+      against clinical norm bands; a favourable move on a still-low band caps at watch,
+      so a low REM reads yellow while adequate deep reads green (consistent).
 
 **Track B — the source-of-truth layer (the real fix for the whole thesis):**
 - B1. A single `resolveMetric(metricId, day)` that every surface (charts, verdict, ledger,
