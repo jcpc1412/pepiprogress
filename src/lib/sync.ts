@@ -1,5 +1,11 @@
 import i18next from 'i18next';
 
+import {
+  buildMirrorRows,
+  carryEntity,
+  diffEntity,
+  type MirrorRow,
+} from '@/lib/normalized-mirror';
 import type {
   CheckinEntry,
   DoseEvent,
@@ -11,12 +17,19 @@ import type {
   SymptomEvent,
 } from '@/lib/store';
 import { supabase } from '@/lib/supabase';
-import type { Json } from '@/types/database';
+import type { Json, TablesInsert } from '@/types/database';
 
 export type SyncResult = { ok: boolean; errors: string[] };
 
 /** Alias so callers don't need to import the internal PersistedState version field. */
 export type SyncableState = PersistedState;
+
+/** Flat map of `entity:key` → content hash, tracking what the normalized mirror
+ *  last wrote so the next push only touches changed rows. Held in memory by
+ *  {@link NormalizedMirror} for the session; a fresh session re-mirrors the
+ *  whole backlog (idempotent). */
+export type MirrorHashes = Record<string, string>;
+export type MirrorRunResult = { errors: string[]; nextHashes: MirrorHashes };
 
 async function fetchSlugMap(): Promise<Map<string, string>> {
   const { data, error } = await supabase.from('compound').select('id, slug');
@@ -29,146 +42,169 @@ async function fetchSlugMap(): Promise<Map<string, string>> {
 }
 
 /**
- * One-time upload of all local data to Supabase. Called immediately after sign-up.
- * All inserts are best-effort: partial failures are collected in `errors` but do not
- * abort the rest of the migration.
+ * F6 one-way normalized mirror (MASTER-PLAN §F6). Best-effort, idempotent upserts
+ * of the community-aggregation entities (profile + check-ins, doses, symptoms,
+ * protocol + items, inventory) into the normalized tables, keyed by the local
+ * store id (`client_id`) so re-runs never duplicate. Local removals hard-delete
+ * by key. `prevHashes` skips unchanged rows; pass `{}` for a full backlog pass
+ * (sign-up, or a fresh session). The snapshot blob stays the source of truth for
+ * restore/merge, so this never flows back down and needs no conflict resolution.
+ *
+ * Metric readings, Pepi chat, the ledger, strength/benchmarks, context notes, and
+ * the quick-log queue stay snapshot-only (owner decision). Photos have their own
+ * per-entity path (`PhotoSync` → `photo` row), so they aren't mirrored here.
+ */
+export async function mirrorEntities(
+  state: PersistedState,
+  userId: string,
+  prevHashes: MirrorHashes,
+): Promise<MirrorRunResult> {
+  const errors: string[] = [];
+  const slugMap = await fetchSlugMap();
+  const build = buildMirrorRows(state, slugMap, i18next.language ?? 'en');
+  const next: MirrorHashes = {};
+
+  // Injects the parent key onto each payload and casts to the table's Insert
+  // type — the payloads are built with the exact snake_case columns, so the cast
+  // is safe (payloads are dynamic Records the generated types can't infer).
+  const withUser = <T>(rows: MirrorRow[]) =>
+    rows.map((r) => ({ user_id: userId, ...r.payload })) as T[];
+
+  // ── user_profile — always upserted (keeps goals/consent fresh for aggregation) ─
+  {
+    const { error } = await supabase
+      .from('user_profile')
+      .upsert({ id: userId, ...build.profile } as TablesInsert<'user_profile'>);
+    if (error) errors.push(`profile: ${error.message}`);
+  }
+
+  // ── log_entry (natural key user_id,date) ─────────────────────────────────
+  {
+    const diff = diffEntity('log_entry', build.logEntries, prevHashes);
+    let failed = false;
+    if (diff.upserts.length) {
+      const { error } = await supabase
+        .from('log_entry')
+        .upsert(withUser<TablesInsert<'log_entry'>>(diff.upserts), { onConflict: 'user_id,date' });
+      if (error) {
+        errors.push(`log_entry: ${error.message}`);
+        failed = true;
+      }
+    }
+    if (!failed && diff.deleteKeys.length) {
+      const { error } = await supabase
+        .from('log_entry')
+        .delete()
+        .eq('user_id', userId)
+        .in('date', diff.deleteKeys);
+      if (error) errors.push(`log_entry delete: ${error.message}`);
+    }
+    Object.assign(next, failed ? carryEntity('log_entry', prevHashes) : diff.next);
+  }
+
+  // ── protocol + protocol_item ─────────────────────────────────────────────
+  // Items live under one mirrored protocol per user (client_id 'local-default').
+  // Resolve/create it only when there is something to mirror or clean up, and
+  // skip entirely when compounds couldn't resolve (else every item looks gone).
+  {
+    const hadItems = Object.keys(prevHashes).some((k) => k.startsWith('protocol_item:'));
+    const shouldRun = build.compoundsResolvable && (build.protocolItems.length > 0 || hadItems);
+    if (!shouldRun) {
+      Object.assign(next, carryEntity('protocol_item', prevHashes));
+    } else {
+      const { data: proto, error: protoErr } = await supabase
+        .from('protocol')
+        .upsert(
+          {
+            user_id: userId,
+            client_id: 'local-default',
+            status: 'active',
+            notes: 'Local mirror',
+            updated_at: new Date().toISOString(),
+          } as TablesInsert<'protocol'>,
+          { onConflict: 'user_id,client_id' },
+        )
+        .select('id')
+        .single();
+      if (protoErr || !proto) {
+        errors.push(`protocol: ${protoErr?.message ?? 'no id returned'}`);
+        Object.assign(next, carryEntity('protocol_item', prevHashes));
+      } else {
+        const protocolId = proto.id;
+        const diff = diffEntity('protocol_item', build.protocolItems, prevHashes);
+        let failed = false;
+        if (diff.upserts.length) {
+          const rows = diff.upserts.map(
+            (r) => ({ protocol_id: protocolId, ...r.payload }) as TablesInsert<'protocol_item'>,
+          );
+          const { error } = await supabase
+            .from('protocol_item')
+            .upsert(rows, { onConflict: 'protocol_id,client_id' });
+          if (error) {
+            errors.push(`protocol_item: ${error.message}`);
+            failed = true;
+          }
+        }
+        if (!failed && diff.deleteKeys.length) {
+          const { error } = await supabase
+            .from('protocol_item')
+            .delete()
+            .eq('protocol_id', protocolId)
+            .in('client_id', diff.deleteKeys);
+          if (error) errors.push(`protocol_item delete: ${error.message}`);
+        }
+        Object.assign(next, failed ? carryEntity('protocol_item', prevHashes) : diff.next);
+      }
+    }
+  }
+
+  // ── dose_event / symptom_event / inventory_item (key user_id,client_id) ───
+  const byClientId: {
+    entity: 'dose_event' | 'symptom_event' | 'inventory_item';
+    rows: MirrorRow[];
+  }[] = [
+    { entity: 'dose_event', rows: build.doseEvents },
+    { entity: 'symptom_event', rows: build.symptomEvents },
+    { entity: 'inventory_item', rows: build.inventoryItems },
+  ];
+  for (const { entity, rows } of byClientId) {
+    const diff = diffEntity(entity, rows, prevHashes);
+    let failed = false;
+    if (diff.upserts.length) {
+      const { error } = await supabase
+        // Table name is a checked literal union member; payloads are pre-shaped.
+        .from(entity)
+        .upsert(withUser<never>(diff.upserts), { onConflict: 'user_id,client_id' });
+      if (error) {
+        errors.push(`${entity}: ${error.message}`);
+        failed = true;
+      }
+    }
+    if (!failed && diff.deleteKeys.length) {
+      const { error } = await supabase
+        .from(entity)
+        .delete()
+        .eq('user_id', userId)
+        .in('client_id', diff.deleteKeys);
+      if (error) errors.push(`${entity} delete: ${error.message}`);
+    }
+    Object.assign(next, failed ? carryEntity(entity, prevHashes) : diff.next);
+  }
+
+  return { errors, nextHashes: next };
+}
+
+/**
+ * Full backlog upload of local data to the normalized tables. Called after
+ * sign-up (and social first-sign-in). Delegates to the idempotent
+ * {@link mirrorEntities} with no prior hashes, so it is safe to re-run and shares
+ * one code path with the continuous mirror.
  */
 export async function migrateToCloud(
   state: PersistedState,
   userId: string,
 ): Promise<SyncResult> {
-  const errors: string[] = [];
-
-  // 1 — user_profile
-  const { error: profileErr } = await supabase.from('user_profile').upsert({
-    id: userId,
-    units: state.profile.units,
-    goals: state.profile.goals,
-    locale: i18next.language ?? 'en',
-    date_of_birth: state.profile.dobISO ? state.profile.dobISO.slice(0, 10) : null,
-    photo_storage_consent: state.profile.consentPhotoStorage ?? false,
-    photo_ai_opt_in: state.profile.consentPhotoAI ?? false,
-    community_opt_in: state.profile.consentCommunity ?? false,
-  });
-  if (profileErr) errors.push(`profile: ${profileErr.message}`);
-
-  const slugMap = await fetchSlugMap();
-
-  // 2 — log_entry (daily check-ins)
-  const logRows = Object.values(state.entries).map((e) => ({
-    user_id: userId,
-    date: e.date,
-    weight: e.weight ?? null,
-    sleep_quality: e.sleep_quality ?? null,
-    wellness: e.wellness ?? null,
-    appetite: e.appetite ?? null,
-    energy: e.energy ?? null,
-    soreness: e.soreness ?? null,
-    workout_effort: e.workout_effort ?? null,
-    libido: e.libido ?? null,
-    skin_notes: e.skin_notes ?? null,
-    measurements: e.measurements ?? null,
-    note: e.note ?? null,
-    updated_at: e.updatedAt,
-  }));
-  if (logRows.length) {
-    const { error } = await supabase
-      .from('log_entry')
-      .upsert(logRows, { onConflict: 'user_id,date' });
-    if (error) errors.push(`log_entries: ${error.message}`);
-  }
-
-  // 3 — symptom_event
-  const symptomRows = state.symptomEvents.map((s) => ({
-    user_id: userId,
-    type: s.type,
-    onset_at: s.onsetAt,
-    duration: s.durationMinutes ? `${s.durationMinutes} minutes` : null,
-    severity: s.severity ?? null,
-    note: s.note ?? null,
-  }));
-  if (symptomRows.length) {
-    const { error } = await supabase.from('symptom_event').insert(symptomRows);
-    if (error) errors.push(`symptom_events: ${error.message}`);
-  }
-
-  // 4 — protocol + items (group all local items under one "Default Protocol" row)
-  const itemsWithCompound = state.protocolItems.filter((p) => slugMap.has(p.compoundSlug));
-  if (itemsWithCompound.length) {
-    const { data: proto, error: protoErr } = await supabase
-      .from('protocol')
-      .insert({ user_id: userId, status: 'active', notes: 'Migrated from local' })
-      .select('id')
-      .single();
-    if (protoErr || !proto) {
-      errors.push(`protocol: ${protoErr?.message ?? 'no id returned'}`);
-    } else {
-      const itemRows = itemsWithCompound.map((p) => ({
-        protocol_id: proto.id,
-        compound_id: slugMap.get(p.compoundSlug)!,
-        dose: p.dose ?? null,
-        dose_unit: p.doseUnit ?? null,
-        route: p.route ?? null,
-        frequency: p.frequency ? { kind: p.frequency } : null,
-      }));
-      const { error } = await supabase.from('protocol_item').insert(itemRows);
-      if (error) errors.push(`protocol_items: ${error.message}`);
-    }
-  }
-
-  // 5 — dose_event
-  const doseRows = state.doseEvents.map((d) => ({
-    user_id: userId,
-    taken_at: d.takenAt,
-    dose: d.dose ?? null,
-    dose_unit: d.doseUnit ?? null,
-    site: d.site ?? null,
-    compound_id: d.compoundSlug ? (slugMap.get(d.compoundSlug) ?? null) : null,
-  }));
-  if (doseRows.length) {
-    const { error } = await supabase.from('dose_event').insert(doseRows);
-    if (error) errors.push(`dose_events: ${error.message}`);
-  }
-
-  // 6 — inventory_item
-  const inventoryRows = state.inventory.map((i) => ({
-    user_id: userId,
-    kind: i.kind,
-    compound_id: i.compoundSlug ? (slugMap.get(i.compoundSlug) ?? null) : null,
-    label: i.label ?? null,
-    concentration: i.concentration ?? null,
-    amount_remaining: i.amountRemaining ?? null,
-    unit: i.unit ?? null,
-    low_threshold: i.lowThreshold ?? null,
-    expiry: i.expiry ?? null,
-    vendor: i.vendor ?? null,
-  }));
-  if (inventoryRows.length) {
-    const { error } = await supabase.from('inventory_item').insert(inventoryRows);
-    if (error) errors.push(`inventory: ${error.message}`);
-  }
-
-  // 7 — photo metadata (local URI as placeholder until bucket upload lands)
-  const photoRows = state.photos.map((p) => ({
-    user_id: userId,
-    session_type: p.session,
-    captured_at: p.takenAt,
-    // Prefer the uploaded bucket path so the row points at the real Storage
-    // object; fall back to the local uri only if the upload hasn't run yet.
-    storage_path: p.cloudPath ?? p.uri,
-    capture_meta: { view: p.view ?? 'front', tilt: p.tilt ?? null, luma: p.luma ?? null, distance_proxy: p.boxRatio ?? null },
-    ai_meta:
-      p.driftScore !== undefined
-        ? { drift_score: p.driftScore, comparable: p.comparable ?? false }
-        : null,
-    storage_consent: state.profile.consentPhotoStorage ?? false,
-    ai_consent: state.profile.consentPhotoAI ?? false,
-  }));
-  if (photoRows.length) {
-    const { error } = await supabase.from('photo').insert(photoRows);
-    if (error) errors.push(`photos: ${error.message}`);
-  }
-
+  const { errors } = await mirrorEntities(state, userId, {});
   return { ok: errors.length === 0, errors };
 }
 

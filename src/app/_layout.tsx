@@ -15,6 +15,7 @@ import { InstrumentBackground } from '@/components/instrument-background';
 import { AuthGate } from '@/features/auth/auth-gate';
 import { AuthProvider } from '@/lib/auth';
 import { CloudSync } from '@/lib/cloud-sync';
+import { NormalizedMirror } from '@/lib/normalized-mirror-runner';
 import { PhotoSync } from '@/lib/photo-sync';
 import { TodayProvider } from '@/lib/today';
 import { IntegrationSync } from '@/lib/integration-sync';
@@ -56,6 +57,9 @@ function RootContent() {
       {/* Backfills photo uploads whenever signed in, so photos exist in the
           cloud regardless of which tab the user visits; renders nothing. */}
       <PhotoSync />
+      {/* One-way mirror of community-aggregation entities into the normalized
+          tables while signed in (F6); renders nothing. */}
+      <NormalizedMirror />
       {/* Keeps a shared "today" that actually changes at midnight, so screens
           left open overnight stop rendering yesterday (W7-46). */}
       <TodayProvider>

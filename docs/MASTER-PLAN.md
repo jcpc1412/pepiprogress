@@ -726,7 +726,23 @@ discoveries instead of generic warmth; **a fixed photo-pair eval set is built
 before hard prompt iteration** (bias-toward-uncertainty gate: changes must be
 provably better, not just different).
 
-### F6. Normalized cloud mirror (scoped with owner 2026-07-21) — next infra item
+### F6. Normalized cloud mirror ✅ (built 2026-07-22)
+Shipped as scoped. Migration `20260722160000_normalized_mirror_f6.sql` (applied
++ types regenerated): `client_id` + `updated_at` + unique `(user_id, client_id)`
+on dose/symptom/inventory/protocol/protocol_item, plus the gap-fill columns
+(log_entry nutrition + structured measurements; dose_event slot_key/extra;
+protocol_item dose_days/started_at/schedule_anchor/concentration; inventory
+amount_initial). Pure diff core `src/lib/normalized-mirror.ts` (hash-based dirty
+detection + delete-by-key, 14 tests); impure writer `mirrorEntities` in
+`src/lib/sync.ts` (idempotent upserts + hard-delete, one code path shared with
+`migrateToCloud`, which now delegates to it); driver `NormalizedMirror`
+(`normalized-mirror-runner.tsx`) mounted beside CloudSync, debounced + AppState
+flush. Photos keep their own path (`PhotoSync`); the migrate photo INSERT was
+removed so it can't duplicate. Consent gate stays at aggregation (rows are
+owner-only RLS; the mirror always runs). Pure JS + one migration; no native
+rebuild.
+
+Original scope (for reference):
 Found during the all-tables sanity check: every normalized table is empty except
 `user_profile` + the seed catalog, because `migrateToCloud` runs exactly once at
 sign-up (owner's account was empty then) and everything since flows only to the

@@ -149,36 +149,48 @@ export type Database = {
       }
       dose_event: {
         Row: {
+          client_id: string | null
           compound_id: string | null
           created_at: string
           dose: number | null
           dose_unit: string | null
+          extra: boolean | null
           id: string
           protocol_item_id: string | null
           site: string | null
+          slot_key: string | null
           taken_at: string
+          updated_at: string
           user_id: string
         }
         Insert: {
+          client_id?: string | null
           compound_id?: string | null
           created_at?: string
           dose?: number | null
           dose_unit?: string | null
+          extra?: boolean | null
           id?: string
           protocol_item_id?: string | null
           site?: string | null
+          slot_key?: string | null
           taken_at?: string
+          updated_at?: string
           user_id: string
         }
         Update: {
+          client_id?: string | null
           compound_id?: string | null
           created_at?: string
           dose?: number | null
           dose_unit?: string | null
+          extra?: boolean | null
           id?: string
           protocol_item_id?: string | null
           site?: string | null
+          slot_key?: string | null
           taken_at?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: [
@@ -233,7 +245,9 @@ export type Database = {
       }
       inventory_item: {
         Row: {
+          amount_initial: number | null
           amount_remaining: number | null
+          client_id: string | null
           compound_id: string | null
           concentration: number | null
           created_at: string
@@ -243,11 +257,14 @@ export type Database = {
           label: string | null
           low_threshold: number | null
           unit: string | null
+          updated_at: string
           user_id: string
           vendor: string | null
         }
         Insert: {
+          amount_initial?: number | null
           amount_remaining?: number | null
+          client_id?: string | null
           compound_id?: string | null
           concentration?: number | null
           created_at?: string
@@ -257,11 +274,14 @@ export type Database = {
           label?: string | null
           low_threshold?: number | null
           unit?: string | null
+          updated_at?: string
           user_id: string
           vendor?: string | null
         }
         Update: {
+          amount_initial?: number | null
           amount_remaining?: number | null
+          client_id?: string | null
           compound_id?: string | null
           concentration?: number | null
           created_at?: string
@@ -271,6 +291,7 @@ export type Database = {
           label?: string | null
           low_threshold?: number | null
           unit?: string | null
+          updated_at?: string
           user_id?: string
           vendor?: string | null
         }
@@ -349,54 +370,84 @@ export type Database = {
       log_entry: {
         Row: {
           appetite: number | null
+          arms: number | null
+          calories: number | null
+          chest: number | null
           created_at: string
           date: string
           energy: number | null
+          extra_measurement_key: string | null
+          extra_measurement_value: number | null
+          hips: number | null
           id: string
           libido: number | null
           measurements: string | null
+          neck: number | null
           note: string | null
+          protein: number | null
           skin_notes: string | null
           sleep_quality: number | null
           soreness: number | null
+          thighs: number | null
           updated_at: string
           user_id: string
+          waist: number | null
           weight: number | null
           wellness: number | null
           workout_effort: number | null
         }
         Insert: {
           appetite?: number | null
+          arms?: number | null
+          calories?: number | null
+          chest?: number | null
           created_at?: string
           date: string
           energy?: number | null
+          extra_measurement_key?: string | null
+          extra_measurement_value?: number | null
+          hips?: number | null
           id?: string
           libido?: number | null
           measurements?: string | null
+          neck?: number | null
           note?: string | null
+          protein?: number | null
           skin_notes?: string | null
           sleep_quality?: number | null
           soreness?: number | null
+          thighs?: number | null
           updated_at?: string
           user_id: string
+          waist?: number | null
           weight?: number | null
           wellness?: number | null
           workout_effort?: number | null
         }
         Update: {
           appetite?: number | null
+          arms?: number | null
+          calories?: number | null
+          chest?: number | null
           created_at?: string
           date?: string
           energy?: number | null
+          extra_measurement_key?: string | null
+          extra_measurement_value?: number | null
+          hips?: number | null
           id?: string
           libido?: number | null
           measurements?: string | null
+          neck?: number | null
           note?: string | null
+          protein?: number | null
           skin_notes?: string | null
           sleep_quality?: number | null
           soreness?: number | null
+          thighs?: number | null
           updated_at?: string
           user_id?: string
+          waist?: number | null
           weight?: number | null
           wellness?: number | null
           workout_effort?: number | null
@@ -480,67 +531,91 @@ export type Database = {
       }
       protocol: {
         Row: {
+          client_id: string | null
           created_at: string
           ended_at: string | null
           id: string
           notes: string | null
           started_at: string | null
           status: Database["public"]["Enums"]["protocol_status"]
+          updated_at: string
           user_id: string
         }
         Insert: {
+          client_id?: string | null
           created_at?: string
           ended_at?: string | null
           id?: string
           notes?: string | null
           started_at?: string | null
           status?: Database["public"]["Enums"]["protocol_status"]
+          updated_at?: string
           user_id: string
         }
         Update: {
+          client_id?: string | null
           created_at?: string
           ended_at?: string | null
           id?: string
           notes?: string | null
           started_at?: string | null
           status?: Database["public"]["Enums"]["protocol_status"]
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
       }
       protocol_item: {
         Row: {
+          client_id: string | null
           compound_id: string
+          concentration: number | null
           created_at: string
           dose: number | null
+          dose_days: number[] | null
           dose_unit: string | null
           ester: string | null
           frequency: Json | null
           id: string
           protocol_id: string
           route: Database["public"]["Enums"]["dose_route"] | null
+          schedule_anchor: string | null
+          started_at: string | null
+          updated_at: string
         }
         Insert: {
+          client_id?: string | null
           compound_id: string
+          concentration?: number | null
           created_at?: string
           dose?: number | null
+          dose_days?: number[] | null
           dose_unit?: string | null
           ester?: string | null
           frequency?: Json | null
           id?: string
           protocol_id: string
           route?: Database["public"]["Enums"]["dose_route"] | null
+          schedule_anchor?: string | null
+          started_at?: string | null
+          updated_at?: string
         }
         Update: {
+          client_id?: string | null
           compound_id?: string
+          concentration?: number | null
           created_at?: string
           dose?: number | null
+          dose_days?: number[] | null
           dose_unit?: string | null
           ester?: string | null
           frequency?: Json | null
           id?: string
           protocol_id?: string
           route?: Database["public"]["Enums"]["dose_route"] | null
+          schedule_anchor?: string | null
+          started_at?: string | null
+          updated_at?: string
         }
         Relationships: [
           {
@@ -561,6 +636,7 @@ export type Database = {
       }
       symptom_event: {
         Row: {
+          client_id: string | null
           created_at: string
           duration: string | null
           id: string
@@ -568,9 +644,11 @@ export type Database = {
           onset_at: string
           severity: number | null
           type: string
+          updated_at: string
           user_id: string
         }
         Insert: {
+          client_id?: string | null
           created_at?: string
           duration?: string | null
           id?: string
@@ -578,9 +656,11 @@ export type Database = {
           onset_at: string
           severity?: number | null
           type: string
+          updated_at?: string
           user_id: string
         }
         Update: {
+          client_id?: string | null
           created_at?: string
           duration?: string | null
           id?: string
@@ -588,6 +668,7 @@ export type Database = {
           onset_at?: string
           severity?: number | null
           type?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
