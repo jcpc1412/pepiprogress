@@ -318,23 +318,18 @@ export function deriveMetrics(
 
     // ─── Sleep architecture ───────────────────────────────────────────────────
 
-    // z-score vs own baseline (personal deep% norm varies; self-comparison is honest)
-    const zDeep = baselineZ(sleepDeepPctSeries, dateKey, excludeDates);
-    if (zDeep !== null) {
-      sleepDeepPctOut.set(dateKey, {
-        dateKey,
-        value: Math.max(1, Math.min(5, Math.round(3 + zDeep))),
-        confidence: 1.0,
-      });
+    // Output the REAL percentage (deep÷total, rem÷total), not a 1-5 z-score. These
+    // are `pct`-unit metrics: the prior z-score→1-5 mapping was displayed with a
+    // "%" suffix, so a z=0 day read as a nonsensical "3%" (Track A3). Coloring is
+    // now a clinical norm band in the verdict engine, not a self-baseline z-score.
+    const deepPct = sleepDeepPctSeries.get(dateKey);
+    if (deepPct !== undefined) {
+      sleepDeepPctOut.set(dateKey, { dateKey, value: Math.round(deepPct * 10) / 10, confidence: 1.0 });
     }
 
-    const zRem = baselineZ(sleepRemPctSeries, dateKey, excludeDates);
-    if (zRem !== null) {
-      sleepRemPctOut.set(dateKey, {
-        dateKey,
-        value: Math.max(1, Math.min(5, Math.round(3 + zRem))),
-        confidence: 1.0,
-      });
+    const remPct = sleepRemPctSeries.get(dateKey);
+    if (remPct !== undefined) {
+      sleepRemPctOut.set(dateKey, { dateKey, value: Math.round(remPct * 10) / 10, confidence: 1.0 });
     }
 
     // ─── Protein adequacy ────────────────────────────────────────────────────

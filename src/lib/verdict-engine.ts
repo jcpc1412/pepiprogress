@@ -180,12 +180,29 @@ export function levelBand(
   value: number,
   goodDir: 'up_good' | 'down_good' | null,
 ): LevelBand {
+  // Sleep-stage %: score against CLINICAL norm bands, not a self-baseline z-score
+  // (Track A3). This makes deep + REM color consistently — a clinically-low stage
+  // reads low/watch even if it beats the user's own average, and vice versa.
+  const norm = SLEEP_STAGE_NORMS[metricId];
+  if (norm) {
+    if (value >= norm.good) return 'high';
+    if (value < norm.low) return 'low';
+    return 'mid'; // borderline → watch (yellow)
+  }
   if (unitFor(metricId) !== 'scale5' || !goodDir) return 'none';
   const fav = goodDir === 'down_good' ? 6 - value : value; // higher = better place to be
   if (fav >= 3.8) return 'high';
   if (fav <= 2.4) return 'low';
   return 'mid';
 }
+
+/** Clinical adequacy bands for sleep-stage share of total sleep (% of night).
+ *  Deep ~13-23% healthy; REM ~20-25% healthy. Below `low` = deficient (red),
+ *  `low`..`good` = borderline (watch/yellow), >= `good` = adequate (green). */
+const SLEEP_STAGE_NORMS: Record<string, { low: number; good: number }> = {
+  sleep_deep_pct: { low: 10, good: 13 },
+  sleep_rem_pct: { low: 15, good: 20 },
+};
 
 /** Contextual row tone (redesign R2-C C2). Tone is a function of the level band,
  *  the movement's favourability + magnitude, and whether an adverse move is
@@ -199,7 +216,10 @@ export function computeSignalTone(p: {
   explained: boolean;
 }): SignalTone {
   if (p.trend === 'flat' || p.favourSign === 0) return 'neutral';
-  if (p.favourSign > 0) return 'good'; // favourable movement is always good
+  // Favourable movement is good — UNLESS the level is still in the low band, where
+  // "improving but still deficient" reads as watch (yellow), not green. This is why
+  // a clinically-low REM % that's ticking up is a watch, not an all-clear (A3).
+  if (p.favourSign > 0) return p.band === 'low' ? 'watch' : 'good';
   const material = p.normDev >= 0.5; // adverse move big enough to matter
   switch (p.band) {
     case 'high':

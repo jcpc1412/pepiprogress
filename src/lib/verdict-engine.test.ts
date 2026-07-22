@@ -68,8 +68,11 @@ describe('contextual signal tone (R2-C C2)', () => {
     expect(computeSignalTone({ band: 'low', favourSign: -1, trend: 'down', normDev: 0.8, explained: false })).toBe('bad');
   });
 
-  it('favourable is always good, flat is neutral', () => {
-    expect(computeSignalTone({ band: 'low', favourSign: 1, trend: 'up', normDev: 0.9, explained: false })).toBe('good');
+  it('favourable move is good, except still-low reads watch; flat is neutral', () => {
+    // Improving from a mid/high level = good; improving but still clinically low =
+    // watch, not an all-clear (A3 — e.g. a low REM % ticking up).
+    expect(computeSignalTone({ band: 'high', favourSign: 1, trend: 'up', normDev: 0.9, explained: false })).toBe('good');
+    expect(computeSignalTone({ band: 'low', favourSign: 1, trend: 'up', normDev: 0.9, explained: false })).toBe('watch');
     expect(computeSignalTone({ band: 'mid', favourSign: 0, trend: 'flat', normDev: 0, explained: false })).toBe('neutral');
   });
 
