@@ -71,6 +71,9 @@ export type ChartProfile = DerivedProfile & {
   units?: 'metric' | 'imperial';
   /** Selects the Navy body-fat formula by sex (see usesFemaleFormula). */
   female?: boolean;
+  /** Onboarding body-fat baseline (%). Lowest-priority source in the body_fat_pct
+   *  chain, so the metric is never invisible when a value exists somewhere. */
+  bodyFatPct?: number;
 };
 
 /** Latest date-key across manual entries + integration readings (for anchoring a
@@ -132,9 +135,24 @@ export function buildMetricSeries(opts: {
     // measurements + height. Sparse; the engine's MIN_POINTS gate hides it until
     // enough days carry measurements. bodyFatNavy returns null for incomplete days.
     if (m.computed === 'body_fat_pct') {
+      // Source-of-truth priority chain per day (Track A2): a real device reading
+      // (Health `body.fat_pct`) wins; else the sex-aware Navy estimate from that
+      // day's tape + height; else, if nothing resolved at all, the onboarding
+      // baseline as a single anchor point so the metric is never invisible.
       const primary: DatedPoint[] = [];
+      const seen = new Set<string>();
+
+      const measured = readingsByMetric.get('body.fat_pct');
+      if (measured) {
+        for (const [d, v] of measured) {
+          if (!inWindow(d)) continue;
+          primary.push({ dateKey: d, value: v });
+          seen.add(d);
+        }
+      }
+
       for (const d of entryDates) {
-        if (!inWindow(d)) continue;
+        if (!inWindow(d) || seen.has(d)) continue;
         const e = entries[d];
         if (!e) continue;
         const est = bodyFatNavy({
@@ -145,8 +163,17 @@ export function buildMetricSeries(opts: {
           hip: typeof e.hips === 'number' ? e.hips : undefined,
           female: profile.female,
         });
-        if (est) primary.push({ dateKey: d, value: est.pct });
+        if (est) {
+          primary.push({ dateKey: d, value: est.pct });
+          seen.add(d);
+        }
       }
+
+      if (primary.length === 0 && typeof profile.bodyFatPct === 'number') {
+        const anchor = windowEnd ?? entryDates.slice().sort().at(-1);
+        if (anchor) primary.push({ dateKey: anchor, value: profile.bodyFatPct });
+      }
+
       primary.sort(byDateAsc);
       return { ...m, primary, estimated: [], insightOnly: false };
     }

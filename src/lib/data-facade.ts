@@ -15,8 +15,10 @@ import {
   buildMetricSeries,
   CHART_METRICS,
   DEFAULT_CHART_METRIC_IDS,
+  type ChartProfile,
   type MetricSeries,
 } from '@/lib/chart-series';
+import { usesFemaleFormula } from '@/lib/body-composition';
 import { daysBetween } from '@/lib/dates';
 import {
   computeVerdict,
@@ -105,11 +107,31 @@ export function selectChartSeries(
     windowStart = startKeys[0];
   }
 
+  // LocalProfile → ChartProfile: derive the fields Navy needs (heightCm, female)
+  // + the body-fat baseline. Previously the raw LocalProfile was passed, so
+  // heightCm was always undefined and the Navy body-fat series never computed
+  // (Track A2 — this is why the chart was empty even with measurements).
+  const p = input.profile;
+  const chartProfile: ChartProfile = {
+    dobISO: p.dobISO,
+    sex: p.sex,
+    units: p.units,
+    estimatedMetricsMode: p.estimatedMetricsMode,
+    female: usesFemaleFormula(p.sex),
+    heightCm:
+      typeof p.height === 'number'
+        ? p.units === 'imperial'
+          ? p.height * 2.54
+          : p.height
+        : undefined,
+    bodyFatPct: p.bodyFatPct,
+  };
+
   const series = buildMetricSeries({
     selectedIds,
     entries: input.entries,
     metricReadings: input.metricReadings,
-    profile: input.profile,
+    profile: chartProfile,
     windowStart,
     windowEnd: today,
     excludeDates: input.contextNotes?.length
