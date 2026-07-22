@@ -1141,7 +1141,9 @@
     "estimated": "geschätzt",
     "noEvents": "Noch keine Ereignisse in diesem Zeitraum",
     "source": {
-      "manual": "Manuell"
+      "manual": "Manuell",
+      "integration": "Verbunden",
+      "derived": "Geschätzt"
     },
     "event": {
       "workout": "Hartes Training",

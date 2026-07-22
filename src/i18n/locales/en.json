@@ -1141,7 +1141,9 @@
     "estimated": "estimated",
     "noEvents": "No logged events in this window yet",
     "source": {
-      "manual": "Manual"
+      "manual": "Manual",
+      "integration": "Connected",
+      "derived": "Estimated"
     },
     "event": {
       "workout": "Hard workout",

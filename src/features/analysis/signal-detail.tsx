@@ -13,6 +13,7 @@ import { compoundBySlug } from '@/data/compound-catalog';
 import { useTheme } from '@/hooks/use-theme';
 import { getSignalLedger, type SignalLedgerResult } from '@/lib/ai';
 import { formatHeroValue, useVerdict, type TFn } from '@/features/home/use-verdict';
+import { CHART_METRICS } from '@/lib/chart-series';
 import { selectMetricDirections } from '@/lib/data-facade';
 import { daysBetween, formatDateKey, shiftDateKey } from '@/lib/dates';
 import { extractLedger, metricExplainer } from '@/lib/signal-ledger';
@@ -68,6 +69,25 @@ export function SignalDetail({ metricId, onClose }: { metricId: string; onClose:
   // verdict resolves it, so the explainer's framing never contradicts the signal.
   const dir = selectMetricDirections({ profile, protocolItems })[metricId] ?? 'neutral';
   const explainer = metricExplainer(metricId, dir === 'up_good' || dir === 'down_good' ? dir : 'neutral');
+
+  // Real data sources feeding THIS metric over the window (§4d transparency): the
+  // chip used to always claim "Manual". Derive it from what actually contributed.
+  const metricCfg = CHART_METRICS.find((m) => m.id === metricId);
+  const inWin = (dk: string) => dk >= windowStart && dk <= windowEnd;
+  const sourceKeys: string[] = [];
+  const hasManual =
+    !!metricCfg?.checkinKey &&
+    Object.values(entries).some((e) => inWin(e.date) && typeof e[metricCfg.checkinKey!] === 'number');
+  const hasIntegration =
+    !!metricCfg?.canonicalMetric &&
+    metricReadings.some((r) => r.metric === metricCfg.canonicalMetric && inWin(r.ts.slice(0, 10)));
+  const hasDerived =
+    (!!metricCfg?.derivedKey || metricCfg?.computed === 'body_fat_pct') &&
+    (profile.estimatedMetricsMode ?? 'fill') !== 'off';
+  if (hasManual) sourceKeys.push('signal.source.manual');
+  if (hasIntegration) sourceKeys.push('signal.source.integration');
+  if (hasDerived) sourceKeys.push('signal.source.derived');
+  if (sourceKeys.length === 0) sourceKeys.push('signal.source.manual');
 
   const fmt = signal ? formatHeroValue(signal.value, metricHeroUnit(metricId), profile.units, tx) : null;
   const toneC = TONE_COLOR[signal?.tone ?? 'neutral'];
@@ -144,11 +164,13 @@ export function SignalDetail({ metricId, onClose }: { metricId: string; onClose:
           <View style={styles.block}>
             <EngravedLabel>{t('signal.sourcesLabel')}</EngravedLabel>
             <View style={styles.chips}>
-              <View style={[styles.chip, { borderColor: theme.border }]}>
-                <ThemedText type="monoSm" themeColor="textSecondary">
-                  {t('signal.source.manual')}
-                </ThemedText>
-              </View>
+              {sourceKeys.map((key) => (
+                <View key={key} style={[styles.chip, { borderColor: theme.border }]}>
+                  <ThemedText type="monoSm" themeColor="textSecondary">
+                    {t(key as 'signal.source.manual')}
+                  </ThemedText>
+                </View>
+              ))}
             </View>
           </View>
 

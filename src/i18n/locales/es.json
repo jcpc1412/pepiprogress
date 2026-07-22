@@ -1141,7 +1141,9 @@
     "estimated": "estimado",
     "noEvents": "Aún no hay eventos registrados en este periodo",
     "source": {
-      "manual": "Manual"
+      "manual": "Manual",
+      "integration": "Conectado",
+      "derived": "Estimado"
     },
     "event": {
       "workout": "Entrenamiento intenso",

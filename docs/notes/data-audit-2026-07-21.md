@@ -152,11 +152,28 @@ to fat). And it uses **zero integration data** (no steps/cardio/deficit). Fixes:
       - `derived-metrics`: recovery label = Track A1 (done).
       - `signal-ledger`: events, not values → Track C.
 
-**Track C — attribution rework (4e, the "what moved it" fix):**
-- C1. Metric-relevance filter on the ledger (effect-tag match for doses; responsive-metric
-      match for lifestyle).
-- C2. Integration movers (cardio/steps/deficit) as first-class ledger rows.
-- C3. "About this" → deterministic, goal-aware explainer (4d); AI in-context pass improved.
+**Track C — attribution rework (4e, the "what moved it" fix): ✅ DONE.**
+- C1. ✅ Metric-relevance filter (`metric-relevance.ts`): doses filter by effect-tag →
+      metric (a fat chart drops hCG/melanotan; unknown compounds stay visible);
+      lifestyle/symptom rows appear only where the metric responds (no "poor sleep"
+      on body fat).
+- C2. ✅ Integration movers: cardio session (`activity.workout_min`) + step spike
+      (`activity.steps`) surface — context rows on body composition, impact rows on
+      responsive subjective metrics. (Deficit-day mover deferred: an honest deficit
+      needs TDEE, which lives in energy-balance; doing it without maintenance would
+      mislead. Fold in when the ledger gets an energy-balance feed.)
+- C3. ✅ Goal-aware "about this": `metricExplainer()` appends a deterministic clause
+      (which way is good for THIS user) resolved via `selectMetricDirections`, so it
+      never contradicts the verdict. New `signal.goal.*` + `signal.event.cardio/steps`
+      in 6 locales.
+      Still thin: the static per-metric `signal.explain.<metric>` bodies themselves
+      (the AI in-context pass refines copy when reachable; the deterministic base is
+      now goal-annotated but the metric descriptions are unchanged).
+
+**Transparency polish: ✅ DONE.** The signal-detail "Data sources" chip now reflects
+the real sources feeding the metric over the window (manual / connected / estimated),
+derived from the metric config + what actually contributed, instead of always
+claiming "Manual".
 
 **Separate tracks (already decided):** B3-06 sign-out → auth splash; camera zoom +
 volume-button shutter (then scope the vision-camera consolidation).
