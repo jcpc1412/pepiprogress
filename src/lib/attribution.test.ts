@@ -1,7 +1,17 @@
 import { describe, expect, it } from 'vitest';
 
 import { computeAttributions } from './attribution';
-import type { CheckinEntry, MetricReading, ProtocolItem } from './store';
+import type { CheckinEntry, LocalProfile, MetricReading, ProtocolItem } from './store';
+
+const PROFILE = {
+  units: 'metric',
+  goals: [],
+  compoundSlugs: [],
+  onboardingComplete: true,
+  addedFields: [],
+  removedFields: [],
+  estimatedMetricsMode: 'fill',
+} as LocalProfile;
 
 const START = '2026-06-01';
 const TODAY = '2026-06-29'; // 4 weeks in
@@ -34,7 +44,38 @@ function checkins(
 
 const NO_READINGS: MetricReading[] = [];
 
+const reading = (metric: string, dateKey: string, value: number): MetricReading => ({
+  id: `${metric}-${dateKey}`,
+  metric,
+  value,
+  ts: `${dateKey}T07:00:00.000Z`,
+  sourceProvider: 'apple_health',
+});
+
 describe('computeAttributions', () => {
+  it('imperial: does not corrupt the weight delta by averaging lbs with kg', () => {
+    // Manual weight in lbs, plus a same-day Health reading in kg. The old raw
+    // dailySeries averaged both per day; resolved, manual wins in one unit so the
+    // ~9 lb drop reads cleanly (not a meaningless lbs+kg mean).
+    const entries = checkins('2026-05-15', TODAY, (d) => ({
+      weight: d < START ? 198 : 189, // lbs
+      calories: 2200,
+      workout_effort: 3,
+    }));
+    const readings: MetricReading[] = [];
+    for (const d of Object.keys(entries)) readings.push(reading('body.weight', d, d < START ? 89.8 : 85.7));
+    const imperial = { ...PROFILE, units: 'imperial' } as LocalProfile;
+    const res = computeAttributions({
+      entries,
+      metricReadings: readings,
+      protocolItems: [protocolItem('semaglutide')],
+      today: TODAY,
+      profile: imperial,
+    });
+    const weight = res[0].metrics.find((m) => m.metricId === 'weight')!;
+    expect(weight.delta).toBeCloseTo(-9, 0); // clean lbs delta, not a kg/lbs blend
+  });
+
   it('attributes a clean weight drop to the compound when nothing else moved', () => {
     // semaglutide (fat_loss): weight falls after start, intake + training flat.
     const entries = checkins('2026-05-15', TODAY, (d) => ({
@@ -47,6 +88,7 @@ describe('computeAttributions', () => {
       metricReadings: NO_READINGS,
       protocolItems: [protocolItem('semaglutide')],
       today: TODAY,
+      profile: PROFILE,
     });
     expect(res).toHaveLength(1);
     const weight = res[0].metrics.find((m) => m.metricId === 'weight')!;
@@ -70,6 +112,7 @@ describe('computeAttributions', () => {
       metricReadings: NO_READINGS,
       protocolItems: [protocolItem('semaglutide')],
       today: TODAY,
+      profile: PROFILE,
     });
     const weight = res[0].metrics.find((m) => m.metricId === 'weight')!;
     expect(weight.factors[0].factor).toBe('nutrition');
@@ -89,6 +132,7 @@ describe('computeAttributions', () => {
       metricReadings: NO_READINGS,
       protocolItems: [protocolItem('bpc-157')],
       today: TODAY,
+      profile: PROFILE,
     });
     const ids = res[0].metrics.map((m) => m.metricId);
     expect(ids).toContain('soreness');
@@ -105,6 +149,7 @@ describe('computeAttributions', () => {
       metricReadings: NO_READINGS,
       protocolItems: [protocolItem('bpc-157')],
       today: TODAY,
+      profile: PROFILE,
     });
     expect(res).toHaveLength(0);
   });
@@ -119,6 +164,7 @@ describe('computeAttributions', () => {
       metricReadings: NO_READINGS,
       protocolItems: [protocolItem('bpc-157')],
       today: TODAY,
+      profile: PROFILE,
     });
     expect(res).toHaveLength(0);
   });
@@ -130,6 +176,7 @@ describe('computeAttributions', () => {
       metricReadings: NO_READINGS,
       protocolItems: [protocolItem('bpc-157', '2026-06-25')], // 4 days in
       today: TODAY,
+      profile: PROFILE,
     });
     expect(res).toHaveLength(0);
   });
@@ -155,6 +202,7 @@ describe('computeAttributions', () => {
       metricReadings: readings,
       protocolItems: [protocolItem('semaglutide')],
       today: TODAY,
+      profile: PROFILE,
     });
     expect(res[0].metrics.some((m) => m.metricId === 'weight')).toBe(true);
   });

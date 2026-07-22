@@ -1,6 +1,7 @@
 import { compoundBySlug } from '@/data/compound-catalog';
+import { resolveMetricSeries } from '@/lib/data-facade';
 import { daysBetween } from '@/lib/dates';
-import type { CheckinEntry, MetricReading, ProtocolItem } from '@/lib/store';
+import type { CheckinEntry, LocalProfile, MetricReading, ProtocolItem } from '@/lib/store';
 
 /**
  * Per-compound attribution (spec positioning §3.1 / §5.1, W4-14). The single
@@ -166,8 +167,17 @@ export function computeAttributions(input: {
   metricReadings: MetricReading[];
   protocolItems: ProtocolItem[];
   today: string;
+  /** For the weight outcome series: resolves manual ∪ Health weight in one unit. */
+  profile: LocalProfile;
 }): CompoundAttribution[] {
-  const { entries, metricReadings, today } = input;
+  const { entries, metricReadings, today, profile } = input;
+
+  // Weight is the one outcome with an integration source; resolve it through the
+  // canonical merge (manual wins, else Health, unit-normalized) instead of the raw
+  // dailySeries, which averaged display-unit manual weight with kg Health readings.
+  const weightSeries = new Map<string, number[]>(
+    resolveMetricSeries({ entries, metricReadings, profile }, 'weight', today).map((p) => [p.dateKey, [p.value]]),
+  );
 
   // Driver series shared across every compound (concurrent lifestyle shifts).
   const intake = dailySeries(entries, metricReadings, {
@@ -177,7 +187,7 @@ export function computeAttributions(input: {
   const training = dailySeries(entries, metricReadings, { checkinKey: 'workout_effort' });
 
   const outcomeSeries: Record<OutcomeMetric, Map<string, number[]>> = {
-    weight: dailySeries(entries, metricReadings, { checkinKey: 'weight', canonicalMetric: 'body.weight' }),
+    weight: weightSeries,
     waist: dailySeries(entries, metricReadings, { checkinKey: 'waist' }),
     hips: dailySeries(entries, metricReadings, { checkinKey: 'hips' }),
     energy: dailySeries(entries, metricReadings, { checkinKey: 'energy' }),

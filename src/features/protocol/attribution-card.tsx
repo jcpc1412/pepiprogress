@@ -42,9 +42,10 @@ export function AttributionCard({ slug }: { slug: string }) {
       metricReadings,
       protocolItems: protocolItems.filter((p) => p.compoundSlug === slug),
       today,
+      profile,
     });
     return all[0] ?? null;
-  }, [entries, metricReadings, protocolItems, slug, today]);
+  }, [entries, metricReadings, protocolItems, slug, today, profile]);
 
   if (!attribution) return null;
 
