@@ -549,10 +549,13 @@ free to interleave. B2's directory review is the long pole.
     connector as the **test harness**. Gate: the spec-05 eval suite gains a fifth
     boundary (connector tool outputs) before exposure.
 49. **B2. Directory launch [M].** Both submissions at once — OpenAI identity/business
-    verification + review, Anthropic connector-directory review. The peptide-app review
-    scrutiny ("is this a steroid app?", same as App Store review) is on the critical
-    path here; the `market_category` posture gates are the defense, review readiness is
-    the gate. Custom connector stays as the rejection fallback, not the primary channel.
+    verification + review, Anthropic connector-directory review. Pepi is a
+    progress-tracking app first (photos, check-ins, general wellness goals); the
+    review scrutiny that matters is specifically on the compound-logging surface
+    (same category App Store review gives any app tracking prescription-adjacent
+    substances), on the critical path here. The `market_category` posture gates are
+    the defense, review readiness is the gate. Custom connector stays as the
+    rejection fallback, not the primary channel.
 50. **B3. Widgets [M].** ChatGPT Apps SDK components — a Today card and a Verdict card,
     matching the instrument design language where their component system allows.
 

@@ -111,12 +111,17 @@ matching the instrument design language where their component system allows.
 | 2 (launch) | **Both directory submissions** (OpenAI identity/business verification + review; Anthropic connector-directory review) | M | Phase 1 + review readiness |
 | 3 | ChatGPT widgets (Today + Verdict cards) | M | Phase 2 |
 
-**Placement DECIDED: post-beta (Polish tier)**, alongside the sync-engine track. It depends
-on nothing in the current beta batch, and the beta batch (calorie sync fix, review-step
-rework, companion pivot, micro check-ins) directly improves what the connector exposes.
+**Placement SUPERSEDED (2026-07-21): moved into the active beta sequence** as
+`MASTER-PLAN.md` Wave 8 (items 47-50), not post-beta. Same reasoning that justified
+post-beta originally still holds and is *why* the move was safe: this track depends on
+nothing else in the beta batch, so it runs in parallel rather than waiting behind it.
+Sequencing note from the master plan: "Backend-only — depends on nothing in the 35-42
+sweep... so B0/B1 can run in parallel with the sweep; placed here for one-thing-at-a-time
+sequencing, but free to interleave. B2's directory review is the long pole."
 
-**Tradeoff we accepted by going straight at the directories:** the peptide-app review
-scrutiny (same "is this a steroid app?" question as App Store review) is now **on the
+**Tradeoff we accepted by going straight at the directories:** review of the app's
+compound-logging surface (same category of scrutiny as App Store review gives any app
+that tracks supplements, hormones, or prescription-adjacent substances) is now **on the
 critical path to any public connector launch**, rather than something we could sidestep
 with a custom-connector-only release. The custom connector is demoted from
 distribution-hedge to test harness. The `market_category` posture gates are the defense;
@@ -125,10 +130,16 @@ still exists as a fallback, but it is no longer the plan of record.
 
 ## Risks, honestly
 
-- **Platform review of a peptide app.** The same "is this a steroid app?" scrutiny from
-  App Store review applies to OpenAI's and Anthropic's directory reviews. The
-  market_category gates are the defense; the Claude *custom* connector path (no review)
-  is the hedge that guarantees beta users get value regardless of review outcomes.
+- **Platform review of the compound-logging surface.** Pepi is a progress-tracking app
+  first: photos, check-ins, and general wellness goals (sleep, recovery, body comp,
+  weight) that stand on their own, with peptide/compound logging as one tracked domain
+  among several, not the app's identity. That said, the domain does include
+  prescription-adjacent and grey-market substances, so the same category of scrutiny App
+  Store review gives any health-tracking app with that surface applies to OpenAI's and
+  Anthropic's directory reviews too. The market_category gates are the defense (framing
+  it accurately in the submission narrows the review to the actual surface instead of the
+  whole app); the Claude *custom* connector path (no review) is the hedge that guarantees
+  beta users get value regardless of review outcomes.
 - **Health-data sensitivity.** Users routing grey-market compound logs through OpenAI is
   a real privacy consideration; consented connection + explicit privacy copy + text-only
   scope is the mitigation. Photos never.
@@ -138,8 +149,9 @@ still exists as a fallback, but it is no longer the plan of record.
 - **Freshness illusion.** Read tools reflect the last app-open. Tool descriptions must
   say so, or the assistant will confidently report stale data.
 
-## Decisions (2026-07-14)
-- **Placement:** post-beta (Polish tier).
+## Decisions (2026-07-14, placement superseded 2026-07-21)
+- **Placement:** moved into the active beta sequence (MASTER-PLAN Wave 8, items 47-50);
+  no longer post-beta. See the phasing note above.
 - **v1 scope:** two-way (reads + writes); the inbox is on the launch critical path.
 - **Distribution:** straight at both directories; custom connector is the test harness +
   rejection fallback, not the primary channel.

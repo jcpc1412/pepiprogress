@@ -163,9 +163,11 @@ k-anonymity thresholds.
   enough to feed the verdict."
 - **Cold start:** community stack data is the long-term moat but is empty at launch;
   interim sourcing is curated citations plus clearly-labeled unverified general info.
-- **Store review:** a peptide app lives near App Store guideline sensitivities; the
-  market-category posture system exists largely as the review defense. Same scrutiny
-  applies to AI-platform connector directories.
+- **Store review:** Pepi is a progress-tracking app first, but its compound-logging
+  surface (peptides, hormones, and other prescription-adjacent substances) lives near
+  App Store guideline sensitivities; the market-category posture system exists largely
+  as the review defense for that surface. Same scrutiny applies to AI-platform connector
+  directories.
 - **Retention is unproven:** the verdict-first loop is designed for it (a daily state
   change beats a log form), but beta data does not exist yet.
 - **Bevel-class free tiers** set user expectations for polish on recovery/sleep scoring
