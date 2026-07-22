@@ -1,5 +1,6 @@
+import { resolveMetricSeries } from '@/lib/data-facade';
 import { shiftDateKey } from '@/lib/dates';
-import type { CheckinEntry, MetricReading } from '@/lib/store';
+import type { CheckinEntry, LocalProfile, MetricReading } from '@/lib/store';
 
 /**
  * Proactive anomaly engine (beta-notes §3.4, W3-10). Detection is deterministic
@@ -81,8 +82,10 @@ export function detectAnomalies(input: {
   metricReadings: MetricReading[];
   todayKey: string;
   excludedDates: Set<string>;
+  /** For the weight-jump baseline: resolves manual ∪ Health weight in one unit. */
+  profile: LocalProfile;
 }): Anomaly[] {
-  const { entries, metricReadings, todayKey, excludedDates } = input;
+  const { entries, metricReadings, todayKey, excludedDates, profile } = input;
   if (excludedDates.has(todayKey)) return [];
   const out: Anomaly[] = [];
 
@@ -106,8 +109,12 @@ export function detectAnomalies(input: {
     }
   }
 
-  // Weight jump: >= 1.5% day-over-baseline move in either direction.
-  const weight = new Map([...dailySeries(metricReadings, 'body.weight'), ...entrySeries(entries, 'weight')]);
+  // Weight jump: >= 1.5% day-over-baseline move in either direction. Resolved
+  // through the canonical merge so manual ∪ Health weight share one unit (the raw
+  // map used to mix display-unit manual weight with kg Health readings).
+  const weight = new Map(
+    resolveMetricSeries({ entries, metricReadings, profile }, 'weight', todayKey).map((p) => [p.dateKey, p.value]),
+  );
   const wToday = weight.get(todayKey);
   if (wToday !== undefined) {
     const mean = trailingMean(weight, todayKey, excludedDates);

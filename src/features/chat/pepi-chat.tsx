@@ -546,9 +546,9 @@ export function PepiChat() {
   const todayAnomaly = useMemo<Anomaly | null>(() => {
     const excluded = new Set(contextNotes.map((n) => n.dateKey));
     const muted = new Set(profile.anomalyMuted ?? []);
-    const hits = detectAnomalies({ entries, metricReadings, todayKey: today, excludedDates: excluded });
+    const hits = detectAnomalies({ entries, metricReadings, todayKey: today, excludedDates: excluded, profile });
     return hits.find((a) => !muted.has(a.kind)) ?? null;
-  }, [contextNotes, entries, metricReadings, today, profile.anomalyMuted]);
+  }, [contextNotes, entries, metricReadings, today, profile]);
 
   const startAnomalyCapture = () => {
     if (!todayAnomaly) return;
