@@ -203,7 +203,7 @@ type TerraRequest = {
 
 type SignalLedgerEvent = {
   id: string;
-  kind: 'workout' | 'rest' | 'poor_sleep' | 'symptom' | 'dose';
+  kind: 'workout' | 'rest' | 'poor_sleep' | 'symptom' | 'dose' | 'cardio' | 'steps';
   label: string; // already-localized row label
   date: string; // YYYY-MM-DD
   impact?: number; // deterministic heuristic impact, if any (never for doses)

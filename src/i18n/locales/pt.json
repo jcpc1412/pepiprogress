@@ -1148,7 +1148,9 @@
       "rest": "Dia de descanso",
       "poorSleep": "Sono ruim",
       "symptom": "Sintoma: {{name}}",
-      "dose": "Dose: {{compound}}"
+      "dose": "Dose: {{compound}}",
+      "cardio": "Sessão de cardio ({{minutes}} min)",
+      "steps": "Dia ativo ({{count}} passos)"
     },
     "explain": {
       "weight": "O teu peso corporal total. Varia com gordura, músculo, água e comida, por isso as oscilações diárias são normais. O que importa é a tendência ao longo das semanas.",
@@ -1159,6 +1161,10 @@
       "sleep_quality": "Quão descansado te sentiste. Sono regular e a horas melhora-a; noites tardias, álcool e stress baixam-na.",
       "soreness": "O quão recuperado te sentes. O descanso e o sono aumentam-no; treino intenso ou novo baixa-o temporariamente.",
       "default": "Um sinal registado no teu diário. A sua tendência é lida face ao teu objetivo no período recente."
+    },
+    "goal": {
+      "lower": "O teu objetivo é reduzir isto.",
+      "higher": "O teu objetivo é aumentar isto."
     }
   },
   "whatILog": {

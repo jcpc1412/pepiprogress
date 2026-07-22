@@ -13,8 +13,9 @@ import { compoundBySlug } from '@/data/compound-catalog';
 import { useTheme } from '@/hooks/use-theme';
 import { getSignalLedger, type SignalLedgerResult } from '@/lib/ai';
 import { formatHeroValue, useVerdict, type TFn } from '@/features/home/use-verdict';
+import { selectMetricDirections } from '@/lib/data-facade';
 import { daysBetween, formatDateKey, shiftDateKey } from '@/lib/dates';
-import { extractLedger, metricExplainerKey } from '@/lib/signal-ledger';
+import { extractLedger, metricExplainer } from '@/lib/signal-ledger';
 import { useStore } from '@/lib/store';
 import { metricHeroUnit, type SignalTone } from '@/lib/verdict-engine';
 import { useToday } from '@/lib/today';
@@ -37,7 +38,7 @@ export function SignalDetail({ metricId, onClose }: { metricId: string; onClose:
   const { t, i18n } = useTranslation();
   const theme = useTheme();
   const tx = t as unknown as TFn;
-  const { entries, symptomEvents, doseEvents, profile } = useStore();
+  const { entries, symptomEvents, doseEvents, metricReadings, protocolItems, profile } = useStore();
   const verdict = useVerdict();
 
   const signal = verdict.signals.find((s) => s.metricId === metricId);
@@ -55,11 +56,18 @@ export function SignalDetail({ metricId, onClose }: { metricId: string; onClose:
     entries,
     symptomEvents,
     doseEvents,
+    metricReadings,
     windowStart,
     windowEnd,
     compoundName: (slug) => compoundBySlug(slug)?.canonicalName,
+    compoundEffectTags: (slug) => compoundBySlug(slug)?.effectTags,
   });
   const anyEstimate = events.some((e) => typeof e.impact === 'number');
+
+  // Goal-aware "about this" (§4d): the direction is resolved the same way the
+  // verdict resolves it, so the explainer's framing never contradicts the signal.
+  const dir = selectMetricDirections({ profile, protocolItems })[metricId] ?? 'neutral';
+  const explainer = metricExplainer(metricId, dir === 'up_good' || dir === 'down_good' ? dir : 'neutral');
 
   const fmt = signal ? formatHeroValue(signal.value, metricHeroUnit(metricId), profile.units, tx) : null;
   const toneC = TONE_COLOR[signal?.tone ?? 'neutral'];
@@ -127,7 +135,8 @@ export function SignalDetail({ metricId, onClose }: { metricId: string; onClose:
           <Card style={styles.block}>
             <EngravedLabel>{t('signal.explainLabel')}</EngravedLabel>
             <ThemedText type="body" themeColor="textSecondary">
-              {t(metricExplainerKey(metricId) as 'signal.explain.default')}
+              {t(explainer.explainKey as 'signal.explain.default')}
+              {explainer.goalKey ? ` ${t(explainer.goalKey as 'signal.goal.lower')}` : ''}
             </ThemedText>
           </Card>
 

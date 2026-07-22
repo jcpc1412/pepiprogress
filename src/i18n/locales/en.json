@@ -1148,7 +1148,9 @@
       "rest": "Rest day",
       "poorSleep": "Poor sleep",
       "symptom": "Symptom: {{name}}",
-      "dose": "Dose: {{compound}}"
+      "dose": "Dose: {{compound}}",
+      "cardio": "Cardio session ({{minutes}} min)",
+      "steps": "Active day ({{count}} steps)"
     },
     "explain": {
       "weight": "Your total body weight. It moves with fat, muscle, water, and food in your system, so daily swings are normal. The trend over weeks is what matters.",
@@ -1159,6 +1161,10 @@
       "sleep_quality": "How rested you felt. Consistent sleep and timing raise it; late nights, alcohol, and stress lower it.",
       "soreness": "How recovered you feel. Rest and sleep raise it; hard or new training temporarily lowers it.",
       "default": "A tracked signal in your log. Its trend is read against your goal over the recent window."
+    },
+    "goal": {
+      "lower": "Your goal is to bring this down.",
+      "higher": "Your goal is to bring this up."
     }
   },
   "whatILog": {

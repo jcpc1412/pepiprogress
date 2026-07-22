@@ -1148,7 +1148,9 @@
       "rest": "Jour de repos",
       "poorSleep": "Mauvais sommeil",
       "symptom": "Symptôme : {{name}}",
-      "dose": "Dose : {{compound}}"
+      "dose": "Dose : {{compound}}",
+      "cardio": "Séance de cardio ({{minutes}} min)",
+      "steps": "Journée active ({{count}} pas)"
     },
     "explain": {
       "weight": "Ton poids corporel total. Il varie avec la graisse, le muscle, l'eau et les aliments, donc les variations quotidiennes sont normales. C'est la tendance sur les semaines qui compte.",
@@ -1159,6 +1161,10 @@
       "sleep_quality": "À quel point tu te sentais reposé. Un sommeil régulier l'améliore ; les nuits tardives, l'alcool et le stress la réduisent.",
       "soreness": "À quel point vous vous sentez récupéré. Le repos et le sommeil l'augmentent ; un entraînement dur ou nouveau le baisse temporairement.",
       "default": "Un signal suivi dans ton journal. Sa tendance est lue par rapport à ton objectif sur la période récente."
+    },
+    "goal": {
+      "lower": "Ton objectif est de faire baisser cette valeur.",
+      "higher": "Ton objectif est de faire monter cette valeur."
     }
   },
   "whatILog": {

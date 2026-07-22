@@ -411,7 +411,7 @@ export async function runEncouragementAnalysis(opts: {
 /** A compound-agnostic event handed to the ledger action for contextual copy. */
 export type SignalLedgerInput = {
   id: string;
-  kind: 'workout' | 'rest' | 'poor_sleep' | 'symptom' | 'dose';
+  kind: 'workout' | 'rest' | 'poor_sleep' | 'symptom' | 'dose' | 'cardio' | 'steps';
   label: string;
   date: string;
   impact?: number;

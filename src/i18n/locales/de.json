@@ -1148,7 +1148,9 @@
       "rest": "Ruhetag",
       "poorSleep": "Schlechter Schlaf",
       "symptom": "Symptom: {{name}}",
-      "dose": "Dosis: {{compound}}"
+      "dose": "Dosis: {{compound}}",
+      "cardio": "Cardio-Einheit ({{minutes}} Min)",
+      "steps": "Aktiver Tag ({{count}} Schritte)"
     },
     "explain": {
       "weight": "Dein Gesamtkörpergewicht. Es schwankt mit Fett, Muskeln, Wasser und Nahrung, tägliche Schwankungen sind normal. Entscheidend ist der Trend über Wochen.",
@@ -1159,6 +1161,10 @@
       "sleep_quality": "Wie erholt du dich gefühlt hast. Regelmäßiger Schlaf hebt sie; späte Nächte, Alkohol und Stress senken sie.",
       "soreness": "Wie erholt du dich fühlst. Ruhe und Schlaf steigern ihn; hartes oder neues Training senkt ihn vorübergehend.",
       "default": "Ein erfasstes Signal in deinem Log. Sein Trend wird über den jüngsten Zeitraum an deinem Ziel gemessen."
+    },
+    "goal": {
+      "lower": "Dein Ziel ist es, diesen Wert zu senken.",
+      "higher": "Dein Ziel ist es, diesen Wert zu steigern."
     }
   },
   "whatILog": {
