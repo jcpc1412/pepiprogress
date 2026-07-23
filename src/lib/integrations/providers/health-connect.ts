@@ -24,6 +24,14 @@ const READ_PERMISSIONS = [
   { accessType: 'read', recordType: 'SleepSession' },
   { accessType: 'read', recordType: 'Nutrition' },
   { accessType: 'read', recordType: 'MenstruationFlow' },
+  // Requested alongside MenstruationFlow, not instead of it: period-tracker apps
+  // split across both record types in practice (some log a daily flow level,
+  // others only log the period span), and there is no public confirmation of
+  // which one any given app — including the tester's Flo — actually writes. The
+  // cost of requesting both is one extra permission line; the cost of guessing
+  // wrong is the cycle feature silently not working for exactly the person it's
+  // being validated against.
+  { accessType: 'read', recordType: 'MenstruationPeriod' },
 ] as const;
 
 async function readHealthConnect(since?: string): Promise<ProviderReading[]> {
@@ -163,29 +171,47 @@ async function readHealthConnect(since?: string): Promise<ProviderReading[]> {
   // --- Menstrual flow: one reading per logged flow day ---
   // The menstruation permission was already being requested here and never read —
   // asking for the most sensitive data class in the app and doing nothing with it.
-  // `MenstruationFlow` rather than `MenstruationPeriod`: it is per-day (matching
-  // HealthKit's samples and the cycle derivation's model), and the library types
-  // MenstruationPeriod as an instantaneous record when it is really an interval.
+  // Read BOTH record types period trackers use (see the permission comment above):
+  // `MenstruationFlow` is per-day; `MenstruationPeriod` is a start..end span, so it
+  // is expanded into the days it covers. Merged into one day->level map so a
+  // period-only day (flow level unknown) still registers as a flow day at level 0,
+  // which is all `derivePeriodStarts` needs to find the start.
+  const byDay: Record<string, number> = {};
   try {
     const { records } = await readRecords('MenstruationFlow', { timeRangeFilter });
     // Flow constants: unknown=0, light=1, medium=2, heavy=3. There is no explicit
     // "none" value to filter out, unlike HealthKit.
-    const byDay: Record<string, number> = {};
     for (const r of records) {
       const d = new Date(r.time);
       if (Number.isNaN(d.getTime())) continue;
       const dateKey = localDateKey(d);
       byDay[dateKey] = Math.max(byDay[dateKey] ?? 0, r.flow ?? 0);
     }
-    for (const [dateKey, value] of Object.entries(byDay)) {
-      readings.push({
-        metric: CanonicalMetric.cycleFlow,
-        value,
-        ts: `${dateKey}T00:00:00.000Z`,
-        sourceProvider: PROVIDER_ID,
-      });
+  } catch { /* unavailable */ }
+  try {
+    // The library's ambient types model MenstruationPeriod as instantaneous
+    // (`time` only); the real Health Connect API defines it as an interval with
+    // startTime/endTime, matching HealthKit's period concept. Cast to the real
+    // shape rather than trust the (wrong) generated type.
+    const { records } = await readRecords('MenstruationPeriod', { timeRangeFilter });
+    for (const r of records as unknown as { startTime: string; endTime: string }[]) {
+      const start = new Date(r.startTime);
+      const end = new Date(r.endTime);
+      if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) continue;
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        const dateKey = localDateKey(new Date(d));
+        byDay[dateKey] = byDay[dateKey] ?? 0;
+      }
     }
   } catch { /* unavailable */ }
+  for (const [dateKey, value] of Object.entries(byDay)) {
+    readings.push({
+      metric: CanonicalMetric.cycleFlow,
+      value,
+      ts: `${dateKey}T00:00:00.000Z`,
+      sourceProvider: PROVIDER_ID,
+    });
+  }
 
   return readings;
 }

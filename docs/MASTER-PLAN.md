@@ -574,8 +574,21 @@ connector guide) at build time.
 - **C. Monetization implementation.** Paid-only: auto-converting trial (StoreKit iOS /
   Stripe web), $19/mo + annual anchor; reconcile spec 12 + CLAUDE.md; trial-lapse
   behavior decided when freemium comes off the backburner. (round-3 §9)
-- **D. HealthKit cycle read + Pepi cycle setup [M].** Category read to cycle metric;
-  conversational setup for non-trackers. (beta-notes §1.7 steps 2-3)
+- **D. HealthKit cycle read + Pepi cycle setup [M].** ✅ **DONE** (commit db0cb7b).
+  Built: pure `src/lib/cycle.ts` (29 tests) — one shared phase resolver replacing
+  three that had silently disagreed (photo path, encouragement path, verdict
+  engine each used a different luteal test); period starts derived from flow-day
+  runs; observed cycle length as a median of real gaps; manual-start-wins-within-
+  the-current-cycle precedence, sync takes over once a later cycle begins. HealthKit
+  `HKCategoryTypeIdentifierMenstrualFlow` read + Health Connect `MenstruationFlow`
+  read (was requesting the permission and never reading it) into the new
+  `cycle.flow` canonical metric. Pepi conversational setup: confirms in one tap
+  when Health already has data, asks with today/yesterday chips otherwise, records
+  a decline so it never asks twice. Also fixed the onboarding bug that stamped
+  *today* as the last period on opt-in (split `cycleTracking` intent from the
+  date). Menstrual data stays local — never enters the F6 normalized mirror, never
+  reaches community aggregation. Native rebuild required (new HealthKit read type
+  + updated usage string); version 0.0.37.
 - **E. Branding round (owner-directed 2026-07-18).** One coordinated pass, before the
   tester pool widens or at public launch at the latest, folding together everything
   that carries the Pepi name outward: **custom domain in front of Supabase Auth** (paid
@@ -1825,7 +1838,7 @@ skeleton. Annotations: **needs** = hard prerequisite; **unblocks** = what it ope
 - **G Remote push infra** → **unblocks 1.5** + the step-goal proximity ping + connector push.
 - **A Web workbench [L].**
 - **F Full per-entity sync engine [L]** (pairs with A; the `connector_event` inbox folds in).
-- **D HealthKit cycle read + Pepi cycle setup.**
+- **D HealthKit cycle read + Pepi cycle setup.** ✅ **DONE** (commit db0cb7b).
 - **C Monetization** (trial/billing).
 - **E Branding round** (custom domain, auth email templates, website, one coordinated pass).
 
