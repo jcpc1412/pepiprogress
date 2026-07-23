@@ -124,7 +124,8 @@
     "body_comp_velocity": "Körperzusammensetzung",
     "cv_strain": "Kardiale Belastung",
     "inflammation": "Entzündung",
-    "body_fat_pct": "Körperfett"
+    "body_fat_pct": "Körperfett",
+    "strength_felt": "Training fühlte sich an"
   },
   "checkin": {
     "title": "Täglicher Check-in",
@@ -341,7 +342,8 @@
     "measuredDelta": "{{value}} {{unit}} seit deiner letzten Messung",
     "runDeepOnShot": "Tiefenanalyse für dieses Foto starten",
     "runDeepOnShotHint": "Tippe ein Foto für eine Tiefenanalyse an",
-    "guideHint": "Tippe auf eine Linie, um ihren Wert einzugeben. Ziehe den Griff, um die Stelle zu verschieben."
+    "guideHint": "Tippe auf eine Linie, um ihren Wert einzugeben. Ziehe den Griff, um die Stelle zu verschieben.",
+    "coachingLabel": "Was du damit machst"
   },
   "markers": {
     "hematocrit": "Hämatokrit",
@@ -1408,5 +1410,11 @@
     "emptyToday": "Heute noch nichts erfasst.",
     "editField": "{{field}} bearbeiten",
     "addValue": "hinzufügen"
+  },
+  "strength": {
+    "easier": "Leichter",
+    "same": "Gleich",
+    "harder": "Schwerer",
+    "chipHint": "Verglichen mit deiner eigenen Normalität, nicht mit der anderer."
   }
 }

@@ -26,6 +26,8 @@ import {
 } from '@/lib/ai';
 import { compoundBySlug } from '@/data/compound-catalog';
 import { buildAnalysisContext, type ContextEntry } from '@/lib/analysis-context';
+import { resolveBodyIntent } from '@/lib/strength-context';
+import { resolveIntent } from '@/lib/verdict-engine';
 import { resolveMetricSeries } from '@/lib/data-facade';
 import { bodyFatNavy, inferBodyComposition, usesFemaleFormula } from '@/lib/body-composition';
 import type { ConfidenceLevel } from '@/lib/confidence';
@@ -286,6 +288,7 @@ export function ProgressPhotos({
     symptomEvents,
     protocolItems,
     doseEvents,
+    strengthSessions,
     analysisLedger,
     addAnalysisRecord,
     profile,
@@ -583,6 +586,14 @@ export function ProgressPhotos({
         })).filter((d) => d.label),
         photoAt: target.takenAt,
         baselineAt: baseline.takenAt,
+        // 2b.2: what the user is training toward + whether strength held. The
+        // second one is the hinge — an across-the-board measurement drop reads
+        // as muscle loss only when strength did NOT hold.
+        intent: (() => {
+          const i = resolveIntent(profile.goals, protocolItems, profile.sex);
+          return resolveBodyIntent(i.cutting, i.bulking);
+        })(),
+        strengthSessions,
       });
 
       const res = await analyzePhoto({
@@ -620,6 +631,7 @@ export function ProgressPhotos({
         observations: sanitizeObservations(res.observations),
         hypothesis: res.hypothesis || undefined,
         watchNext: res.watchNext || undefined,
+        coaching: res.coaching || undefined,
         change: res.change || undefined,
       });
       setLastNote({ id: target.id, analysis: res });
@@ -632,7 +644,7 @@ export function ProgressPhotos({
     } finally {
       setAnalyzing(false);
     }
-  }, [sessionPhotos, latest, baseline, analyzing, trackSession, trackPart, i18n.language, profile, entries, metricReadings, doseEvents, analysisLedger, addAnalysisRecord, symptomEvents, protocolItems, updatePhoto, setProfile, cadence, resolvedUris]);
+  }, [sessionPhotos, latest, baseline, analyzing, trackSession, trackPart, i18n.language, profile, entries, metricReadings, doseEvents, analysisLedger, addAnalysisRecord, symptomEvents, protocolItems, strengthSessions, updatePhoto, setProfile, cadence, resolvedUris]);
 
   // ── On-demand deep analysis from the Journal (2a.6) ───────────────────────
   // Tapping a photo in the Journal deep-links here with ?analyze=<id>: focus that
@@ -1334,6 +1346,15 @@ export function ProgressPhotos({
                           <EngravedLabel>{t('photos.hypothesisLabel')}</EngravedLabel>
                           <ThemedText type="small" themeColor="text">
                             {note.hypothesis}
+                          </ThemedText>
+                        </>
+                      ) : null}
+                      {note.coaching ? (
+                        <>
+                          <Divider />
+                          <EngravedLabel>{t('photos.coachingLabel')}</EngravedLabel>
+                          <ThemedText type="small" themeColor="text">
+                            {note.coaching}
                           </ThemedText>
                         </>
                       ) : null}

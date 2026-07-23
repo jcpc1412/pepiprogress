@@ -284,8 +284,12 @@ type TransitionDir = 'mtf' | 'ftm' | null;
 
 /** Protocol intent, read from goals + active-compound effect tags. Drives the
  *  favourable direction of "context" metrics (weight, caloric balance), plus the
- *  transition-redistribution direction for hips (sex-keyed, goal-gated). */
-function resolveIntent(
+ *  transition-redistribution direction for hips (sex-keyed, goal-gated).
+ *
+ *  Exported so the photo-coaching layer (2b.2) resolves intent through the SAME
+ *  rule the charts do — two definitions of "is this user cutting" would let the
+ *  arrows and the coaching disagree about which way is good. */
+export function resolveIntent(
   goals: Goal[],
   protocolItems: ProtocolItem[],
   sex?: VerdictInput['profile']['sex'],

@@ -17,6 +17,7 @@ import { applyFieldCustomization, partitionByTime, surfaceFields } from '@/lib/f
 import { bodyFatNavy, ffmiBand, usesFemaleFormula } from '@/lib/body-composition';
 import { compoundBySlug } from '@/data/compound-catalog';
 import { localDateKey, useStore, type CheckinEntry } from '@/lib/store';
+import type { StrengthFelt } from '@/lib/strength-context';
 import { useToday } from '@/lib/today';
 import {
   baselineFor,
@@ -412,6 +413,16 @@ export function DetailedLog({
     );
   };
 
+  // Strength-felt chip (2b.3). A relative signal, not an absolute one: "harder"
+  // means harder than this user's own normal, which is what separates fat loss
+  // from muscle loss in the photo analysis. Kept as chips rather than a 1-5 scale
+  // precisely because it is comparative.
+  const strengthFeltOptions: { value: StrengthFelt; label: string }[] = [
+    { value: 'easier', label: t('strength.easier') },
+    { value: 'same', label: t('strength.same') },
+    { value: 'harder', label: t('strength.harder') },
+  ];
+
   const scaleRow = (f: ScaleField, i: number) => (
     <View key={f}>
       {i > 0 && <Divider style={styles.rowDivider} />}
@@ -636,6 +647,20 @@ export function DetailedLog({
             </>
           )}
         </View>
+      )}
+
+      {fields.includes('strength_felt') && (
+        <Card style={styles.section}>
+          <EngravedLabel>{t('fields.strength_felt')}</EngravedLabel>
+          <ThemedText type="small" themeColor="textSecondary">
+            {t('strength.chipHint')}
+          </ThemedText>
+          <SingleSelectChips
+            options={strengthFeltOptions}
+            value={(merged('strength_felt') as StrengthFelt | undefined) ?? undefined}
+            onChange={(v) => setField({ strength_felt: v })}
+          />
+        </Card>
       )}
 
       {TEXT_FIELDS.filter((f) => fields.includes(f)).map((f) => (

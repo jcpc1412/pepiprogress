@@ -124,7 +124,8 @@
     "body_comp_velocity": "Composição corporal",
     "cv_strain": "Estresse cardíaco",
     "inflammation": "Inflamação",
-    "body_fat_pct": "Gordura corporal"
+    "body_fat_pct": "Gordura corporal",
+    "strength_felt": "O treino pareceu"
   },
   "checkin": {
     "title": "Check-in diário",
@@ -341,7 +342,8 @@
     "measuredDelta": "{{value}} {{unit}} desde sua última medição",
     "runDeepOnShot": "Fazer uma análise profunda desta foto",
     "runDeepOnShotHint": "Toque numa foto para uma análise profunda",
-    "guideHint": "Toque numa linha para inserir o número. Arraste a alça para mover o ponto."
+    "guideHint": "Toque numa linha para inserir o número. Arraste a alça para mover o ponto.",
+    "coachingLabel": "O que fazer com isto"
   },
   "markers": {
     "hematocrit": "Hematócrito",
@@ -1408,5 +1410,11 @@
     "emptyToday": "Ainda nada registado hoje.",
     "editField": "Editar {{field}}",
     "addValue": "adicionar"
+  },
+  "strength": {
+    "easier": "Mais fácil",
+    "same": "Igual",
+    "harder": "Mais difícil",
+    "chipHint": "Comparado com o seu próprio normal, não com o de outros."
   }
 }

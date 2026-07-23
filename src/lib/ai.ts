@@ -46,6 +46,9 @@ export type PhotoAnalysis = {
   hypothesis?: string;
   /** F5: one concrete thing to look for in the next photo of this track. */
   watchNext?: string;
+  /** 2b: context-dependent lifestyle coaching (or the strength question when the
+   *  strength signal is missing). Empty for face tracks and no-body-intent users. */
+  coaching?: string;
   retake: boolean;
   /** Clothing coverage of the NEW photo (PH-1 skin priority). Drives the
    *  quality-highscore reference promotion + the soft lock toward minimal cover. */

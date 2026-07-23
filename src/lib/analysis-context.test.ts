@@ -113,4 +113,45 @@ describe('buildAnalysisContext', () => {
       expect(ctx.recentDoses).toBeUndefined();
     });
   });
+  describe('intent + strength (2b.2)', () => {
+    it('carries a body intent through, and drops "maintain"', () => {
+      const base = { entries: [], doses: [], photoAt: PHOTO_AT, baselineAt: BASELINE_AT };
+      expect(buildAnalysisContext({ ...base, intent: 'cut' }).intent).toBe('cut');
+      expect(buildAnalysisContext({ ...base, intent: 'maintain' }).intent).toBeUndefined();
+      expect(buildAnalysisContext(base).intent).toBeUndefined();
+    });
+
+    it('resolves the strength trend from the reported chip inside the window', () => {
+      const ctx = buildAnalysisContext({
+        entries: [
+          entry('2026-07-03', { strength_felt: 'same' }),
+          entry('2026-07-09', { strength_felt: 'same' }),
+          entry('2026-06-20', { strength_felt: 'harder' }), // before the baseline
+        ],
+        doses: [],
+        photoAt: PHOTO_AT,
+        baselineAt: BASELINE_AT,
+      });
+      expect(ctx.strength).toEqual({ trend: 'held', source: 'reported', samples: 2 });
+    });
+
+    it('reports unknown rather than omitting, so the prompt knows to ask', () => {
+      const ctx = buildAnalysisContext({
+        entries: [entry('2026-07-03', { weight: 80 })],
+        doses: [],
+        photoAt: PHOTO_AT,
+        baselineAt: BASELINE_AT,
+      });
+      expect(ctx.strength?.trend).toBe('unknown');
+    });
+
+    it('asks nothing about strength when there is no baseline window', () => {
+      const ctx = buildAnalysisContext({
+        entries: [entry('2026-07-03', { strength_felt: 'harder' })],
+        doses: [],
+        photoAt: PHOTO_AT,
+      });
+      expect(ctx.strength).toBeUndefined();
+    });
+  });
 });

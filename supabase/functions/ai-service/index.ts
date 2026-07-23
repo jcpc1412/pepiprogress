@@ -77,6 +77,15 @@ type AnalysisDataContext = {
   nutrition?: { avgProtein?: number; avgCalories?: number; daysLogged: number };
   avgSleepQuality?: number;
   recentDoses?: { label: string; hoursBefore: number }[];
+  /** What the user is training toward (2b.2) — selects the coaching branch. */
+  intent?: 'cut' | 'gain' | 'recomp' | 'maintain';
+  /** Did strength hold across the window (2b.2)? `unknown` is meaningful: it
+   *  means the question is open and must be ASKED, never assumed either way. */
+  strength?: {
+    trend: 'up' | 'held' | 'down' | 'unknown';
+    source: 'reported' | 'sessions';
+    samples: number;
+  };
 };
 
 type AnalyzePhotoRequest = {
@@ -399,6 +408,11 @@ const ANALYZE_SCHEMA = {
       description:
         'ONE concrete, specific thing to look for in the next photo of this track. Empty string when nothing specific suggests itself.',
     },
+    coaching: {
+      type: 'string',
+      description:
+        'Lifestyle guidance for THIS user given their intent, window phase and strength trend (2b) — at most one thing to do, or one question to answer when the strength signal is missing. Never mentions doses, schedules or compound choices. Empty string when nothing warrants coaching, or when no coaching layer was provided above.',
+    },
     retake: { type: 'boolean', description: 'true if drift is high enough to recommend a retake.' },
     coverage: {
       type: 'string',
@@ -431,6 +445,7 @@ const ANALYZE_SCHEMA = {
     'observations',
     'hypothesis',
     'watchNext',
+    'coaching',
     'retake',
     'coverage',
     'cropBox',
@@ -634,13 +649,14 @@ function visionBaseLines(
     hasBaseline
       ? '- change: ONE short, hedged sentence with the single most interesting finding (the headline).'
       : '- change: return an empty string (no baseline to compare); observations must also be empty.',
+    '- coaching: guidance for this user, written ONLY when a COACHING LAYER section appears below. No coaching layer, or nothing worth saying => empty string.',
     '',
     'HARD RULES (non-negotiable):',
     '- Observational ONLY. Never diagnose, never give medical advice, never claim a health outcome.',
     '- Hedge everything ("appears", "may", "slightly"). Never definitive.',
     "- Do NOT identify or describe the person's identity. Judge framing/lighting/visible change only.",
     '- Uncertainty beats overclaiming: one wrong confident read costs more trust than ten honest "unclear"s.',
-    `- ${localeLine(locale, 'every user-facing string (change, observation notes and region labels, hypothesis, watchNext)')}`,
+    `- ${localeLine(locale, 'every user-facing string (change, observation notes and region labels, hypothesis, watchNext, coaching)')}`,
     `- The user's unit system is ${ctx?.units ?? 'metric'}. Report any measurement or weight in ${ctx?.units === 'imperial' ? 'imperial (in / lb)' : 'metric (cm / kg)'}. Do NOT default to imperial.`,
   ];
 }
@@ -662,6 +678,13 @@ function visionDataContextLines(d: AnalysisDataContext | undefined, units?: 'met
     parts.push(`nutrition over last 14d: ${n.join(', ')} (${d.nutrition.daysLogged} days logged)`);
   }
   if (d.avgSleepQuality !== undefined) parts.push(`avg sleep quality last 14d: ${d.avgSleepQuality}/5`);
+  if (d.strength) {
+    const label =
+      d.strength.trend === 'unknown'
+        ? 'UNKNOWN (no strength data in this window)'
+        : `${d.strength.trend} (${d.strength.source === 'reported' ? 'user-reported "lifting felt"' : 'logged sessions, estimated 1RM'}, ${d.strength.samples} data points)`;
+    parts.push(`strength across the window: ${label}`);
+  }
   if (d.recentDoses?.length) {
     parts.push(
       `doses before this photo: ${d.recentDoses.map((x) => `${x.label} ${x.hoursBefore}h before`).join(', ')}`,
@@ -739,6 +762,71 @@ function visionSymptomLines(symptomContext: string | undefined): string[] {
   return ['', `User reported a symptom to document: "${symptomContext}". Focus on whether this is visually apparent.`];
 }
 
+/**
+ * Context-dependent coaching (MASTER-PLAN 2b.1 + 2b.7).
+ *
+ * The split mirrors 2a: BOLD COACHING, HUMBLE DIAGNOSIS. Lifestyle coaching
+ * (calories, protein, training intensity, recovery) is allowed and personalized
+ * per CLAUDE.md rule 3 — the regulated thing is dosing, and nothing here touches
+ * it. What stays humble is the *inference*: "you are losing muscle" is a read of
+ * a 2D photo and is always hedged, always paired with the reassuring alternative,
+ * and always paired with the strength check.
+ *
+ * Only fires for body sessions with a real body intent. Face tracks and
+ * wellness-only users get no coaching layer at all.
+ */
+function visionCoachingLines(session: string, ctx: VisionCtx | undefined): string[] {
+  const intent = ctx?.dataContext?.intent;
+  if (session !== 'body' || !intent || intent === 'maintain') return [];
+
+  const strength = ctx?.dataContext?.strength?.trend ?? 'unknown';
+  const week = ctx?.cycleWeek;
+  // Early-window changes are water, glycogen and gut fill, not tissue. Reading
+  // them as muscle loss is the single most damaging false alarm this layer can
+  // produce, so the phase gate comes before any muscle talk.
+  const phase = week === undefined ? 'unknown' : week <= 3 ? 'early' : 'late';
+
+  const lines = [
+    '',
+    'COACHING LAYER (write the "coaching" field — this is guidance, not a finding):',
+    `- The user's intent is: ${intent}. Strength across this window: ${strength}. Window phase: ${phase}${week ? ` (about week ${week})` : ''}.`,
+    '- Register: direct and personal about LIFESTYLE (calories, protein, training intensity, sleep). Hedged and gentle about what the photo implies. You may say "eat a bit more protein"; you may never suggest, change, or comment on a compound dose, schedule, or combination.',
+    '- Every calorie or protein nudge carries its health-positive reason ("to protect the muscle you are building"). Never a bare "eat more" or "eat less".',
+    '- Intensity coaching stays soft and optional ("if you are able to", "when you feel up to it"). Never scold effort.',
+    '- Coach at most ONE thing. A list of five corrections is noise, and the user will act on none of them.',
+    '- Empty string when nothing honestly warrants coaching. Silence beats filler.',
+  ];
+
+  if (intent === 'cut' || intent === 'recomp') {
+    lines.push(
+      '- Fat-loss branch, decided by phase x strength:',
+      '  * EARLY window + measurements down across the board => this is expected water and glycogen. Reassure. Do NOT raise muscle loss at all.',
+      '  * LATE window + down across the board + strength HELD or UP => fat lost with muscle preserved. This is the good outcome: praise the adherence and the training specifically, name what they did right.',
+      '  * LATE window + down across the board + strength DOWN => muscle concern is warranted. Say it hedged, immediately pair it with the reassuring alternative (water, glycogen, a hard training week, poor sleep), and coach ONE thing: a modest protein or calorie increase to protect muscle, or holding training intensity.',
+      '  * LATE window + down across the board + strength UNKNOWN => do not guess. ASK how lifting has felt lately, and say plainly that the answer is what separates fat loss from muscle loss here.',
+      '  * LOCALIZED drop (waist down, limbs holding) => clean fat loss. Unambiguous praise, no caveats, no coaching needed.',
+    );
+  }
+
+  if (intent === 'gain' || intent === 'recomp') {
+    lines.push(
+      '- Weight-gain branch, decided by the waist-versus-limbs tell, with strength as the arbiter:',
+      '  * Limbs and shoulders up, waist holding, strength CLIMBING => productive gain. Praise the progressive overload by name.',
+      '  * Waist climbing fastest, strength FLAT => the surplus is running ahead of what they can build. Coach a smaller, slower surplus while keeping the overload going, and name the waist as the fat proxy to watch.',
+      '  * EARLY window => expect water, glycogen and gut fill (creatine and GH-class compounds do this). Do not read early inflation as fat gain.',
+      '  * Strength UNKNOWN => ask how the lifts have been moving before drawing any conclusion about what the gain is made of.',
+    );
+  }
+
+  if (intent === 'recomp') {
+    lines.push(
+      '- Recomposition branch: weight is expected to sit flat, so weight is NOT the story here. The arrows and the tape carry it. Say so explicitly if the user seems to be reading a flat scale as no progress.',
+    );
+  }
+
+  return lines;
+}
+
 /** Weeks-into-cycle calibration, so a mid-cycle first photo isn't read as day 1. */
 function visionCycleWeekLines(cycleWeek: number | undefined): string[] {
   if (!cycleWeek || cycleWeek <= 0) return [];
@@ -766,6 +854,8 @@ function visionSystemPrompt(
     ...transitionPromptLines(ctx?.transitionContext),
     ...visionSymptomLines(ctx?.symptomContext),
     ...visionCycleWeekLines(ctx?.cycleWeek),
+    // Last: coaching reads everything above it (numbers, phase, measurements).
+    ...visionCoachingLines(session, ctx),
   ].join('\n');
 }
 
@@ -969,6 +1059,7 @@ Deno.serve(async (req: Request) => {
           observations: [],
           hypothesis: '',
           watchNext: '',
+          coaching: '',
           retake: true,
           coverage: 'clothed',
           // cropBox deliberately omitted: a degraded read must not crop the

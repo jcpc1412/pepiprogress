@@ -50,6 +50,11 @@ export type CheckinEntry = {
   energy?: number;
   soreness?: number;
   workout_effort?: number;
+  /** Standing "lifting felt" chip (2b.3): relative to this user's own normal.
+   *  Distinct from workout_effort (absolute RPE) — this is the strength-held
+   *  ground truth the photo analysis needs, and the user's override over any
+   *  passive device fill. Snapshot-only for now (no normalized column). */
+  strength_felt?: 'easier' | 'same' | 'harder';
   libido?: number;
   protein?: number; // grams (manual entry or autofilled from Health, spec 06)
   calories?: number; // kcal (manual entry or autofilled from Health, spec 06)

@@ -1233,9 +1233,41 @@ Stepped plan:
 
 1. **Coaching-framing layer** keyed on {intent, `cycleWeek` phase, strength-held,
    region/measurement pattern}; hedged muscle read + reassuring alternative +
-   strength check; consumes 2a's `regions[]`. `[M]`
-2. **Explicit `intent` + derived `strengthHeld` into `dataContext`.** `[S]`
-3. **Strength-felt standing chip** (same/harder/easier) in the detailed log. `[S]`
+   strength check; consumes 2a's `regions[]`. `[M]` ✅ **DONE**
+   Built: `visionCoachingLines(session, ctx)` composer module in `ai-service`
+   (body sessions with a real body intent only; face + wellness-only users get no
+   coaching layer at all). Encodes the fat-loss 2×2 verbatim: early+across-the-board
+   = water/glycogen, reassure and never raise muscle; late+drop+strength held/up =
+   praise adherence + training by name; late+drop+strength down = hedged muscle
+   concern ALWAYS paired with the reassuring alternative + one protein/calorie nudge
+   carrying its health-positive reason; late+drop+strength **unknown** = ask how
+   lifting felt rather than guess; localized waist drop = unambiguous praise.
+   Register rails: at most ONE coached thing, soft/optional intensity language,
+   empty string beats filler, and an explicit "never a dose, schedule or
+   combination" line (CLAUDE.md rule 3 — lifestyle is personalized, dosing never is).
+   New `coaching` output field (schema + required + degraded fallback + locale line),
+   persisted on the `AnalysisRecord`, rendered as a "What to do with this" block in
+   the analysis card.
+2. **Explicit `intent` + derived `strengthHeld` into `dataContext`.** `[S]` ✅ **DONE**
+   Built: pure core `src/lib/strength-context.ts` (+ 11 tests) —
+   `resolveBodyIntent(cutting, bulking)` → cut/gain/recomp/maintain, and
+   `resolveStrengthTrend({felt, sessions, from, to})` → up/held/down/**unknown**.
+   The subjective chip is primary and overrides logged sessions outright (≥2 chip
+   days, ±0.34 mean band); the session fallback compares per-exercise best Epley
+   e1RM across the window's two halves and only counts exercises present in BOTH
+   (±2% band), so a movement started mid-window carries no false trend. `unknown`
+   is passed through deliberately rather than omitted — the prompt must know the
+   question is OPEN so it asks instead of assuming. `AnalysisDataContext` gains
+   `intent` + `strength`, both gated on a real baseline window; intent resolves
+   through the **exported** `resolveIntent` in `verdict-engine` so the coaching and
+   the charts can never disagree about which way is good.
+3. **Strength-felt standing chip** (same/harder/easier) in the detailed log. `[S]` ✅ **DONE**
+   Built: new `strength_felt` check-in field (`easier|same|harder`), surfaced by the
+   `body_comp` + `fat_loss`/`muscle` paths, evening-weighted, customizable, rendered
+   as `SingleSelectChips` with the hint "compared with your own normal, not anyone
+   else's". Deliberately chips rather than a 1-5 scale: this is a RELATIVE signal and
+   is distinct from `workout_effort` (absolute RPE). Snapshot-only for now (no
+   normalized column, so no migration); i18n ×6.
 4. **Passive strength fill:** add workout **type** + **effort score** (iOS 18+) to
    the Apple Health pull; add exercise-session pull to Health Connect (type + HR,
    no RPE); derive the chip suggestion; user override; subjective fallback. `[M]`
@@ -1245,7 +1277,19 @@ Stepped plan:
 6. **Proactive "how'd your lifting feel?" Pepi opener** (opener only, no
    notification), gated on the routine window, fired only when the analysis needs
    it and passive fill came up empty. `[S]`
-7. **Weight-gain mirror** (waist-vs-limbs, strength-as-arbiter). `[S]`
+7. **Weight-gain mirror** (waist-vs-limbs, strength-as-arbiter). `[S]` ✅ **DONE**
+   Built: the gain branch of `visionCoachingLines` — limbs/shoulders up + waist
+   holding + strength climbing = praise the progressive overload by name; waist
+   climbing fastest + strength flat = coach a smaller/slower surplus while keeping
+   the overload, waist named as the fat proxy; early window = expect water/glycogen/
+   gut fill (creatine, GH-class), never read as fat gain; strength unknown = ask
+   first. Plus a recomp branch: weight is expected flat, so the arrows and the tape
+   carry the story, said explicitly when a flat scale is being misread as no progress.
+
+**Status: 2b.1 / 2b.2 / 2b.3 / 2b.7 shipped. 2b.4 / 2b.5 / 2b.6 remain blocked**
+(2b.4 on the integration-provider block, 2b.5 + 2b.6 on the Point-1 opener infra).
+The chip already carries the signal end to end, so the blocked steps are additive
+suggestion/timing layers, not prerequisites.
 
 Original raw braindump (kept for provenance):
 > Fat loss: if measurements are dropping across the board (possibly signaling

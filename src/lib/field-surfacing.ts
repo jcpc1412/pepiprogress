@@ -15,6 +15,7 @@ export type CheckinField =
   | 'energy'
   | 'soreness'
   | 'workout_effort'
+  | 'strength_felt'
   | 'libido'
   | 'protein'
   | 'calories'
@@ -33,6 +34,7 @@ const FIELD_ORDER: CheckinField[] = [
   'appetite',
   'soreness',
   'workout_effort',
+  'strength_felt',
   'libido',
   'protein',
   'calories',
@@ -47,7 +49,7 @@ const FIELD_ORDER: CheckinField[] = [
 const GOAL_FIELDS: Record<Goal, CheckinField[]> = {
   weight_loss: ['weight', 'appetite', 'calories'],
   skin: ['face_photo', 'skin_notes'],
-  body_comp: ['body_photo', 'weight', 'measurements', 'protein', 'calories'],
+  body_comp: ['body_photo', 'weight', 'measurements', 'protein', 'calories', 'strength_felt'],
   sleep: ['sleep_quality'],
   recovery: ['soreness', 'energy', 'workout_effort'],
   wellness: ['wellness', 'energy'],
@@ -59,8 +61,8 @@ const GOAL_FIELDS: Record<Goal, CheckinField[]> = {
 
 /** Compound effect-tag → fields (the outcomes a compound should move, spec 02). */
 const EFFECT_TAG_FIELDS: Record<string, CheckinField[]> = {
-  fat_loss: ['weight', 'appetite', 'calories'],
-  muscle: ['workout_effort', 'weight', 'protein', 'calories'],
+  fat_loss: ['weight', 'appetite', 'calories', 'strength_felt'],
+  muscle: ['workout_effort', 'strength_felt', 'weight', 'protein', 'calories'],
   recovery: ['soreness', 'energy'],
   healing: ['soreness'],
   skin: ['skin_notes', 'face_photo'],
@@ -185,6 +187,7 @@ const FIELD_TIME: Record<CheckinField, FieldTime> = {
   note: 'any',
   soreness: 'evening',
   workout_effort: 'evening',
+  strength_felt: 'evening',
   protein: 'evening',
   calories: 'evening',
 };
@@ -229,6 +232,7 @@ export const CUSTOMIZABLE_FIELDS: CustomizableField[] = [
   'energy',
   'soreness',
   'workout_effort',
+  'strength_felt',
   'libido',
   'protein',
   'calories',

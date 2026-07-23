@@ -124,7 +124,8 @@
     "body_comp_velocity": "Body Comp",
     "cv_strain": "Cardiac Strain",
     "inflammation": "Inflammation",
-    "body_fat_pct": "Body fat"
+    "body_fat_pct": "Body fat",
+    "strength_felt": "Lifting felt"
   },
   "checkin": {
     "title": "Daily check-in",
@@ -341,7 +342,8 @@
     "measuredDelta": "{{value}} {{unit}} since your last measurement",
     "runDeepOnShot": "Run a deep analysis on this photo",
     "runDeepOnShotHint": "Tap a photo for a deep analysis",
-    "guideHint": "Tap a line to enter its number. Drag the grip to move the spot."
+    "guideHint": "Tap a line to enter its number. Drag the grip to move the spot.",
+    "coachingLabel": "What to do with this"
   },
   "markers": {
     "hematocrit": "Hematocrit",
@@ -1408,5 +1410,11 @@
     "emptyToday": "Nothing logged yet today.",
     "editField": "Edit {{field}}",
     "addValue": "add"
+  },
+  "strength": {
+    "easier": "Easier",
+    "same": "Same",
+    "harder": "Harder",
+    "chipHint": "Compared with your own normal, not anyone else’s."
   }
 }

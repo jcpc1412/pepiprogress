@@ -11,6 +11,14 @@
  * this stays free of catalog imports.
  */
 
+import {
+  resolveStrengthTrend,
+  type BodyIntent,
+  type SessionLike,
+  type StrengthFelt,
+  type StrengthSignal,
+} from '@/lib/strength-context';
+
 /** The subset of a check-in entry this module reads. */
 export type ContextEntry = {
   date: string; // YYYY-MM-DD
@@ -18,6 +26,8 @@ export type ContextEntry = {
   protein?: number;
   calories?: number;
   sleep_quality?: number;
+  /** The standing "lifting felt" chip (2b.3) — the strength-held ground truth. */
+  strength_felt?: StrengthFelt;
 };
 
 export type AnalysisDataContext = {
@@ -30,6 +40,11 @@ export type AnalysisDataContext = {
   avgSleepQuality?: number;
   /** Doses taken shortly before the photo — timing shapes fullness/water. */
   recentDoses?: { label: string; hoursBefore: number }[];
+  /** What the user is training toward (2b.2). Selects the coaching branch. */
+  intent?: BodyIntent;
+  /** Did strength hold across the window (2b.2)? The hinge that separates
+   *  "losing fat" from "losing muscle" when measurements drop. */
+  strength?: StrengthSignal;
 };
 
 /** How far back a weight reading may sit from a window end and still anchor it. */
@@ -65,6 +80,10 @@ export function buildAnalysisContext(opts: {
   photoAt: string;
   /** When the baseline photo was taken (ISO); absent = no baseline. */
   baselineAt?: string;
+  /** What the user is training toward (2b.2); omit for no body intent. */
+  intent?: BodyIntent;
+  /** Logged strength sessions, the fallback under the subjective chip (2b.2). */
+  strengthSessions?: SessionLike[];
 }): AnalysisDataContext {
   const photoDay = dayOf(opts.photoAt);
   const baselineDay = opts.baselineAt ? dayOf(opts.baselineAt) : undefined;
@@ -125,6 +144,23 @@ export function buildAnalysisContext(opts: {
     ctx.recentDoses = Array.from(byLabel.entries())
       .map(([label, hours]) => ({ label, hoursBefore: round1(hours) }))
       .sort((a, b) => a.hoursBefore - b.hoursBefore);
+  }
+
+  // Intent + strength (2b.2). Both only mean something across a window, so a
+  // baseline is required; a single photo has no "did strength hold" to answer.
+  if (opts.intent && opts.intent !== 'maintain') ctx.intent = opts.intent;
+  if (baselineDay) {
+    const strength = resolveStrengthTrend({
+      felt: opts.entries
+        .filter((e) => e.strength_felt !== undefined)
+        .map((e) => ({ date: e.date, felt: e.strength_felt as StrengthFelt })),
+      sessions: opts.strengthSessions ?? [],
+      from: baselineDay,
+      to: photoDay,
+    });
+    // `unknown` is passed through deliberately: the prompt must be told that the
+    // strength question is OPEN, so it asks rather than assuming either answer.
+    ctx.strength = strength;
   }
 
   return ctx;

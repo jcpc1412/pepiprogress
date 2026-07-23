@@ -55,6 +55,8 @@ export type AnalysisRecord = {
   hypothesis?: string;
   /** One concrete thing to look for in the next photo of this track. */
   watchNext?: string;
+  /** 2b: the coaching line that accompanied this analysis. */
+  coaching?: string;
   /** The one-line summary (kept for share cards + encouragement context). */
   change?: string;
 };

@@ -124,7 +124,8 @@
     "body_comp_velocity": "Composition corporelle",
     "cv_strain": "Stress cardiaque",
     "inflammation": "Inflammation",
-    "body_fat_pct": "Masse grasse"
+    "body_fat_pct": "Masse grasse",
+    "strength_felt": "La séance a semblé"
   },
   "checkin": {
     "title": "Suivi quotidien",
@@ -341,7 +342,8 @@
     "measuredDelta": "{{value}} {{unit}} depuis ta dernière mesure",
     "runDeepOnShot": "Lancer une analyse approfondie de cette photo",
     "runDeepOnShotHint": "Touche une photo pour une analyse approfondie",
-    "guideHint": "Touche une ligne pour saisir son chiffre. Fais glisser la poignée pour déplacer le repère."
+    "guideHint": "Touche une ligne pour saisir son chiffre. Fais glisser la poignée pour déplacer le repère.",
+    "coachingLabel": "Quoi en faire"
   },
   "markers": {
     "hematocrit": "Hématocrite",
@@ -1408,5 +1410,11 @@
     "emptyToday": "Rien enregistré aujourd'hui pour le moment.",
     "editField": "Modifier {{field}}",
     "addValue": "ajouter"
+  },
+  "strength": {
+    "easier": "Plus facile",
+    "same": "Pareil",
+    "harder": "Plus dur",
+    "chipHint": "Par rapport à votre propre normale, pas à celle des autres."
   }
 }
