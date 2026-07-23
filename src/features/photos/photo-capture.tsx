@@ -13,7 +13,13 @@ import { Spacing } from '@/constants/theme';
 import { checkFit, classifyPose, type FitCheck } from '@/lib/ai';
 import { bodyFatNavy, usesFemaleFormula } from '@/lib/body-composition';
 import { copyPhotoToDocuments } from '@/lib/photos';
-import { poseFromCapture, type CanonicalPose } from '@/lib/photo-pose';
+import {
+  poseFromCapture,
+  REQUIRED_POSES,
+  sessionForPose,
+  viewForPose,
+  type CanonicalPose,
+} from '@/lib/photo-pose';
 import { computeQuality, type PhotoQuality } from '@/lib/photo-quality';
 import { initialSampleState, recordSample, shouldSample } from '@/lib/pose-live';
 import { localDateKey, useStore, type PhotoSession } from '@/lib/store';
@@ -41,6 +47,7 @@ export function PhotoCapture({
   view = 'front',
   timer = 0,
   casual = false,
+  smart = false,
 }: {
   session: PhotoSession;
   part?: string;
@@ -53,9 +60,15 @@ export function PhotoCapture({
   /** Fired after a shot is saved to the store (PH-2): the parent runs the instant
    *  post-capture read + celebration. */
   onSaved?: (photoId: string) => void;
-  /** Capture angle + self-timer are chosen in the Photos tab now, not in-camera. */
+  /** Capture angle + self-timer default here; in smart mode the self-timer is
+   *  controlled in-camera (the pre-camera picker is gone, 2a.1). */
   view?: 'front' | 'side';
   timer?: 0 | 3 | 10;
+  /** One smart camera (2a.1): auto-detect session (face/body) + pose for ALL four
+   *  canonical poses (not just body), swap the ghost, and derive the save tag from
+   *  the detection. An in-camera chip row is the manual override / offline
+   *  fallback. Off = the legacy explicit session+pose path (custom parts). */
+  smart?: boolean;
   /** Quick-shot mode (W6-26c): shoot freely (back cam by default), no ghost lock,
    *  no measurements. The shot lands casual (`isRequiredSet: false`) and its pose
    *  is left to background classification, so it joins the reel for triage rather
@@ -76,6 +89,25 @@ export function PhotoCapture({
   const [countdown, setCountdown] = useState<number | null>(null);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // ── Smart-camera in-camera controls (2a.1) ────────────────────────────────
+  // Manual override wins over live detection (wrong-guess / offline / AI off);
+  // `casualOverride` demotes a shot to a freeform reel entry; the self-timer is
+  // set here now that the pre-camera picker is gone.
+  const [manualPose, setManualPose] = useState<CanonicalPose | null>(null);
+  const [detectedPose, setDetectedPose] = useState<CanonicalPose | null>(null);
+  const [showManual, setShowManual] = useState(false);
+  const [casualOverride, setCasualOverride] = useState(false);
+  const [timerSec, setTimerSec] = useState<0 | 3 | 10>(timer);
+
+  // The pose this shot will save with, and the session it implies. Manual
+  // override → live detection → the caller's default. In smart mode the session
+  // is re-derived from the pose (a detected face shot saves as `face` and skips
+  // measurements even though the smart camera opened body-first); custom parts
+  // keep their explicit session.
+  const effPose: CanonicalPose = part ? 'other' : manualPose ?? detectedPose ?? poseFromCapture(session, view);
+  const effSession: PhotoSession = part ? 'body' : smart ? sessionForPose(effPose) : session;
+  const isCasual = casual || casualOverride;
+
   // Quality score + low-score retry modal (redesign §4A, owner 2026-07-06).
   const [quality, setQuality] = useState<PhotoQuality | null>(null);
   const [qualityAck, setQualityAck] = useState(false);
@@ -93,10 +125,10 @@ export function PhotoCapture({
   const [hips, setHips] = useState('');
   const [extraKey, setExtraKey] = useState<'chest' | 'arms' | 'thighs' | undefined>();
   const [extraVal, setExtraVal] = useState('');
-  const isBody = session === 'body';
+  const isBody = effSession === 'body';
   // Casual quick-shots skip the measurement step entirely (save + close), even in
   // the body track — measurements belong to the guided comparability flow.
-  const collectMeasurements = isBody && !casual;
+  const collectMeasurements = isBody && !isCasual;
   const units = profile?.units ?? 'metric';
   const unitLabel = units === 'imperial' ? t('measurements.unitIn') : t('measurements.unitCm');
 
@@ -182,15 +214,19 @@ export function PhotoCapture({
   //    against the part's reference instead — a live "does this match my
   //    reference shot" hint (the custom-pose version of pose detection).
   // Offline / AI-unconfigured: fails open, manual chips + last ghost remain.
-  const [detectedPose, setDetectedPose] = useState<CanonicalPose | null>(null);
   const [liveFit, setLiveFit] = useState<FitCheck | null>(null);
   const samplingRef = useRef(false); // serializes sampling captures
   const actionRef = useRef(false); // true while a real capture is in flight
   const isBodyMain = session === 'body' && !part;
+  // Smart mode samples for BOTH sessions (the classifier distinguishes face vs
+  // body poses), so the one camera never has to pre-declare the session. The
+  // legacy body-main path is unchanged; custom parts run the check_fit branch.
+  const detectPose = (smart || isBodyMain) && !part;
+  const detectFit = !!(part && ghostUri);
 
   useEffect(() => {
     if (!live || !isSupabaseConfigured) return;
-    if (!isBodyMain && !(part && ghostUri)) return; // face → VisionCameraCapture
+    if (!detectPose && !detectFit) return; // (non-smart face → VisionCameraCapture)
     let cancelled = false;
     let state = initialSampleState();
     const id = setInterval(async () => {
@@ -204,17 +240,19 @@ export function PhotoCapture({
           skipProcessing: true,
         });
         if (!pic?.uri || cancelled) return;
-        if (part && ghostUri) {
+        if (detectFit) {
           // Custom track: live fit vs the part reference. Reuse the schedule's
           // sample cap as the cost ceiling; never "stabilizes".
           state = { ...state, samples: state.samples + 1, lastAt: Date.now() };
-          const fit = await checkFit(pic.uri, ghostUri);
+          const fit = await checkFit(pic.uri, ghostUri as string);
           if (!cancelled) setLiveFit(fit);
         } else {
           const res = await classifyPose(pic.uri);
           if (!res || cancelled) return;
           state = recordSample(state, res.pose, res.confidence, Date.now());
-          if (state.stable === 'front_relaxed' || state.stable === 'side_relaxed') {
+          // Accept any of the four comparability poses (face + body), so the
+          // smart camera can resolve either session from the live frame.
+          if (state.stable && REQUIRED_POSES.includes(state.stable)) {
             setDetectedPose(state.stable);
           }
         }
@@ -228,7 +266,7 @@ export function PhotoCapture({
       cancelled = true;
       clearInterval(id);
     };
-  }, [live, isBodyMain, part, ghostUri]);
+  }, [live, detectPose, detectFit, part, ghostUri]);
 
   /** Stop any running self-timer countdown. */
   const clearCountdown = () => {
@@ -261,6 +299,9 @@ export function PhotoCapture({
     setExtraVal('');
     setDetectedPose(null);
     setLiveFit(null);
+    setManualPose(null);
+    setShowManual(false);
+    setCasualOverride(false);
     onClose();
   };
 
@@ -304,11 +345,11 @@ export function PhotoCapture({
   /** Shutter press: fire now, or run the self-timer countdown then fire. */
   const startCapture = () => {
     if (busy || countdown !== null) return;
-    if (timer === 0) {
+    if (timerSec === 0) {
       void capture();
       return;
     }
-    setCountdown(timer);
+    setCountdown(timerSec);
     countdownRef.current = setInterval(() => {
       setCountdown((c) => {
         if (c === null) return null;
@@ -330,11 +371,13 @@ export function PhotoCapture({
     setBusy(true);
     try {
       const persistentUri = await copyPhotoToDocuments(shot);
-      // Detected pose (live sampling) wins over the manual angle chip; custom
-      // parts are their own sub-track, not one of the four locked poses.
-      const savedView = detectedPose === 'side_relaxed' ? 'side' : detectedPose === 'front_relaxed' ? 'front' : view;
+      // Manual override → live detection → the caller's default (see effPose).
+      // The save tag, its view, and the session all derive from that one pose so
+      // a smart-detected face shot lands in the face track (custom parts stay
+      // `other` in the body track).
+      const savedView = part ? view : viewForPose(effPose);
       const newId = addPhoto({
-        session,
+        session: effSession,
         part,
         view: savedView,
         uri: persistentUri,
@@ -342,10 +385,10 @@ export function PhotoCapture({
         tilt: shotTilt,
         qualityScore: quality?.score,
         // Casual: leave the pose to background classification (undefined unless a
-        // live sample already resolved one) so the shot lands in the reel for
-        // triage. Guided: derive + lock to the comparability set.
-        pose: casual ? detectedPose ?? undefined : part ? 'other' : detectedPose ?? poseFromCapture(session, view),
-        isRequiredSet: casual ? false : !part,
+        // live sample / manual chip already resolved one) so the shot lands in the
+        // reel for triage. Guided: derive + lock to the comparability set.
+        pose: isCasual ? manualPose ?? detectedPose ?? undefined : part ? 'other' : effPose,
+        isRequiredSet: isCasual ? false : !part,
       });
       savedIdRef.current = newId;
       onSaved?.(newId);
@@ -383,16 +426,19 @@ export function PhotoCapture({
     close();
   };
 
-  const sessionLabel = casual
+  const sessionLabel = isCasual
     ? t('photos.quickShot')
-    : session === 'face'
+    : effSession === 'face'
       ? t('photos.sessionFace')
       : t('photos.sessionBody');
 
   // Ghost for the live view: prefer the reference of the pose being held
-  // (detected live, else the manual angle chip); fall back to the chain ghost.
-  const activePose: CanonicalPose = part ? 'other' : detectedPose ?? poseFromCapture(session, view);
-  const liveGhostUri = ghostByPose?.[activePose] ?? ghostUri;
+  // (manual override → detected live); fall back to the chain ghost.
+  const liveGhostUri = ghostByPose?.[effPose] ?? ghostUri;
+
+  // Manual override chips (2a.1): the demoted picker, now in-camera for the
+  // wrong-guess / offline / AI-unconfigured cases.
+  const cycleTimer = () => setTimerSec((s) => (s === 0 ? 3 : s === 3 ? 10 : 0));
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={close}>
@@ -635,10 +681,19 @@ export function PhotoCapture({
               <ThemedText type="label" style={styles.overlayText}>
                 {sessionLabel}
               </ThemedText>
-              {/* Live-detected pose (sampled): the tag the shot will save with. */}
-              {detectedPose ? (
+              {/* Live-detected (or manually set) pose: the tag the shot saves
+                  with. In smart mode, show a scanning hint until it resolves. */}
+              {manualPose ? (
+                <ThemedText type="monoSm" style={styles.overlayDim}>
+                  {t('photos.poseSet', { pose: t(`photos.pose_${manualPose}` as 'photos.pose_front_relaxed') })}
+                </ThemedText>
+              ) : detectedPose ? (
                 <ThemedText type="monoSm" style={styles.overlayDim}>
                   {t('photos.poseDetected', { pose: t(`photos.pose_${detectedPose}` as 'photos.pose_front_relaxed') })}
+                </ThemedText>
+              ) : smart && !part ? (
+                <ThemedText type="monoSm" style={styles.overlayDim}>
+                  {t('photos.smartScanning')}
                 </ThemedText>
               ) : null}
               {/* Custom-part live fit vs the reference (the custom-pose flavor). */}
@@ -685,6 +740,53 @@ export function PhotoCapture({
                 ]}
               />
             </View>
+            {/* Manual override (2a.1): the demoted picker, in-camera for the
+                wrong-guess / offline / AI-unconfigured cases + the self-timer. */}
+            {smart && !part ? (
+              <View style={styles.manualWrap}>
+                {showManual ? (
+                  <View style={styles.manualPanel}>
+                    <View style={styles.manualChips}>
+                      <OverlayChip
+                        label={t('photos.poseAuto')}
+                        active={manualPose === null}
+                        onPress={() => setManualPose(null)}
+                      />
+                      {REQUIRED_POSES.map((p) => (
+                        <OverlayChip
+                          key={p}
+                          label={t(`photos.pose_${p}` as 'photos.pose_front_relaxed')}
+                          active={manualPose === p}
+                          onPress={() => setManualPose(p)}
+                        />
+                      ))}
+                    </View>
+                    <View style={styles.manualChips}>
+                      <OverlayChip
+                        label={t('photos.quickShot')}
+                        active={casualOverride}
+                        onPress={() => setCasualOverride((c) => !c)}
+                      />
+                      <OverlayChip
+                        label={t(timerSec === 0 ? 'photos.timerOff' : timerSec === 3 ? 'photos.timer3' : 'photos.timer10')}
+                        active={timerSec !== 0}
+                        onPress={cycleTimer}
+                      />
+                    </View>
+                  </View>
+                ) : null}
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityState={{ expanded: showManual }}
+                  onPress={() => setShowManual((s) => !s)}
+                  hitSlop={8}
+                  style={styles.manualToggle}>
+                  <ThemedText type="monoSm" style={styles.overlayDim}>
+                    {t('photos.setPose')}
+                  </ThemedText>
+                </Pressable>
+              </View>
+            ) : null}
             <SafeAreaView style={styles.bottomBar} edges={['bottom']}>
               <Pressable accessibilityRole="button" onPress={close}>
                 <ThemedText type="label" style={styles.overlayText}>
@@ -714,6 +816,21 @@ export function PhotoCapture({
   );
 }
 
+/** A compact chip for the in-camera manual-override strip (dark overlay). */
+function OverlayChip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ selected: active }}
+      onPress={onPress}
+      style={[styles.overlayChip, active && styles.overlayChipActive]}>
+      <ThemedText type="monoSm" style={active ? styles.overlayChipTextActive : styles.overlayChipText}>
+        {label}
+      </ThemedText>
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
   fill: { flex: 1, backgroundColor: '#000' },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: Spacing.three, padding: Spacing.five },
@@ -732,6 +849,22 @@ const styles = StyleSheet.create({
   },
   overlayText: { color: '#F0EFEC', letterSpacing: 1.3 },
   overlayDim: { color: 'rgba(240,239,236,0.7)' },
+  // In-camera manual override strip (2a.1), sits just above the shutter bar.
+  manualWrap: { position: 'absolute', bottom: 96, left: 0, right: 0, alignItems: 'center', gap: Spacing.two },
+  manualPanel: { alignItems: 'center', gap: Spacing.two, paddingHorizontal: Spacing.four },
+  manualChips: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: Spacing.two },
+  manualToggle: { paddingVertical: Spacing.one, paddingHorizontal: Spacing.three },
+  overlayChip: {
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.one,
+    borderRadius: 2,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(240,239,236,0.4)',
+    backgroundColor: 'rgba(17,17,16,0.55)',
+  },
+  overlayChipActive: { backgroundColor: 'rgba(240,239,236,0.92)', borderColor: '#F0EFEC' },
+  overlayChipText: { color: 'rgba(240,239,236,0.85)' },
+  overlayChipTextActive: { color: '#131210' },
   // Review step 1: shot + big score. Near-black frame (tinted, not #000-pure UI).
   reviewContent: { flexGrow: 1 },
   reviewPhoto: { width: '100%', aspectRatio: 3 / 4 },

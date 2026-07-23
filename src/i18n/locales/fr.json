@@ -321,7 +321,11 @@
     "filterPose": "Posture",
     "regionsLabel": "Lecture par zones",
     "hypothesisLabel": "Hypothèse de travail",
-    "watchNext": "La prochaine fois, surveillez : {{hint}}"
+    "watchNext": "La prochaine fois, surveillez : {{hint}}",
+    "smartScanning": "Recherche de ta pose",
+    "setPose": "Choisir la pose",
+    "poseAuto": "Auto",
+    "poseSet": "Pose : {{pose}}"
   },
   "markers": {
     "hematocrit": "Hématocrite",

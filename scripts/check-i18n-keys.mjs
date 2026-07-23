@@ -50,6 +50,8 @@ const IDENTICAL_OK = new Set([
   'markers.estradiol', 'markers.glucose', 'me.name', 'measurements.unitCm', 'measurements.unitIn',
   'photos.comparable', 'photos.dayShort', 'photos.filterTitle', 'photos.heading', 'photos.partName',
   'photos.tagWeek', 'photos.timer3', 'photos.timer10', 'photos.timerOff',
+  // "Auto" is universal; "Pose" is a cognate in es/pt/de (the pose name is interpolated).
+  'photos.poseAuto', 'photos.poseSet',
   'protocol.dose', 'protocol.nominal',
   'protocol.vialCount_one', 'report.date', 'dose.date', 'journal.source.pepi', 'journal.scaleValue',
   // Journal cognates that legitimately equal English in some locales (fr/pt "doses"/"dose",

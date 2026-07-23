@@ -1018,11 +1018,28 @@ humble. Hard rules:
 
 Stepped plan:
 
-1. **One smart camera [M].** Collapse the guided/quick chooser + pose picker into
-   a single camera: auto-detect **session (face/body) and pose** from the live
-   classify sample, live ghost swap, tag on capture. Picker survives only as an
-   **offline fallback + manual override** (wrong-guess / AI-unconfigured). Keeps
-   the ghost's before-shot reference need satisfied without a pre-declaration step.
+1. **One smart camera [M]. ✅ DONE.** Collapse the guided/quick chooser + pose
+   picker into a single camera: auto-detect **session (face/body) and pose** from
+   the live classify sample, live ghost swap, tag on capture. Picker survives only
+   as an **offline fallback + manual override** (wrong-guess / AI-unconfigured).
+   Keeps the ghost's before-shot reference need satisfied without a pre-declaration
+   step. **Built:** the floating button (+ both empty-state opens) now open ONE
+   expo-camera directly in a new `smart` mode; the `chooserOpen`/`posePickerOpen`
+   modals + `CaptureOption` are deleted. `photo-capture.tsx` live sampling now runs
+   for BOTH sessions (was body-only) and accepts all four `REQUIRED_POSES`, so
+   `classify_pose` resolves face vs body from the frame; the ghost, the save tag,
+   the view, and the **session** all derive from one `effPose` (manual override →
+   detection → default), so a detected face shot saves to the face track + skips
+   measurements. `ghostByPose` now spans all photos (poses are session-unique) so
+   the ghost can swap either way. The demoted picker is an **in-camera chip strip**
+   (`OverlayChip`: Auto + 4 poses + quick toggle + self-timer, revealed by a "Set
+   pose" toggle). New i18n: `photos.smartScanning/setPose/poseAuto/poseSet` (×6).
+   **Decision (flagged):** the vision-camera face-box assist is off the default
+   path in V1 — the one smart camera is expo-camera (it detects both sessions and
+   sidesteps the vision-camera native-build caveat noted in CLAUDE.md M4).
+   `VisionCameraCapture` stays in the tree behind `useVisionCamera` (now only an
+   explicit non-smart face open, none today) for re-integration as an opt-in "face
+   precision" mode in a later step. Green: tsc / lint / i18n(6) / 441 tests / web.
 2. **Review ends on the payoff [M].** Reorder the review so the last screen is the
    comparison, not measurements: capture → instant deterministic `quickReadout` →
    measurements (body only, via the **guide-line overlay in step 7**, still feeding
@@ -1604,7 +1621,7 @@ skeleton. Annotations: **needs** = hard prerequisite; **unblocks** = what it ope
 **2. Region-arrow contract + arrow UI (2a), the contract every photo sub-point consumes**
 - **2a.3 `regions[]` structured output** in `analyze_photo` — **separate `direction`
   (grew/shrank) + `favour` (good/bad) + free coords**. **Needs** 3.1. ← the contract.
-- **2a.1 One smart camera** (auto session+pose, picker demoted to fallback).
+- **2a.1 One smart camera** (auto session+pose, picker demoted to fallback). ✅ DONE.
 - **2a.2 Review ends on the comparison card** (capture → readout → measurements → card).
 - **2a.4 Arrow overlay** — `TrendMarker` glyph, direction × color (green ▲ muscle /
   green ▼ fat loss / red ▲ fat gain / red ▼ muscle loss / grey dash none / yellow dash

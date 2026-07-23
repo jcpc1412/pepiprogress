@@ -52,12 +52,10 @@ import {
 import { daysBetween } from '@/lib/dates';
 import {
   CANONICAL_POSES,
-  REQUIRED_POSES,
   groupPhotosByPose,
   needsPoseConfirm,
   poseFromCapture,
   sessionForPose,
-  viewForPose,
   type CanonicalPose,
   type PoseKey,
 } from '@/lib/photo-pose';
@@ -297,18 +295,19 @@ export function ProgressPhotos({
   // and reveals its compare / timeline / milestones / analysis below.
   const [focused, setFocused] = useState<{ session: PhotoSession; part?: string } | null>(null);
 
-  // Capture flow: the floating button opens a chooser (guided check-in vs quick
-  // shot). Guided → a pose picker → the right camera; quick → the casual camera.
-  // `captureCfg` being non-null opens a camera; its shape decides which + how.
-  const [chooserOpen, setChooserOpen] = useState(false);
-  const [posePickerOpen, setPosePickerOpen] = useState(false);
+  // Capture flow (2a.1 "one smart camera"): the floating button opens ONE camera
+  // directly — no guided/quick chooser, no pre-camera pose picker. Live pose
+  // sampling inside the camera detects the session (face/body) + pose, swaps the
+  // ghost, and tags on capture; the picker survives only as an in-camera manual
+  // override. `captureCfg` being non-null opens a camera; `smart` runs the auto
+  // path (custom-part capture stays an explicit, non-smart open).
   const [captureCfg, setCaptureCfg] = useState<{
     session: PhotoSession;
     part?: string;
     view: 'front' | 'side';
     casual: boolean;
+    smart?: boolean;
   } | null>(null);
-  const [timer, setTimer] = useState<0 | 3 | 10>(0);
 
   const [analyzing, setAnalyzing] = useState(false);
   // Instant, deterministic quick readout shown while the deep analysis loads (§4A).
@@ -358,13 +357,22 @@ export function ProgressPhotos({
   const thumbW = useThumbWidth();
   const thumbH = Math.floor(thumbW * (4 / 3));
 
-  // Expose the capture trigger to the parent floating button: open the chooser.
+  // 2a.1: one smart camera. Opens body/front as a neutral default; the live pose
+  // sample re-derives the real session + pose (and the ghost) once the user
+  // frames a shot, so the body/front default is only what shows for the first
+  // instant before detection resolves.
+  const startSmart = useCallback(() => {
+    setCaptureCfg({ session: 'body', part: undefined, view: 'front', casual: false, smart: true });
+  }, []);
+
+  // Expose the capture trigger to the parent floating button: open the smart
+  // camera directly (2a.1) — no chooser, no pose picker.
   useEffect(() => {
-    if (captureRef) captureRef.current = () => setChooserOpen(true);
+    if (captureRef) captureRef.current = () => startSmart();
     return () => {
       if (captureRef) captureRef.current = null;
     };
-  }, [captureRef]);
+  }, [captureRef, startSmart]);
 
   // Newest-first; [0] = latest, last = baseline. Scoped to the active track
   // (session + optional custom part), so each part has its own baseline/ghost.
@@ -401,16 +409,18 @@ export function ProgressPhotos({
   // Per-pose ghost references (W6-26.5): the live pose detection in the capture
   // screens swaps the ghost to the best reference OF THE POSE the user is
   // actually holding. Poses without a tagged reference fall back to `ghostUri`.
+  // Computed across ALL photos (poses are session-unique), so the 2a.1 smart
+  // camera — which opens before the session is known — can swap to either a face
+  // or a body ghost as the live sample resolves.
   const ghostByPose = useMemo(() => {
     const map: Partial<Record<CanonicalPose, string>> = {};
     for (const p of CANONICAL_POSES) {
-      const chain = sessionPhotos.filter((ph) => ph.pose === p);
+      const chain = photos.filter((ph) => ph.pose === p);
       const ref = pickReference(chain);
       if (ref) map[p] = resolvedUris[ref.id] ?? ref.uri;
     }
     return map;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [photos, trackSession, trackPart, resolvedUris]);
+  }, [photos, resolvedUris]);
 
   // ── Compound group + cadence ─────────────────────────────────────────────
   const group = useMemo(() => getGroupForSlugs(profile.compoundSlugs), [profile.compoundSlugs]);
@@ -821,18 +831,6 @@ export function ProgressPhotos({
   }, []);
 
   // ── Capture entry actions ────────────────────────────────────────────────
-  const startGuided = useCallback((pose: CanonicalPose) => {
-    const session = sessionForPose(pose);
-    setFocused({ session, part: undefined });
-    setPosePickerOpen(false);
-    setCaptureCfg({ session, part: undefined, view: viewForPose(pose), casual: false });
-  }, []);
-
-  const startQuick = useCallback(() => {
-    setChooserOpen(false);
-    setCaptureCfg({ session: 'body', part: undefined, view: 'front', casual: true });
-  }, []);
-
   const startPartCapture = useCallback(() => {
     if (!focused?.part) return;
     setCaptureCfg({ session: 'body', part: focused.part, view: 'front', casual: false });
@@ -875,7 +873,11 @@ export function ProgressPhotos({
       </View>
     ) : null;
 
-  const useVisionCamera = captureCfg?.session === 'face' && !captureCfg.casual;
+  // The vision-camera face detector stays reachable only for an explicit,
+  // non-smart face capture. The smart camera (2a.1) always uses expo-camera so a
+  // single live view can detect BOTH sessions (and it sidesteps the vision-camera
+  // native-build caveat). Face precision returns as an opt-in in a later step.
+  const useVisionCamera = captureCfg?.session === 'face' && !captureCfg.casual && !captureCfg.smart;
   const trackLabel =
     trackSession === 'face' ? t('photos.sessionFace') : trackPart ?? t('photos.sessionBody');
 
@@ -890,7 +892,7 @@ export function ProgressPhotos({
           <ThemedText type="monoSm" themeColor="textMuted" style={styles.clothingGuidance}>
             {t('photos.clothingGuidance')}
           </ThemedText>
-          <TextButton label={t('photos.open')} onPress={() => setChooserOpen(true)} />
+          <TextButton label={t('photos.open')} onPress={() => startSmart()} />
         </View>
       ) : (
         <>
@@ -998,7 +1000,7 @@ export function ProgressPhotos({
                   <ThemedText type="mono" themeColor="textMuted">
                     {t('photos.empty')}
                   </ThemedText>
-                  <TextButton label={t('photos.open')} onPress={() => setChooserOpen(true)} />
+                  <TextButton label={t('photos.open')} onPress={() => startSmart()} />
                 </View>
               ) : (
                 <>
@@ -1267,62 +1269,9 @@ export function ProgressPhotos({
         </ThemedText>
       </Pressable>
 
-      {/* ── Capture chooser: guided check-in vs quick shot ── */}
-      <Modal visible={chooserOpen} transparent animationType="fade" onRequestClose={() => setChooserOpen(false)}>
-        <Pressable style={styles.partModalBackdrop} onPress={() => setChooserOpen(false)}>
-          <View
-            style={[styles.partModalSheet, { backgroundColor: theme.surfaceRaised, borderColor: theme.border }]}
-            onStartShouldSetResponder={() => true}>
-            <EngravedLabel>{t('photos.chooseCaptureTitle')}</EngravedLabel>
-            <CaptureOption
-              title={t('photos.captureGuided')}
-              desc={t('photos.captureGuidedDesc')}
-              onPress={() => {
-                setChooserOpen(false);
-                setPosePickerOpen(true);
-              }}
-            />
-            <CaptureOption title={t('photos.captureQuick')} desc={t('photos.captureQuickDesc')} onPress={startQuick} />
-            <TextButton label={t('common.cancel')} onPress={() => setChooserOpen(false)} />
-          </View>
-        </Pressable>
-      </Modal>
-
-      {/* ── Guided pose picker: choose which canonical pose to capture ── */}
-      <Modal visible={posePickerOpen} transparent animationType="fade" onRequestClose={() => setPosePickerOpen(false)}>
-        <Pressable style={styles.partModalBackdrop} onPress={() => setPosePickerOpen(false)}>
-          <View
-            style={[styles.partModalSheet, { backgroundColor: theme.surfaceRaised, borderColor: theme.border }]}
-            onStartShouldSetResponder={() => true}>
-            <EngravedLabel>{t('photos.choosePoseTitle')}</EngravedLabel>
-            <View style={styles.partRow}>
-              {REQUIRED_POSES.map((p) => (
-                <PartChip
-                  key={p}
-                  label={t(`photos.pose_${p}` as 'photos.pose_front_relaxed')}
-                  active={false}
-                  onPress={() => startGuided(p)}
-                />
-              ))}
-            </View>
-            <View style={styles.settingCol}>
-              <EngravedLabel>{t('photos.timerLabel')}</EngravedLabel>
-              <SingleSelectChips
-                options={[
-                  { value: '0', label: t('photos.timerOff') },
-                  { value: '3', label: t('photos.timer3') },
-                  { value: '10', label: t('photos.timer10') },
-                ]}
-                value={String(timer)}
-                onChange={(v) => setTimer(Number(v) as 0 | 3 | 10)}
-              />
-            </View>
-            <TextButton label={t('common.cancel')} onPress={() => setPosePickerOpen(false)} />
-          </View>
-        </Pressable>
-      </Modal>
-
-      {/* ── Camera: vision-camera for guided face, expo-camera otherwise ── */}
+      {/* ── One smart camera (2a.1): vision-camera survives only for an explicit
+          non-smart face capture (none today); every entry point opens the
+          expo-camera in smart mode, which auto-detects session + pose. ── */}
       {useVisionCamera ? (
         <VisionCameraCapture
           session="face"
@@ -1338,8 +1287,8 @@ export function ProgressPhotos({
           session={captureCfg?.session ?? 'body'}
           part={captureCfg?.part}
           view={captureCfg?.view ?? 'front'}
-          timer={timer}
           casual={captureCfg?.casual ?? false}
+          smart={captureCfg?.smart ?? false}
           ghostUri={ghostUri}
           ghostByPose={ghostByPose}
           visible={captureCfg !== null}
@@ -1451,30 +1400,6 @@ export function ProgressPhotos({
   );
 }
 
-/** A capture-chooser option: a titled, described tappable row. */
-function CaptureOption({ title, desc, onPress }: { title: string; desc: string; onPress: () => void }) {
-  const theme = useTheme();
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={title}
-      accessibilityHint={desc}
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.captureOption,
-        { borderColor: theme.border, backgroundColor: theme.surfaceSunken },
-        pressed && styles.thumbPressed,
-      ]}>
-      <ThemedText type="label" themeColor="text">
-        {title}
-      </ThemedText>
-      <ThemedText type="monoSm" themeColor="textMuted" style={styles.captureOptionDesc}>
-        {desc}
-      </ThemedText>
-    </Pressable>
-  );
-}
-
 /** A small selectable chip for a body sub-part (or the "+ Add part" affordance). */
 function PartChip({
   label,
@@ -1533,7 +1458,6 @@ const styles = StyleSheet.create({
   instantHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.two },
   instantBadgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.one },
   partRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
-  settingCol: { gap: Spacing.one },
   partChip: {
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.one,
@@ -1550,13 +1474,6 @@ const styles = StyleSheet.create({
   },
   partModalActions: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.three },
   partModalSave: { minWidth: 120 },
-  captureOption: {
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: Radii.panel,
-    padding: Spacing.three,
-    gap: Spacing.half,
-  },
-  captureOptionDesc: { lineHeight: 16 },
   milestoneRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.two },
   aiErrorRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.two },
   aiErrorText: { flex: 1 },

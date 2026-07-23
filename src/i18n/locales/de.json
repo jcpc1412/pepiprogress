@@ -321,7 +321,11 @@
     "filterPose": "Körperhaltung",
     "regionsLabel": "Zonen-Messwerte",
     "hypothesisLabel": "Arbeitshypothese",
-    "watchNext": "Beim nächsten Mal beachten: {{hint}}"
+    "watchNext": "Beim nächsten Mal beachten: {{hint}}",
+    "smartScanning": "Pose wird erkannt",
+    "setPose": "Pose wählen",
+    "poseAuto": "Auto",
+    "poseSet": "Pose: {{pose}}"
   },
   "markers": {
     "hematocrit": "Hämatokrit",

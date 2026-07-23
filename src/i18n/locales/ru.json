@@ -321,7 +321,11 @@
     "filterPose": "Поза",
     "regionsLabel": "Показания по зонам",
     "hypothesisLabel": "Рабочая гипотеза",
-    "watchNext": "В следующий раз обратите внимание: {{hint}}"
+    "watchNext": "В следующий раз обратите внимание: {{hint}}",
+    "smartScanning": "Определяем позу",
+    "setPose": "Выбрать позу",
+    "poseAuto": "Авто",
+    "poseSet": "Поза: {{pose}}"
   },
   "markers": {
     "hematocrit": "Гематокрит",
