@@ -1058,14 +1058,25 @@ Stepped plan:
    baseline; strict baseline-anchoring rides the tab's `runScientificAnalysis`.
    New i18n `photos.compareNow/compareBefore/compareTapHint/analysisTimelineHint`
    (×6). Green: tsc / lint / i18n(6) / 441 tests / web.
-3. **Region arrows in the vision response [M].** Extend the `analyze_photo` edge
-   function's structured output to return
-   `regions: { region, x, y, direction: up|down|flat, favour: good|bad|none|watch, pct, confidence, note }[]`
-   — **direction and favour are SEPARATE fields** (owner mockup 2026-07-22: direction
-   = grew/shrank, favour = good/bad), with free normalized coords so the AI places
-   markers wherever it detected change ("materialize the AI's vision"). Capable model;
-   **canonical poses only for V1** (region mapping is reliable there; custom poses =
-   2c/2d). Bigger/slower/costlier response is the accepted V1 cost.
+3. **Region arrows in the vision response [M]. ✅ DONE (code; not yet deployed).**
+   Extend the `analyze_photo` structured output to carry the on-photo arrow
+   contract — **direction and favour are SEPARATE fields** (direction = grew/shrank,
+   favour = good/bad), with free normalized coords so the AI places markers wherever
+   it detected change. **Built on the existing `observations[]` field** (not a new
+   parallel array — it already carried `region`/`direction`/`note`/`confidence` and
+   is the persisted ledger): each entry now ALSO carries **`favour` (good|bad|none|
+   watch)**, **`x`/`y`** (0..1 marker position on the new photo), and optional
+   **`pct`** (magnitude only when honestly estimable). `direction` stays the
+   grew/shrank axis (`gain|loss|stable|unclear` — the same values already persisted;
+   maps to ▲/▼/dash at render, no ledger migration). Prompt teaches the two-axis
+   decoupling + the default muscle-good/fat-bad valence, deferring to the transition
+   context when present; favour needs **no new ctx** (region+direction suffices), so
+   2a.3 stayed self-contained. Client: `PhotoObservation` gains the four optional
+   fields; `sanitizeObservations` validates/clamps them (bad favour or out-of-range
+   coord drops that field, never the observation) + 2 new tests. **Capable model,
+   canonical poses only for V1.** ⚠️ **Deploy gate:** the edge fn is outside the app
+   green gate — run `deno test` + a branch-deploy smoke check before deploying
+   `ai-service`. Code green: tsc / lint / i18n(6) / 443 tests / web.
 4. **Arrow overlay + tappable tooltips [M].** Draw the `TrendMarker`-glyph markers
    (direction × color, per the arrow-posture block) at the end of contrast-adaptive
    leader lines on the comparison photo (image stays clean); tap → tooltip (%, note,
@@ -1636,7 +1647,8 @@ skeleton. Annotations: **needs** = hard prerequisite; **unblocks** = what it ope
 - **2a.2 Review ends on the comparison card** (capture → readout → measurements →
   card). ✅ DONE. Clean-photo card now; arrows backfill once 2a.4 lands.
 - **2a.3 `regions[]` structured output** in `analyze_photo` — **separate `direction`
-  (grew/shrank) + `favour` (good/bad) + free coords**. **Needs** 3.1. ← the contract.
+  (grew/shrank) + `favour` (good/bad) + free coords**. ✅ DONE (code; not deployed —
+  needs `deno test` + branch smoke). Built on `observations[]` (+favour/x/y/pct).
 - **2a.4 Arrow overlay** — `TrendMarker` glyph, direction × color (green ▲ muscle /
   green ▼ fat loss / red ▲ fat gain / red ▼ muscle loss / grey dash none / yellow dash
   low-conf), contrast-adaptive leader lines, tappable tooltip (X / tap-away). **Needs**

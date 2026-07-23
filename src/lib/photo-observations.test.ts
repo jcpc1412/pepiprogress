@@ -167,4 +167,21 @@ describe('sanitizeObservations', () => {
     expect(sanitizeObservations(undefined)).toEqual([]);
     expect(sanitizeObservations('nope')).toEqual([]);
   });
+
+  it('keeps valid arrow geometry (favour, x, y, pct) — 2a.3', () => {
+    const out = sanitizeObservations([
+      { region: 'waist', note: 't', direction: 'loss', confidence: 0.8, favour: 'good', x: 0.5, y: 0.6, pct: 4 },
+    ]);
+    expect(out[0]).toMatchObject({ favour: 'good', x: 0.5, y: 0.6, pct: 4 });
+  });
+
+  it('drops malformed geometry fields but keeps the observation', () => {
+    const out = sanitizeObservations([
+      { region: 'waist', note: 't', direction: 'loss', confidence: 0.8, favour: 'sideways', x: 2, y: 'no', pct: -3 },
+    ]);
+    // Bad favour + out-of-range/non-numeric coords drop to undefined; the note
+    // survives. x is clamped to 1; pct is stored as its magnitude.
+    expect(out).toHaveLength(1);
+    expect(out[0]).toMatchObject({ region: 'waist', favour: undefined, x: 1, y: undefined, pct: 3 });
+  });
 });

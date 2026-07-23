@@ -335,12 +335,14 @@ const ANALYZE_SCHEMA = {
       description:
         'ONE short, hedged sentence capturing the single most interesting finding — the headline. Empty string when there is no baseline. Never a medical claim or diagnosis.',
     },
-    // F5: region-level findings — the discovery layer.
+    // F5 + 2a.3: region-level findings — the discovery layer AND the on-photo
+    // arrow contract. `direction` (grew/shrank) and `favour` (good/bad) are two
+    // INDEPENDENT axes; `x`/`y` place the marker where the change actually is.
     observations: {
       type: 'array',
       maxItems: 5,
       description:
-        'Region-level findings comparing baseline to new (empty array when there is no baseline or nothing is honestly visible). Only regions where something is actually worth saying.',
+        'Region-level findings comparing baseline to new (empty array when there is no baseline or nothing is honestly visible). Only regions where something is actually worth saying. Each becomes an on-photo marker, so place it precisely.',
       items: {
         type: 'object',
         additionalProperties: false,
@@ -356,7 +358,27 @@ const ANALYZE_SCHEMA = {
           direction: {
             type: 'string',
             enum: ['gain', 'loss', 'stable', 'unclear'],
-            description: 'Apparent direction of change in this region (size/fullness up = gain).',
+            description:
+              'Did the TISSUE grow or shrink here — physical only, never judged. "gain" = grew (more muscle OR more fat), "loss" = shrank (less fat OR less muscle), "stable" = no movement, "unclear" = cannot tell.',
+          },
+          favour: {
+            type: 'string',
+            enum: ['good', 'bad', 'none', 'watch'],
+            description:
+              'Whether that change is GOOD for this user — the independent valence axis. Default valence: more muscle and less fat = "good"; more fat and less muscle = "bad"; "stable" = "none"; low confidence leaning unfavourable = "watch". Infer muscle vs fat from the region (shoulders/chest/arms growing = muscle; waist/flanks growing = fat). If a transition context is given above, follow it instead (e.g. feminizing hip/thigh fullness = "good").',
+          },
+          x: {
+            type: 'number',
+            description: 'Horizontal position of this region on the NEW photo, 0..1 from the left edge.',
+          },
+          y: {
+            type: 'number',
+            description: 'Vertical position of this region on the NEW photo, 0..1 from the top edge.',
+          },
+          pct: {
+            type: 'number',
+            description:
+              'Optional approximate magnitude of the change as a percent (positive number), ONLY when the photo honestly supports an estimate. Omit when you cannot estimate — never invent a number.',
           },
           confidence: {
             type: 'number',
@@ -364,7 +386,7 @@ const ANALYZE_SCHEMA = {
               '0..1 confidence from the photo evidence alone. Lighting/angle differences cap this at 0.5.',
           },
         },
-        required: ['region', 'note', 'direction', 'confidence'],
+        required: ['region', 'note', 'direction', 'favour', 'x', 'y', 'confidence'],
       },
     },
     hypothesis: {
@@ -604,7 +626,9 @@ function visionBaseLines(
     '- cropBox: the subject region of the NEW photo worth showing (torso for body shots, head for face shots), normalized 0..1 from the top-left. This only crops the display thumbnail; the stored original is untouched. Prefer a slightly generous box, and set confidence below 0.6 whenever you are unsure so the app falls back to the full frame.',
     '',
     'Layer 2 — DISCOVERY (why the user is here):',
-    `- observations: compare region by region (${regionGuide}). Report ONLY regions where something is honestly worth saying, 0-5 entries. Each: a short region label in the user's locale, one hedged sentence, a direction, and a confidence from the photo evidence alone. Different lighting or angle caps confidence at 0.5 — name the limit in the note.`,
+    `- observations: compare region by region (${regionGuide}). Report ONLY regions where something is honestly worth saying, 0-5 entries. Each: a short region label in the user's locale, one hedged sentence, a direction, a favour, an x/y position, and a confidence from the photo evidence alone. Different lighting or angle caps confidence at 0.5 — name the limit in the note.`,
+    '- Each observation becomes an ARROW drawn on the new photo, so direction and favour are two SEPARATE axes: direction = did the tissue grow (gain) or shrink (loss); favour = is that good for this user. Keep them independent — a "loss" of fat is favour "good", a "gain" of fat is favour "bad". Default valence is more-muscle/less-fat = good; if a transition context is given above, follow that instead. Use favour "watch" only for a low-confidence read that leans unfavourable.',
+    '- x and y place the marker where the change is on the NEW photo (0..1 from the top-left). Put it on the actual region (waist marker over the waist), not a corner. Only report pct when the photo honestly supports a magnitude; otherwise omit it rather than guess.',
     '- hypothesis: ONE sentence connecting what you see to the DATA CONTEXT below, when they genuinely relate ("waist appears tighter while weight held steady, consistent with recomposition or water shift rather than fat loss alone"). Always a hypothesis, never a conclusion; never state a mechanism as fact. Empty string when visuals and data do not honestly connect.',
     '- watchNext: ONE concrete thing to look for in the next photo of this track, tied to what the data suggests should move next. Empty string when nothing specific suggests itself.',
     hasBaseline

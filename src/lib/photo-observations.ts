@@ -17,14 +17,27 @@
 
 import type { PhotoSession } from '@/lib/store';
 
+/** Whether a region's change is good for this user — the valence axis, kept
+ *  independent of `direction` (2a.3). "watch" = low-confidence leaning bad. */
+export type ObservationFavour = 'good' | 'bad' | 'none' | 'watch';
+
 /** One region-level finding from a single analysis. `region` is a short label
  *  already in the user's locale (the model writes it); `direction` stays
- *  canonical so trends can be computed without parsing prose. */
+ *  canonical so trends can be computed without parsing prose. `favour` + `x`/`y`
+ *  (+ optional `pct`) are the on-photo arrow contract (2a.3): direction says the
+ *  tissue grew or shrank, favour says whether that is good, x/y place the marker.
+ *  All four are optional so pre-2a.3 ledger records still parse. */
 export type PhotoObservation = {
   region: string;
   note: string;
   direction: 'gain' | 'loss' | 'stable' | 'unclear';
   confidence: number; // 0..1
+  favour?: ObservationFavour;
+  /** Normalized marker position on the NEW photo, 0..1 from the top-left. */
+  x?: number;
+  y?: number;
+  /** Approximate magnitude of change as a percent, when the model estimated one. */
+  pct?: number;
 };
 
 /** The persisted result of one scientific analysis on one track. */
@@ -133,7 +146,19 @@ export function sanitizeObservations(raw: unknown, max: number = 5): PhotoObserv
       typeof cand.confidence === 'number' && Number.isFinite(cand.confidence)
         ? Math.min(1, Math.max(0, cand.confidence))
         : 0.5;
-    out.push({ region: cand.region.trim(), note: cand.note.trim(), direction, confidence });
+    // Arrow geometry (2a.3), all optional: a malformed value drops that field,
+    // never the whole observation, so a partial read still yields a valid note.
+    const favour: ObservationFavour | undefined =
+      cand.favour === 'good' || cand.favour === 'bad' || cand.favour === 'none' || cand.favour === 'watch'
+        ? cand.favour
+        : undefined;
+    const clamp01 = (v: unknown): number | undefined =>
+      typeof v === 'number' && Number.isFinite(v) ? Math.min(1, Math.max(0, v)) : undefined;
+    const x = clamp01(cand.x);
+    const y = clamp01(cand.y);
+    const pct =
+      typeof cand.pct === 'number' && Number.isFinite(cand.pct) ? Math.abs(cand.pct) : undefined;
+    out.push({ region: cand.region.trim(), note: cand.note.trim(), direction, confidence, favour, x, y, pct });
     if (out.length >= max) break;
   }
   return out;
