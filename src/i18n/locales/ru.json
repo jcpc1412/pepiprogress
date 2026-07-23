@@ -328,7 +328,16 @@
     "poseSet": "Поза: {{pose}}",
     "compareBefore": "Раньше",
     "compareTapHint": "Нажми, чтобы сравнить с прошлым снимком",
-    "analysisTimelineHint": "Полное сравнение появится в твоей ленте."
+    "analysisTimelineHint": "Полное сравнение появится в твоей ленте.",
+    "arrowsTitle": "Что изменилось",
+    "arrowsHint": "Нажми на маркер для деталей",
+    "arrowA11y": "{{region}}: {{direction}}. {{note}}",
+    "arrowConfidence": "Уверенность {{pct}}%",
+    "arrowMagnitude": "≈{{pct}}%",
+    "dir_gain": "выросло",
+    "dir_loss": "уменьшилось",
+    "dir_stable": "без изменений",
+    "dir_unclear": "неясно"
   },
   "markers": {
     "hematocrit": "Гематокрит",

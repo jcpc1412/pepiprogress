@@ -328,7 +328,16 @@
     "poseSet": "Pose: {{pose}}",
     "compareBefore": "Before",
     "compareTapHint": "Tap to compare with your last shot",
-    "analysisTimelineHint": "Your full comparison lands in your timeline."
+    "analysisTimelineHint": "Your full comparison lands in your timeline.",
+    "arrowsTitle": "What changed",
+    "arrowsHint": "Tap a marker for detail",
+    "arrowA11y": "{{region}}: {{direction}}. {{note}}",
+    "arrowConfidence": "Confidence {{pct}}%",
+    "arrowMagnitude": "≈{{pct}}%",
+    "dir_gain": "grew",
+    "dir_loss": "shrank",
+    "dir_stable": "held",
+    "dir_unclear": "unclear"
   },
   "markers": {
     "hematocrit": "Hematocrit",

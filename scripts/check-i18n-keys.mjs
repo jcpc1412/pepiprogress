@@ -52,6 +52,8 @@ const IDENTICAL_OK = new Set([
   'photos.tagWeek', 'photos.timer3', 'photos.timer10', 'photos.timerOff',
   // "Auto" is universal; "Pose" is a cognate in es/pt/de (the pose name is interpolated).
   'photos.poseAuto', 'photos.poseSet',
+  // Pure interpolation templates: every content token is a placeholder (2a.4).
+  'photos.arrowA11y', 'photos.arrowMagnitude',
   'protocol.dose', 'protocol.nominal',
   'protocol.vialCount_one', 'report.date', 'dose.date', 'journal.source.pepi', 'journal.scaleValue',
   // Journal cognates that legitimately equal English in some locales (fr/pt "doses"/"dose",

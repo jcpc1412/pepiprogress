@@ -86,6 +86,16 @@ export function recentForTrack(
     .slice(0, n);
 }
 
+/** The observations from the most recent analysis of a given photo (2a.4): the
+ *  markers drawn on it. Empty when the photo was never analysed. */
+export function observationsForPhoto(ledger: AnalysisRecord[], photoId: string | undefined): PhotoObservation[] {
+  if (!photoId) return [];
+  const rec = ledger
+    .filter((r) => r.photoId === photoId)
+    .sort((a, b) => b.at.localeCompare(a.at))[0];
+  return rec ? rec.observations : [];
+}
+
 /** Compact shape sent to the edge function as prior context. Confidence and ids
  *  are dropped: the model needs what was seen and wondered, not our bookkeeping. */
 export type PriorAnalysisPayload = {

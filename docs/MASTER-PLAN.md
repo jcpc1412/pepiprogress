@@ -1077,11 +1077,27 @@ Stepped plan:
    canonical poses only for V1.** ⚠️ **Deploy gate:** the edge fn is outside the app
    green gate — run `deno test` + a branch-deploy smoke check before deploying
    `ai-service`. Code green: tsc / lint / i18n(6) / 443 tests / web.
-4. **Arrow overlay + tappable tooltips [M].** Draw the `TrendMarker`-glyph markers
-   (direction × color, per the arrow-posture block) at the end of contrast-adaptive
-   leader lines on the comparison photo (image stays clean); tap → tooltip (%, note,
-   confidence, closes via X / tap-away). Wired into the reel + Journal so any past
-   comparable photo is tappable. Baseline-anchored, comparability-gated.
+4. **Arrow overlay + tappable tooltips [M]. ✅ DONE.** Draw the `TrendMarker`-glyph
+   markers (direction × color, per the arrow-posture block) at the end of
+   contrast-adaptive leader lines on the comparison photo (image stays clean); tap →
+   tooltip (%, note, confidence, closes via X / tap-away). Wired into the reel +
+   Journal so any past comparable photo is tappable. Baseline-anchored,
+   comparability-gated. **Built:** pure core `src/lib/photo-arrows.ts`
+   (`layoutArrowMarkers` — glyph/favour mapping, marker pushed off the nearer edge
+   so it never covers the body, straight leader line, **vertical de-overlap for
+   clustered markers** = the collision case the mockup flagged; +8 tests). Component
+   `src/features/photos/photo-arrows.tsx` (`PhotoWithArrows`): frame aspect matched
+   to the photo's own aspect (via `expo-image` `onLoad`) so normalized coords map
+   1:1; leader line = dark halo under a light line (pragmatic contrast-adaptive);
+   glyph ▲/▼/— tinted by favour (green/red/grey/yellow, the verdict's signal
+   colors); tap → tooltip (region, note, `≈pct%`, confidence, ✕ / tap-away); a11y
+   announces region + direction word + note, never the raw glyph. Rendered in the
+   focused track above the wipe (`observationsForPhoto` from the ledger), gated on
+   `comparable === true` + at least one coord-bearing marker, so scrubbing the
+   timeline surfaces any past comparable read. Green: tsc / lint / i18n(6) / 451
+   tests / web. **Renders only once 2a.3 is deployed** (needs real coord-bearing
+   analyses); until then the gate keeps it hidden. Collision de-overlap is V1
+   (min-gap push); landmark-aware placement rides 2c tier 2.
 5. **Measurement-delta arrows [S].** Objective waist/hips/etc deltas render as their
    own arrows in the same tap paradigm, these **may carry magnitude** (measured,
    not judged), the one place a confident number on the arrow is allowed.
@@ -1651,8 +1667,8 @@ skeleton. Annotations: **needs** = hard prerequisite; **unblocks** = what it ope
   needs `deno test` + branch smoke). Built on `observations[]` (+favour/x/y/pct).
 - **2a.4 Arrow overlay** — `TrendMarker` glyph, direction × color (green ▲ muscle /
   green ▼ fat loss / red ▲ fat gain / red ▼ muscle loss / grey dash none / yellow dash
-  low-conf), contrast-adaptive leader lines, tappable tooltip (X / tap-away). **Needs**
-  2a.3. *(Mockup received ✅.)*
+  low-conf), contrast-adaptive leader lines, tappable tooltip (X / tap-away). ✅ DONE.
+  Pure `photo-arrows.ts` + `PhotoWithArrows`; renders once 2a.3 is deployed.
 - **2a.5 Measurement-delta arrows** (magnitude allowed, measured, not judged).
 - **2a.6 Milestone gating + on-demand deep analysis** (Journal "run deep analysis").
 - **2a.7 Measurement guide-line overlay** — guide line + value chip at each spot for

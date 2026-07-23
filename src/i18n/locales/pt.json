@@ -328,7 +328,16 @@
     "poseSet": "Pose: {{pose}}",
     "compareBefore": "Antes",
     "compareTapHint": "Toque para comparar com sua última foto",
-    "analysisTimelineHint": "Sua comparação completa aparece na sua linha do tempo."
+    "analysisTimelineHint": "Sua comparação completa aparece na sua linha do tempo.",
+    "arrowsTitle": "O que mudou",
+    "arrowsHint": "Toque num marcador para detalhes",
+    "arrowA11y": "{{region}}: {{direction}}. {{note}}",
+    "arrowConfidence": "Confiança {{pct}}%",
+    "arrowMagnitude": "≈{{pct}}%",
+    "dir_gain": "cresceu",
+    "dir_loss": "reduziu",
+    "dir_stable": "manteve",
+    "dir_unclear": "incerto"
   },
   "markers": {
     "hematocrit": "Hematócrito",

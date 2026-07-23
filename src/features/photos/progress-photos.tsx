@@ -30,11 +30,13 @@ import { resolveMetricSeries } from '@/lib/data-facade';
 import { bodyFatNavy, inferBodyComposition, usesFemaleFormula } from '@/lib/body-composition';
 import type { ConfidenceLevel } from '@/lib/confidence';
 import {
+  observationsForPhoto,
   recentDiscoveries,
   recentForTrack,
   sanitizeObservations,
   toPriorPayload,
 } from '@/lib/photo-observations';
+import { PhotoWithArrows } from '@/features/photos/photo-arrows';
 import { hapticSuccess } from '@/lib/haptics';
 import { quickReadout, type Comparability, type QuickReadout } from '@/lib/photo-readout';
 import { isNewHighscore, pickReference } from '@/lib/photo-reference';
@@ -859,6 +861,18 @@ export function ProgressPhotos({
   const note = lastNote && selected && lastNote.id === selected.id ? lastNote.analysis : null;
   const munit = profile.units === 'imperial' ? t('measurements.unitIn') : t('measurements.unitCm');
   const showWipe = !!selected && !!baseline && selected.id !== baseline.id;
+  // On-photo arrows (2a.4): the markers from the selected photo's own analysis,
+  // drawn on it. Comparability-gated — a non-comparable shot draws NO arrows
+  // (shaky comparability is the bright line; shaky confidence is fine). Only
+  // shows once at least one marker carries coordinates (a post-2a.3 read).
+  const selectedObservations = useMemo(
+    () => observationsForPhoto(analysisLedger, selected?.id),
+    [analysisLedger, selected?.id],
+  );
+  const showArrows =
+    !!selected &&
+    selected.comparable === true &&
+    selectedObservations.some((o) => o.x !== undefined && o.y !== undefined);
   const lightingBad = showWipe && selected.lighting !== undefined && selected.lighting !== 'ok';
   const selectedBadge =
     showWipe && (selected.comparable !== undefined || lightingBad) ? (
@@ -1004,6 +1018,21 @@ export function ProgressPhotos({
                 </View>
               ) : (
                 <>
+              {/* On-photo arrows (2a.4): the selected shot with its analysis
+                  markers drawn on it — the "materialized" AI vision. Shown above
+                  the raw before/after wipe. */}
+              {showArrows ? (
+                <Card style={styles.arrowsCard}>
+                  <View style={styles.timelineHeader}>
+                    <EngravedLabel>{t('photos.arrowsTitle')}</EngravedLabel>
+                    <ThemedText type="monoSm" themeColor="textMuted">
+                      {t('photos.arrowsHint')}
+                    </ThemedText>
+                  </View>
+                  <PhotoWithArrows uri={resolvedUris[selected.id]} observations={selectedObservations} />
+                </Card>
+              ) : null}
+
               {/* Photo display */}
               {showWipe ? (
                 <WipeCompare
@@ -1454,6 +1483,7 @@ const styles = StyleSheet.create({
   thumbImg: { flex: 1 },
   milestoneSection: { gap: Spacing.two },
   quickCard: { gap: Spacing.two },
+  arrowsCard: { gap: Spacing.two },
   instantCard: { gap: Spacing.two },
   instantHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.two },
   instantBadgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.one },
