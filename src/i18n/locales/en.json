@@ -649,7 +649,8 @@
     "confirmSynced": "Got it. You’re on day {{day}} of about a {{length}}-day cycle, and I’ll keep it current from your health app.",
     "confirmManual": "Got it. Day {{day}} of about a {{length}}-day cycle.",
     "opener": "Account for my cycle",
-    "dateRetry": "I couldn’t read that as a date. Try a format like 2026-07-01."
+    "dateRetry": "I couldn’t read that as a date. Try a format like 2026-07-01.",
+    "chartLegend": "Shaded: the days before your period, when water weight is expected."
   },
   "measurements": {
     "optionalHint": "Optional: log measurements to track body composition changes.",

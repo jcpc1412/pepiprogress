@@ -649,7 +649,8 @@
     "confirmSynced": "C’est noté. Vous êtes au jour {{day}} d’un cycle d’environ {{length}} jours, et je le tiendrai à jour depuis votre app santé.",
     "confirmManual": "C’est noté. Jour {{day}} d’un cycle d’environ {{length}} jours.",
     "opener": "Tenir compte de mon cycle",
-    "dateRetry": "Je n’ai pas pu lire cela comme une date. Essayez un format comme 2026-07-01."
+    "dateRetry": "Je n’ai pas pu lire cela comme une date. Essayez un format comme 2026-07-01.",
+    "chartLegend": "Zone grisée : les jours avant vos règles, quand la rétention d’eau est attendue."
   },
   "measurements": {
     "optionalHint": "Optionnel : enregistre tes mensurations pour suivre les changements de composition corporelle.",

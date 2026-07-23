@@ -3,13 +3,15 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
 import { OptionChip } from '@/components/form';
-import { LineChart, type BandPoint, type ChartMarker, type ChartPoint } from '@/components/line-chart';
+import { LineChart, type BandPoint, type ChartMarker, type ChartPoint, type ChartSpan } from '@/components/line-chart';
 import { Card, EngravedLabel, Metric, SignalText } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { compoundBySlug } from '@/data/compound-catalog';
 import { useVerdict } from '@/features/home/use-verdict';
 import { CHART_METRICS } from '@/lib/chart-series';
+import { lutealWindows } from '@/lib/cycle';
+import { CanonicalMetric } from '@/lib/integrations/types';
 import { selectChartSeries } from '@/lib/data-facade';
 import { daysBetween } from '@/lib/dates';
 import { useStore, type CheckinEntry } from '@/lib/store';
@@ -22,6 +24,9 @@ export const MIN_CHECKINS = 4;
 /** How far the weight chart's projected trajectory reaches (days). Kept modest so
  *  the dotted forward line never dwarfs the logged history. */
 const PROJECTION_HORIZON_DAYS = 21;
+
+/** Metrics a luteal water swing actually distorts — the ones worth shading. */
+const CYCLE_SHADED = ['weight', 'body_fat_pct', 'waist', 'hips'];
 
 type DeltaTone = 'good' | 'bad' | 'neutral';
 
@@ -169,23 +174,38 @@ export function ChartsSection() {
         })}
       </View>
       {series.map((s) => {
-        const points: ChartPoint[] = s.primary.map((p) => ({ label: p.dateKey.slice(5), value: p.value }));
-        const estimated: ChartPoint[] = s.estimated.map((p) => ({ label: p.dateKey.slice(5), value: p.value }));
+        // Full YYYY-MM-DD labels: the chart never renders them as text (they are
+        // only the x-domain), and the MM-DD form both broke span interpolation
+        // and sorted wrong across a year boundary.
+        const points: ChartPoint[] = s.primary.map((p) => ({ label: p.dateKey, value: p.value }));
+        const estimated: ChartPoint[] = s.estimated.map((p) => ({ label: p.dateKey, value: p.value }));
 
         // TRAJ-1: an honest projected trajectory + widening band on the weight
         // chart only (the metric with a modeled forecast + optional goal line).
         const proj =
           s.id === 'weight' && s.primary.length >= 3 ? projectSeries(s.primary, PROJECTION_HORIZON_DAYS) : null;
-        const projected: ChartPoint[] | undefined = proj?.points.map((p) => ({ label: p.dateKey.slice(5), value: p.value }));
-        const band: BandPoint[] | undefined = proj?.points.map((p) => ({ label: p.dateKey.slice(5), lower: p.lower, upper: p.upper }));
+        const projected: ChartPoint[] | undefined = proj?.points.map((p) => ({ label: p.dateKey, value: p.value }));
+        const band: BandPoint[] | undefined = proj?.points.map((p) => ({ label: p.dateKey, lower: p.lower, upper: p.upper }));
         const goalValue =
           s.id === 'weight' && typeof profile.targetWeight === 'number' ? profile.targetWeight : undefined;
         // Protocol-start markers positioned across the chart's actual date span.
         const span = [...s.primary, ...s.estimated];
         let markers: ChartMarker[] = [];
+        let spans: ChartSpan[] = [];
         if (span.length >= 2) {
           const first = span.reduce((a, b) => (a.dateKey < b.dateKey ? a : b)).dateKey;
           const last = span.reduce((a, b) => (a.dateKey > b.dateKey ? a : b)).dateKey;
+          // Cycle shading, only where a luteal water swing actually distorts the
+          // reading. Shading a sleep chart would be noise.
+          if (profile.sex === 'female' && CYCLE_SHADED.includes(s.id)) {
+            spans = lutealWindows({
+              manualStart: profile.lastPeriodDate,
+              statedLength: profile.cycleLength,
+              flow: metricReadings.filter((r) => r.metric === CanonicalMetric.cycleFlow),
+              from: first,
+              to: last,
+            });
+          }
           const days = daysBetween(first, last) || 1;
           markers = startKeys
             .map((k) => daysBetween(first, k) / days)
@@ -202,9 +222,15 @@ export function ChartsSection() {
               band={band}
               goalValue={goalValue}
               markers={markers}
+              spans={spans}
               unit={s.unitKey ? t(s.unitKey as 'units.g') : undefined}
               emptyLabel={t('common.noData')}
             />
+            {spans.length > 0 ? (
+              <ThemedText type="monoSm" themeColor="textMuted">
+                {t('cycle.chartLegend')}
+              </ThemedText>
+            ) : null}
             {proj ? (
               <ThemedText type="monoSm" themeColor="textMuted">
                 {t(proj.plateau ? 'insights.projectedFlat' : 'insights.projected')}

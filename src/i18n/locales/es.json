@@ -649,7 +649,8 @@
     "confirmSynced": "Listo. Estás en el día {{day}} de un ciclo de unos {{length}} días, y lo mantendré al día desde tu app de salud.",
     "confirmManual": "Listo. Día {{day}} de un ciclo de unos {{length}} días.",
     "opener": "Tener en cuenta mi ciclo",
-    "dateRetry": "No pude leer eso como una fecha. Prueba un formato como 2026-07-01."
+    "dateRetry": "No pude leer eso como una fecha. Prueba un formato como 2026-07-01.",
+    "chartLegend": "Sombreado: los días previos a tu periodo, cuando se espera retención de líquidos."
   },
   "measurements": {
     "optionalHint": "Opcional: registra medidas para rastrear cambios en la composición corporal.",

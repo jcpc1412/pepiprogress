@@ -198,6 +198,72 @@ export function resolveCycle(opts: {
   };
 }
 
+/** An inclusive date range (YYYY-MM-DD) during which the user was in the luteal
+ *  phase — the window where water retention shows up on the scale. */
+export type CycleWindow = { start: string; end: string };
+
+/**
+ * The luteal windows overlapping a date range, for shading behind a chart.
+ *
+ * This is the point of the whole cycle feature made visible: a weight chart that
+ * does not mark these windows invites the user to read a predictable water swing
+ * as lost progress, which is exactly the misreading the attribution register was
+ * built to prevent.
+ *
+ * Walks backward and forward from the known start rather than only forward, so a
+ * chart window that begins before the recorded period start still gets shaded.
+ * Returns [] when the cycle is not resolvable — never a guessed window.
+ */
+export function lutealWindows(opts: {
+  manualStart?: string;
+  statedLength?: number;
+  flow?: FlowReading[];
+  /** Inclusive chart bounds, YYYY-MM-DD. */
+  from: string;
+  to: string;
+}): CycleWindow[] {
+  // Resolve as of the LATEST date we know about, not the chart's end: a chart
+  // showing only last winter must still shade using a start date recorded since,
+  // and resolveCycle deliberately ignores start dates in its own future.
+  const latestKnown = [opts.to, opts.manualStart ?? '', ...(opts.flow ?? []).map((f) => f.ts.slice(0, 10))]
+    .filter(Boolean)
+    .sort()
+    .pop() as string;
+  const state = resolveCycle({
+    manualStart: opts.manualStart,
+    statedLength: opts.statedLength,
+    flow: opts.flow,
+    today: latestKnown,
+  });
+  if (!state) return [];
+
+  const { cycleLength } = state;
+  const len = Math.max(MIN_CYCLE_LENGTH, cycleLength);
+  const addDays = (key: string, n: number) => new Date(toUtcDay(key) + n * DAY_MS).toISOString().slice(0, 10);
+
+  // Step the anchor back to at or before `from`, then walk forward cycle by
+  // cycle. `anchor` is always day 1 of some cycle.
+  let anchor = state.startedOn;
+  while (daysBetween(opts.from, anchor) > 0) anchor = addDays(anchor, -len);
+
+  const out: CycleWindow[] = [];
+  // Luteal runs from day (len - LUTEAL_DAYS + 1) to day len, i.e. the last
+  // LUTEAL_DAYS days before the next period.
+  for (let a = anchor; daysBetween(a, opts.to) >= 0; a = addDays(a, len)) {
+    const start = addDays(a, len - LUTEAL_DAYS);
+    const end = addDays(a, len - 1);
+    if (end < opts.from) continue; // entirely before the range
+    if (start > opts.to) break; // entirely after the range
+    // Clip to the chart bounds. All keys are YYYY-MM-DD, so string order is date
+    // order and comparing directly is both correct and readable.
+    out.push({
+      start: start < opts.from ? opts.from : start,
+      end: end > opts.to ? opts.to : end,
+    });
+  }
+  return out;
+}
+
 /** Bookkeeping for the one-time Pepi setup prompt, mirroring the typical-day
  *  pattern: once declined, never asked again. */
 export type CyclePromptState = 'asked' | 'declined' | 'active';

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   cyclePromptEligible,
+  lutealWindows,
   DEFAULT_CYCLE_LENGTH,
   derivePeriodStarts,
   observedCycleLength,
@@ -195,5 +196,71 @@ describe('cyclePromptEligible', () => {
   it('never raises this for anyone but a female user', () => {
     expect(cyclePromptEligible({ ...base, sex: 'male' })).toBeNull();
     expect(cyclePromptEligible({ ...base, sex: undefined })).toBeNull();
+  });
+});
+
+describe('lutealWindows', () => {
+  it('returns nothing when the cycle is not resolvable', () => {
+    expect(lutealWindows({ from: '2026-03-01', to: '2026-03-31' })).toEqual([]);
+  });
+
+  it('marks the last 14 days before the next period', () => {
+    // Day 1 = 2026-03-01, 28-day cycle -> luteal is days 15..28 = Mar 15..Mar 28.
+    const w = lutealWindows({
+      manualStart: '2026-03-01',
+      statedLength: 28,
+      from: '2026-03-01',
+      to: '2026-03-28',
+    });
+    expect(w).toEqual([{ start: '2026-03-15', end: '2026-03-28' }]);
+  });
+
+  it('repeats across several cycles in a long range', () => {
+    const w = lutealWindows({
+      manualStart: '2026-03-01',
+      statedLength: 28,
+      from: '2026-03-01',
+      to: '2026-05-30',
+    });
+    expect(w.length).toBeGreaterThanOrEqual(3);
+    expect(w[0]).toEqual({ start: '2026-03-15', end: '2026-03-28' });
+    expect(w[1]).toEqual({ start: '2026-04-12', end: '2026-04-25' });
+  });
+
+  it('shades a window that started before the chart range, clipped to it', () => {
+    // The chart opens mid-luteal; the band must still appear, not vanish.
+    const w = lutealWindows({
+      manualStart: '2026-03-01',
+      statedLength: 28,
+      from: '2026-03-20',
+      to: '2026-03-28',
+    });
+    expect(w).toEqual([{ start: '2026-03-20', end: '2026-03-28' }]);
+  });
+
+  it('walks backward so a range entirely before the recorded start still shades', () => {
+    const w = lutealWindows({
+      manualStart: '2026-05-01',
+      statedLength: 28,
+      from: '2026-03-01',
+      to: '2026-03-31',
+    });
+    expect(w.length).toBeGreaterThan(0);
+    for (const win of w) {
+      expect(win.start >= '2026-03-01').toBe(true);
+      expect(win.end <= '2026-03-31').toBe(true);
+    }
+  });
+
+  it('uses the observed length rather than the stated one', () => {
+    // Observed 30-day cycle overrides the stated 28: luteal starts on day 17.
+    const w = lutealWindows({
+      manualStart: '2026-03-02',
+      statedLength: 28,
+      flow: flow('2026-01-01', '2026-01-31', '2026-03-02'),
+      from: '2026-03-02',
+      to: '2026-03-31',
+    });
+    expect(w[0].start).toBe('2026-03-18');
   });
 });

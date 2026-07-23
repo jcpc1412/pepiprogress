@@ -649,7 +649,8 @@
     "confirmSynced": "Alles klar. Du bist an Tag {{day}} eines Zyklus von etwa {{length}} Tagen, und ich halte das über deine Gesundheits-App aktuell.",
     "confirmManual": "Alles klar. Tag {{day}} eines Zyklus von etwa {{length}} Tagen.",
     "opener": "Meinen Zyklus berücksichtigen",
-    "dateRetry": "Das konnte ich nicht als Datum lesen. Versuch ein Format wie 2026-07-01."
+    "dateRetry": "Das konnte ich nicht als Datum lesen. Versuch ein Format wie 2026-07-01.",
+    "chartLegend": "Schattiert: die Tage vor deiner Periode, wenn Wassereinlagerungen zu erwarten sind."
   },
   "measurements": {
     "optionalHint": "Optional: Maße eingeben, um Veränderungen der Körperzusammensetzung zu verfolgen.",

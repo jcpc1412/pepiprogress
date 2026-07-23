@@ -649,7 +649,8 @@
     "confirmSynced": "Registado. Estás no dia {{day}} de um ciclo de cerca de {{length}} dias, e mantenho isto atualizado a partir da tua app de saúde.",
     "confirmManual": "Registado. Dia {{day}} de um ciclo de cerca de {{length}} dias.",
     "opener": "Ter o meu ciclo em conta",
-    "dateRetry": "Não consegui ler isso como uma data. Tenta um formato como 2026-07-01."
+    "dateRetry": "Não consegui ler isso como uma data. Tenta um formato como 2026-07-01.",
+    "chartLegend": "Sombreado: os dias antes do teu período, quando é esperada retenção de líquidos."
   },
   "measurements": {
     "optionalHint": "Opcional: registre medidas para acompanhar mudanças na composição corporal.",

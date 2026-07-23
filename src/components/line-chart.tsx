@@ -1,15 +1,27 @@
 import { StyleSheet, View } from 'react-native';
-import Svg, { Circle, Line, Polygon, Polyline } from 'react-native-svg';
+import Svg, { Circle, Line, Polygon, Polyline, Rect } from 'react-native-svg';
 
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+
+const DAY_MS = 86400000;
+/** Whole days between two YYYY-MM-DD labels. */
+function dayDiff(a: string, b: string): number {
+  return Math.round(
+    (new Date(`${b}T00:00:00.000Z`).getTime() - new Date(`${a}T00:00:00.000Z`).getTime()) / DAY_MS,
+  );
+}
 
 export type ChartPoint = { label: string; value: number };
 /** A vertical reference line (e.g. a dose/protocol start) at a 0–1 x-fraction. */
 export type ChartMarker = { fraction: number };
 /** One point of the projected uncertainty band (TRAJ-1). */
 export type BandPoint = { label: string; lower: number; upper: number };
+/** A shaded vertical span across the full chart height, by x-label range. Used
+ *  for cycle luteal windows: without them a predictable water swing reads as
+ *  lost progress. */
+export type ChartSpan = { start: string; end: string };
 
 /** Minimal line chart on react-native-svg, themed to the instrument aesthetic (H-01).
  *  `estimated` is an optional secondary series (wearable-derived) drawn dashed +
@@ -26,6 +38,7 @@ export function LineChart({
   height = 160,
   unit,
   markers,
+  spans,
   emptyLabel,
 }: {
   data: ChartPoint[];
@@ -36,6 +49,7 @@ export function LineChart({
   height?: number;
   unit?: string;
   markers?: ChartMarker[];
+  spans?: ChartSpan[];
   emptyLabel?: string;
 }) {
   const theme = useTheme();
@@ -81,6 +95,15 @@ export function LineChart({
   const xIndex = new Map(domain.map((l, i) => [l, i]));
   const stepX = (width - padX * 2) / Math.max(1, domain.length - 1);
   const xFor = (label: string) => padX + (xIndex.get(label) ?? 0) * stepX;
+  // Spans carry arbitrary dates, not necessarily labels that exist in the data,
+  // so interpolate their position against the domain's first/last label rather
+  // than looking them up. Without this a luteal window whose edge falls on a day
+  // with no logged reading would silently collapse to x = padX.
+  const first = domain[0];
+  const lastLabel = domain[domain.length - 1];
+  const domainDays = Math.max(1, dayDiff(first, lastLabel));
+  const xForDate = (date: string) =>
+    padX + (dayDiff(first, date) / domainDays) * (width - padX * 2);
 
   // Header range reflects only the ACTUAL data (manual + estimated), so the
   // projection + band never inflate the "N – M" readout.
@@ -142,6 +165,28 @@ export function LineChart({
         </ThemedText>
       </View>
       <Svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`}>
+        {/* Shaded spans (cycle luteal windows) — drawn first so every series sits
+            on top. Deliberately very faint: this is context for reading the line,
+            never a signal competing with it. */}
+        {spans?.map((s, i) => {
+          // Clamp to the drawn domain: a span may extend past the data on either
+          // side, and an unclamped rect would spill outside the plot area.
+          const clamp = (x: number) => Math.max(padX, Math.min(width - padX, x));
+          const x1 = clamp(xForDate(s.start));
+          const x2 = clamp(xForDate(s.end));
+          if (x2 <= x1) return null;
+          return (
+            <Rect
+              key={`s${i}`}
+              x={x1}
+              y={padY}
+              width={x2 - x1}
+              height={height - padY * 2}
+              fill={theme.textMuted}
+              fillOpacity={0.1}
+            />
+          );
+        })}
         {/* Dose/protocol-start markers — faint vertical reference lines. */}
         {markers?.map((m, i) => {
           const x = padX + Math.max(0, Math.min(1, m.fraction)) * (width - padX * 2);

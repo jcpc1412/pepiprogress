@@ -14,6 +14,8 @@ import { useTheme } from '@/hooks/use-theme';
 import { getSignalLedger, type SignalLedgerResult } from '@/lib/ai';
 import { formatHeroValue, useVerdict, type TFn } from '@/features/home/use-verdict';
 import { CHART_METRICS } from '@/lib/chart-series';
+import { lutealWindows } from '@/lib/cycle';
+import { CanonicalMetric } from '@/lib/integrations/types';
 import { selectMetricDirections } from '@/lib/data-facade';
 import { daysBetween, formatDateKey, shiftDateKey } from '@/lib/dates';
 import { extractLedger, metricExplainer } from '@/lib/signal-ledger';
@@ -67,6 +69,21 @@ export function SignalDetail({ metricId, onClose }: { metricId: string; onClose:
 
   // Goal-aware "about this" (§4d): the direction is resolved the same way the
   // verdict resolves it, so the explainer's framing never contradicts the signal.
+  // Cycle shading (item 1): only on the metrics a luteal water swing actually
+  // distorts. Shading a sleep-quality chart would be noise — the point is to stop
+  // a predictable water swing on the SCALE being read as lost progress.
+  const CYCLE_SHADED = ['weight', 'body_fat_pct', 'waist', 'hips'];
+  const lutealSpans =
+    profile.sex === 'female' && CYCLE_SHADED.includes(metricId)
+      ? lutealWindows({
+          manualStart: profile.lastPeriodDate,
+          statedLength: profile.cycleLength,
+          flow: metricReadings.filter((r) => r.metric === CanonicalMetric.cycleFlow),
+          from: windowStart,
+          to: windowEnd,
+        })
+      : [];
+
   const dir = selectMetricDirections({ profile, protocolItems })[metricId] ?? 'neutral';
   const explainer = metricExplainer(metricId, dir === 'up_good' || dir === 'down_good' ? dir : 'neutral');
 
@@ -178,9 +195,15 @@ export function SignalDetail({ metricId, onClose }: { metricId: string; onClose:
           {signal?.series.length ? (
             <Card style={styles.block}>
               <LineChart
-                data={signal.series.map((p): ChartPoint => ({ label: p.dateKey.slice(5), value: p.value }))}
+                data={signal.series.map((p): ChartPoint => ({ label: p.dateKey, value: p.value }))}
+                spans={lutealSpans}
                 emptyLabel={t('common.noData')}
               />
+              {lutealSpans.length > 0 ? (
+                <ThemedText type="monoSm" themeColor="textMuted">
+                  {t('cycle.chartLegend')}
+                </ThemedText>
+              ) : null}
             </Card>
           ) : null}
 
