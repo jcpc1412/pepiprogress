@@ -103,6 +103,9 @@ async function authenticate(): Promise<{ ok: boolean; error?: string }> {
     'HKCategoryTypeIdentifierSleepAnalysis',
     'HKQuantityTypeIdentifierHeartRate', // read per-workout avg HR for TRIMP load
     'HKWorkoutTypeIdentifier',
+    // Cycle: real period starts, so the luteal attribution stops drifting off a
+    // hand-typed date that is never updated again.
+    'HKCategoryTypeIdentifierMenstrualFlow',
   ] as Parameters<ReturnType<typeof hk>['requestAuthorization']>[0]['toRead'] & string[];
   const toShare = [...SHARE_MAP] as Parameters<
     ReturnType<typeof hk>['requestAuthorization']
@@ -189,6 +192,15 @@ async function diagnose(): Promise<string> {
     lines.push(`  sleep.duration: ${sleep.length}`);
   } catch (e) {
     lines.push(`  sleep.duration: error ${e instanceof Error ? e.message : String(e)}`);
+  }
+  try {
+    const flow = await mod.queryCategorySamples('HKCategoryTypeIdentifierMenstrualFlow', {
+      filter: { date: { startDate, endDate } },
+      limit: -1,
+    });
+    lines.push(`  cycle.flow: ${flow.length}`);
+  } catch (e) {
+    lines.push(`  cycle.flow: error ${e instanceof Error ? e.message : String(e)}`);
   }
 
   return lines.join('\n');
@@ -322,6 +334,40 @@ async function readHealthKit(since?: string): Promise<ProviderReading[]> {
     // Workouts unavailable.
   }
 
+  // --- Menstrual flow: one reading per logged flow day ---
+  // HKCategoryValueVaginalBloodFlow: unspecified=1, light=2, medium=3, heavy=4,
+  // none=5. `none` is a deliberate "no flow today" entry from Cycle Tracking and
+  // must NOT be stored as a flow day, or every non-period day would open a new
+  // period and collapse the derived cycle length.
+  try {
+    const flow = await queryCategorySamples('HKCategoryTypeIdentifierMenstrualFlow', {
+      filter: { date: { startDate, endDate } },
+      limit: -1,
+    });
+    // Bucket by local day: several samples can land on one day, and only the
+    // fact that flow occurred that day matters to the derivation.
+    const byDay: Record<string, number> = {};
+    for (const s of flow) {
+      const value = s.value as number;
+      if (value === 5) continue; // explicit "none"
+      const d = toDate(s.startDate);
+      if (!d) continue;
+      const dateKey = localDateKey(d);
+      const level = value >= 2 && value <= 4 ? value - 1 : 0; // 1 light .. 3 heavy, 0 unspecified
+      byDay[dateKey] = Math.max(byDay[dateKey] ?? 0, level);
+    }
+    for (const [dateKey, value] of Object.entries(byDay)) {
+      readings.push({
+        metric: CanonicalMetric.cycleFlow,
+        value,
+        ts: `${dateKey}T00:00:00.000Z`,
+        sourceProvider: PROVIDER_ID,
+      });
+    }
+  } catch {
+    // Cycle tracking unavailable or not authorized.
+  }
+
   return readings;
 }
 
@@ -379,7 +425,7 @@ export const appleHealthProvider: IntegrationProvider = {
     CanonicalMetric.nutritionProtein,
     CanonicalMetric.nutritionCarbs,
     CanonicalMetric.nutritionFat,
-    CanonicalMetric.cyclePhase,
+    CanonicalMetric.cycleFlow,
   ],
   isAvailable: () => Platform.OS === 'ios',
   nativeReady: true,

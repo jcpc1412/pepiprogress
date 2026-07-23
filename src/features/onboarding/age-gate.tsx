@@ -64,7 +64,7 @@ export function AgeGate({ onVerified }: { onVerified: (dobISO: string) => void }
 
   const setSex = (s: Sex | undefined) => setProfile({ sex: s });
   const showCycle = !!profile.sex && CYCLE_SEXES.includes(profile.sex);
-  const cycleOn = !!profile.lastPeriodDate;
+  const cycleOn = !!profile.cycleTracking || !!profile.lastPeriodDate;
 
   const d = parseInt(day, 10);
   const m = parseInt(month, 10);
@@ -189,9 +189,12 @@ export function AgeGate({ onVerified }: { onVerified: (dobISO: string) => void }
             selected={cycleOn}
             onPress={() =>
               setProfile(
+                // Opting in records the INTENT only. It used to stamp today as
+                // the last period, which is correct only for someone literally on
+                // day 1; Pepi asks for the real date (or Health supplies it).
                 cycleOn
-                  ? { lastPeriodDate: undefined, cycleLength: undefined }
-                  : { lastPeriodDate: new Date().toISOString().slice(0, 10), cycleLength: 28 },
+                  ? { cycleTracking: false, lastPeriodDate: undefined, cycleLength: undefined }
+                  : { cycleTracking: true },
               )
             }
           />

@@ -629,7 +629,22 @@
     "datePlaceholder": "JJJJ-MM-TT",
     "cycleLength": "Durchschnittliche Zykluslänge (Tage)",
     "enable": "Zyklus-Tracking aktivieren",
-    "disable": "Zyklus-Tracking deaktivieren"
+    "disable": "Zyklus-Tracking deaktivieren",
+    "ask": {
+      "confirm": "Ich sehe Zyklusdaten in deiner Gesundheits-App. Soll ich sie nutzen, damit eine Woche mit Wassereinlagerungen nicht als Rückschritt gelesen wird?",
+      "ask": "Soll ich deinen Zyklus berücksichtigen? Das verhindert, dass eine Woche mit Wassereinlagerungen als Rückschritt gilt."
+    },
+    "yes": "Ja, nutze sie",
+    "no": "Nein danke",
+    "declineAck": "Verstanden. Ich frage nicht noch einmal.",
+    "askDate": "Wann hat deine letzte Periode begonnen?",
+    "chipToday": "Heute",
+    "chipYesterday": "Gestern",
+    "chipTypeDate": "Datum eingeben",
+    "confirmSynced": "Alles klar. Du bist an Tag {{day}} eines Zyklus von etwa {{length}} Tagen, und ich halte das über deine Gesundheits-App aktuell.",
+    "confirmManual": "Alles klar. Tag {{day}} eines Zyklus von etwa {{length}} Tagen.",
+    "opener": "Meinen Zyklus berücksichtigen",
+    "dateRetry": "Das konnte ich nicht als Datum lesen. Versuch ein Format wie 2026-07-01."
   },
   "measurements": {
     "optionalHint": "Optional: Maße eingeben, um Veränderungen der Körperzusammensetzung zu verfolgen.",

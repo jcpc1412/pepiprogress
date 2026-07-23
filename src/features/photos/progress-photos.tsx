@@ -26,6 +26,8 @@ import {
 } from '@/lib/ai';
 import { compoundBySlug } from '@/data/compound-catalog';
 import { buildAnalysisContext, type ContextEntry } from '@/lib/analysis-context';
+import { resolveCycle } from '@/lib/cycle';
+import { CanonicalMetric } from '@/lib/integrations/types';
 import { resolveBodyIntent } from '@/lib/strength-context';
 import { resolveIntent } from '@/lib/verdict-engine';
 import { resolveMetricSeries } from '@/lib/data-facade';
@@ -482,14 +484,16 @@ export function ProgressPhotos({
     setInstantRead(null);
     setLastAiAction('scientific');
     try {
-      let cycleCtx: 'luteal' | undefined;
-      if (profile.lastPeriodDate && profile.cycleLength) {
-        const daysSince = Math.floor(
-          (Date.now() - new Date(profile.lastPeriodDate).getTime()) / 86400000,
-        );
-        const dayInCycle = daysSince % profile.cycleLength;
-        if (dayInCycle >= profile.cycleLength - 14) cycleCtx = 'luteal';
-      }
+      // One definition of phase for the whole app (src/lib/cycle.ts). This used
+      // to be hand-rolled here and disagreed with the verdict engine's rule for
+      // any cycle that is not 28 days.
+      const cycleState = resolveCycle({
+        manualStart: profile.lastPeriodDate,
+        statedLength: profile.cycleLength,
+        flow: metricReadings.filter((r) => r.metric === CanonicalMetric.cycleFlow),
+        today: localDateKey(new Date()),
+      });
+      const cycleCtx: 'luteal' | undefined = cycleState?.phase === 'luteal' ? 'luteal' : undefined;
 
       // Direction-aware transition framing (beta-notes §1.9): the goal is the
       // intent signal, sex alone never implies it (some trans users are here
@@ -689,14 +693,19 @@ export function ProgressPhotos({
         .slice(0, 7)
         .map((e) => ({ date: e.date, weight: e.weight, wellness: e.wellness, energy: e.energy }));
 
-      let cycleCtx: 'luteal' | 'follicular' | undefined;
-      if (profile.lastPeriodDate && profile.cycleLength) {
-        const daysSince = Math.floor(
-          (Date.now() - new Date(profile.lastPeriodDate).getTime()) / 86400000,
-        );
-        const dayInCycle = daysSince % profile.cycleLength;
-        cycleCtx = dayInCycle >= profile.cycleLength - 14 ? 'luteal' : 'follicular';
-      }
+      const encCycle = resolveCycle({
+        manualStart: profile.lastPeriodDate,
+        statedLength: profile.cycleLength,
+        flow: metricReadings.filter((r) => r.metric === CanonicalMetric.cycleFlow),
+        today: localDateKey(new Date()),
+      });
+      // The encouragement tier only distinguishes the two halves; menstrual days
+      // ride with follicular there.
+      const cycleCtx: 'luteal' | 'follicular' | undefined = encCycle
+        ? encCycle.phase === 'luteal'
+          ? 'luteal'
+          : 'follicular'
+        : undefined;
 
       const res = await runEncouragementAnalysis({
         compoundGroup: group,
@@ -724,7 +733,7 @@ export function ProgressPhotos({
     } finally {
       setAnalyzing(false);
     }
-  }, [analyzing, entries, profile, group, lastNote, analysisLedger, i18n.language, trackSession, cadence, setProfile]);
+  }, [analyzing, entries, metricReadings, profile, group, lastNote, analysisLedger, i18n.language, trackSession, cadence, setProfile]);
 
   // ── PH-2: instant post-capture read ──────────────────────────────────────
   const onPhotoSaved = useCallback((photoId: string) => {

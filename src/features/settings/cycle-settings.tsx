@@ -14,13 +14,17 @@ export function CycleSettings() {
   const { t } = useTranslation();
   const { profile, setProfile } = useStore();
 
-  const enabled = !!(profile?.lastPeriodDate);
+  // Tracking can be on before a start date is known (the onboarding opt-in and
+  // the synced path both reach that state), so the form must not hide itself
+  // just because the date field is still empty.
+  const enabled = !!profile?.cycleTracking || !!profile?.lastPeriodDate;
   const [lastPeriod, setLastPeriod] = useState(profile?.lastPeriodDate ?? '');
   const [cycleLen, setCycleLen] = useState(String(profile?.cycleLength ?? 28));
 
   const save = () => {
     const len = parseInt(cycleLen, 10);
     setProfile({
+      cycleTracking: true,
       lastPeriodDate: lastPeriod.trim() || undefined,
       cycleLength: Number.isFinite(len) && len >= 21 && len <= 40 ? len : 28,
     });
@@ -28,7 +32,13 @@ export function CycleSettings() {
 
   const disable = () => {
     setLastPeriod('');
-    setProfile({ lastPeriodDate: undefined, cycleLength: undefined });
+    setProfile({
+      cycleTracking: false,
+      lastPeriodDate: undefined,
+      cycleLength: undefined,
+      // Turning it off here is an answer, so Pepi must not re-open the question.
+      cyclePromptState: 'declined',
+    });
   };
 
   return (
@@ -66,9 +76,9 @@ export function CycleSettings() {
         <Pressable
           accessibilityRole="button"
           onPress={() => {
-            const today = new Date().toISOString().slice(0, 10);
-            setLastPeriod(today);
-            setProfile({ lastPeriodDate: today, cycleLength: 28 });
+            // Enabling records intent only — no fake start date. The user fills
+            // the field below, or Health supplies real period starts.
+            setProfile({ cycleTracking: true, cycleLength: 28 });
           }}>
           <ThemedText type="smallBold" themeColor="textSecondary">
             {t('cycle.enable')}

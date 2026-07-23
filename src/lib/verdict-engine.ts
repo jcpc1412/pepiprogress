@@ -17,6 +17,7 @@
 
 import { usesFemaleFormula } from '@/lib/body-composition';
 import { buildMetricSeries, CHART_METRICS, type DatedPoint } from '@/lib/chart-series';
+import { resolveCycle, type CycleState } from '@/lib/cycle';
 import type { Goal } from '@/lib/field-surfacing';
 import { compoundBySlug } from '@/data/compound-catalog';
 import { daysToTarget, projectSeries } from '@/lib/trajectory';
@@ -397,18 +398,19 @@ function relevanceFor(metricId: string, input: VerdictInput): number {
   return w;
 }
 
-/** Cycle day (0-based) for a female user, or null when not trackable. */
-function cycleDay(input: VerdictInput, today: string): number | null {
+/** Cycle state for a female user, or null when not trackable. Resolved through
+ *  the shared core so this agrees with the photo + encouragement paths — it used
+ *  to test `day >= cycleLength / 2`, which put a 35-day cycle into luteal on day
+ *  18 instead of day 22 and contradicted every other consumer. */
+function cycleState(input: VerdictInput, today: string): CycleState | null {
   const { sex, lastPeriodDate, cycleLength } = input.profile;
-  if (sex !== 'female' || !lastPeriodDate) return null;
-  const len = cycleLength && cycleLength > 0 ? cycleLength : 28;
-  const days = Math.floor(
-    (new Date(`${today}T00:00:00.000Z`).getTime() -
-      new Date(`${lastPeriodDate}T00:00:00.000Z`).getTime()) /
-      DAY_MS,
-  );
-  if (days < 0) return null;
-  return ((days % len) + len) % len;
+  if (sex !== 'female') return null;
+  return resolveCycle({
+    manualStart: lastPeriodDate,
+    statedLength: cycleLength,
+    flow: input.metricReadings.filter((r) => r.metric === 'cycle.flow'),
+    today,
+  });
 }
 
 // ── Engine ──────────────────────────────────────────────────────────────────
@@ -533,8 +535,7 @@ export function computeVerdict(input: VerdictInput): Verdict {
     if (movedBodyComp) heroRaw = movedBodyComp;
   }
 
-  const cday = cycleDay(input, today);
-  const luteal = cday !== null && cday >= (input.profile.cycleLength ?? 28) / 2;
+  const luteal = cycleState(input, today)?.phase === 'luteal';
   const heavyTraining = recentHeavyTraining(input, today);
 
   // Build the signal stack + reconciliation.

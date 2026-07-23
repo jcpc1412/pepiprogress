@@ -629,7 +629,22 @@
     "datePlaceholder": "AAAA-MM-JJ",
     "cycleLength": "Durée moyenne du cycle (jours)",
     "enable": "Activer le suivi du cycle",
-    "disable": "Désactiver le suivi du cycle"
+    "disable": "Désactiver le suivi du cycle",
+    "ask": {
+      "confirm": "Je vois des données de cycle dans votre app santé. Voulez-vous que je les utilise, pour qu’une semaine de rétention d’eau ne passe pas pour une régression ?",
+      "ask": "Voulez-vous que je tienne compte de votre cycle ? Cela évite qu’une semaine de rétention d’eau soit lue comme une régression."
+    },
+    "yes": "Oui, utilise-les",
+    "no": "Non merci",
+    "declineAck": "Compris. Je n’en reparlerai pas.",
+    "askDate": "Quand vos dernières règles ont-elles commencé ?",
+    "chipToday": "Aujourd’hui",
+    "chipYesterday": "Hier",
+    "chipTypeDate": "Saisir une date",
+    "confirmSynced": "C’est noté. Vous êtes au jour {{day}} d’un cycle d’environ {{length}} jours, et je le tiendrai à jour depuis votre app santé.",
+    "confirmManual": "C’est noté. Jour {{day}} d’un cycle d’environ {{length}} jours.",
+    "opener": "Tenir compte de mon cycle",
+    "dateRetry": "Je n’ai pas pu lire cela comme une date. Essayez un format comme 2026-07-01."
   },
   "measurements": {
     "optionalHint": "Optionnel : enregistre tes mensurations pour suivre les changements de composition corporelle.",

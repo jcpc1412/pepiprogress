@@ -629,7 +629,22 @@
     "datePlaceholder": "AAAA-MM-DD",
     "cycleLength": "Duração média do ciclo (dias)",
     "enable": "Ativar rastreamento do ciclo",
-    "disable": "Desativar rastreamento do ciclo"
+    "disable": "Desativar rastreamento do ciclo",
+    "ask": {
+      "confirm": "Vejo dados do teu ciclo na tua app de saúde. Queres que os use, para que uma semana de retenção de líquidos não seja lida como um retrocesso?",
+      "ask": "Queres que tenha o teu ciclo em conta? Evita que uma semana de retenção de líquidos seja lida como um retrocesso."
+    },
+    "yes": "Sim, usa-os",
+    "no": "Não, obrigado",
+    "declineAck": "Entendido. Não volto a perguntar.",
+    "askDate": "Quando começou o teu último período?",
+    "chipToday": "Hoje",
+    "chipYesterday": "Ontem",
+    "chipTypeDate": "Escrever uma data",
+    "confirmSynced": "Registado. Estás no dia {{day}} de um ciclo de cerca de {{length}} dias, e mantenho isto atualizado a partir da tua app de saúde.",
+    "confirmManual": "Registado. Dia {{day}} de um ciclo de cerca de {{length}} dias.",
+    "opener": "Ter o meu ciclo em conta",
+    "dateRetry": "Não consegui ler isso como uma data. Tenta um formato como 2026-07-01."
   },
   "measurements": {
     "optionalHint": "Opcional: registre medidas para acompanhar mudanças na composição corporal.",

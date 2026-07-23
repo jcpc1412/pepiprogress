@@ -30,7 +30,14 @@ export const CanonicalMetric = {
   // compute Banister TRIMP load; kept as flat readings to fit the MetricReading model.
   activityWorkoutMin: 'activity.workout_min',
   activityWorkoutHr: 'activity.workout_hr',
-  cyclePhase: 'cycle.phase',
+  /** One logged menstrual-flow day. Value = flow level (1 light .. 4 heavy, 0 =
+   *  recorded but unspecified). `src/lib/cycle.ts` collapses runs of these into
+   *  period starts, an observed cycle length, and today's phase.
+   *
+   *  Was `cycle.phase`, which both providers advertised as a capability and
+   *  neither ever produced. Sensitive class: stays local, never mirrored to the
+   *  normalized tables, never reaches community aggregation. */
+  cycleFlow: 'cycle.flow',
 } as const;
 
 export type CanonicalMetricKey = (typeof CanonicalMetric)[keyof typeof CanonicalMetric];

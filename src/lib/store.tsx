@@ -11,6 +11,7 @@ import {
 } from 'react';
 
 import { registerCustomCompounds, type CatalogCompound } from '@/data/compound-catalog';
+import type { CyclePromptState } from '@/lib/cycle';
 import { localDateKey } from '@/lib/dates';
 import type { CheckinField, Goal } from '@/lib/field-surfacing';
 import { appendToLedger, type AnalysisRecord } from '@/lib/photo-observations';
@@ -349,6 +350,14 @@ export type LocalProfile = {
   // Cycle modifier for female users (luteal-phase water-retention flag).
   lastPeriodDate?: string; // YYYY-MM-DD
   cycleLength?: number; // default 28
+  /** User wants their cycle accounted for, INDEPENDENT of whether a start date
+   *  is known yet. Split out because the onboarding opt-in used to stamp *today*
+   *  as the last period, which is right only for someone on day 1 and silently
+   *  wrong by up to a month for everyone else. */
+  cycleTracking?: boolean;
+  /** One-time Pepi setup bookkeeping (asked / declined / active), same pattern as
+   *  `typicalPromptState`: a decline is remembered so it never asks twice. */
+  cyclePromptState?: CyclePromptState;
   // Body type calibration passed to vision AI for accurate composition assessment.
   bodyType?: string;
   /** User-defined custom "problem area" photo tracks within the body session

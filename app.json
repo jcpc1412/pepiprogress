@@ -2,7 +2,7 @@
   "expo": {
     "name": "PepiProgress",
     "slug": "pepiprogress",
-    "version": "0.0.36",
+    "version": "0.0.37",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "pepi",
@@ -76,7 +76,7 @@
       [
         "@kingstinct/react-native-healthkit",
         {
-          "NSHealthShareUsageDescription": "PepiProgress reads your health data (weight, sleep, activity, nutrition, heart rate) to autofill your daily check-in and reduce manual logging.",
+          "NSHealthShareUsageDescription": "PepiProgress reads your health data (weight, sleep, activity, nutrition, heart rate, and cycle dates when you track them) to autofill your daily check-in and to avoid misreading normal cycle-related changes as lost progress. This data stays on your device and in your private account.",
           "NSHealthUpdateUsageDescription": "PepiProgress can save your logged weight, body-fat estimate and waist back to Apple Health so your data stays in one place.",
           "background": false
         }

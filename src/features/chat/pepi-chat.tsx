@@ -55,6 +55,8 @@ import {
   TYPICAL_GROUPS,
   type TypicalGroup,
 } from '@/lib/typical-day';
+import { cyclePromptEligible, resolveCycle, type CyclePromptKind } from '@/lib/cycle';
+import { CanonicalMetric } from '@/lib/integrations/types';
 
 const TF_KEY: Record<Timeframe, string> = {
   today: 'ask.tfToday',
@@ -159,6 +161,9 @@ export function PepiChat() {
   const [pending, setPending] = useState(false);
   // Typical-day setup mini-flow (spec 15). Null when not setting up.
   const [typicalSetup, setTypicalSetup] = useState<{ group: TypicalGroup; step: 'confirm' | 'baseline' } | null>(null);
+  // Cycle setup (piece D): 'confirm' when Health already has the data (one tap,
+  // nothing to type), 'date' when it must be entered by hand.
+  const [cycleSetup, setCycleSetup] = useState<{ step: 'confirm' | 'date' } | null>(null);
   // Micro check-in flow (W3-9, beta-notes §4.1): chips-first 1-5 answers, zero AI.
   const [microFlow, setMicroFlow] = useState<{ slot: MicroSlot; fields: CheckinField[]; index: number } | null>(null);
   // Snoozed/dismissed this session: hides the opener chip until the next visit.
@@ -228,7 +233,8 @@ export function PepiChat() {
   const hasConversation = pepiMessages.length > 0;
   // Chips that answer a question Pepi just asked are the interaction itself, so
   // they ignore the pill rules entirely.
-  const activeChipFlow = !!anomalyCapture || !!microFlow || typicalSetup?.step === 'confirm';
+  const activeChipFlow =
+    !!anomalyCapture || !!microFlow || typicalSetup?.step === 'confirm' || cycleSetup?.step === 'confirm';
 
   useEffect(() => {
     const evaluate = (): number | null => {
@@ -569,6 +575,84 @@ export function PepiChat() {
     addPepiMessage({ role: 'pepi', text: t('anomaly.muted'), variant: 'hint' });
   };
 
+  // ── Cycle setup (piece D) ──────────────────────────────────────────────────
+  const cycleFlowReadings = useMemo(
+    () => metricReadings.filter((r) => r.metric === CanonicalMetric.cycleFlow),
+    [metricReadings],
+  );
+
+  const cyclePrompt = useMemo<CyclePromptKind | null>(
+    () =>
+      cyclePromptEligible({
+        sex: profile.sex,
+        promptState: profile.cyclePromptState,
+        tracking: profile.cycleTracking,
+        hasManualStart: !!profile.lastPeriodDate,
+        hasSyncedFlow: cycleFlowReadings.length > 0,
+        goals: profile.goals,
+      }),
+    [profile.sex, profile.cyclePromptState, profile.cycleTracking, profile.lastPeriodDate, profile.goals, cycleFlowReadings.length],
+  );
+
+  const startCycleSetup = (kind: CyclePromptKind) => {
+    addPepiMessage({ role: 'pepi', text: t(`cycle.ask.${kind}` as 'cycle.ask.confirm'), variant: 'answer' });
+    setCycleSetup({ step: kind === 'confirm' ? 'confirm' : 'date' });
+    store.setProfile({ cyclePromptState: 'asked' });
+  };
+
+  /** Answer the yes/no. Yes on the synced path needs no date at all — Health
+   *  already has the period starts, which is the whole point of confirming
+   *  rather than asking. */
+  const confirmCycle = (yes: boolean) => {
+    if (yes) {
+      addPepiMessage({ role: 'user', text: t('cycle.yes') });
+      store.setProfile({ cycleTracking: true, cyclePromptState: 'active' });
+      const state = resolveCycle({
+        manualStart: profile.lastPeriodDate,
+        statedLength: profile.cycleLength,
+        flow: cycleFlowReadings,
+        today,
+      });
+      addPepiMessage({
+        role: 'pepi',
+        text: state
+          ? t('cycle.confirmSynced', { day: state.dayInCycle, length: state.cycleLength })
+          : t('cycle.askDate'),
+        variant: 'answer',
+      });
+      setCycleSetup(state ? null : { step: 'date' });
+    } else {
+      addPepiMessage({ role: 'user', text: t('cycle.no') });
+      store.setProfile({ cyclePromptState: 'declined' });
+      addPepiMessage({ role: 'pepi', text: t('cycle.declineAck'), variant: 'hint' });
+      setCycleSetup(null);
+    }
+  };
+
+  /** Record a start date from a chip (today / yesterday) or typed text. */
+  const setCycleStart = (dateKey: string) => {
+    store.setProfile({
+      cycleTracking: true,
+      lastPeriodDate: dateKey,
+      cycleLength: profile.cycleLength ?? 28,
+      cyclePromptState: 'active',
+    });
+    const state = resolveCycle({
+      manualStart: dateKey,
+      statedLength: profile.cycleLength,
+      flow: cycleFlowReadings,
+      today,
+    });
+    addPepiMessage({
+      role: 'pepi',
+      text: state
+        ? t('cycle.confirmManual', { day: state.dayInCycle, length: state.cycleLength })
+        : t('cycle.declineAck'),
+      variant: 'answer',
+    });
+    setCycleSetup(null);
+  };
+
   const startTypicalSetup = (group: TypicalGroup) => {
     addPepiMessage({ role: 'pepi', text: t(`typical.ask.${group}` as 'typical.ask.nutrition'), variant: 'answer' });
     setTypicalSetup({ group, step: 'confirm' });
@@ -621,6 +705,22 @@ export function PepiChat() {
           text: t(`typical.baselineRetry.${group}` as 'typical.baselineRetry.nutrition'),
           variant: 'hint',
         });
+      }
+      return;
+    }
+
+    // Cycle setup: while waiting for a start date, the message is a date, not a
+    // log entry — route it here instead of to the parser.
+    if (cycleSetup?.step === 'date') {
+      addPepiMessage({ role: 'user', text: input });
+      setText('');
+      setSelection(undefined);
+      const match = input.match(/(\d{4})-(\d{2})-(\d{2})/);
+      const key = match?.[0];
+      if (key && key <= today && !Number.isNaN(new Date(`${key}T00:00:00Z`).getTime())) {
+        setCycleStart(key);
+      } else {
+        addPepiMessage({ role: 'pepi', text: t('cycle.dateRetry'), variant: 'hint' });
       }
       return;
     }
@@ -908,6 +1008,22 @@ export function PepiChat() {
               <OptionChip label={t('typical.yes')} selected={false} onPress={() => confirmTypical(true)} />
               <OptionChip label={t('typical.no')} selected={false} onPress={() => confirmTypical(false)} />
             </>
+          ) : cycleSetup?.step === 'confirm' ? (
+            <>
+              <OptionChip label={t('cycle.yes')} selected={false} onPress={() => confirmCycle(true)} />
+              <OptionChip label={t('cycle.no')} selected={false} onPress={() => confirmCycle(false)} />
+            </>
+          ) : cycleSetup?.step === 'date' ? (
+            // Chips for the two answers that cover most cases, so the common path
+            // needs no typing at all; anything older is typed into the input.
+            <>
+              <OptionChip label={t('cycle.chipToday')} selected={false} onPress={() => setCycleStart(today)} />
+              <OptionChip
+                label={t('cycle.chipYesterday')}
+                selected={false}
+                onPress={() => setCycleStart(shiftDateKey(today, -1))}
+              />
+            </>
           ) : (
             <>
               {todayAnomaly && !anomalyHidden ? (
@@ -922,6 +1038,13 @@ export function PepiChat() {
                   label={t(`micro.opener.${microPending.slot}` as 'micro.opener.morning')}
                   selected={false}
                   onPress={startMicroFlow}
+                />
+              ) : null}
+              {cyclePrompt && !cycleSetup ? (
+                <OptionChip
+                  label={t('cycle.opener')}
+                  selected={false}
+                  onPress={() => startCycleSetup(cyclePrompt)}
                 />
               ) : null}
               {eligibleGroup && !typicalSetup ? (

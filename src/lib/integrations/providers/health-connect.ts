@@ -23,7 +23,7 @@ const READ_PERMISSIONS = [
   { accessType: 'read', recordType: 'HeartRateVariabilityRmssd' },
   { accessType: 'read', recordType: 'SleepSession' },
   { accessType: 'read', recordType: 'Nutrition' },
-  { accessType: 'read', recordType: 'MenstruationPeriod' },
+  { accessType: 'read', recordType: 'MenstruationFlow' },
 ] as const;
 
 async function readHealthConnect(since?: string): Promise<ProviderReading[]> {
@@ -160,6 +160,33 @@ async function readHealthConnect(since?: string): Promise<ProviderReading[]> {
     }
   } catch { /* unavailable */ }
 
+  // --- Menstrual flow: one reading per logged flow day ---
+  // The menstruation permission was already being requested here and never read —
+  // asking for the most sensitive data class in the app and doing nothing with it.
+  // `MenstruationFlow` rather than `MenstruationPeriod`: it is per-day (matching
+  // HealthKit's samples and the cycle derivation's model), and the library types
+  // MenstruationPeriod as an instantaneous record when it is really an interval.
+  try {
+    const { records } = await readRecords('MenstruationFlow', { timeRangeFilter });
+    // Flow constants: unknown=0, light=1, medium=2, heavy=3. There is no explicit
+    // "none" value to filter out, unlike HealthKit.
+    const byDay: Record<string, number> = {};
+    for (const r of records) {
+      const d = new Date(r.time);
+      if (Number.isNaN(d.getTime())) continue;
+      const dateKey = localDateKey(d);
+      byDay[dateKey] = Math.max(byDay[dateKey] ?? 0, r.flow ?? 0);
+    }
+    for (const [dateKey, value] of Object.entries(byDay)) {
+      readings.push({
+        metric: CanonicalMetric.cycleFlow,
+        value,
+        ts: `${dateKey}T00:00:00.000Z`,
+        sourceProvider: PROVIDER_ID,
+      });
+    }
+  } catch { /* unavailable */ }
+
   return readings;
 }
 
@@ -179,7 +206,7 @@ export const healthConnectProvider: IntegrationProvider = {
     CanonicalMetric.nutritionProtein,
     CanonicalMetric.nutritionCarbs,
     CanonicalMetric.nutritionFat,
-    CanonicalMetric.cyclePhase,
+    CanonicalMetric.cycleFlow,
   ],
   isAvailable: () => Platform.OS === 'android',
   nativeReady: true,
