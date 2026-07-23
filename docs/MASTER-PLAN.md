@@ -1619,10 +1619,12 @@ skeleton. Annotations: **needs** = hard prerequisite; **unblocks** = what it ope
 - *Unblocks:* every Point-2 photo sub-point; also feeds connector posture reuse (B1).
 
 **2. Region-arrow contract + arrow UI (2a), the contract every photo sub-point consumes**
+- **2a.1 One smart camera** (auto session+pose, picker demoted to fallback). ✅ DONE.
+- **2a.2 Review ends on the comparison card** (capture → readout → measurements →
+  card). ← next. Pure client, no dep on 2a.3: build the card as a **clean photo**
+  now (arrows backfill once 2a.4 lands). Continues 2a.1's files + phone-testable.
 - **2a.3 `regions[]` structured output** in `analyze_photo` — **separate `direction`
   (grew/shrank) + `favour` (good/bad) + free coords**. **Needs** 3.1. ← the contract.
-- **2a.1 One smart camera** (auto session+pose, picker demoted to fallback). ✅ DONE.
-- **2a.2 Review ends on the comparison card** (capture → readout → measurements → card).
 - **2a.4 Arrow overlay** — `TrendMarker` glyph, direction × color (green ▲ muscle /
   green ▼ fat loss / red ▲ fat gain / red ▼ muscle loss / grey dash none / yellow dash
   low-conf), contrast-adaptive leader lines, tappable tooltip (X / tap-away). **Needs**
