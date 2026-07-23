@@ -340,7 +340,8 @@
     "dir_unclear": "incierto",
     "measuredDelta": "{{value}} {{unit}} desde tu última medición",
     "runDeepOnShot": "Analizar esta foto en profundidad",
-    "runDeepOnShotHint": "Toca una foto para un análisis profundo"
+    "runDeepOnShotHint": "Toca una foto para un análisis profundo",
+    "guideHint": "Toca una línea para escribir su número. Arrastra el asa para mover el punto."
   },
   "markers": {
     "hematocrit": "Hematocrito",

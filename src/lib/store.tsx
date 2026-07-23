@@ -349,6 +349,11 @@ export type LocalProfile = {
   /** User-defined custom "problem area" photo tracks within the body session
    *  (spec 04 §4A), e.g. ["belly", "thighs"]. */
   customPhotoParts?: string[];
+  /** Measurement guide-line positions (2a.7), normalized 0..1 down the photo, per
+   *  measurement key. The whole point is CONSISTENCY: the user wraps the tape at
+   *  the same anatomical spot every session, so the trend is signal not noise.
+   *  Seeded from the default anatomical map, then adjusted by dragging. */
+  measureGuides?: Record<string, number>;
   /** How much Pepi weighs in (beta-notes §3.6): explicit user choice. Absent =
    *  adaptively inferred (observe/nudge only; coach is never inferred). */
   coachingLevel?: 'observe' | 'nudge' | 'coach';

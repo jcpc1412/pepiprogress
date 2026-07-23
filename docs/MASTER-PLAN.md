@@ -1136,7 +1136,23 @@ Stepped plan:
    The in-tab "deep comparison" button now also targets the *selected* shot rather
    than always the latest. New i18n `photos.runDeepOnShot/runDeepOnShotHint` (×6).
    Green: tsc / lint / i18n(6) / 455 tests / web.
-7. **Measurement guide-line overlay [M] (owner mockup 2026-07-22).** In the
+7. **Measurement guide-line overlay [M] (owner mockup 2026-07-22). ✅ DONE.**
+   **Built:** `measurement-guides.tsx` (`MeasurementGuides`) replaces the plain
+   text fields in the capture flow's measurement step with the just-taken shot
+   carrying a **horizontal guide line per spot** (neck / waist / hips + the chosen
+   extra), each with a **tappable value chip** (mono numerals, dark instrument
+   chip, NOT the mockup's rough white box) that opens an inline numeric field, plus
+   a **drag grip** to move the spot. Line uses the same dark-halo-under-light
+   treatment as the 2a.4 leader lines; frame aspect matched to the photo via
+   `onLoad` so spots sit where they were placed. Positions seed from the 2a.5
+   `MEASURE_POS` anatomy map, are overridden by the user's own saved spots
+   (`profile.measureGuides`, new field), stay local while dragging and persist once
+   on finish **or skip** (so a repositioned spot is never lost). Body-fat readout +
+   the extra-measurement selector survive below the photo. New i18n
+   `photos.guideHint` (×6). Green: tsc / lint / i18n(6) / 455 tests / web.
+   ⚠️ V1 positions are stored-relative-to-the-shot; landmark-anchored re-projection
+   (same spot regardless of framing) rides the 2c tier-2 keypoint work. Original
+   scope for reference: In the
    measurement step, draw a **horizontal guide line at each measurement spot** (chest,
    waist, hips…) on the photo with a **tappable value chip** on the line (instrument
    `Metric`/`StatusPill` pill, mono numerals — NOT the rough white box) to enter/edit
@@ -1703,7 +1719,8 @@ skeleton. Annotations: **needs** = hard prerequisite; **unblocks** = what it ope
   Grey/favour-neutral by design; shares the vision overlay + tap paradigm.
 - **2a.6 Milestone gating + on-demand deep analysis** (Journal "run deep analysis").
   ✅ DONE. Gating already existed; added per-photo targeting + the Journal tap.
-- **2a.7 Measurement guide-line overlay** — guide line + value chip at each spot for
+- **2a.7 Measurement guide-line overlay** ✅ DONE. **2a is now complete end to end.**
+  Guide line + value chip at each spot for
   consistent measurement; V1 stored positions, later landmark-anchored (2c tier 2).
 - *Unblocks:* 2b coaching, 2c, 2d, 2f, beauty, trans, moles.
 

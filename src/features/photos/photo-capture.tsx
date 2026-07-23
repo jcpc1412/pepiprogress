@@ -20,6 +20,8 @@ import {
   viewForPose,
   type CanonicalPose,
 } from '@/lib/photo-pose';
+import { MeasurementGuides, type Guide } from '@/features/photos/measurement-guides';
+import { MEASURE_POS, type MeasureKey } from '@/lib/photo-arrows';
 import { computeQuality, type PhotoQuality } from '@/lib/photo-quality';
 import { quickReadout, type Comparability } from '@/lib/photo-readout';
 import { initialSampleState, recordSample, shouldSample } from '@/lib/pose-live';
@@ -77,7 +79,7 @@ export function PhotoCapture({
   casual?: boolean;
 }) {
   const { t } = useTranslation();
-  const { addPhoto, upsertCheckin, profile, entries } = useStore();
+  const { addPhoto, upsertCheckin, setProfile, profile, entries } = useStore();
   const [permission, requestPermission] = useCameraPermissions();
   const camRef = useRef<CameraView>(null);
   const [shot, setShot] = useState<string | null>(null);
@@ -129,6 +131,15 @@ export function PhotoCapture({
   const [hips, setHips] = useState('');
   const [extraKey, setExtraKey] = useState<'chest' | 'arms' | 'thighs' | undefined>();
   const [extraVal, setExtraVal] = useState('');
+  // Guide-line spots (2a.7): seeded from the default anatomy map, overridden by
+  // the user's own saved spots. Kept local while dragging and persisted once on
+  // finish, so a drag doesn't hammer the store.
+  const [guideY, setGuideY] = useState<Record<string, number>>(() => {
+    const seed: Record<string, number> = {};
+    for (const k of Object.keys(MEASURE_POS) as MeasureKey[]) seed[k] = MEASURE_POS[k].y;
+    return { ...seed, ...(profile?.measureGuides ?? {}) };
+  });
+  const [editingKey, setEditingKey] = useState<MeasureKey | undefined>();
   const isBody = effSession === 'body';
   // Casual quick-shots skip the measurement step entirely (save + close), even in
   // the body track — measurements belong to the guided comparability flow.
@@ -173,6 +184,31 @@ export function PhotoCapture({
     }
     return null;
   })();
+
+  // ── Guide-line value plumbing (2a.7) ──────────────────────────────────────
+  const valueFor = (k: MeasureKey): string =>
+    k === 'waist' ? waist : k === 'hips' ? hips : k === 'neck' ? neck : extraKey === k ? extraVal : '';
+  const setValueFor = (k: MeasureKey, v: string) => {
+    if (k === 'waist') setWaist(v);
+    else if (k === 'hips') setHips(v);
+    else if (k === 'neck') setNeck(v);
+    else if (extraKey === k) setExtraVal(v);
+  };
+  /** The spots shown on the photo: the three standing measurements plus the one
+   *  optional extra the user picked. */
+  const guides: Guide[] = ([
+    'neck',
+    'waist',
+    'hips',
+    ...(extraKey ? [extraKey] : []),
+  ] as MeasureKey[]).map((k) => ({
+    key: k,
+    label: t(`measurements.${k}` as 'measurements.waist'),
+    y: guideY[k] ?? MEASURE_POS[k].y,
+    value: valueFor(k) || undefined,
+  }));
+  /** Persist the user's spots so the next session measures at the same place. */
+  const persistGuides = () => setProfile({ measureGuides: guideY });
 
   const applyLastMeasurements = () => {
     if (!lastMeasurements) return;
@@ -302,6 +338,7 @@ export function PhotoCapture({
     setHips('');
     setExtraKey(undefined);
     setExtraVal('');
+    setEditingKey(undefined);
     setDetectedPose(null);
     setLiveFit(null);
     setManualPose(null);
@@ -429,6 +466,13 @@ export function PhotoCapture({
     if (Object.keys(patch).length > 0) {
       upsertCheckin(localDateKey(), patch as Parameters<typeof upsertCheckin>[1]);
     }
+    persistGuides();
+    finishToPayoff();
+  };
+
+  /** Skip the numbers but keep any spot the user just repositioned. */
+  const skipMeasurements = () => {
+    persistGuides();
     finishToPayoff();
   };
 
@@ -624,57 +668,38 @@ export function PhotoCapture({
                   </ThemedText>
                 </Pressable>
               ) : null}
-              <View style={styles.measureRow}>
-                <View style={styles.measureField}>
-                  <LabeledInput
-                    label={`${t('measurements.waist')} (${unitLabel})`}
-                    placeholder={lastMeasurements?.waist !== undefined ? String(lastMeasurements.waist) : '—'}
-                    keyboardType="decimal-pad"
-                    value={waist}
-                    onChangeText={setWaist}
-                  />
-                </View>
-                <View style={styles.measureField}>
-                  <LabeledInput
-                    label={`${t('measurements.hips')} (${unitLabel})`}
-                    placeholder={lastMeasurements?.hips !== undefined ? String(lastMeasurements.hips) : '—'}
-                    keyboardType="decimal-pad"
-                    value={hips}
-                    onChangeText={setHips}
-                  />
-                </View>
-              </View>
-              <View style={styles.measureRow}>
-                <View style={styles.measureField}>
-                  <LabeledInput
-                    label={`${t('measurements.neck')} (${unitLabel})`}
-                    placeholder={lastMeasurements?.neck !== undefined ? String(lastMeasurements.neck) : '—'}
-                    keyboardType="decimal-pad"
-                    value={neck}
-                    onChangeText={setNeck}
-                  />
-                </View>
-                <View style={styles.measureField}>
-                  {/* Hedged Navy body-fat estimate (observational, not medical). */}
-                  {bodyFat ? (
-                    <View style={styles.bfBox}>
-                      <ThemedText type="monoSm" style={styles.bfLabel}>
-                        {t('photos.bodyFat')}
-                      </ThemedText>
-                      <ThemedText type="metricSm" style={styles.bfValue}>
-                        {`${bodyFat.pct}%`}
-                      </ThemedText>
-                      <ThemedText type="monoSm" style={styles.bfLabel}>
-                        {t('photos.bodyFatHedge', { low: bodyFat.low, high: bodyFat.high })}
-                      </ThemedText>
-                    </View>
-                  ) : (
-                    <ThemedText type="monoSm" style={styles.bfHint}>
-                      {t('photos.bodyFatNeed')}
-                    </ThemedText>
-                  )}
-                </View>
-              </View>
+              {/* Guide lines on the shot (2a.7): tap a chip to enter its number,
+                  drag the grip to move the spot. Consistency, not measurement. */}
+              <MeasurementGuides
+                uri={shot ?? undefined}
+                guides={guides}
+                unitLabel={unitLabel}
+                editingKey={editingKey}
+                onMove={(k, y) => setGuideY((prev) => ({ ...prev, [k]: y }))}
+                onEditSpot={(k) => setEditingKey((cur) => (cur === k ? undefined : k))}
+              />
+              {editingKey ? (
+                <LabeledInput
+                  label={`${t(`measurements.${editingKey}` as 'measurements.waist')} (${unitLabel})`}
+                  placeholder={
+                    editingKey === 'waist' && lastMeasurements?.waist !== undefined
+                      ? String(lastMeasurements.waist)
+                      : editingKey === 'hips' && lastMeasurements?.hips !== undefined
+                        ? String(lastMeasurements.hips)
+                        : editingKey === 'neck' && lastMeasurements?.neck !== undefined
+                          ? String(lastMeasurements.neck)
+                          : '—'
+                  }
+                  keyboardType="decimal-pad"
+                  value={valueFor(editingKey)}
+                  onChangeText={(v) => setValueFor(editingKey, v)}
+                  autoFocus
+                />
+              ) : (
+                <ThemedText type="monoSm" style={styles.bfLabel}>
+                  {t('photos.guideHint')}
+                </ThemedText>
+              )}
               <SingleSelectChips
                 options={(['chest', 'arms', 'thighs'] as const).map((k) => ({
                   value: k,
@@ -683,20 +708,29 @@ export function PhotoCapture({
                 value={extraKey}
                 onChange={setExtraKey}
               />
-              {extraKey && (
-                <LabeledInput
-                  label={`${t(`measurements.${extraKey}`)} (${unitLabel})`}
-                  placeholder="—"
-                  keyboardType="decimal-pad"
-                  value={extraVal}
-                  onChangeText={setExtraVal}
-                />
+              {/* Hedged Navy body-fat estimate (observational, not medical). */}
+              {bodyFat ? (
+                <View style={styles.bfBox}>
+                  <ThemedText type="monoSm" style={styles.bfLabel}>
+                    {t('photos.bodyFat')}
+                  </ThemedText>
+                  <ThemedText type="metricSm" style={styles.bfValue}>
+                    {`${bodyFat.pct}%`}
+                  </ThemedText>
+                  <ThemedText type="monoSm" style={styles.bfLabel}>
+                    {t('photos.bodyFatHedge', { low: bodyFat.low, high: bodyFat.high })}
+                  </ThemedText>
+                </View>
+              ) : (
+                <ThemedText type="monoSm" style={styles.bfHint}>
+                  {t('photos.bodyFatNeed')}
+                </ThemedText>
               )}
             </ScrollView>
             {/* Fixed footer: the photo is already saved; measurements only.
                 Skip still lands on the comparison payoff (2a.2). */}
             <SafeAreaView style={styles.reviewBar} edges={['bottom']}>
-              <Pressable accessibilityRole="button" onPress={finishToPayoff}>
+              <Pressable accessibilityRole="button" onPress={skipMeasurements}>
                 <ThemedText type="label" style={styles.darkText}>
                   {t('photos.skipMeasurements')}
                 </ThemedText>

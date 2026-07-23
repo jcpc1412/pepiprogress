@@ -340,7 +340,8 @@
     "dir_unclear": "unklar",
     "measuredDelta": "{{value}} {{unit}} seit deiner letzten Messung",
     "runDeepOnShot": "Tiefenanalyse für dieses Foto starten",
-    "runDeepOnShotHint": "Tippe ein Foto für eine Tiefenanalyse an"
+    "runDeepOnShotHint": "Tippe ein Foto für eine Tiefenanalyse an",
+    "guideHint": "Tippe auf eine Linie, um ihren Wert einzugeben. Ziehe den Griff, um die Stelle zu verschieben."
   },
   "markers": {
     "hematocrit": "Hämatokrit",
