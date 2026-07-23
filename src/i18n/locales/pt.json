@@ -338,7 +338,9 @@
     "dir_loss": "reduziu",
     "dir_stable": "manteve",
     "dir_unclear": "incerto",
-    "measuredDelta": "{{value}} {{unit}} desde sua última medição"
+    "measuredDelta": "{{value}} {{unit}} desde sua última medição",
+    "runDeepOnShot": "Fazer uma análise profunda desta foto",
+    "runDeepOnShotHint": "Toque numa foto para uma análise profunda"
   },
   "markers": {
     "hematocrit": "Hematócrito",

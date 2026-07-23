@@ -1116,11 +1116,26 @@ Stepped plan:
    parts, and it rides the same `comparable === true` gate (the fixed anatomical map
    assumes a standard pose). Green: tsc / lint / i18n(6) / 455 tests / web.
    ⚠️ Positions are a V1 fixed map; landmark-anchored placement rides 2c tier 2.
-6. **Milestone gating + on-demand deep analysis [S].** Regional deep analysis runs
-   on the compound-driven milestone cadence ([photo-cadence.ts](../src/lib/photo-cadence.ts));
-   most shots get only the instant readout + comparability. Add a **Journal
-   affordance: tap a picture → run deep analysis on demand** (the manual escape
-   hatch when the user wants a rich read off-cadence).
+6. **Milestone gating + on-demand deep analysis [S]. ✅ DONE.** Regional deep
+   analysis runs on the compound-driven milestone cadence
+   ([photo-cadence.ts](../src/lib/photo-cadence.ts)); most shots get only the instant
+   readout + comparability. Add a **Journal affordance: tap a picture → run deep
+   analysis on demand** (the manual escape hatch when the user wants a rich read
+   off-cadence). **Milestone gating already existed** (`runInstantRead` auto-runs the
+   Sonnet read only when the scheduled `nextScientificAt` has passed and the chain
+   has 2+ shots) — verified, not rebuilt. **New work:** `runScientificAnalysis` now
+   takes an optional `targetId` so the deep read can run on **any** shot of the
+   track, not just the newest (target replaces `latest` for the uri, tilt delta,
+   `photoAt`, `updatePhoto`, ledger `photoId`, and the resulting note; baseline stays
+   the anchor, and a no-op guard skips the baseline itself). The Journal's photo
+   strip is now **per-thumbnail tappable** → `/photos?analyze=<id>`, which focuses
+   that photo's track, selects it, and fires the deep read once the track has
+   switched (two-step effect, since `sessionPhotos`/`baseline` must reflect the new
+   track first). The param is **consumed** (`setParams({ analyze: '' })`) because the
+   tab stays mounted — otherwise a second tap on the same photo would be a no-op.
+   The in-tab "deep comparison" button now also targets the *selected* shot rather
+   than always the latest. New i18n `photos.runDeepOnShot/runDeepOnShotHint` (×6).
+   Green: tsc / lint / i18n(6) / 455 tests / web.
 7. **Measurement guide-line overlay [M] (owner mockup 2026-07-22).** In the
    measurement step, draw a **horizontal guide line at each measurement spot** (chest,
    waist, hips…) on the photo with a **tappable value chip** on the line (instrument
@@ -1687,6 +1702,7 @@ skeleton. Annotations: **needs** = hard prerequisite; **unblocks** = what it ope
 - **2a.5 Measurement-delta arrows** (magnitude allowed, measured, not judged). ✅ DONE.
   Grey/favour-neutral by design; shares the vision overlay + tap paradigm.
 - **2a.6 Milestone gating + on-demand deep analysis** (Journal "run deep analysis").
+  ✅ DONE. Gating already existed; added per-photo targeting + the Journal tap.
 - **2a.7 Measurement guide-line overlay** — guide line + value chip at each spot for
   consistent measurement; V1 stored positions, later landmark-anchored (2c tier 2).
 - *Unblocks:* 2b coaching, 2c, 2d, 2f, beauty, trans, moles.

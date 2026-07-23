@@ -310,24 +310,37 @@ export function JournalScreen() {
             </View>
           ) : null}
 
-          {/* Photos */}
+          {/* Photos. Tapping a single shot runs the deep analysis on THAT shot
+              (2a.6) — the manual escape hatch when the user wants a rich read
+              off the milestone cadence. The header still opens the tab. */}
           {dayPhotos.length ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={t('journal.photos')}
-              accessibilityHint={t('photos.heading')}
-              onPress={() => router.push('/photos')}
-              style={styles.section}>
-              <View style={styles.photosHead}>
-                <EngravedLabel>{t('journal.photos')}</EngravedLabel>
-                <SourceBadge source="tap" />
-              </View>
+            <View style={styles.section}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t('journal.photos')}
+                accessibilityHint={t('photos.heading')}
+                onPress={() => router.push('/photos')}>
+                <View style={styles.photosHead}>
+                  <EngravedLabel>{t('journal.photos')}</EngravedLabel>
+                  <SourceBadge source="tap" />
+                </View>
+              </Pressable>
               <View style={styles.thumbRow}>
                 {dayPhotos.slice(0, 4).map((p) => (
-                  <Image key={p.id} source={{ uri: p.uri }} style={styles.thumb} contentFit="cover" />
+                  <Pressable
+                    key={p.id}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('photos.runDeepOnShot')}
+                    onPress={() => router.push(`/photos?analyze=${p.id}`)}
+                    style={({ pressed }) => (pressed ? styles.thumbPressed : undefined)}>
+                    <Image source={{ uri: p.uri }} style={styles.thumb} contentFit="cover" />
+                  </Pressable>
                 ))}
               </View>
-            </Pressable>
+              <ThemedText type="monoSm" themeColor="textMuted">
+                {t('photos.runDeepOnShotHint')}
+              </ThemedText>
+            </View>
           ) : null}
 
         </ScrollView>
@@ -356,6 +369,7 @@ const styles = StyleSheet.create({
   readCard: { gap: Spacing.two },
   section: { gap: Spacing.two },
   photosHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  thumbPressed: { opacity: 0.7 },
   thumbRow: { flexDirection: 'row', gap: Spacing.two },
   thumb: { width: 64, aspectRatio: 3 / 4, borderRadius: 2 },
 });

@@ -338,7 +338,9 @@
     "dir_loss": "уменьшилось",
     "dir_stable": "без изменений",
     "dir_unclear": "неясно",
-    "measuredDelta": "{{value}} {{unit}} с прошлого замера"
+    "measuredDelta": "{{value}} {{unit}} с прошлого замера",
+    "runDeepOnShot": "Провести глубокий анализ этого фото",
+    "runDeepOnShotHint": "Нажми на фото для глубокого анализа"
   },
   "markers": {
     "hematocrit": "Гематокрит",

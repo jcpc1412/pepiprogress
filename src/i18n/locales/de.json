@@ -338,7 +338,9 @@
     "dir_loss": "schrumpfte",
     "dir_stable": "gehalten",
     "dir_unclear": "unklar",
-    "measuredDelta": "{{value}} {{unit}} seit deiner letzten Messung"
+    "measuredDelta": "{{value}} {{unit}} seit deiner letzten Messung",
+    "runDeepOnShot": "Tiefenanalyse für dieses Foto starten",
+    "runDeepOnShotHint": "Tippe ein Foto für eine Tiefenanalyse an"
   },
   "markers": {
     "hematocrit": "Hämatokrit",

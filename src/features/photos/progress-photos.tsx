@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { type MutableRefObject, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AccessibilityInfo, Animated, Dimensions, type LayoutChangeEvent, Modal, PanResponder, Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -277,6 +277,8 @@ export function ProgressPhotos({
   const router = useRouter();
   const theme = useTheme();
   const { user } = useAuth();
+  // ?analyze=<photoId> — the Journal's "run deep analysis on this shot" (2a.6).
+  const { analyze: analyzeParam } = useLocalSearchParams<{ analyze?: string }>();
   const {
     photos,
     entries,
@@ -465,8 +467,11 @@ export function ProgressPhotos({
   // run globally in <PhotoSync>, mounted in the root layout (W7-32).
 
   // ── Scientific analysis ──────────────────────────────────────────────────
-  const runScientificAnalysis = useCallback(async () => {
-    if (!latest || !baseline || analyzing) return;
+  // `targetId` (2a.6) lets the deep read run on ANY photo of the track, not just
+  // the newest — the on-demand escape hatch from the Journal. Defaults to latest.
+  const runScientificAnalysis = useCallback(async (targetId?: string) => {
+    const target = (targetId ? sessionPhotos.find((p) => p.id === targetId) : undefined) ?? latest;
+    if (!target || !baseline || analyzing || target.id === baseline.id) return;
     setAnalyzing(true);
     setEncouragementNote(null);
     setAiError(null);
@@ -517,8 +522,8 @@ export function ProgressPhotos({
       // Two-stage analysis: render an instant, local readout while the deep
       // vision call runs (§4A). Comparability from the tilt delta between shots.
       const tiltDelta =
-        latest.tilt != null && baseline.tilt != null ? Math.abs(latest.tilt - baseline.tilt) : undefined;
-      setQuickNote({ id: latest.id, readout: quickReadout({ tiltDelta, measurementDelta }) });
+        target.tilt != null && baseline.tilt != null ? Math.abs(target.tilt - baseline.tilt) : undefined;
+      setQuickNote({ id: target.id, readout: quickReadout({ tiltDelta, measurementDelta }) });
 
       const symptomCtx = symptomEvents
         .filter((s) => isVisualSymptom(s.type))
@@ -576,12 +581,12 @@ export function ProgressPhotos({
           label: d.compoundSlug ? (compoundBySlug(d.compoundSlug)?.canonicalName ?? d.compoundSlug) : '',
           takenAt: d.takenAt,
         })).filter((d) => d.label),
-        photoAt: latest.takenAt,
+        photoAt: target.takenAt,
         baselineAt: baseline.takenAt,
       });
 
       const res = await analyzePhoto({
-        uri: resolvedUris[latest.id] ?? latest.uri,
+        uri: resolvedUris[target.id] ?? target.uri,
         baselineUri: resolvedUris[baseline.id] ?? baseline.uri,
         session: trackSession,
         locale: i18n.language,
@@ -597,7 +602,7 @@ export function ProgressPhotos({
         dataContext,
         poseLabel: trackPart,
       });
-      updatePhoto(latest.id, {
+      updatePhoto(target.id, {
         driftScore: res.driftScore,
         comparable: res.comparable,
         lighting: res.lighting,
@@ -610,14 +615,15 @@ export function ProgressPhotos({
       addAnalysisRecord({
         session: trackSession,
         part: trackPart,
-        photoId: latest.id,
+        photoId: target.id,
         at: new Date().toISOString(),
         observations: sanitizeObservations(res.observations),
         hypothesis: res.hypothesis || undefined,
         watchNext: res.watchNext || undefined,
         change: res.change || undefined,
       });
-      setLastNote({ id: latest.id, analysis: res });
+      setLastNote({ id: target.id, analysis: res });
+      setSelectedId(target.id); // focus the shot that was just read
       const sciKey = sessionScientificKey(trackSession);
       setProfile({ [sciKey]: nextMilestoneISO(new Date().toISOString(), cadence.scientificDays) });
     } catch (err) {
@@ -626,7 +632,36 @@ export function ProgressPhotos({
     } finally {
       setAnalyzing(false);
     }
-  }, [latest, baseline, analyzing, trackSession, trackPart, i18n.language, profile, entries, metricReadings, doseEvents, analysisLedger, addAnalysisRecord, symptomEvents, protocolItems, updatePhoto, setProfile, cadence, resolvedUris]);
+  }, [sessionPhotos, latest, baseline, analyzing, trackSession, trackPart, i18n.language, profile, entries, metricReadings, doseEvents, analysisLedger, addAnalysisRecord, symptomEvents, protocolItems, updatePhoto, setProfile, cadence, resolvedUris]);
+
+  // ── On-demand deep analysis from the Journal (2a.6) ───────────────────────
+  // Tapping a photo in the Journal deep-links here with ?analyze=<id>: focus that
+  // photo's track, select it, then run the deep read once the track has switched
+  // (the analysis needs `sessionPhotos`/`baseline` to reflect the new track).
+  const [pendingAnalyzeId, setPendingAnalyzeId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!analyzeParam) return;
+    const photo = photos.find((p) => p.id === analyzeParam);
+    if (!photo) return;
+    // Reacting to a navigation param is exactly "sync state to a prop".
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setFocused({ session: photo.session, part: photo.part ?? undefined });
+    setSelectedId(photo.id);
+    setPendingAnalyzeId(photo.id);
+    // Consume the param: the tab stays mounted, so without this a second tap on
+    // the SAME photo would be a no-op (the param never changes).
+    router.setParams({ analyze: '' });
+  }, [analyzeParam, photos, router]);
+
+  useEffect(() => {
+    if (!pendingAnalyzeId) return;
+    if (!sessionPhotos.some((p) => p.id === pendingAnalyzeId)) return; // track not switched yet
+    const id = pendingAnalyzeId;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setPendingAnalyzeId(null);
+    void runScientificAnalysis(id);
+  }, [pendingAnalyzeId, sessionPhotos, runScientificAnalysis]);
 
   // ── Encouragement check-in ───────────────────────────────────────────────
   const runEncouragementCheckin = useCallback(async () => {
@@ -1198,7 +1233,7 @@ export function ProgressPhotos({
                 <View style={styles.milestoneSection}>
                   <TextButton
                     label={t('photos.runDeepComparison', { days: cadence.scientificDays })}
-                    onPress={runScientificAnalysis}
+                    onPress={() => runScientificAnalysis(selected?.id)}
                     disabled={analyzing}
                   />
                   <View style={styles.milestoneRow}>
