@@ -1494,7 +1494,15 @@ function extractJson(message: any, fallback: unknown): unknown {
  */
 function structured(schema: unknown) {
   return {
-    tools: [{ name: 'record', description: 'Record the structured result.', input_schema: schema }],
+    // The schema literals above are plain JSON Schema objects; their `type: 'object'`
+    // widens to `string`, which the SDK's InputSchema literal type rejects. The cast
+    // is the whole reason it is confined to this one line — every call site stays
+    // typechecked, and `deno check` catches real errors instead of drowning in this one.
+    tools: [{
+      name: 'record',
+      description: 'Record the structured result.',
+      input_schema: schema as Anthropic.Messages.Tool.InputSchema,
+    }],
     tool_choice: { type: 'tool' as const, name: 'record' },
   };
 }

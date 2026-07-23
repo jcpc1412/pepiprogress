@@ -79,6 +79,7 @@
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "check:edge": "cd supabase/functions && deno check ai-service/index.ts",
     "i18n:check": "node scripts/check-i18n-keys.mjs",
     "eval:posture": "node scripts/eval-posture.mjs",
     "gen:types": "supabase gen types typescript --project-id pjdbxnycrvibmebfumel > src/types/database.ts",

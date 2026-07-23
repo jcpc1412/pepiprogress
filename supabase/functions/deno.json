@@ -1,0 +1,11 @@
+{
+  "//": "Deno config for the edge functions ONLY. The app's tsconfig deliberately excludes supabase/* (Deno globals + npm: specifiers would break the Expo build), which left ai-service/index.ts with NOTHING typechecking it — a typo there is invisible until it 500s in production. `npm run check:edge` closes that gap. The _shared modules are pure TS and are covered by the normal vitest gate.",
+  "nodeModulesDir": "auto",
+  "imports": {
+    "@anthropic-ai/sdk": "npm:@anthropic-ai/sdk@^0.71.0"
+  },
+  "compilerOptions": {
+    "lib": ["deno.window", "dom"]
+  },
+  "exclude": ["**/*.test.ts"]
+}
