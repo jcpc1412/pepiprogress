@@ -37,6 +37,8 @@ import {
   toPriorPayload,
 } from '@/lib/photo-observations';
 import { PhotoWithArrows } from '@/features/photos/photo-arrows';
+import { measurementDeltas, type MeasureKey } from '@/lib/photo-arrows';
+import type { PhotoObservation } from '@/lib/photo-observations';
 import { hapticSuccess } from '@/lib/haptics';
 import { quickReadout, type Comparability, type QuickReadout } from '@/lib/photo-readout';
 import { isNewHighscore, pickReference } from '@/lib/photo-reference';
@@ -869,10 +871,54 @@ export function ProgressPhotos({
     () => observationsForPhoto(analysisLedger, selected?.id),
     [analysisLedger, selected?.id],
   );
+
+  // Measurement-delta arrows (2a.5): the objective layer. Deltas are taken
+  // against the measurement before the selected photo's day, so scrubbing the
+  // timeline shows the numbers that belonged to THAT shot. These are the one
+  // place a confident magnitude is allowed (measured, not judged), so they stay
+  // favour-neutral — the vision arrows own the good/bad story.
+  const measurementMarkers = useMemo<PhotoObservation[]>(() => {
+    if (!selected || trackSession !== 'body' || trackPart) return [];
+    const toMeasures = (e: (typeof entries)[string]): Partial<Record<MeasureKey, number>> => {
+      const m: Partial<Record<MeasureKey, number>> = {};
+      if (e.waist !== undefined) m.waist = e.waist;
+      if (e.hips !== undefined) m.hips = e.hips;
+      if (e.neck !== undefined) m.neck = e.neck;
+      if (e.extraMeasurementKey && e.extraMeasurementValue !== undefined) {
+        m[e.extraMeasurementKey] = e.extraMeasurementValue;
+      }
+      return m;
+    };
+    const withM = Object.values(entries)
+      .filter((e) => Object.keys(toMeasures(e)).length > 0)
+      .sort((a, b) => a.date.localeCompare(b.date));
+    const photoDay = localDateKey(new Date(selected.takenAt));
+    let ci = -1;
+    for (let i = 0; i < withM.length; i++) if (withM[i].date <= photoDay) ci = i;
+    if (ci < 1) return []; // need a prior measurement to compare against
+    return measurementDeltas(toMeasures(withM[ci]), toMeasures(withM[ci - 1])).map((d) => ({
+      region: t(`measurements.${d.key}` as 'measurements.waist'),
+      note: t('photos.measuredDelta', {
+        value: `${d.delta > 0 ? '+' : ''}${Math.round(d.delta * 10) / 10}`,
+        unit: munit,
+      }),
+      direction: d.delta < 0 ? 'loss' : 'gain',
+      favour: 'none',
+      confidence: 1,
+      x: d.x,
+      y: d.y,
+    }));
+  }, [selected, trackSession, trackPart, entries, t, munit]);
+
+  // Vision markers + measured markers share one overlay and one tap paradigm.
+  const arrowMarkers = useMemo(
+    () => [...selectedObservations, ...measurementMarkers],
+    [selectedObservations, measurementMarkers],
+  );
   const showArrows =
     !!selected &&
     selected.comparable === true &&
-    selectedObservations.some((o) => o.x !== undefined && o.y !== undefined);
+    arrowMarkers.some((o) => o.x !== undefined && o.y !== undefined);
   const lightingBad = showWipe && selected.lighting !== undefined && selected.lighting !== 'ok';
   const selectedBadge =
     showWipe && (selected.comparable !== undefined || lightingBad) ? (
@@ -1029,7 +1075,7 @@ export function ProgressPhotos({
                       {t('photos.arrowsHint')}
                     </ThemedText>
                   </View>
-                  <PhotoWithArrows uri={resolvedUris[selected.id]} observations={selectedObservations} />
+                  <PhotoWithArrows uri={resolvedUris[selected.id]} observations={arrowMarkers} />
                 </Card>
               ) : null}
 

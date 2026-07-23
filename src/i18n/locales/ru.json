@@ -337,7 +337,8 @@
     "dir_gain": "выросло",
     "dir_loss": "уменьшилось",
     "dir_stable": "без изменений",
-    "dir_unclear": "неясно"
+    "dir_unclear": "неясно",
+    "measuredDelta": "{{value}} {{unit}} с прошлого замера"
   },
   "markers": {
     "hematocrit": "Гематокрит",

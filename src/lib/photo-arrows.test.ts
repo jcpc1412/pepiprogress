@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { favourFor, glyphFor, layoutArrowMarkers } from '@/lib/photo-arrows';
+import { favourFor, glyphFor, layoutArrowMarkers, measurementDeltas } from '@/lib/photo-arrows';
 import type { PhotoObservation } from '@/lib/photo-observations';
 
 const obs = (o: Partial<PhotoObservation>): PhotoObservation => ({
@@ -74,5 +74,32 @@ describe('layoutArrowMarkers', () => {
     expect(m.favour).toBe('good');
     expect(m.length).toBeGreaterThan(0);
     expect(Number.isFinite(m.angleDeg)).toBe(true);
+  });
+});
+
+describe('measurementDeltas', () => {
+  it('returns a positioned marker per measurement that moved', () => {
+    const out = measurementDeltas({ waist: 80, hips: 100 }, { waist: 82, hips: 100 });
+    // hips held, so only the waist moved.
+    expect(out).toHaveLength(1);
+    expect(out[0]).toMatchObject({ key: 'waist', delta: -2 });
+    expect(out[0].x).toBeGreaterThan(0);
+    expect(out[0].y).toBeGreaterThan(0);
+  });
+
+  it('ignores sub-0.1 measurement noise', () => {
+    expect(measurementDeltas({ waist: 80.05 }, { waist: 80 })).toEqual([]);
+  });
+
+  it('needs both sides of the comparison', () => {
+    expect(measurementDeltas({ waist: 80 }, {})).toEqual([]);
+    expect(measurementDeltas({}, { waist: 80 })).toEqual([]);
+  });
+
+  it('keeps the sign so the caller can read direction from it', () => {
+    const [grew] = measurementDeltas({ arms: 38 }, { arms: 36 });
+    expect(grew.delta).toBe(2);
+    const [shrank] = measurementDeltas({ thighs: 55 }, { thighs: 57 });
+    expect(shrank.delta).toBe(-2);
   });
 });

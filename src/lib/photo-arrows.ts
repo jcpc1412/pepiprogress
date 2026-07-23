@@ -33,6 +33,47 @@ export type ArrowMarker = {
   angleDeg: number;
 };
 
+/** Body measurements that can render as their own arrows (2a.5). */
+export type MeasureKey = 'neck' | 'chest' | 'arms' | 'waist' | 'hips' | 'thighs';
+
+/** Approximate anatomical positions on a front body photo, normalized 0..1 from
+ *  the top-left. V1 is a fixed map (measurement arrows are a small, objective
+ *  layer); landmark-anchored placement rides 2c tier 2, same as the 2a.7 overlay. */
+export const MEASURE_POS: Record<MeasureKey, { x: number; y: number }> = {
+  neck: { x: 0.5, y: 0.16 },
+  chest: { x: 0.5, y: 0.34 },
+  arms: { x: 0.8, y: 0.42 },
+  waist: { x: 0.5, y: 0.52 },
+  hips: { x: 0.5, y: 0.63 },
+  thighs: { x: 0.44, y: 0.78 },
+};
+
+const MEASURE_EPS = 0.1; // ignore sub-0.1 measurement noise (either unit)
+
+export type MeasureMarker = { key: MeasureKey; delta: number; x: number; y: number };
+
+/**
+ * Objective measurement deltas between two check-ins, as positioned markers
+ * (2a.5). Unlike the vision arrows these carry a MEASURED magnitude (the caller
+ * shows it confidently), so direction is just the sign of the delta and valence
+ * is left neutral — the AI arrows own the good/bad story.
+ */
+export function measurementDeltas(
+  curr: Partial<Record<MeasureKey, number>>,
+  prev: Partial<Record<MeasureKey, number>>,
+): MeasureMarker[] {
+  const out: MeasureMarker[] = [];
+  for (const key of Object.keys(MEASURE_POS) as MeasureKey[]) {
+    const c = curr[key];
+    const p = prev[key];
+    if (typeof c === 'number' && typeof p === 'number') {
+      const delta = c - p;
+      if (Math.abs(delta) >= MEASURE_EPS) out.push({ key, delta, ...MEASURE_POS[key] });
+    }
+  }
+  return out;
+}
+
 const MARKER_OFFSET = 0.14; // glyph sits this fraction of the width off its region
 const EDGE_PAD = 16; // keep glyphs this many px off the frame edge
 const MIN_GAP = 30; // min vertical spacing between glyphs stacked on one side (px)

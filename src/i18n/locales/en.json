@@ -337,7 +337,8 @@
     "dir_gain": "grew",
     "dir_loss": "shrank",
     "dir_stable": "held",
-    "dir_unclear": "unclear"
+    "dir_unclear": "unclear",
+    "measuredDelta": "{{value}} {{unit}} since your last measurement"
   },
   "markers": {
     "hematocrit": "Hematocrit",

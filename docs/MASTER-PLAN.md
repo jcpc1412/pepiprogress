@@ -1098,9 +1098,24 @@ Stepped plan:
    tests / web. **Renders only once 2a.3 is deployed** (needs real coord-bearing
    analyses); until then the gate keeps it hidden. Collision de-overlap is V1
    (min-gap push); landmark-aware placement rides 2c tier 2.
-5. **Measurement-delta arrows [S].** Objective waist/hips/etc deltas render as their
-   own arrows in the same tap paradigm, these **may carry magnitude** (measured,
-   not judged), the one place a confident number on the arrow is allowed.
+5. **Measurement-delta arrows [S]. ✅ DONE.** Objective waist/hips/etc deltas render
+   as their own arrows in the same tap paradigm, these **may carry magnitude**
+   (measured, not judged), the one place a confident number on the arrow is allowed.
+   **Built:** pure `measurementDeltas()` + a fixed anatomical position map
+   (`MEASURE_POS`: neck/chest/arms/waist/hips/thighs on a front body shot) in
+   [photo-arrows.ts](../src/lib/photo-arrows.ts), +4 tests. The parent synthesizes
+   them as ordinary markers so they share ONE overlay and one tap paradigm with the
+   vision arrows: direction is just the **sign of the delta**, the tooltip note
+   carries the **confident measured value + unit** (`photos.measuredDelta`, ×6), and
+   `favour` is deliberately **`none` (grey)** — measurements cannot tell muscle from
+   fat, so the vision arrows keep sole ownership of the good/bad story. That split
+   is the honest reading of "measured, not judged": grey ▲/▼ = moved by a known
+   amount, coloured ▲/▼ = interpreted. Deltas are taken against the measurement
+   **before the selected photo's day**, so scrubbing the timeline shows the numbers
+   that belonged to that shot (not just the latest pair). Body track only, no custom
+   parts, and it rides the same `comparable === true` gate (the fixed anatomical map
+   assumes a standard pose). Green: tsc / lint / i18n(6) / 455 tests / web.
+   ⚠️ Positions are a V1 fixed map; landmark-anchored placement rides 2c tier 2.
 6. **Milestone gating + on-demand deep analysis [S].** Regional deep analysis runs
    on the compound-driven milestone cadence ([photo-cadence.ts](../src/lib/photo-cadence.ts));
    most shots get only the instant readout + comparability. Add a **Journal
@@ -1669,7 +1684,8 @@ skeleton. Annotations: **needs** = hard prerequisite; **unblocks** = what it ope
   green ▼ fat loss / red ▲ fat gain / red ▼ muscle loss / grey dash none / yellow dash
   low-conf), contrast-adaptive leader lines, tappable tooltip (X / tap-away). ✅ DONE.
   Pure `photo-arrows.ts` + `PhotoWithArrows`; renders once 2a.3 is deployed.
-- **2a.5 Measurement-delta arrows** (magnitude allowed, measured, not judged).
+- **2a.5 Measurement-delta arrows** (magnitude allowed, measured, not judged). ✅ DONE.
+  Grey/favour-neutral by design; shares the vision overlay + tap paradigm.
 - **2a.6 Milestone gating + on-demand deep analysis** (Journal "run deep analysis").
 - **2a.7 Measurement guide-line overlay** — guide line + value chip at each spot for
   consistent measurement; V1 stored positions, later landmark-anchored (2c tier 2).
