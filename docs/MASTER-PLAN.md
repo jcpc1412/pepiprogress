@@ -117,7 +117,7 @@ the settings override + quieter-only silent adjustment shipped).
     i18n ×6. Vial scan stays deferred.
 17. **"What should I measure next?" suggestions ✅ SHIPPED 2026-07-17.**
     `src/lib/measure-next.ts` (pure, 9 tests): `computeEvidenceGaps` ranks a stack's
-    biggest evidence gaps — never-checked/overdue bloodwork markers (via
+    biggest evidence gaps, never-checked/overdue bloodwork markers (via
     lab-monitoring) above photo gaps (baseline missing or last shot past the
     compound's scientific cadence, via photo-cadence's new `groupForSlug`).
     `MeasureNextNudge` surfaces the top gap under the Today verdict and the top two
@@ -129,7 +129,7 @@ the settings override + quieter-only silent adjustment shipped).
     `meterFilled`. Shared `ConfidenceBadge` (`src/components/confidence-badge.tsx`):
     monochrome three-dot instrument gauge, deliberately NOT the good/watch/bad signal
     palette (confidence is orthogonal to favourability); rationale-on-tap when supplied.
-    Adopted on: verdict (engine now emits `confidenceRationale` in the same register —
+    Adopted on: verdict (engine now emits `confidenceRationale` in the same register,
     dashboard + reasoning recap), compound-info facts, per-compound attribution, and
     the photo analysis read (`photoReadLevel` from comparable + lighting + framing).
     `confidence.*` + `verdict.confidenceWhy.*` + `photos.confWhy*` i18n ×6. Forecasts +
@@ -185,20 +185,20 @@ the settings override + quieter-only silent adjustment shipped).
 23. **Transition tracking v1 ✅ SHIPPED 2026-07-17.** DB: `goal` enum gained
     `gender_transition` (migration `20260717221006`), applied + types regenerated;
     `user_profile.goals` column comment documents the k-anonymity exclusion so the
-    V2 aggregation job (not built yet — `community_aggregate` has no populate job
+    V2 aggregation job (not built yet, `community_aggregate` has no populate job
     today) can't silently violate it later. **Conditional chip:** visible only when
-    sex is mtf/ftm (or already selected), never preselected — in both onboarding and
+    sex is mtf/ftm (or already selected), never preselected, in both onboarding and
     the post-onboarding Me settings editor. **Surfaced fields:** skin_notes, wellness
     (mood), libido, measurements. **Direction-aware verdict:** `resolveIntent` gained
     a goal+sex-derived `transitionDir`; hips reads up_good for mtf / down_good for
     ftm, overriding the generic cut/bulk rule for that metric specifically (9 new
-    verdict-engine tests) — flows through `resolveMetricDirections`, the single
+    verdict-engine tests), flows through `resolveMetricDirections`, the single
     source every surface including AI prompts reads from. **Direction-aware vision
     prompt:** extracted `supabase/functions/_shared/transition-context.ts` (mirrors
     the posture.ts reuse pattern) with a `transitionPromptLines(dir)` block applied
     to BOTH face and body sessions in `analyze_photo`; unit-tested on the literal
     prompt text (5 tests, zero API cost) rather than a live vision eval, which would
-    need real photos this feature doesn't have — deployed as ai-service v22, posture
+    need real photos this feature doesn't have, deployed as ai-service v22, posture
     evals re-run 4/4 clean. **Privacy:** a conditional note in Privacy settings states
     plainly that transition data is never in community aggregates regardless of the
     community-sharing toggle. Browser-verified: chip appears for mtf, hidden for a
@@ -207,13 +207,13 @@ the settings override + quieter-only silent adjustment shipped).
     first-class substance is already satisfied by prior shipped work (6 non-PED
     goals incl. sleep/recovery/wellness/skin, goals-first onboarding flow); the
     "store copy" portion (App Store listing copy) is an external marketing artifact,
-    not app code — flagged here rather than silently dropped, left for the owner to
+    not app code, flagged here rather than silently dropped, left for the owner to
     commission separately. (beta-notes §1.9; round-3 §2)
 24. **Narrative timeline ✅ SHIPPED 2026-07-17.** `src/lib/narrative.ts` (pure,
     8 tests): `buildNarrative` assembles a cross-metric chronological STORY from the
-    store's own logged events — protocol starts, first symptom onsets, first lab
+    store's own logged events, protocol starts, first symptom onsets, first lab
     readings per marker, strength PRs (strict e1RM improvements only), benchmarks,
-    and analyzed photo notes — deduped to milestones (not a diary) and ordered
+    and analyzed photo notes, deduped to milestones (not a diary) and ordered
     oldest → newest. Emits STRUCTURED moments, never prose, so the engine stays
     pure/locale-agnostic and the UI owns all copy + unit formatting. Chronology
     only, never causation. `NarrativeTimeline` on the Analysis tab: a single dotted
@@ -300,10 +300,10 @@ system, so several checklist items were satisfied or near-satisfied. Done + ship
 **35** (foundations: motion tokens/presets, padding architecture, 4 Journal primitives,
 ARCHITECTURE census, lottie), **41b** (the Journal tab), **38** (Today's record strip +
 logging-toggle removal), **37** (dialog anchor-Cancels → buttons; the Roboto-leak class
-was already clean — no raw `<Text>` anywhere but the `ThemedText` wrapper), **40**
+was already clean, no raw `<Text>` anywhere but the `ThemedText` wrapper), **40**
 (signal-detail chip border tokenized). Audited, no code change needed: **36** (sex
 selector already required; onboarding has zero hardcoded colors), **39/41/42** (already
-tokened; the camera/photo overlays keep fixed light-on-black *by design* — they sit over
+tokened; the camera/photo overlays keep fixed light-on-black *by design*, they sit over
 a live feed/photos, not the instrument surface). **Still owed, device-blocked:** the
 Google official branded button (native `@react-native-google-signin` component, item 36),
 the on-device dark-mode verification pass (checklist step d), and **44** (runtime perf
@@ -312,11 +312,11 @@ profiling, needs the Moto G60s-class device). These need the native rebuild.
 **Sweep tail closed (2026-07-22):** item 36's Google branded button shipped in code
 (`GoogleSigninButton` from `@react-native-google-signin`, Wide/Light, replaces the
 custom Google `SocialButton` when `googleAuthAvailable`; the custom outlined button
-stays as the web/unconfigured browser-OAuth fallback) — renders on the next native
+stays as the web/unconfigured browser-OAuth fallback), renders on the next native
 build. Web dark-mode audit pass done (auth, onboarding, Today, Journal, Settings, both
 schemes): no token drift or hardcoded-colour leaks; both co-equal themes invert
 correctly. Tab-order slip fixed (Pepi moved before Photos, owner-confirmed). **Still
-device-only:** on-device OLED dark-mode confirmation + **44** (perf profiling) — both
+device-only:** on-device OLED dark-mode confirmation + **44** (perf profiling), both
 need the native build.
 
 ### 7A. Auth/sync hardening (notes §3, §4, §5)
@@ -327,7 +327,7 @@ need the native build.
     deep-link return, and purge `localhost:3000` from the Supabase redirect allow-list.
     While in there, **verify the Apple sign-in config end to end** (native bundle-id
     path + web Services ID/secret) since it shares the same plumbing. Custom-domain
-    branding explicitly deferred to the Branding track (E) — owner accepts the
+    branding explicitly deferred to the Branding track (E), owner accepts the
     `supabase.co` leak during closed beta.
 32. **Cross-device photo restore [M].** Storage hardening pulled forward from backlog
     (owner: option A). On restore/sign-in, `cloudPath` → signed URL becomes the source
@@ -337,7 +337,7 @@ need the native build.
     existing session/store code first: `signOut()` already ended the Supabase session
     (+ best-effort native Google sign-out) without touching local state, and
     `AccountSection` already re-rendered to the signed-out card once `user` went null
-    — the underlying semantics were already correct, nothing to rebuild. What was
+   , the underlying semantics were already correct, nothing to rebuild. What was
     actually missing: the sign-out link had no confirmation (a mis-tap silently ended
     the session) and no stated "your data stays" behavior, and a failed `signOut()`
     call was swallowed with no feedback. Added an `Alert.alert` confirm (matching the
@@ -346,7 +346,7 @@ need the native build.
 
 ### 7B. Dose drawer (notes §6)
 
-34. **Dose logging drawer [M].** ✅ SHIPPED 2026-07-19. Owner: option A — the drawer
+34. **Dose logging drawer [M].** ✅ SHIPPED 2026-07-19. Owner: option A, the drawer
     **replaces** tap-to-confirm as the default dose-logging surface. Compound name,
     dose seeded from the protocol and fully editable, date + time via **native**
     pickers (`@react-native-community/datetimepicker`, already a dep). Pure
@@ -355,7 +355,7 @@ need the native build.
     `clampToNow` (no future doses, mirrors the check-in rule), `protocolChangePrompt`.
     The "apply to all future doses?" question is asked **in the drawer, only when the
     typed amount actually differs**, defaults to **this dose only**, and a yes patches
-    the protocol item forward — logged history is never rewritten (stated in the copy
+    the protocol item forward, logged history is never rewritten (stated in the copy
     too). P-04 schedule anchoring now keys off the **drafted** dose day rather than
     today, since a dose can be logged for yesterday. Browser-verified end to end:
     prompt fires on 250→300, dose writes with the drafted timestamp, protocol updates
@@ -394,7 +394,7 @@ the Roboto leak); (c) padding audit against the documented scale; (d) theme-toke
     screen (item 41b) introduces four reusable components; build them here so the
     Journal is normalized by construction and other screens can adopt them:
     **source badge** (HEALTH / PEPI / QUICK / TYPICAL / TAP provenance chip),
-    **completeness dot-meter** (filled/empty dots, "N of M areas" — no percentages,
+    **completeness dot-meter** (filled/empty dots, "N of M areas", no percentages,
     no streaks, spec-03 no-shame), **week strip** (7-day nav, green dot = logged /
     empty ring = no log), and **value-row-with-badge** (label · value · source).
     Item 35 → the Journal is a hard dependency (it both consumes foundations and
@@ -416,11 +416,11 @@ the Roboto leak); (c) padding audit against the documented scale; (d) theme-toke
 39. **Pepi chat [S].** Checklist (pairs with item 42).
 40. **Analysis [S].** Checklist.
 41. **Photos (reel, capture, review, history) [M].** Checklist.
-41b. **Journal — new screen (F4 build, merged into the sweep) [M].** Build on the
+41b. **Journal, new screen (F4 build, merged into the sweep) [M].** Build on the
     item-35 foundations, so it is normalized by construction and needs no second
     pass. Fifth tab, **order: Today · Pepi · Photos · Analysis · Journal** (owner
     2026-07-21). A read/edit view over the day's existing entities (checkin + doses
-    + symptoms + photos; metric readings shown, snapshot-sourced), assembled — never
+    + symptoms + photos; metric readings shown, snapshot-sourced), assembled, never
     a second write surface, so nothing is logged twice. Sections: **week strip**
     (history nav; green=logged / empty=no log), **"the day, distilled"** header (the
     AI prose summary; degrades gracefully when sparse, describes what IS there, never
@@ -460,18 +460,18 @@ the Roboto leak); (c) padding audit against the documented scale; (d) theme-toke
 
 ### 7E. Android performance, two independent tracks (notes §9, flag B)
 
-44. **Runtime track [M] — profile first.** React profiler + render-count audit on
+44. **Runtime track [M], profile first.** React profiler + render-count audit on
     device (Moto G60s class): store-context re-render storms, `useResolvedUris` over
     all photos, unmemoized lists, instrument SVG/chamfer cost, navigation transitions.
     Fix what the profile shows, nothing speculative. Starts in parallel with 7A.
 45. **Build track ✅ (2026-07-22).** Not blocked: RN 0.85.3's version catalog
     (`node_modules/react-native/gradle/libs.versions.toml`, consumed via
     `expoAutolinking.useExpoVersionCatalog()` in `android/settings.gradle`) pins
-    **AGP 8.12.0** + Kotlin 2.1.20 — nowhere near the AGP-9 concern that would have
+    **AGP 8.12.0** + Kotlin 2.1.20, nowhere near the AGP-9 concern that would have
     deferred this to the next Expo SDK bump. R8 full mode has been AGP's default
     behavior since 8.0, so no separate full-mode flag is needed, only minify itself.
     Enabled via `app.json`'s `expo-build-properties` plugin (the actual source of
-    truth — `android/` is gitignored, regenerated by prebuild/EAS on every build, so
+    truth, `android/` is gitignored, regenerated by prebuild/EAS on every build, so
     hand-editing the generated Gradle files would have been silently discarded):
     `enableMinifyInReleaseBuilds` + `enableShrinkResourcesInReleaseBuilds`, both
     `true`. Also merged a stray duplicate no-op `expo-build-properties` plugin entry
@@ -480,7 +480,7 @@ the Roboto leak); (c) padding audit against the documented scale; (d) theme-toke
     (`minifyEnabled true`, `shrinkResources true`) and the Reanimated/TurboModule
     baseline keep rules regenerate as expected; `npx expo config` resolves clean.
     Release-build-only (debug is unaffected). **Device-blocked verification still
-    owed:** minification is a runtime risk invisible to typecheck/lint/tests — a
+    owed:** minification is a runtime risk invisible to typecheck/lint/tests, a
     reflection-dependent native module can build fine and crash on launch. The next
     EAS production build's device smoke test must explicitly cover launch, email +
     Google + Apple sign-in, camera capture, and the Health integrations before this
@@ -503,15 +503,15 @@ the Roboto leak); (c) padding audit against the documented scale; (d) theme-toke
     advanced. Original note below.
 
     Not a performance
-    bug — filed here at owner's request, kept distinct so it isn't conflated with
+    bug, filed here at owner's request, kept distinct so it isn't conflated with
     44/45. The app never fully closes on Android/iOS, so a screen left open
     overnight keeps rendering yesterday's "today": `localDateKey()` itself is pure
     and always correct at call time (`src/lib/dates.ts`), but nothing forces
     already-mounted screens (Home, check-in, doses) to re-render when the local
-    calendar day rolls over while backgrounded — the existing `AppState` listeners
+    calendar day rolls over while backgrounded, the existing `AppState` listeners
     (`integration-sync.tsx`, `notification-manager.tsx`) only refire their own
     fetch/notification logic, not a general re-render. Fix: a shared day-boundary
-    watcher — on every foreground transition, compare the current
+    watcher, on every foreground transition, compare the current
     `localDateKey()` to the last-seen one and, if it changed, bump a shared
     "today" value in the store so date-derived screens re-render onto the new
     day. One hook, reused by the screens that call `localDateKey()` for "today"
@@ -521,7 +521,7 @@ the Roboto leak); (c) padding audit against the documented scale; (d) theme-toke
 
 One remote MCP server serving both ChatGPT apps and Claude connectors (both converged
 on MCP): one OAuth 2.1/PKCE flow via Supabase Auth, two thin platform skins, no fork.
-Detail spec: `CONNECTORS-PLAN.md`. **Backend-only — depends on nothing in the 35-42
+Detail spec: `CONNECTORS-PLAN.md`. **Backend-only, depends on nothing in the 35-42
 sweep** (it reads the verdict engine + store entities that already exist), so B0/B1
 can run in parallel with the sweep; placed here for one-thing-at-a-time sequencing, but
 free to interleave. B2's directory review is the long pole.
@@ -533,14 +533,14 @@ free to interleave. B2's directory review is the long pole.
     the server never hand-rolls access control. RLS-scoped read path. **`connector_event`
     inbox table + app-side foreground merge** (append-only, device is the merger, so
     writes are conflict-safe without touching the snapshot the next device mirror would
-    clobber) — on the critical path because v1 is two-way, and the same primitive remote
+    clobber), on the critical path because v1 is two-way, and the same primitive remote
     push will later need. No new gates: auth + cloud sync already exist (M1).
 48. **B1. Tool surface, two-way [M].** Reads: `get_today`, `get_verdict`,
     `get_recent_logs`, `get_protocol`, `get_compound_info`. Writes via the inbox:
     `log_dose`, `log_checkin`, `log_symptom`, `log_weight` (same entities the quick-log
     parser writes; the platform model formulates the structured call, so this costs us
     no AI tokens). **Posture gate rides along:** outputs are `market_category`-gated
-    exactly like `ai-service` — reuse/extend the shared `_shared/posture.ts` module
+    exactly like `ai-service`, reuse/extend the shared `_shared/posture.ts` module
     (shipped item 12) so the edge function and the MCP server import one gate;
     controlled = track-only, OTC = hedged + contraindication pointer. **Photos excluded,
     full stop** (text-only; never leave the hardened bucket to third-party models).
@@ -548,7 +548,7 @@ free to interleave. B2's directory review is the long pole.
     report stale data as live. Validate in ChatGPT developer mode + Claude custom
     connector as the **test harness**. Gate: the spec-05 eval suite gains a fifth
     boundary (connector tool outputs) before exposure.
-49. **B2. Directory launch [M].** Both submissions at once — OpenAI identity/business
+49. **B2. Directory launch [M].** Both submissions at once, OpenAI identity/business
     verification + review, Anthropic connector-directory review. Pepi is a
     progress-tracking app first (photos, check-ins, general wellness goals); the
     review scrutiny that matters is specifically on the compound-logging surface
@@ -556,7 +556,7 @@ free to interleave. B2's directory review is the long pole.
     substances), on the critical path here. The `market_category` posture gates are
     the defense, review readiness is the gate. Custom connector stays as the
     rejection fallback, not the primary channel.
-50. **B3. Widgets [M].** ChatGPT Apps SDK components — a Today card and a Verdict card,
+50. **B3. Widgets [M].** ChatGPT Apps SDK components, a Today card and a Verdict card,
     matching the instrument design language where their component system allows.
 
 Pairs with track F (sync engine): the `connector_event` inbox is the pragmatic v1
@@ -569,7 +569,7 @@ connector guide) at build time.
 - **A. Web workbench [L].** One codebase, capability-class responsive layouts (the
   "Xbox test"), calendar-primary navigation, detailed-sheet retro editing incl. photo
   upload, custom chart builder with pinned sync to phone. (round-3 §1, §9)
-- **B. Connectors** — **moved into the beta sequence as Wave 8** (owner 2026-07-21).
+- **B. Connectors**, **moved into the beta sequence as Wave 8** (owner 2026-07-21).
   See that wave for the B0-B3 phasing.
 - **C. Monetization implementation.** Paid-only: auto-converting trial (StoreKit iOS /
   Stripe web), $19/mo + annual anchor; reconcile spec 12 + CLAUDE.md; trial-lapse
@@ -585,17 +585,35 @@ connector guide) at build time.
   marketing site and the workbench share the domain). ⚠️ Carries android-notes flag A:
   the domain switch changes the callback URL in Google Cloud console, the Apple
   Services ID return URL (which likely forces regenerating the Apple client secret,
-  see memory `apple-oauth-secret-renewal`), and the Supabase redirect allow-list — all
+  see memory `apple-oauth-secret-renewal`), and the Supabase redirect allow-list, all
   must land in one window or sign-in breaks mid-beta.
-- **F. Full per-entity sync engine (spec 10 "Option B") [L] — paired with track A.**
+- **F. Full per-entity sync engine (spec 10 "Option B") [L], paired with track A.**
   Owner decision 2026-07-21: F6's one-way mirror ships first; this is the eventual
   bidirectional engine (field-level conflict resolution, tombstones, SQLite/MMKV)
   that replaces the snapshot as the merge mechanism. Why it pairs with track A:
   the snapshot's last-write-wins merge handles *sequential* multi-device fine
   (phone morning, desktop evening), but clobbers changes under *concurrent*
-  editing — and the web workbench is exactly what makes phone + desktop open
+  editing, and the web workbench is exactly what makes phone + desktop open
   simultaneously a normal pattern. When A ships, F becomes a priority; F6's
   `client_id`/`updated_at` schema work is the prerequisite and carries over.
+- **G. Remote push infrastructure [M], reusable platform capability.** Every
+  reminder today is *local*: a fixed daily schedule or a check that runs only when
+  the app foregrounds. There is no way for the server to initiate a ping while the
+  app is closed. This track adds that: Expo push tokens (register on sign-in, store
+  per device), a server-side send path (Supabase edge function → Expo push API or
+  APNs/FCM direct), and a lightweight rules layer that decides *when* the server
+  fires. **First consumer:** the "alarming anomaly" tier of the proactive-coaching
+  work (see Owner braindump → point 1, step 5), declining body metrics against a
+  running protocol, or a sharp adverse trend, where waiting for the next app open is
+  too late. **Why it's its own track and not folded into notifications:** it's
+  general infra, not a feature. Once it exists it also unlocks the step-goal
+  proximity ping (needs live intraday data + a while-closed fire), connector-driven
+  alerts, community/social pushes if sharing ever ships, and any future
+  server-initiated moment. Build it once, reuse it everywhere. Carries the same
+  consent + fatigue discipline as local notifications (opt-in per category, hard
+  daily cap, `coach`-level gate for anything coaching-flavored). Deferred from beta:
+  beta runs entirely on local notifications, which are enough to validate the
+  cadence and copy before we pay for server-push complexity.
 
 ## Deferred / backlog
 
@@ -624,7 +642,7 @@ own separate Users & permissions grant. Owner added the service account to
 `--auto-submit` completed successfully. `eas build --platform android --profile
 production --auto-submit` is confirmed working end-to-end for future releases.
 
-### F2. Motion + animation ✅ DECIDED — folded into Wave 7 item 35
+### F2. Motion + animation ✅ DECIDED, folded into Wave 7 item 35
 Owner decisions (2026-07-26): motion is **first-class, applied everywhere** with
 haptics, done during the 35-42 sweep so every screen is visited once; add
 **lottie-react-native** (Apache-2.0) for confirmation animations; everything else on
@@ -662,7 +680,7 @@ Owner decisions (2026-07-26):
 - **Hidden telemetry counter** (deterministic vs AI path) in the local store, not
   user-visible, to measure real coverage instead of guessing.
 
-### F4. "Journal" (day in review) — design session DONE, merged into the 35-42 sweep
+### F4. "Journal" (day in review), design session DONE, merged into the 35-42 sweep
 Architecture (owner-confirmed 2026-07-26): the detailed log stops being a second
 write surface and becomes a **read/edit view over the day's existing entities**
 (checkin + doses + symptoms + metric readings + photos). Quick-log (post-F3), Pepi
@@ -674,7 +692,7 @@ history list dissolves).
 
 **Design session ✅ DONE 2026-07-21** (live mock `.preview-mockup/journal.html`).
 Resolved decisions:
-- **It's a fifth tab named "Journal"** (not a tap-through from a Home card — owner
+- **It's a fifth tab named "Journal"** (not a tap-through from a Home card, owner
   flagged that as frail, confirmed by code: the distillation currently hides inside
   the "see the reasoning" screen). No floating chat widget: a persistent tab bar
   already is an always-one-tap surface, a bubble only occludes the photo reel and
@@ -694,7 +712,7 @@ Resolved decisions:
 - **Home-becomes-review rejected** (would double-purpose Today and bury the verdict);
   configurable/modular Home rejected for beta (curation over configuration).
 
-**No longer a separate phase — merged into the design sweep to avoid double work**
+**No longer a separate phase, merged into the design sweep to avoid double work**
 (owner 2026-07-21): item 35 builds the four new primitives (source badge,
 completeness dot-meter, week strip, value-row-with-badge); the Today record strip +
 Log-screen toggle removal ride **item 38** (Home visited once); the Journal is built
@@ -714,14 +732,14 @@ entirely (`photo-pose.ts`).
 thing about the user's body they couldn't have seen alone, connected to what they
 did. If an output can't clear that bar, it says so honestly instead of padding
 with praise. The register is always hypothesis, never conclusion ("consistent
-with", "may suggest") — this is the same posture as the standing
+with", "may suggest"), this is the same posture as the standing
 bias-toward-uncertainty rule, so the crown-jewel direction and the safety gate
 point the same way. Honest capability line: region-level relative observations and
 cross-signal reasoning are real; pixel-precise claims (vascularity detail) and
 water-vs-fat-vs-glycogen certainty are not, and stay hypothesis-framed forever.
 
 Owner decisions (2026-07-26):
-1. **Goal statement locked** (above) — confidence-in-actions and
+1. **Goal statement locked** (above), confidence-in-actions and
    seeing-the-unseen are the same thing at this altitude.
 2. **Pepi may proactively open a chat** with a discovery ("I noticed…"), reusing
    the local-notification + deep-link pattern (as typical-day does). Where
@@ -741,11 +759,11 @@ Architecture (four pieces, dependency order):
   data, renderable as discovery and storable.
 - **B. Observation ledger:** persist each analysis's observations per pose track;
   every new call receives the last N for its track, so the model can confirm,
-  extend, or drop earlier hypotheses. The single highest-leverage piece — it's
+  extend, or drop earlier hypotheses. The single highest-leverage piece, it's
   what makes Pepi appear to know *this* user's body, with zero training. "This is
   the pose where X changes first" later becomes a query over this ledger.
 - **C. Context fusion:** the same call gets weight trend over the window,
-  protein/calorie adherence, dose timing vs photo, sleep, cycle phase — the
+  protein/calorie adherence, dose timing vs photo, sleep, cycle phase, the
   "abs sharper despite stable weight" connections are impossible without this and
   nearly automatic with it.
 - **D. Custom poses join analysis:** a user can promote a custom pose to a
@@ -790,9 +808,9 @@ Owner decisions (2026-07-21):
    for restore/merge (unchanged). The client additionally mirrors changed
    entities up into the normalized tables: best-effort, debounced, idempotent
    upserts, never flowing back down (so no conflict resolution needed). Option B
-   (full per-entity sync engine, spec 10) stays deferred — see the note under
+   (full per-entity sync engine, spec 10) stays deferred, see the note under
    post-beta tracks; A's schema work is B's prerequisite, nothing is thrown away.
-2. **Metric readings excluded from v1** — snapshot keeps carrying them; the
+2. **Metric readings excluded from v1**, snapshot keeps carrying them; the
    typical-day community exclusion ("metricReadings never migrate to normalized
    tables") stays intact. Wearable data in community insights would be its own
    consent conversation.
@@ -840,3 +858,786 @@ flag native-rebuild requirements explicitly.
 confident verdict damages trust more than ten correct ones build it. When evidence
 conflicts or is thin, the verdict downgrades its confidence rather than picking a side;
 evals for verdict-adjacent AI output test for overconfidence, not just correctness.
+
+## Owner braindump (2026-07-22)
+
+Points 1, 2 (all sub-points), and 3 are now **RESOLVED + SCOPED** with the owner
+(2026-07-22). Each entry carries the grounding, decisions, traps, and a stepped
+plan; raw braindumps are kept inline for provenance. Sequencing into the waves is a
+later pass ("rearrange later", owner).
+
+**Pending mockups (owner to produce, batch in one go):**
+- **Arrow overlay** (2a), the four-state `TrendMarker` markers + contrast-adaptive
+  leader lines + tooltip, incl. how lines/markers avoid collision when regions sit
+  close together (esp. the face).
+- **[Other mockup, owner to name]**, the owner has a second pending mockup to
+  provide; pair it with the arrow-overlay mockup. (Candidate: the verdict-first Home
+  mock, unconfirmed.)
+
+**1. Proactive coaching notifications, RESOLVED + SCOPED (owner 2026-07-22)**
+
+Grounding: the *detection* substrate mostly already exists. [anomaly.ts](../src/lib/anomaly.ts)
+detects `sleep_short / sleep_poor / weight_jump / workout_drop` for free (pure,
+zero-token) but only surfaces in-app as Pepi chat openers, never as a
+notification. [coaching.ts](../src/lib/coaching.ts) already gates how much Pepi
+weighs in (`observe / nudge / coach`, and `coach` is only ever user-chosen). The
+reactive skip-dose nudge in [notifications.ts](../src/lib/notifications.ts)
+(`maybeNotifySkippedDoses`) is the pattern any new reactive nudge copies.
+
+Two governing constraints: (a) **no remote push today**, everything is local, so
+anything that must fire while the app is closed is deferred to post-beta track G;
+(b) **notification fatigue**, a user can already get ~6 pings/day, so new proactive
+output should *replace/consolidate* rather than *add*, and default to an in-app
+card or Pepi opener over a push.
+
+Owner decisions: agreed on all four sub-points below. Plus: **scope remote push
+for the "alarming" anomaly tier** (post-beta track G), noting the infra is reusable
+for future server-initiated features.
+
+Stepped plan:
+
+1. **`weight_plateau` detection [S].** Fifth anomaly kind in `anomaly.ts`
+   (deterministic, free): weight flat within a band over N weeks despite an active
+   goal. Highest-value, lowest-risk win. Surfaces as a Pepi opener first.
+2. **Wire the anomaly engine to ONE reactive local notification [S].** Fires on
+   foreground like the skip-dose nudge, **gated to `coach` level**, **hard cap
+   one-per-day**, consolidating whatever anomalies are live into a single
+   observational ping that deep-links into Pepi. No new fatigue budget if it
+   replaces rather than adds. Copy stays observational, never prescriptive.
+3. **Declining-metrics-against-a-protocol = observation only [S].** Detection is
+   safe and valuable ("sleep, energy, recovery have trended down since you started
+   X"); the *recommendation* is the regulated part. **Reflect-and-refer only:**
+   surface the correlation, hedge it, point to their prescriber/doctor. Never name
+   a dose direction ("lower the dose" is prescribing the protocol, the CLAUDE.md
+   rule-3 bright line, and squarely off-limits on controlled compounds).
+4. **Food + plateau "suggest a change" = in-app Pepi copy, never push [S].**
+   Reflect the pattern ("logged less than usual three days running") and offer a
+   *mechanism*, not a menu ("protein and fiber tend to help fullness"), never
+   "eat X" (allergy/medical liability). Plateau follow-up is an observation plus an
+   open question, `coach`-gated, never "change your sport."
+5. **Alarming-anomaly remote push [M], DEFERRED to post-beta track G.** The one
+   case where waiting for the next app open is too late (sharp adverse body-metric
+   trend against a running protocol). Needs the remote-push infra; beta ships
+   without it. The **step-goal proximity ping** (near your 10k in the late
+   afternoon) also lives here: it needs live intraday connector data *and* a
+   while-closed fire, two dependencies we don't have in beta.
+
+**Reusable pattern (scoped in 2b, applies here):** *Post-sync reconciliation* +
+*invisible routine learning*. On foreground, run the integration sync, then
+auto-fill every detailed-log field it now has data for and **defer-ask** (a
+follow-up message, not an immediate opener) only the fields it still lacks, with a
+fallback fire so it never hangs; an invisible modal-time-of-day model gates *when*
+to ask (e.g. never ask about a workout before the user's usual training window).
+Turns "ask the user" into the fallback rather than the default. Reuse for strength,
+nutrition, sleep, steps. Full detail under point 2b.
+
+Original raw braindump (kept for provenance):
+> Since we added more coach like functionality, should we send proactive
+> notifications for weight loss related activities? Maybe not weight loss but if
+> the user sets 10k steps as the goal, do we ping them in the late afternoon if
+> they are near their goal? What about food, if answers are "less than usual" do we
+> offer food suggestions/hacks (allergy legal issue)? If weight doesn't move, do we
+> encourage a routine/sport change? Side effects: if body metrics (sleep, energy,
+> recovery) are going down, do we say maybe lower the dose?
+
+**2. Photo analysis**
+
+**2a. Capture flow + on-photo arrows, RESOLVED + SCOPED (owner 2026-07-22)**
+
+Grounding (what already exists): the upfront Face/Body choice was already
+removed (W6-26c). A two-step review already exists in
+[photo-capture.tsx](../src/features/photos/photo-capture.tsx): step 1 = shot +
+quality score, step 2 = measurements (body); the photo saves on step-1 confirm
+so the analysis warms in the background. Pose is already auto-detected (live
+`classify_pose` sampling swaps the ghost via `ghostByPose` and tags the save).
+What remains pre-capture is a **chooser (guided vs quick) + a pose picker**,
+that is the "ugly selector." The comparison analysis (`analyzePhoto` → drift +
+comparable + hedged text `change`) runs *after* save and is shown in the reel,
+not in the capture flow. There are **no arrows today**; `change` is text and
+measurement deltas are signed numbers rendered as text.
+
+The core tension (locked understanding): auto-detection is great for sorting a
+shot *after* capture, but **the ghost overlay is a before-shot aid that needs a
+reference chain up front**, so the picker can be *demoted to a fallback/override*
+but never fully deleted (offline / low-confidence / wrong-guess paths need it).
+
+**Arrow posture (the crux, owner-decided).** Arrows are a deliberate trust +
+anti-dysmorphia mechanism: a dysmorphic user cannot see their own progress, so an
+external instrument that *points to where change happened* is the therapeutic core
+of the photo USP. Text is "talk is cheap"; a pointer drawn on their own photo is
+not. The posture rule ("bias toward uncertainty") is honored by reframing what the
+arrow claims: **bold pointer, humble label.** The arrow is confident about
+*direction + region* (honest even at shaky confidence); magnitude and valence stay
+humble. Hard rules:
+- **Four states (owner 2026-07-22, refines the earlier three), reusing the existing
+  "progress triangles":** the marker is the existing `TrendMarker` glyph from
+  [hero-figure.tsx](../src/components/hero-figure.tsx) (▲/▼ tinted by `favour`), so
+  the verdict trend language and photo arrows are ONE visual vocabulary. Its
+  `favour → color` map already yields green/yellow/red:
+  - **green ▲** = progress (favour `good`)
+  - **red ▼** = regression (favour `bad`)
+  - **grey dash** = maintained / no movement (the "Maintained" state, app's existing
+    nomenclature, the label that replaced "holding")
+  - **yellow dash** = low confidence but leaning toward slipping away from progress
+    (favour `watch`). This is a **static per-read cue**, NOT the temporal
+    exploratory→solid "hardening" that was scrapped; the exact % still lives in the
+    tooltip, the yellow dash is just its glanceable form.
+- **Visual overlay spec (owner 2026-07-22; mockup pending, see below):** on the
+  captured photo, draw **contrast-adaptive straight (180°) leader lines** (white or
+  black depending on skin/background contrast) from the region to a marker at the
+  **line end** (placed off the region so it never obscures the body). The marker is
+  the `TrendMarker`-style glyph above.
+- **The photo stays clean:** just the lines + markers. Each marker is **tappable → a
+  tooltip with progression %, a short note, and a confidence score** (actual numbers);
+  the tooltip closes via an **X** or **auto-closes on tap-away**. This *replaces* any
+  visual confidence-hardening/texture idea (scrapped). Tapping works on **any past
+  photo**, so scrubbing the reel surfaces past progress + notes. A11y (per the
+  `TrendMarker` note): the marker announces region + direction + tooltip content, never
+  the raw glyph ("black up-pointing triangle"). Mockup must solve line/marker
+  **collision** when several regions sit close together (esp. the face).
+- **Always against baseline** for short-term comparison (universal rule).
+- **Valence-neutral arrows;** the goal + compound context supplies praise (2b/2f).
+- **Comparability-gated:** arrows only render on a *comparable* shot. A
+  non-comparable shot draws **no** guessed arrows, it prompts a retake. Shaky
+  *confidence* is fine; shaky *comparability* is not (the bright line).
+- **AI claim wording:** "reveals what daily checking hides," never "sees beyond
+  human eyesight" (honest, on-voice, lowers the fall when wrong).
+
+Stepped plan:
+
+1. **One smart camera [M].** Collapse the guided/quick chooser + pose picker into
+   a single camera: auto-detect **session (face/body) and pose** from the live
+   classify sample, live ghost swap, tag on capture. Picker survives only as an
+   **offline fallback + manual override** (wrong-guess / AI-unconfigured). Keeps
+   the ghost's before-shot reference need satisfied without a pre-declaration step.
+2. **Review ends on the payoff [M].** Reorder the review so the last screen is the
+   comparison, not measurements: capture → instant deterministic `quickReadout` →
+   measurements (body only, still feeding `measurementDelta`) → **comparison card =
+   clean new photo with arrows** where the score used to be.
+3. **Region arrows in the vision response [M].** Extend the `analyze_photo` edge
+   function's structured output to return
+   `regions: { region, direction: progress|maintained|regression, pct, confidence, note }[]`.
+   Capable model; **canonical poses only for V1** (region mapping is reliable
+   there; custom poses = 2c/2d). Bigger/slower/costlier response is the accepted
+   V1 cost.
+4. **Arrow overlay + tappable tooltips [M].** Draw the three-state arrows on the
+   comparison photo (image stays clean); tap → tooltip (%, note, confidence). Wired
+   into the reel + Journal so any past comparable photo is tappable. Valence-neutral,
+   baseline-anchored, comparability-gated per the rules above.
+5. **Measurement-delta arrows [S].** Objective waist/hips/etc deltas render as their
+   own arrows in the same tap paradigm, these **may carry magnitude** (measured,
+   not judged), the one place a confident number on the arrow is allowed.
+6. **Milestone gating + on-demand deep analysis [S].** Regional deep analysis runs
+   on the compound-driven milestone cadence ([photo-cadence.ts](../src/lib/photo-cadence.ts));
+   most shots get only the instant readout + comparability. Add a **Journal
+   affordance: tap a picture → run deep analysis on demand** (the manual escape
+   hatch when the user wants a rich read off-cadence).
+
+Original raw braindump (kept for provenance):
+> First step is ghost (1), measurement logging (3), and photo score (2). As part
+> of step three, do we add a "photo category" part? Shouldn't the AI detect it
+> automatically? Why do we have that step beforehand? This would get rid of the
+> ugly "photo type" selector that comes before taking the pic (guided vs free).
+> Second step: clear screen, leave the new photo, show the progress arrows (up,
+> down, no change), and where the score was in the previous screen, show the photo
+> comparison analysis.
+
+**2b. Context-dependent coaching in the body comparison, RESOLVED + SCOPED (owner 2026-07-22)**
+
+Grounding: `analyze_photo` already receives most of the context (`measurementDelta`,
+`cycleWeek` = the early-water-vs-late-muscle gate, weight delta, avg protein/
+calories/sleep, recent doses, `bodyTypeCalibration`, `transitionContext`,
+`priorAnalyses`). The **one missing hinge is strength context**, `StrengthSession`
+/ `Benchmark` exist ([store.tsx](../src/lib/store.tsx)) but never flow into the
+analysis, so "late across-the-board drops = maybe muscle, *unless* strength held"
+is impossible today.
+
+Posture: this is **allowed, personalized lifestyle coaching** (CLAUDE.md rule 3,
+calories/training/recovery), *not* dosing. The split matches 2a: **bold coaching,
+humble diagnosis.** Muscle-loss inference is always hedged and always paired with
+the reassuring alternative + the strength check; never a standalone alarm. Calorie
+coaching always carries its health-positive reason ("to protect muscle"), never
+bare "eat more." Intensity coaching stays soft ("if you're able to").
+
+The fat-loss logic is a 2×2 of window phase (`cycleWeek`) × strength-held:
+- **Early + across-the-board drop** → expected water/glycogen; reassure, no muscle talk.
+- **Late + drop + strength HELD** → fat with muscle preserved; **praise** adherence + training. The good outcome the arrows celebrate.
+- **Late + drop + strength DOWN/unknown** → muscle concern warranted; **coach** protein/calorie nudge + hold intensity, hedged.
+- **Localized drop (waist down, limbs stable)** → clean fat loss; unambiguous praise.
+
+Weight-gain mirror (owner-approved draft), keyed on the waist-vs-limbs tell:
+- **Limbs/shoulders up, waist stable, strength climbing** → productive (muscle) gain; praise the progressive overload.
+- **Waist climbing fastest, strength flat** → surplus too aggressive; coach a smaller/slower surplus, keep overloading, watch waist as the fat proxy.
+- **Early window** → expect water/glycogen/gut-fill inflation (creatine, GH peptides); don't over-alarm.
+- Strength is the arbiter throughout. Recomp is its own branch (weight flat, arrows + measurements carry the story).
+
+**Strength-held signal, subjective chip primary, passive fill opportunistic
+(owner-decided).** Most users won't log full sessions, so a subjective **"lifting
+felt: same / harder / easier" standing daily field** in the detailed log is the
+ground truth + override. Passive fill is a *suggestion* layer on top, and the
+backbone already exists: [integration-sync.tsx](../src/lib/integration-sync.tsx)
+already pulls every provider on mount + foreground and autofills the log; Apple
+Health already pulls workouts (duration + avg HR). What's missing for the chip:
+workout **type** (strength vs cardio) + Apple's iOS 18 **effort score** (sparse
+RPE-like). Platform reality: **iOS** = presence + type + HR + sparse effort score;
+**Android/Health Connect** = presence + type + HR proxy, **no passive RPE** (no
+effort record type; and HC doesn't pull exercise sessions at all yet). Honest
+signal = "trained (strength) today at ~usual/higher/lower intensity"; HR is a
+confounded proxy (GH peptides, stimulants, heat) so it only nudges. The chip stays
+authoritative.
+
+**Routine learning + post-sync reconciliation (reusable, owner-requested).**
+Workout readings are timestamped, so an **invisible modal-workout-window** model
+gates the proactive question: don't ask before the usual window; if data is present
+after it, auto-fill silently; ask only when the window has passed and passive fill
+came up empty. Generalized as a reusable pattern (see the pointer under point 1):
+**post-sync reconciliation**, on foreground, run the sync, *then* auto-fill every
+detailed-log field it now has data for and **defer-ask** (a follow-up message, not
+an immediate opener) only the fields it still lacks, with a fallback fire so it
+never hangs. Applies to strength, nutrition, sleep, steps, any autofillable field.
+Routine model stays invisible (gates timing only, never announces "we noticed you
+train at 3pm").
+
+Stepped plan:
+
+1. **Coaching-framing layer** keyed on {intent, `cycleWeek` phase, strength-held,
+   region/measurement pattern}; hedged muscle read + reassuring alternative +
+   strength check; consumes 2a's `regions[]`. `[M]`
+2. **Explicit `intent` + derived `strengthHeld` into `dataContext`.** `[S]`
+3. **Strength-felt standing chip** (same/harder/easier) in the detailed log. `[S]`
+4. **Passive strength fill:** add workout **type** + **effort score** (iOS 18+) to
+   the Apple Health pull; add exercise-session pull to Health Connect (type + HR,
+   no RPE); derive the chip suggestion; user override; subjective fallback. `[M]`
+5. **Routine-learning gate + post-sync reconciliation**, invisible modal-window
+   model; auto-fill if present, defer-ask only when absent + window passed,
+   fallback fire. **Reusable infra**, not photo-specific. `[M]`
+6. **Proactive "how'd your lifting feel?" Pepi opener** (opener only, no
+   notification), gated on the routine window, fired only when the analysis needs
+   it and passive fill came up empty. `[S]`
+7. **Weight-gain mirror** (waist-vs-limbs, strength-as-arbiter). `[S]`
+
+Original raw braindump (kept for provenance):
+> Fat loss: if measurements are dropping across the board (possibly signaling
+> muscle loss), praise the diet adherence and exercise discipline, but emphasize or
+> recommend more effort (higher RPE) or slightly higher calories to avoid muscle
+> loss. First couple weeks = mostly water and muscle stores; week 6 = might be
+> muscle loss UNLESS the user logs strength being the same (maybe a proactive Pepi
+> message + add another thing to the detailed logging menu). Weight gain: same
+> behavior adapted, needs a draft.
+
+**2c. Arrows for custom poses, RESOLVED + SCOPED (owner 2026-07-22)**
+
+Grounding: the pose model ([photo-pose.ts](../src/lib/photo-pose.ts)) locks the four
+canonical poses to the scientific compare; `other` + custom "parts" never feed
+analysis today, so per 2a custom poses currently get **no arrows**. But the
+comparison substrate is already pose-agnostic (ghost overlay + self-baseline +
+`poseLabel` already passed to the vision call).
+
+Key insight (dissolves the either/or): arrows need two separable things,
+**change detection** ("did this region change vs my own baseline of this same
+pose?", pose-agnostic, works now) and **anatomical labeling + placement** (naming
++ locating the region, needs pose knowledge). We ship the spotlight without the
+label first, then add the label. It is a maturity ladder, not anatomical-vs-community.
+
+**Labels are two-layer (owner-decided).** The **UI label is the user's freeform
+name** (any weird name they like). The **backend attaches an anatomical label** to
+help the AI, invisible to the user, **moderated** for mistakes (owner during beta,
+an **AI moderation agent post-release**). Display and analysis are decoupled.
+
+**Tier 3 is silent pose-geometry learning, NOT a displayed community library
+(owner clarification).** The AI silently recognizes recurring pose geometries (the
+3/4 legs-and-glutes show-off pose) to place regions better. Never surfaced, never
+"community pose #N", nobody feels unoriginal. Abstract geometry only, never user
+imagery.
+
+**Consent reconciliation (owner-decided 2026-07-22), the load-bearing part.**
+The live consent makes an absolute promise tier 3 would break ("Never used to
+train any AI model. Ever."). Resolution:
+- **Production consent copy** stays clean and honest: automated AI analysis +
+  *abstract pose geometry (never your image)* to improve pose recognition; never
+  trained on your images; never used to identify you. **No human-review line**
+  (it spooks people, and post-release there is no human review). Soften the one
+  absolute line to the precise version ("Never used to train models on your images,
+  and never to identify you").
+- **No operator/human-review disclosure in the shipped app.** During beta the owner
+  reviews labels manually, but that window is covered by the **closed-beta tester
+  terms** (known, consented cohort), not the production consent. Post-release an
+  **AI moderation agent replaces the owner**, so the clean production copy becomes
+  fully accurate.
+- **Sequencing:** the copy/spec edits (CLAUDE.md rule 2 + spec 11 + consent i18n)
+  land **with tier 3**, not now, changing live consent to describe a capability
+  that doesn't exist yet would itself be inaccurate. Decision locked; edits deferred
+  to build time.
+
+Stepped plan (all tiers in scope per owner; order-independent):
+
+1. **Tier 1, self-baseline unlabeled spotlights [M].** Custom poses get arrows
+   (arrow + "this area" + %/note/confidence, no anatomical name). Extends the 2a
+   `regions[]` contract; `region` is a generic locator. Comparability-gated (custom
+   poses lean harder on it: bad ghost-alignment = no arrows, prompt retake).
+2. **Tier 2, anatomical labeling + placement [M].** Server-side, on the uploaded
+   image (arrows are post-capture, so **no device build**): extend the `regions[]`
+   structured output with an anatomical label + normalized coords. Two-layer labels
+   (freeform UI + BE anatomical). Optional **live** pose-guidance keypoints
+   (on-device frame processor, e.g. MediaPipe/ML Kit) are a *separate deferred
+   device-build enhancement*, not required for arrows.
+3. **Tier 3, silent pose-geometry learning [L].** BE recognizes recurring pose
+   geometries to improve guesstimation, never surfaced. Moderation: lightweight
+   Supabase admin view of label + abstracted geometry (owner during beta → AI agent
+   post-release). Gated on the consent reconciliation above.
+4. **Consent reconciliation [M], executes with tier 3.** Update CLAUDE.md rule 2 +
+   spec 11 + consent copy in lockstep to the precise wording above; add the
+   pose-geometry disclosure; NO human-review line; closed-beta terms cover the
+   manual-review window; wire the post-release AI moderation agent.
+
+Original raw braindump (kept for provenance):
+> So this would work beautifully for "default" poses, but how would it work for
+> custom? Surely it'd be capable? Do we use anatomical measurements or do we use
+> community poses eventually? Surely people aren't unique, so they "average out" to
+> common poses?
+
+**2d. New-pose handling + the detail drawer, RESOLVED + SCOPED (owner 2026-07-22)**
+
+Mostly the operational layer of 2c; the scary parts (legal, who-moderates) are
+already settled there. Grounding: [photo-pose.ts](../src/lib/photo-pose.ts) already
+has `POSE_CONFIRM_THRESHOLD = 0.75` + `needsPoseConfirm` (low-confidence classify →
+reel asks to confirm) and an `unsorted` triage group, reuse both. Users can
+already create named custom "parts."
+
+Three decisions:
+
+1. **The "new" flag is an internal fail-safe, not a user badge.** The real risk is
+   applying the *wrong* template (a "waist" arrow on a glute shot), worse than no
+   template. So a **template-match-confidence threshold** (reuse the 0.75 pattern):
+   below it, **fail safe to tier-1 unlabeled self-baseline spotlights** (always
+   correct, self-referential) and queue the geometry for moderation. Never force a
+   shaky template. The classification *mechanics* stay hidden (no "unknown pose"
+   badge, no confidence score shown), it collides with the "silent, don't make
+   people feel unoriginal" rule.
+2. **Not every pose gets a template.** One-offs live on tier-1 spotlights **forever**
+   (safe, free, no moderation). Only **recurring** geometries graduate to a moderated
+   template, recurrence, not novelty, is the trigger, so the queue stays small and
+   frequency-sorted. (Recurrence detection needs tier-3 clustering; beta = manual
+   eyeballing at low volume.)
+3. **Two new-pose signals:** explicit (**user creates a named custom part**, a
+   strong "I care about this pose" signal, free) + implicit (AI recurrence
+   detection for unnamed repeated angles). Observe how the named-part signal behaves.
+
+**The detail drawer (owner idea, resolved).** Reuse the **dose-logging sheet
+pattern** for one photo/pose detail surface that converges 2a + 2c + 2d:
+- **Freeform name** (editable, the user's own words, 2c).
+- **"Tracking: glutes, hamstrings, waist"**, the internal anatomical label surfaced
+  as **plain-language "what the arrows look at," NEVER a clinical pose
+  classification with a score.** Warm output, hidden mechanics. This is a trust
+  builder (the instrument visibly knows what it measures) and lands on the
+  anti-dysmorphia goal.
+- **Correctable regions** ("that's my quad, not my hamstring"). A correction is
+  **explicit, consensual teaching** (strengthens the tier-3 consent story vs silent
+  learning) and a **high-quality moderation signal**. Guardrail (2d trap 4): a
+  correction adjusts **that user's** label + feeds the moderation queue as weighted
+  input; it **never** auto-writes the shared template (one mislabel must not corrupt
+  the pose for everyone).
+- **Arrow tooltip detail** (%/note/confidence, 2a) lives in this same drawer. So the
+  2a tooltip, 2c naming, and 2d drawer are *one* surface, no new primitive.
+
+Guardrails carried: tier-1 feedback is immediate, never blocked on moderation;
+"new" means new to the *system* (per-user-new inherits the existing template
+silently); templates are versioned + correctable (owner → AI agent) and geometry-only.
+
+Stepped plan:
+
+1. **Template-match confidence fail-safe [S].** Below threshold → tier-1 spotlights
+   + queue for moderation. Reuses the 0.75 / `needsPoseConfirm` scaffolding.
+2. **Recurrence-gated graduation [M].** One-offs stay tier-1; clustered geometries
+   enter the frequency-sorted moderation queue (depends on tier-3 clustering; beta
+   = manual).
+3. **Photo/pose detail drawer [M].** Dose-logging sheet pattern; freeform name +
+   plain-language tracked regions + correction + arrow tooltip in one surface.
+4. **User-correction → moderation signal [S].** Per-user label fix + weighted queue
+   input; never a global auto-write.
+
+(Legal / consent / who-moderates: resolved in 2c. Moderation UI: the beta Supabase
+admin view from 2c, fed by this queue.)
+
+Original raw braindump (kept for provenance):
+> Do we do this for every single pose? For new poses, do we put a "new" flag in the
+> UI to avoid making mistakes and then have a moderator see the photo and add the
+> "placeholder" arrows on top? Would this be an issue legally?
+
+**2e. Pose-template injection (prompt architecture), RESOLVED + SCOPED (owner 2026-07-22)**
+
+Heavily pre-answered by 2c/2d + point 3. Grounding: the AI service
+([index.ts](../supabase/functions/ai-service/index.ts), one edge function) is
+already **action-dispatched** with a stable per-action prompt builder
+(`visionSystemPrompt(session, hasBaseline, locale, ctx)` injects
+measurement/cycle/symptom/transition context into ONE prompt), `classify_pose`
+already exists (cheap Haiku), and the classified pose is **already stored on
+`PhotoEntry.pose`** at capture. So "classify → analyze with context injected into
+one prompt" is already how it works.
+
+Resolution (dissolves "pose-specific prompts + agent forwarding" into a simpler,
+safer pattern the service already uses):
+- **A pose template is structured DATA, not a prompt**, a region-map
+  `[{region, coords, lookAt}]` (the moderator-authored / tier-3-refined artifact
+  from 2c/2d). One stable prompt, N data templates. Adding a pose = adding a data
+  row, never writing/safety-reviewing a new prompt.
+- **Server-side injection, code-level lookup (owner-agreed A).** At analysis time
+  the pose is already known (`PhotoEntry.pose`, no re-classify) → server does a
+  **DB lookup** of the matching template → injects it as one more structured field
+  into the one `visionSystemPrompt` → analyze. Templates **stay on the server**
+  (privacy-sensitive geometry + tier-3 IP); the client only sends the image.
+  **No per-pose prompts, no per-pose agents, no extra model hop.**
+- **Templates are structured region DATA, never free-text instructions
+  (owner-agreed B).** Enum regions + bounded coords + look-at hints, consumed as
+  data. The observational/hedged/never-diagnose gate stays **immovable in the one
+  vetted base prompt**; templates only say "where to look," never "what to
+  conclude." Critical post-release, when an **AI agent** authors templates:
+  agent-generated content re-entering a prompt must be constrained data so a
+  hallucinated/compromised template can't hijack the analysis.
+- **Template versioning on each analysis (owner-agreed C).** Record which template
+  version an analysis used (via the observation ledger / `priorAnalyses`) so a later
+  template fix doesn't silently invalidate past reads; the 2a on-demand deep-analysis
+  can re-run them.
+- **"Learn the placeholder position" = refining the DATA template** (2d corrections
+  + tier-3 geometry clustering), never the model and never the prompt. Keeps clear
+  of the "no training on photos" line and keeps the prompt vetted.
+- **Missing template → fall back to tier-1** (2d fail-safe); the base prompt works
+  with or without a template, so the template is always optional context.
+
+No separate stepped plan: 2e's work is subsumed by 2c tiers 2–3 (template authoring
++ injection) + point 3 (the general "data over prompts, dispatch over mega-prompt"
+principle, which the service already follows). Flagged here so the architecture
+decision is findable from the photo work.
+
+Original raw braindump (kept for provenance):
+> Could AI learn the placeholder position and tweak the prompt for that specific
+> pose? Do we create pose-specific prompts and have one of the agents forward it to
+> the analysis agent?
+
+**2f. Face analysis, RESOLVED + SCOPED (owner 2026-07-22)**
+
+Not a new mechanism: the same 2a–2e region-arrow + template machinery applied to
+the face session. Grounding: the vision prompt already branches on
+`session === 'face'` with a region guide ("jawline, cheek fullness, under-eye area,
+neck, overall puffiness vs definition"), already carries the water-vs-fat concept
+(hypothesis example: "water shift rather than fat loss alone"), and already has the
+**identity guard** ("Do NOT identify or describe the person's identity"). So face
+arrows already land on face regions and the model already knows puffiness ≠
+definition.
+
+2f's real content is three additions, all under *elevated* caution:
+
+1. **Intent-keyed face region templates (owner-agreed A)** via the 2e injection,
+   replacing today's one static guide: fat_loss face (cheeks, chin, jaw, jowls);
+   weight_gain face (same regions, localized-vs-global foregrounded); beauty face
+   and trans face are their own upcoming templates.
+2. **Clean-gain expectation:** a lean gain shouldn't move the face much, so face
+   change during weight gain is a *fat or water* signal (intent-aware baseline,
+   tied to the 2b mirror + `cycleWeek` = early water).
+3. **Localized-vs-global disambiguation as first-class (owner-agreed C, observe in
+   action):** change concentrated in fat-prone regions (cheeks/chin/jowls) leans
+   fat; uniform whole-face puffiness leans water.
+
+**Face-specific guardrails (why face is the highest-caution session):**
+- **Identity guard stays ironclad.** Arrows describe *change in a region*, never
+  identity, attractiveness, or a face judgment. "Jaw appears more defined" yes;
+  "you look better / younger / more masculine" never.
+- **Water-vs-fat confidence stays LOW, alternatives always surfaced.** Facial
+  puffiness moves with sleep, sodium, alcohol, cortisol, GH peptides (water), cycle,
+  time of day. Never a confident "face fat" claim.
+- **Face regression arrows gated HARDER than body (owner-agreed B).** A "puffier /
+  rounder" arrow is usually noise/water and maximally dysmorphia-triggering, so
+  negative face reads require higher comparability + persistence before showing
+  boldly and default to the water/sleep/time-of-day alternative framing. Progress +
+  maintenance arrows stay normal; only the negative read earns extra restraint. The
+  face-specific application of "bias toward uncertainty."
+- **Face comparability weights capture time-of-day + lighting harder** (morning vs
+  evening puffiness is dramatic).
+- **Beauty/aesthetic reads stay observational + refer for anything clinical** (see
+  the beauty-compounds sub-point next).
+
+No separate stepped plan: implemented as face-keyed templates within 2c tier 2 +
+the 2e injection, plus the regression-gating rule (a small extension of the 2a
+comparability gate). Flagged here so the face caution rules are findable.
+
+Original raw braindump (kept for provenance):
+> Fat loss: show arrows in appropriate places like cheeks and chin. Weight gain:
+> face shouldn't be affected per se if it's clean weight gain; if we detect fat,
+> make sure it's fat (localized) and not water retention (general face puffiness).
+
+**2-beauty. Beauty compounds (face + skin categories), RESOLVED + SCOPED (owner 2026-07-22)**
+*(owner's second "2e"; renamed to avoid the duplicate label)*
+
+Two distinct pieces:
+
+**Piece 1, beauty face regions.** Just another **intent-keyed face template**
+(the "beauty face" template flagged in 2f): crow's feet, smile lines, forehead,
+under-eye bags, puffiness. Mechanics fully covered by the 2e injection + 2f face
+guardrails. Only new nuance: beauty/anti-aging reads border on dermatology, so
+**observational only** ("skin around the eyes appears smoother," never "you look
+younger") + a **"check with a dermatologist"** pointer for clinical signs (OTC-style
+posture, CLAUDE.md rule 3). Face-regression gating from 2f applies, harder.
+(Make-up detected → tell the user to retake without it; make-up confounds the read.)
+
+**Piece 2, conversational entity-creation card (the genuinely new, reusable
+primitive).** Skin compounds affect user-specific areas, so categories can't be
+predefined. Flow: Pepi asks ("where does your skin usually get dry?") → parse the
+NL answer (reuses the quick-log parse) → **show a tickable confirmation card** of
+candidates → user ticks which to create → written as custom "parts"/tags (storage
+already exists). The **tickable card is the new chat affordance** (today Pepi has
+suggestion pills + answer chips, no multi-select-create card) and it is **reusable
+app-wide** (goals, compounds, symptom tags, any set of user-defined tracking
+entities from free text). Build for skin, design reusable; don't speculatively
+refactor all entity creation onto it. The card is the human-in-the-loop step that
+keeps the parse from creating unwanted categories (stay conservative: only what the
+user named).
+
+**Photo-content policy, DECIDED (owner 2026-07-22, prior-settled, re-confirmed).**
+Intimate-area categories (FUPA, lower abdomen, etc.) **are photo-eligible**, and
+**nudes are accepted**, minimal coverage is the highest-confidence analysis, and
+the app never *solicits* nudes; a user tracking their own progress that way is their
+choice. **No nudity-specific block.** Rejection is on **tracking value, not on
+skin:** the existing quality/coverage gate already drops non-trackable content (a
+genital-only closeup tracks nothing vs a physique baseline → low score → not saved),
+while a full-body progress nude tracks plenty → passes. So "sexual-only" content
+fails on its merits, no special-casing. CSAM mitigation: **age-restrict the app
+listing in the stores** + **formal legal review once there's traction** (owner will
+consult a lawyer). Residual item for that review (not covered by age-restrict): the
+**AI vendor's acceptable-use policy** on sexual content is a separate constraint
+since analyzed photos are sent to the Anthropic API, verify current policy before
+the tester pool widens. Reconciles with spec 04/11 photo policy; edits land when
+this area is built. Decision locked; do not relitigate.
+
+Stepped plan:
+
+1. **Beauty face template** (crow's feet / smile lines / forehead / under-eye) via
+   2e injection, observational + derm-referral posture, make-up retake prompt. `[S]`
+2. **Conversational entity-creation card** (Pepi ask → parse → tickable card →
+   create custom parts/tags). Reusable primitive; build for skin categories. `[M]`
+3. **Photo policy:** confirm the quality/coverage gate cleanly drops non-trackable
+   content (incl. sexual-only) with no nudity-specific rule; age-restrict store
+   listings; legal review deferred to traction. `[S]`
+
+Original raw braindump (kept for provenance):
+> Face: focus on common pain points like crow's feet, smile lines, forehead, bags
+> under eyes, general puffiness. Skin: places that get dry easily. Use Pepi chat as
+> soft onboarding to create tags/photo categories: "where do you see your skin
+> getting dry" → user says "forearms, legs, crotch" → Pepi shows a card of
+> categories to tick and create. Reusable for the rest of the app.
+
+**2-trans. Transition tracking, RESOLVED (owner 2026-07-22, light).**
+*(owner's second "2f")*
+
+Already mostly plumbed: `transitionContext` (`mtf`/`ftm`) is passed to
+`analyze_photo` today and the prompt does direction-aware framing ("goal is the
+intent signal, sex alone never implies it"). So this is **two more intent-keyed
+templates** (mtf / ftm), body + face:
+- **Body:** hip/thigh vs waist fat redistribution, shoulder line, water retention,
+  body-hair regions.
+- **Face:** cheek fullness, roundness, jaw softening (mtf) / squaring (ftm), hairline.
+- **Hair loss (ftm on T, DHT):** observational + **"see a hair specialist"**
+  referral (derm-style posture).
+- **Voice:** post-MVP, an audio feature not a photo one, out of scope here.
+- **Posture:** affirming, "changes consistent with the direction you're tracking,"
+  never "you look more/less [gender]," never misgender. Hormone dosing stays
+  track-only/observational (testosterone/estrogen are controlled, already gated).
+
+Plan: mtf + ftm templates via the 2e injection; hair-loss referral; voice deferred. `[S]`
+
+**2g. Mole tracking, RESOLVED (owner 2026-07-22, light).**
+
+The one real line is **regulatory**: an app that *screens for skin cancer* is a
+medical device (FDA territory) and we are **not** that. Strict posture:
+- **Track silently** (a mole is just another region whose change we can detect).
+- **On a persistent, comparable change** (size/color/shape), surface a gentle,
+  non-alarming **"this spot has changed, worth a professional look"** referral.
+- **Never diagnose, never name a condition, never a risk score** (any of these =
+  medical device), **never reassure** ("looks fine" is dangerous), and only flag
+  *comparable, persistent* change so lighting noise doesn't cause panic.
+- Change-detection + referral, deliberately **not** screening. Face moles interact
+  with the identity guard, but change-only tracking stays clear of identity.
+
+Plan: mole-change detection reuses the region machinery; referral-only output;
+explicitly not positioned as screening. `[S]`
+
+Original raw braindump (kept for provenance):
+> Trans, Body: arrows where hormones affect physique (hips, arm hair, water
+> retention, maybe voice? post-MVP). Face: cheeks, roundness, hair (point out hair
+> loss + suggest a specialist? extra DHT). Moles, keep track, especially face
+> moles; silent until something's worth a dermatologist visit.
+
+**3. Prompt architecture, RESOLVED + SCOPED (owner 2026-07-22)**
+
+Grounding: the AI service is **already well-factored, not a mega-prompt.** Action
+dispatch (11 discrete actions, each its own focused prompt builder); a shared safety
+module already exists ([`_shared/posture.ts`](../supabase/functions/_shared/posture.ts)
+= the single `market_category → posture` gate, built to be reused by the Wave-8 MCP
+connector too) + `_shared/transition-context.ts`; **code-level hard gates**
+(controlled → `isTrackOnly` → no model call); model tiering (Haiku cheap / Sonnet
+capable); structured outputs everywhere. So point 3 is "formalize + extend," not
+"replace."
+
+**Answer: neither one mega-prompt nor agents. A layered composition model
+(owner-agreed A).**
+- **"Skills" = composable code modules** (posture.ts is one already). Extend the
+  pattern: extract a **voice/hedging** module (currently repeated inline), a
+  **locale-rule** module (repeated), a **region-template loader** (2c/2e), a
+  **coaching-register** module (2b observe/nudge/coach). Each action composes what
+  it needs. **NOT** the Claude "Agent Skills" runtime (SKILL.md loaded at runtime),
+  prompts are built server-side in code, deterministically; well-factored code
+  modules are the right tool, the runtime would be machinery we don't need.
+- **No autonomous agents.** Every surface is a single-shot transform (input → one
+  focused call → structured output). An agent that plans its own steps adds
+  latency/cost/unpredictability **and erodes the deterministic code gate that is the
+  app's most important safety property** ("controlled → no model call" only holds
+  because code guarantees it). Multi-step needs (classify → template-lookup →
+  analyze in 2e; anomaly → opener → conversation in point 1) are **code-orchestrated
+  workflows** (deterministic pipelines, one bounded model job per step), the
+  "workflow" tier, never the "agent" tier. Revisit a real agent only for a genuinely
+  open-ended, exploratory use case against the four-criteria bar
+  (complexity/value/viability/cost-of-error); most Pepi AI fails "open-ended" by
+  design.
+
+**The mega-prompt risk lives in ONE place: the vision prompt** (the accumulator,
+base rules + session regionGuide + measurement + cycle + transition, and the roadmap
+piles on pose templates, coaching branch, face/trans/beauty templates, intent
+framing). Fix = **composition, not accumulation:** the vision prompt becomes a
+**composer** assembling only the modules relevant to *this* call (a plain body shot
+stays lean; a fat-loss-cut-with-strength shot composes more); "what to look at"
+(regions) moves entirely into **data/templates** (2e) so the prompt stays about
+**posture + hedging + format** (stable, bounded); the safety gate stays in the one
+shared module, never re-written per branch.
+
+Traps: (1) premature agent framework, cost + breaks the code-gate safety
+determinism (the worst available move); (2) prompt-by-accumulation on the vision
+prompt; (3) duplicating the safety gate per branch (must stay one `_shared` module);
+(4) over-modularizing (extract only modules with a real reuse/safety reason);
+(5) Wave 8's MCP connector is a second AI surface needing the *same* gates, the
+shared-module discipline is what makes it safe without re-implementing, so point 3
+and Wave 8 reinforce each other.
+
+Stepped plan:
+
+1. **Vision-prompt composer refactor [M], near-term, lands BEFORE the 2c/2e/2b
+   templates (owner-agreed B).** Turn the vision prompt into a conditional composer
+   so the mega-prompt risk is designed out rather than accumulated. Highest-leverage
+   point-3 action; cheap now, expensive after five features append to a monolith.
+2. **Extract the next `_shared/*` modules [M]:** voice/hedging, locale-rule,
+   region-template loader, coaching-register. Composable, safety-critical fragments
+   written once.
+3. **Keep multi-step needs as code-orchestrated workflows [S]:** no agent framework;
+   deterministic pipelines with one bounded model job per step.
+
+(Applies across the whole app's AI, not just photos. 2e is the worked example of the
+"data over prompts" half of this principle.)
+
+Original raw braindump (kept for provenance):
+> How do we structure this to avoid making the prompt mega-large and convoluted? Do
+> we use agents or skills?
+
+## Implementation order (dependency-sequenced, 2026-07-22)
+
+Every **pending** item across all phases, ordered by **code-block dependency**, not
+by size or difficulty (owner: "regardless of implementation size/difficulty/
+complexity"). Waves 1-6 + most of Wave 7 are shipped; only their leftovers appear
+here. Sequencing into calendar waves is a later pass; this is the build-order
+skeleton. Annotations: **needs** = hard prerequisite; **unblocks** = what it opens up.
+
+**0. Beta unblockers (independent, first)**
+- **Item 31, Google sign-in return leg** (native `GoogleSignin` path + browser-
+  fallback deep link + purge `localhost:3000` from the Supabase allow-list; verify
+  Apple sign-in end to end). Blocks widening the tester pool. No code deps.
+- **Device-gated verification** (not code-ordered, runs at the next native build):
+  item **44** runtime perf profiling (Moto G60s class), item **45** minify/R8 smoke
+  test, on-device OLED dark-mode pass, and all pending native rebuilds (vision-camera
+  face detector, notifications, integrations/HealthKit, lottie).
+
+**1. AI prompt-architecture foundation (Point 3), prerequisite for ALL photo-AI templates**
+- **3.1 Vision-prompt composer refactor**, conditional composer, assembles only the
+  modules relevant to a call. **Must land before any photo template** (2a.3/2b/2c/2e/2f).
+- **3.2 Extract `_shared/*` modules**, voice/hedging, locale-rule, region-template
+  loader, coaching-register (posture.ts already exists).
+- **3.3 Multi-step needs stay code-orchestrated workflows** (no agent framework).
+- *Unblocks:* every Point-2 photo sub-point; also feeds connector posture reuse (B1).
+
+**2. Region-arrow contract + arrow UI (2a), the contract every photo sub-point consumes**
+- **2a.3 `regions[]` structured output** in `analyze_photo`. **Needs** 3.1. ← the contract.
+- **2a.1 One smart camera** (auto session+pose, picker demoted to fallback).
+- **2a.2 Review ends on the comparison card** (capture → readout → measurements → card).
+- **2a.4 Arrow overlay**, extend `TrendMarker` to 4 states (green ▲ / red ▼ / grey
+  dash / yellow dash), contrast-adaptive leader lines, tappable tooltip (X / tap-away).
+  **Needs** 2a.3. *(Mockup pending from owner.)*
+- **2a.5 Measurement-delta arrows** (magnitude allowed, measured, not judged).
+- **2a.6 Milestone gating + on-demand deep analysis** (Journal "run deep analysis").
+- *Unblocks:* 2b coaching, 2c, 2d, 2f, beauty, trans, moles.
+
+**3. Pose templates + detail drawer (2e / 2c / 2d), build on regions[] + composer**
+- **2e Server-side template injection** (DB lookup keyed on stored pose → into the one
+  prompt; templates stay server-side; versioned). **Needs** 3.1 + 2a.3.
+- **2c tier 1, unlabeled self-baseline spotlights** (custom poses get arrows). **Needs** 2a.3.
+- **2d Template-match fail-safe** (low match → tier-1 + queue) **+ the detail drawer**
+  (unifies 2a tooltip + 2c freeform name + 2d correctable regions). **Needs** 2a.4.
+- **2c tier 2, anatomical labeling + placement** (server-side; label + coords in
+  `regions[]`; no device build). Optional live-guidance keypoints deferred (device build).
+- **2d Recurrence-gated graduation** + **user-correction → moderation signal** (per-user
+  fix, never a global auto-write).
+- **2c tier 3, silent pose-geometry learning** + **consent reconciliation** (CLAUDE.md
+  rule 2 + spec 11 + consent copy edits land WITH this; gates tier 3).
+- *Unblocks:* face/beauty/trans templates are just more of this machinery.
+
+**4. Integration provider extensions (prereq for 2b passive fill), reusable data plumbing**
+- **Apple Health:** add workout **type** + iOS-18 **effort score** to the pull.
+- **Health Connect:** add exercise-session pull (type + HR; no RPE on Android).
+- *Unblocks:* 2b.4 passive strength fill; also improves TRIMP/load context generally.
+
+**5. Proactive coaching notifications (Point 1), opener infra feeds 2b.6**
+- **1.1 `weight_plateau` detection** (extend `anomaly.ts`).
+- **1.2 Anomaly → one coach-gated reactive notification** (foreground, 1/day cap).
+  1.1 + 1.2 **unblock 2b.6**.
+- **1.3 Declining-metrics reflect-and-refer** (observation only, never a dose direction).
+- **1.4 Food / plateau in-app Pepi copy** (mechanism not menu; never push).
+- **1.5 Alarming-anomaly remote push, deferred to track G** (block 9).
+
+**6. Context coaching + passive fill (2b), needs regions[] + block 4 + Point 1 opener**
+- **2b.3 Strength-felt standing chip** in the detailed log (surface already shipped).
+- **2b.2 Explicit `intent` + derived `strengthHeld` into `dataContext`.**
+- **2b.1 Coaching-framing layer** (2×2 fat-loss logic + weight-gain mirror). **Needs**
+  2a.3 + the coaching-register module (3.2).
+- **2b.4 Passive strength fill.** **Needs** block 4.
+- **2b.5 Routine learning + post-sync reconciliation** (reusable across log fields;
+  uses `integration-sync`, exists).
+- **2b.7 Weight-gain mirror.**
+- **2b.6 Proactive "how'd your lifting feel?" opener.** **Needs** 1.1-1.2.
+
+**7. Face / beauty / trans / moles, consume templates + intent-keying (block 3)**
+- **2f Face templates** (fat_loss / weight_gain) + **regression arrows gated harder
+  than body** + localized-vs-global fat-vs-water. Identity guard ironclad.
+- **Beauty** face template (crow's feet / smile lines) + the **conversational
+  entity-creation card** (Pepi ask → parse → tickable card → create; reusable primitive).
+- **Trans** mtf/ftm templates (`transitionContext` already exists) + hair-loss referral.
+- **Moles** change-detection + referral-only (never screening/diagnosis/reassurance).
+
+**8. Connectors (Wave 8), backend-only, parallelizable from the start; reuses posture.ts**
+- **47 B0 Server + auth + inbox** (`connector_event` table; Supabase Auth OAuth; RLS scoping).
+- **48 B1 Tool surface, two-way** (reads + inbox writes; **reuses/extends `_shared/posture.ts`**
+ , benefits from 3.2; photos excluded; +5th eval boundary).
+- **49 B2 Directory launch** (OpenAI + Anthropic review, long pole).
+- **50 B3 Widgets** (Today + Verdict cards).
+
+**9. Post-beta platform tracks (larger; grouped as their own code blocks)**
+- **G Remote push infra** → **unblocks 1.5** + the step-goal proximity ping + connector push.
+- **A Web workbench [L].**
+- **F Full per-entity sync engine [L]** (pairs with A; the `connector_event` inbox folds in).
+- **D HealthKit cycle read + Pepi cycle setup.**
+- **C Monetization** (trial/billing).
+- **E Branding round** (custom domain, auth email templates, website, one coordinated pass).
+
+**10. Deferred / backlog (no active dependency)**
+- Vial scan (AI vision), storage hardening (pairs with the cloud/sync track), Terra
+  (~500 users), storage quotas (pricing-dependent), community cohort insights (needs
+  aggregates + N thresholds), per-region posture overrides (mechanism reserved).
+
+**Standing cross-cutting themes** (not phases, carried through the blocks above):
+the region-arrow contract (2a.3), the detail drawer (2d), the post-sync reconciliation
++ invisible routine learning pattern (2b.5), the conversational entity-creation card
+(block 7), and the consent reconciliation (block 3) are each built once and reused.
