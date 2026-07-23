@@ -866,13 +866,14 @@ Points 1, 2 (all sub-points), and 3 are now **RESOLVED + SCOPED** with the owner
 plan; raw braindumps are kept inline for provenance. Sequencing into the waves is a
 later pass ("rearrange later", owner).
 
-**Pending mockups (owner to produce, batch in one go):**
-- **Arrow overlay** (2a), the four-state `TrendMarker` markers + contrast-adaptive
-  leader lines + tooltip, incl. how lines/markers avoid collision when regions sit
-  close together (esp. the face).
-- **[Other mockup, owner to name]**, the owner has a second pending mockup to
-  provide; pair it with the arrow-overlay mockup. (Candidate: the verdict-first Home
-  mock, unconfirmed.)
+**Mockups received (owner, 2026-07-22):**
+- **Arrow overlay ✅** — rough before/after with green ▲ (muscle gain) + green ▼ (fat
+  loss) on leader lines. Confirmed the direction×color decoupling folded into 2a.
+  Still to solve in a polished mockup: line/marker collision when regions sit close
+  (esp. the face).
+- **Measurement overlay ✅** — horizontal guide lines at chest + waist with value-box
+  placeholders. Folded into 2a step 7 (guide-line consistency overlay; value chips
+  replace the white boxes).
 
 **1. Proactive coaching notifications, RESOLVED + SCOPED (owner 2026-07-22)**
 
@@ -969,19 +970,31 @@ not. The posture rule ("bias toward uncertainty") is honored by reframing what t
 arrow claims: **bold pointer, humble label.** The arrow is confident about
 *direction + region* (honest even at shaky confidence); magnitude and valence stay
 humble. Hard rules:
-- **Four states (owner 2026-07-22, refines the earlier three), reusing the existing
-  "progress triangles":** the marker is the existing `TrendMarker` glyph from
-  [hero-figure.tsx](../src/components/hero-figure.tsx) (▲/▼ tinted by `favour`), so
-  the verdict trend language and photo arrows are ONE visual vocabulary. Its
-  `favour → color` map already yields green/yellow/red:
-  - **green ▲** = progress (favour `good`)
-  - **red ▼** = regression (favour `bad`)
-  - **grey dash** = maintained / no movement (the "Maintained" state, app's existing
-    nomenclature, the label that replaced "holding")
-  - **yellow dash** = low confidence but leaning toward slipping away from progress
-    (favour `watch`). This is a **static per-read cue**, NOT the temporal
-    exploratory→solid "hardening" that was scrapped; the exact % still lives in the
-    tooltip, the yellow dash is just its glanceable form.
+- **Direction × color are TWO independent axes (owner mockup 2026-07-22, refines the
+  earlier "up=progress/down=regression").** The marker is the existing `TrendMarker`
+  glyph from [hero-figure.tsx](../src/components/hero-figure.tsx), which already
+  separates `trend` (▲/▼) from `favour` (color), so the verdict trend language and
+  photo arrows are ONE visual vocabulary AND the refinement needs no new component.
+  - **Direction (▲/▼)** = did the tissue *grow or shrink* here. ▲ = grew (muscle
+    gained, OR fat gained), ▼ = shrank (fat lost, OR muscle lost).
+  - **Color (favour)** = is that *good*. green = good, red = bad, grey = none,
+    yellow = low-confidence-leaning-bad. So the 2×2: **green ▲** muscle gain, **green
+    ▼** fat loss, **red ▲** fat gain, **red ▼** muscle loss. The owner's happy-path
+    mockup is all-green (recomp: shoulders/chest ▲, waist/oblique ▼).
+  - **grey dash** = maintained / no movement ("Maintained", the app label that
+    replaced "holding"). **yellow dash** = low confidence leaning bad — a static
+    per-read cue (NOT the scrapped temporal "hardening"); exact % lives in the tooltip.
+  - The tooltip carries the interpretation ("fat loss here", "muscle gain here") + the
+    hedge + confidence, so the bold marker never overclaims ("tapping gives context,
+    that's how we don't lose confidence" — owner).
+- **"Materialize the AI's vision" (owner framing):** placement is **AI-driven and
+  free** — lines + markers go wherever the AI actually detected change, not a fixed
+  landmark grid. The `regions[]` payload therefore carries **separate `direction` and
+  `favour` fields** (not one fused `progress/regression` enum) plus free normalized
+  coords, region note, %, and confidence.
+- **Visual (owner mockup 2026-07-22):** contrast-adaptive straight leader lines from
+  the region to a `TrendMarker` glyph at the line end; tap → tooltip (X / tap-away
+  close). See also the measurement-overlay note below (same leader-line primitive).
 - **Visual overlay spec (owner 2026-07-22; mockup pending, see below):** on the
   captured photo, draw **contrast-adaptive straight (180°) leader lines** (white or
   black depending on skin/background contrast) from the region to a marker at the
@@ -1012,18 +1025,22 @@ Stepped plan:
    the ghost's before-shot reference need satisfied without a pre-declaration step.
 2. **Review ends on the payoff [M].** Reorder the review so the last screen is the
    comparison, not measurements: capture → instant deterministic `quickReadout` →
-   measurements (body only, still feeding `measurementDelta`) → **comparison card =
-   clean new photo with arrows** where the score used to be.
+   measurements (body only, via the **guide-line overlay in step 7**, still feeding
+   `measurementDelta`) → **comparison card = clean new photo with arrows** where the
+   score used to be.
 3. **Region arrows in the vision response [M].** Extend the `analyze_photo` edge
    function's structured output to return
-   `regions: { region, direction: progress|maintained|regression, pct, confidence, note }[]`.
-   Capable model; **canonical poses only for V1** (region mapping is reliable
-   there; custom poses = 2c/2d). Bigger/slower/costlier response is the accepted
-   V1 cost.
-4. **Arrow overlay + tappable tooltips [M].** Draw the three-state arrows on the
-   comparison photo (image stays clean); tap → tooltip (%, note, confidence). Wired
-   into the reel + Journal so any past comparable photo is tappable. Valence-neutral,
-   baseline-anchored, comparability-gated per the rules above.
+   `regions: { region, x, y, direction: up|down|flat, favour: good|bad|none|watch, pct, confidence, note }[]`
+   — **direction and favour are SEPARATE fields** (owner mockup 2026-07-22: direction
+   = grew/shrank, favour = good/bad), with free normalized coords so the AI places
+   markers wherever it detected change ("materialize the AI's vision"). Capable model;
+   **canonical poses only for V1** (region mapping is reliable there; custom poses =
+   2c/2d). Bigger/slower/costlier response is the accepted V1 cost.
+4. **Arrow overlay + tappable tooltips [M].** Draw the `TrendMarker`-glyph markers
+   (direction × color, per the arrow-posture block) at the end of contrast-adaptive
+   leader lines on the comparison photo (image stays clean); tap → tooltip (%, note,
+   confidence, closes via X / tap-away). Wired into the reel + Journal so any past
+   comparable photo is tappable. Baseline-anchored, comparability-gated.
 5. **Measurement-delta arrows [S].** Objective waist/hips/etc deltas render as their
    own arrows in the same tap paradigm, these **may carry magnitude** (measured,
    not judged), the one place a confident number on the arrow is allowed.
@@ -1032,6 +1049,17 @@ Stepped plan:
    most shots get only the instant readout + comparability. Add a **Journal
    affordance: tap a picture → run deep analysis on demand** (the manual escape
    hatch when the user wants a rich read off-cadence).
+7. **Measurement guide-line overlay [M] (owner mockup 2026-07-22).** In the
+   measurement step, draw a **horizontal guide line at each measurement spot** (chest,
+   waist, hips…) on the photo with a **tappable value chip** on the line (instrument
+   `Metric`/`StatusPill` pill, mono numerals — NOT the rough white box) to enter/edit
+   the number, replacing the plain text fields. Purpose: **consistency** — the user
+   wraps the tape at the same anatomical spot every session, so the trend is signal
+   not measurement noise. The line is a **positional guide only** (a 2D photo can't
+   measure circumference). **V1:** positions stored relative to the shot (AI-suggested
+   initial spots). **Later:** landmark-anchored re-projection so the line lands on the
+   same anatomical spot regardless of framing — rides the **2c tier-2** keypoint work.
+   Reuses the same leader-line primitive as the arrows.
 
 Original raw braindump (kept for provenance):
 > First step is ghost (1), measurement logging (3), and photo score (2). As part
@@ -1544,31 +1572,48 @@ here. Sequencing into calendar waves is a later pass; this is the build-order
 skeleton. Annotations: **needs** = hard prerequisite; **unblocks** = what it opens up.
 
 **0. Beta unblockers (independent, first)**
-- **Item 31, Google sign-in return leg** (native `GoogleSignin` path + browser-
-  fallback deep link + purge `localhost:3000` from the Supabase allow-list; verify
-  Apple sign-in end to end). Blocks widening the tester pool. No code deps.
-- **Device-gated verification** (not code-ordered, runs at the next native build):
-  item **44** runtime perf profiling (Moto G60s class), item **45** minify/R8 smoke
-  test, on-device OLED dark-mode pass, and all pending native rebuilds (vision-camera
-  face detector, notifications, integrations/HealthKit, lottie).
+- **Item 31, Google sign-in return leg** — ✅ **code side DONE (2026-07-22).** Audit
+  found no code bug: the native `GoogleSignin` path is wired, the client IDs are in
+  every eas.json profile (so the native path runs on device and the browser dead-end
+  is bypassed), and the browser-fallback return handling is correct. The dead-end is
+  **pure config** (Supabase URL configuration + Google/Apple consoles). Owner has the
+  dashboard/console checklist; verified in the batched build.
+- **Device-gated verification** (not code-ordered, runs at the next native build,
+  owner deferred to a later batched build): item **44** runtime perf profiling
+  (Moto G60s class), item **45** minify/R8 smoke test, on-device OLED dark-mode pass,
+  and all pending native rebuilds (vision-camera face detector, notifications,
+  integrations/HealthKit, lottie).
 
-**1. AI prompt-architecture foundation (Point 3), prerequisite for ALL photo-AI templates**
-- **3.1 Vision-prompt composer refactor**, conditional composer, assembles only the
-  modules relevant to a call. **Must land before any photo template** (2a.3/2b/2c/2e/2f).
-- **3.2 Extract `_shared/*` modules**, voice/hedging, locale-rule, region-template
-  loader, coaching-register (posture.ts already exists).
-- **3.3 Multi-step needs stay code-orchestrated workflows** (no agent framework).
+**1. AI prompt-architecture foundation (Point 3)** — ✅ **DONE 2026-07-22 (commit ed050a9)**
+- **3.1 Vision-prompt composer refactor ✅** — `visionSystemPrompt` is now a composer
+  of 8 local block-helpers (each returns `string[]` / `[]`, spread in the original
+  load-bearing order). Adding a pose region-template later is one helper + one spread.
+- **3.2 Extract `_shared/*` modules — partial ✅ + scoped-down.** Extracted the one
+  genuinely-clean cross-surface fragment: `_shared/prompt-lines.ts` (`localeLine`,
+  vitest-guarded, applied in vision/lab/insights/simple/ledger). Voice/units were
+  **left inline** (meaningful per-surface variation; extracting would flatten intended
+  wording). The **region-template loader + coaching-register land WITH their features**
+  (2c/2e and 2b), not as empty scaffolding now (anti-over-modularization, point-3 trap).
+- **3.3 Multi-step needs stay code-orchestrated workflows** (no agent framework) — a
+  standing principle, nothing to build.
+- ⚠️ Edge function is outside the app green gate (Deno): app gate passed (typecheck /
+  lint / i18n / 441 tests / web export); run `deno test` + a branch-deploy smoke check
+  before the next `ai-service` deploy. Not yet deployed.
 - *Unblocks:* every Point-2 photo sub-point; also feeds connector posture reuse (B1).
 
 **2. Region-arrow contract + arrow UI (2a), the contract every photo sub-point consumes**
-- **2a.3 `regions[]` structured output** in `analyze_photo`. **Needs** 3.1. ← the contract.
+- **2a.3 `regions[]` structured output** in `analyze_photo` — **separate `direction`
+  (grew/shrank) + `favour` (good/bad) + free coords**. **Needs** 3.1. ← the contract.
 - **2a.1 One smart camera** (auto session+pose, picker demoted to fallback).
 - **2a.2 Review ends on the comparison card** (capture → readout → measurements → card).
-- **2a.4 Arrow overlay**, extend `TrendMarker` to 4 states (green ▲ / red ▼ / grey
-  dash / yellow dash), contrast-adaptive leader lines, tappable tooltip (X / tap-away).
-  **Needs** 2a.3. *(Mockup pending from owner.)*
+- **2a.4 Arrow overlay** — `TrendMarker` glyph, direction × color (green ▲ muscle /
+  green ▼ fat loss / red ▲ fat gain / red ▼ muscle loss / grey dash none / yellow dash
+  low-conf), contrast-adaptive leader lines, tappable tooltip (X / tap-away). **Needs**
+  2a.3. *(Mockup received ✅.)*
 - **2a.5 Measurement-delta arrows** (magnitude allowed, measured, not judged).
 - **2a.6 Milestone gating + on-demand deep analysis** (Journal "run deep analysis").
+- **2a.7 Measurement guide-line overlay** — guide line + value chip at each spot for
+  consistent measurement; V1 stored positions, later landmark-anchored (2c tier 2).
 - *Unblocks:* 2b coaching, 2c, 2d, 2f, beauty, trans, moles.
 
 **3. Pose templates + detail drawer (2e / 2c / 2d), build on regions[] + composer**
