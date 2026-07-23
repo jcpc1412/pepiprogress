@@ -485,7 +485,7 @@
   "consent": {
     "storage": {
       "label": "1 VON 2, FOTO-SPEICHERUNG",
-      "title": "Fortschrittsfotos speichern",
+      "title": "Deine Fotos bleiben privat",
       "body": "Fotos müssen gespeichert werden, damit Geist-Überlagerung und Zeitachse funktionieren. Sie sind standardmäßig privat.",
       "offTitle": "Ohne Speicherung",
       "off1": "Keine Geist-Überlagerung",
@@ -498,14 +498,14 @@
       "accept": "Speicherung erlauben",
       "decline": "Nein danke, Fotos überspringen",
       "notice": "Privat auf deinem Gerät gespeichert und bei Kontoerstellung in einem verschlüsselten Bucket, nie geteilt oder für KI-Training verwendet.",
-      "bullet1": "Fotos bleiben standardmäßig auf Ihrem Gerät.",
-      "bullet2": "Optionale verschlüsselte Cloud-Sicherung.",
-      "bullet3": "Wird nie zum Training einer KI verwendet. Nie.",
+      "bullet1": "Verschlüsselt, auf deinem Gerät",
+      "bullet2": "Werden mit niemandem geteilt",
+      "bullet3": "Nie zum Training von KI-Modellen genutzt",
       "understand": "Verstanden"
     },
     "ai": {
       "label": "2 VON 2, KI-ANALYSE",
-      "title": "KI-Fotoanalyse",
+      "title": "Was Pepi sieht",
       "body": "Unsere KI vergleicht aufeinanderfolgende Fotos auf Konsistenz von Beleuchtung, Winkel und Bildausschnitt. Sie stellt nie eine Diagnose.",
       "offTitle": "Ohne KI",
       "off1": "Kein Drift-Score",
@@ -520,7 +520,12 @@
       "notice": "Fotos werden an einen KI-Dienst gesendet. Sie werden nie für Training verwendet. Analyse ist rein beobachtend, nie eine medizinische Aussage.",
       "toggleLabel": "KI-Analyse in der Cloud",
       "toggleSub": "Foto-Drift + Erkenntnisse",
-      "continueButton": "Weiter"
+      "continueButton": "Weiter",
+      "cap1": "Muskelfülle und Definition",
+      "cap2": "Fettverteilung",
+      "cap3": "Wassereinlagerungen und Schwellungen",
+      "cap4": "Haltung und Proportionen",
+      "footer": "Nur beobachtend. Keine medizinische Beratung."
     }
   },
   "privacy": {
@@ -1431,5 +1436,18 @@
     "same": "Gleich",
     "harder": "Schwerer",
     "chipHint": "Verglichen mit deiner eigenen Normalität, nicht mit der anderer."
+  },
+  "setup": {
+    "label": "EINRICHTUNG ABSCHLIESSEN",
+    "later": "Später",
+    "goals": {
+      "title": "Was verfolgst du?",
+      "body": "Pepi verfolgt gerade 3 Dinge. Wähle dein Ziel, dann kommt der Rest dazu.",
+      "save": "{{count}} Ziele verfolgen"
+    },
+    "health": {
+      "title": "Verbinde deine Gesundheits-App",
+      "body": "Gewicht, Schlaf und Workouts tragen sich selbst ein, du protokollierst weniger."
+    }
   }
 }

@@ -485,7 +485,7 @@
   "consent": {
     "storage": {
       "label": "1 OF 2, PHOTO STORAGE",
-      "title": "Store your progress photos",
+      "title": "Your photos stay private",
       "body": "Progress photos need to be stored so the ghost overlay and timeline can work. They are private by default, never shared unless you choose to.",
       "offTitle": "Without storage",
       "off1": "No ghost overlay",
@@ -498,14 +498,14 @@
       "accept": "Allow photo storage",
       "decline": "No thanks, skip photos",
       "notice": "Stored privately on your device and (when you create an account) in an encrypted private bucket, never shown to others, never used to train AI models.",
-      "bullet1": "Photos stay on your device by default.",
-      "bullet2": "Optional encrypted cloud backup, opt-in.",
-      "bullet3": "Never used to train any AI model. Ever.",
+      "bullet1": "Encrypted, on your device",
+      "bullet2": "Never shared with anyone",
+      "bullet3": "Never used to train AI models",
       "understand": "I understand"
     },
     "ai": {
       "label": "2 OF 2, AI ANALYSIS",
-      "title": "AI photo analysis",
+      "title": "What Pepi sees",
       "body": "Our AI compares consecutive photos for lighting, angle, and framing consistency, and gives a hedged, observational change note. It never diagnoses anything.",
       "offTitle": "Without AI",
       "off1": "No drift score",
@@ -520,7 +520,12 @@
       "notice": "Photos are sent to a server-side AI service for analysis. Your photos are never used to train any model. Analysis is observational only, never a medical claim.",
       "toggleLabel": "Cloud AI analysis",
       "toggleSub": "Photo drift + insights",
-      "continueButton": "Continue"
+      "continueButton": "Continue",
+      "cap1": "Muscle fullness and definition",
+      "cap2": "Fat distribution",
+      "cap3": "Water retention and puffiness",
+      "cap4": "Posture and proportions",
+      "footer": "Observational only. Not medical advice."
     }
   },
   "privacy": {
@@ -1431,5 +1436,18 @@
     "same": "Same",
     "harder": "Harder",
     "chipHint": "Compared with your own normal, not anyone else’s."
+  },
+  "setup": {
+    "label": "FINISH SETUP",
+    "later": "Later",
+    "goals": {
+      "title": "What are you tracking?",
+      "body": "Pepi is tracking 3 things right now. Pick what you’re after and it tracks the rest.",
+      "save": "Track {{count}} goals"
+    },
+    "health": {
+      "title": "Connect your health app",
+      "body": "Weight, sleep and workouts fill themselves in, so you log less."
+    }
   }
 }

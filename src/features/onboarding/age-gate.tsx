@@ -1,5 +1,5 @@
 import { getLocales } from 'expo-localization';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, TextInput, View } from 'react-native';
 
@@ -8,6 +8,7 @@ import { EngravedLabel } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
 import { Fonts, Radii, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { weightInUnits } from '@/lib/integrations/autofill';
 import { useStore, type Sex, type UnitsSystem } from '@/lib/store';
 import { Constants } from '@/types/database';
 
@@ -37,18 +38,40 @@ function isValidDate(day: number, month: number, year: number): boolean {
 
 /**
  * "About you" — consolidated first step (O-02/O-03): 18+ DOB gate plus sex,
- * units, and an optional cycle opt-in (shown only for those who menstruate).
+ * units, starting weight, and an optional cycle opt-in (shown only for those who
+ * menstruate).
+ *
+ * Weight lives here rather than on its own screen (onboarding review 2026-07-23):
+ * it is one number of the same kind as the rest of this form, and a dedicated
+ * screen for it bought a step in the funnel without buying any clarity.
  */
 export function AgeGate({ onVerified }: { onVerified: (dobISO: string) => void }) {
   const { t } = useTranslation();
   const theme = useTheme();
-  const { profile, setProfile } = useStore();
+  const { profile, setProfile, metricReadings } = useStore();
 
   const [day, setDay] = useState('');
   const [month, setMonth] = useState('');
   const [year, setYear] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [showTrans, setShowTrans] = useState(profile.sex === 'ftm' || profile.sex === 'mtf');
+
+  // Weight, seeded from Health when a reading is already synced.
+  const healthWeight = useMemo(() => {
+    const latest = metricReadings
+      .filter((r) => r.metric === 'body.weight')
+      .sort((a, b) => (a.ts < b.ts ? 1 : -1))[0];
+    return latest ? weightInUnits(latest.value, profile.units) : undefined;
+  }, [metricReadings, profile.units]);
+  const [weightRaw, setWeightRaw] = useState(
+    profile.weightBaseline != null
+      ? String(profile.weightBaseline)
+      : healthWeight != null
+        ? String(healthWeight)
+        : '',
+  );
+  const [weightError, setWeightError] = useState<string | null>(null);
+  const weightUnit = profile.units === 'imperial' ? t('units.lb') : t('units.kg');
 
   const monthRef = useRef<TextInput>(null);
   const yearRef = useRef<TextInput>(null);
@@ -79,6 +102,19 @@ export function AgeGate({ onVerified }: { onVerified: (dobISO: string) => void }
   const submit = () => {
     if (!isValidDate(d, m, y)) { setError(t('ageGate.errorInvalid')); return; }
     if (!isAtLeast18(d, m, y)) { setError(t('ageGate.errorAge')); return; }
+    // Weight is optional, but a value that IS entered must be valid — silently
+    // dropping a typo would leave a wrong baseline every later delta is measured
+    // against.
+    const raw = weightRaw.trim();
+    if (raw) {
+      const w = parseFloat(raw.replace(',', '.'));
+      if (!Number.isFinite(w) || w <= 0 || w > 999) {
+        setWeightError(t('checkin.weightInvalid'));
+        return;
+      }
+      setProfile({ weightBaseline: w });
+    }
+    setWeightError(null);
     setError(null);
     onVerified(new Date(y, m - 1, d).toISOString());
   };
@@ -152,6 +188,24 @@ export function AgeGate({ onVerified }: { onVerified: (dobISO: string) => void }
           />
         ))}
       </View>
+
+      {/* Starting weight — optional, but every later delta is measured from it. */}
+      <EngravedLabel>{t('onboarding.weight.title')}</EngravedLabel>
+      <View style={[styles.weightRow, { backgroundColor: theme.surfaceSunken, borderColor: weightError ? theme.signalBad : theme.border }]}>
+        <TextInput
+          style={[styles.weightInput, { color: weightRaw ? theme.numeral : theme.textMuted }]}
+          value={weightRaw}
+          onChangeText={(v) => { setWeightRaw(v); setWeightError(null); }}
+          placeholder={t('onboarding.weight.placeholder')}
+          placeholderTextColor={theme.textMuted}
+          keyboardType="decimal-pad"
+          returnKeyType="done"
+        />
+        <ThemedText type="monoSm" themeColor="textMuted">{weightUnit}</ThemedText>
+      </View>
+      {weightError ? (
+        <ThemedText type="monoSm" themeColor="signalBad">{weightError}</ThemedText>
+      ) : null}
 
       {/* Sex (required: it drives field surfacing and photo-analysis context) */}
       <EngravedLabel>{t('about.sex')}</EngravedLabel>
@@ -249,5 +303,21 @@ const styles = StyleSheet.create({
   sep: { paddingHorizontal: 2 },
   dobSpacer: { flex: 1 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
+  weightRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: Radii.chamfer,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: Spacing.three,
+    height: 52,
+    gap: Spacing.two,
+  },
+  weightInput: {
+    flex: 1,
+    fontFamily: Fonts.mono,
+    fontSize: 18,
+    fontVariant: ['tabular-nums'],
+    padding: 0,
+  },
   disclaimer: { lineHeight: 18 },
 });

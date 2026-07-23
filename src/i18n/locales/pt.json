@@ -485,7 +485,7 @@
   "consent": {
     "storage": {
       "label": "1 DE 2, ARMAZENAMENTO",
-      "title": "Armazenar fotos de progresso",
+      "title": "As tuas fotos ficam privadas",
       "body": "As fotos de progresso precisam ser armazenadas para que a sobreposição fantasma e a linha do tempo funcionem. São privadas por padrão.",
       "offTitle": "Sem armazenamento",
       "off1": "Sem sobreposição fantasma",
@@ -498,14 +498,14 @@
       "accept": "Permitir armazenamento",
       "decline": "Não obrigado, pular fotos",
       "notice": "Armazenadas de forma privada no seu dispositivo e, ao criar uma conta, em um bucket criptografado, nunca compartilhadas ou usadas para treinar modelos de IA.",
-      "bullet1": "As fotos ficam no seu dispositivo por padrão.",
-      "bullet2": "Backup criptografado na nuvem opcional.",
-      "bullet3": "Nunca usado para treinar nenhuma IA. Nunca.",
+      "bullet1": "Encriptadas, no teu dispositivo",
+      "bullet2": "Nunca partilhadas com ninguém",
+      "bullet3": "Nunca usadas para treinar modelos de IA",
       "understand": "Entendido"
     },
     "ai": {
       "label": "2 DE 2, ANÁLISE IA",
-      "title": "Análise de fotos com IA",
+      "title": "O que o Pepi vê",
       "body": "Nossa IA compara fotos consecutivas para consistência de iluminação, ângulo e enquadramento. Nunca diagnostica nada.",
       "offTitle": "Sem IA",
       "off1": "Sem pontuação de deriva",
@@ -520,7 +520,12 @@
       "notice": "As fotos são enviadas a um serviço de IA. Nunca são usadas para treinar modelos. A análise é observacional, nunca uma afirmação médica.",
       "toggleLabel": "Análise de IA na nuvem",
       "toggleSub": "Desvio de foto + perspectivas",
-      "continueButton": "Continuar"
+      "continueButton": "Continuar",
+      "cap1": "Volume e definição muscular",
+      "cap2": "Distribuição de gordura",
+      "cap3": "Retenção de líquidos e inchaço",
+      "cap4": "Postura e proporções",
+      "footer": "Apenas observacional. Não é aconselhamento médico."
     }
   },
   "privacy": {
@@ -1431,5 +1436,18 @@
     "same": "Igual",
     "harder": "Mais difícil",
     "chipHint": "Comparado com o seu próprio normal, não com o de outros."
+  },
+  "setup": {
+    "label": "CONCLUIR CONFIGURAÇÃO",
+    "later": "Mais tarde",
+    "goals": {
+      "title": "O que queres acompanhar?",
+      "body": "O Pepi acompanha 3 coisas neste momento. Escolhe o teu objetivo e ele acompanha o resto.",
+      "save": "Acompanhar {{count}} objetivos"
+    },
+    "health": {
+      "title": "Liga a tua app de saúde",
+      "body": "Peso, sono e treinos preenchem-se sozinhos, registas menos."
+    }
   }
 }

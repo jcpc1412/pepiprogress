@@ -485,7 +485,7 @@
   "consent": {
     "storage": {
       "label": "1 SUR 2, STOCKAGE",
-      "title": "Stocker vos photos de progression",
+      "title": "Vos photos restent privées",
       "body": "Les photos doivent être stockées pour que la superposition fantôme et la chronologie fonctionnent. Elles sont privées par défaut.",
       "offTitle": "Sans stockage",
       "off1": "Pas de superposition fantôme",
@@ -498,14 +498,14 @@
       "accept": "Autoriser le stockage",
       "decline": "Non merci, ignorer les photos",
       "notice": "Stockées de manière privée sur votre appareil et, lors de la création d'un compte, dans un compartiment chiffré, jamais partagées ni utilisées pour entraîner des modèles d'IA.",
-      "bullet1": "Les photos restent sur votre appareil par défaut.",
-      "bullet2": "Sauvegarde chiffrée dans le cloud en option.",
-      "bullet3": "Jamais utilisé pour entraîner une IA. Jamais.",
+      "bullet1": "Chiffrées, sur votre appareil",
+      "bullet2": "Jamais partagées avec personne",
+      "bullet3": "Jamais utilisées pour entraîner des modèles d’IA",
       "understand": "Je comprends"
     },
     "ai": {
       "label": "2 SUR 2, ANALYSE IA",
-      "title": "Analyse IA des photos",
+      "title": "Ce que Pepi observe",
       "body": "Notre IA compare des photos consécutives pour la cohérence de l'éclairage, de l'angle et du cadrage. Elle ne pose jamais de diagnostic.",
       "offTitle": "Sans IA",
       "off1": "Pas de score de dérive",
@@ -520,7 +520,12 @@
       "notice": "Les photos sont envoyées à un service IA. Elles ne sont jamais utilisées pour entraîner des modèles. L'analyse est observationnelle, jamais une affirmation médicale.",
       "toggleLabel": "Analyse IA cloud",
       "toggleSub": "Dérive photo + analyses",
-      "continueButton": "Continuer"
+      "continueButton": "Continuer",
+      "cap1": "Volume et définition musculaire",
+      "cap2": "Répartition des graisses",
+      "cap3": "Rétention d’eau et gonflement",
+      "cap4": "Posture et proportions",
+      "footer": "Observation uniquement. Pas un avis médical."
     }
   },
   "privacy": {
@@ -1431,5 +1436,18 @@
     "same": "Pareil",
     "harder": "Plus dur",
     "chipHint": "Par rapport à votre propre normale, pas à celle des autres."
+  },
+  "setup": {
+    "label": "TERMINER LA CONFIGURATION",
+    "later": "Plus tard",
+    "goals": {
+      "title": "Que suivez-vous ?",
+      "body": "Pepi suit 3 choses pour l’instant. Choisissez votre objectif et il suivra le reste.",
+      "save": "Suivre {{count}} objectifs"
+    },
+    "health": {
+      "title": "Connectez votre app santé",
+      "body": "Poids, sommeil et séances se remplissent seuls, vous saisissez moins."
+    }
   }
 }

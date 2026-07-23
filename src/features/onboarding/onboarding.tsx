@@ -1,39 +1,41 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Line } from 'react-native-svg';
 
-import { ChamferBox } from '@/components/chamfer';
 import { LabeledInput, PrimaryButton, TextButton } from '@/components/form';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Chamfer, Fonts, MaxContentWidth, Radii, Spacing } from '@/constants/theme';
-import { BodySilhouette } from '@/features/onboarding/body-silhouette';
+import { MaxContentWidth, Radii, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth, type OAuthProvider } from '@/lib/auth';
-import type { Goal } from '@/lib/field-surfacing';
-import { weightInUnits } from '@/lib/integrations/autofill';
-import { availableProviders } from '@/lib/integrations/registry';
 import { useStore } from '@/lib/store';
 import { mergeStates, migrateToCloud, pullFromCloud, pullSnapshot, pushSnapshot } from '@/lib/sync';
 import { isSupabaseConfigured } from '@/lib/supabase';
-import { Constants } from '@/types/database';
 
 import { AgeGate } from './age-gate';
 import { ConsentPhotoAI, ConsentPhotoStorage } from './consent-photos';
 
-const GOALS = Constants.public.Enums.goal;
-
-// Steps:
+// Steps (restructured after the 2026-07-23 onboarding review):
 // 0 = Account (optional — sign in/up first, incl. Apple/Google)
-// 1 = Age gate (DOB + sex + units)
-// 2 = Health connector (optional — enables weight autofill)
-// 3 = Weight baseline (prefilled from Health when available)
-// 4 = Photo-storage consent
-// 5 = Photo-AI consent
-// 6 = Goals
-const TOTAL_STEPS = 7;
+// 1 = About you (DOB + sex + units + starting weight + cycle opt-in)
+// 2 = Photo-storage consent
+// 3 = Photo-AI consent
+//
+// Deliberately NOT here any more, all deferred to the post-onboarding setup
+// cards on Home: the health connector (asks for trust before any value is
+// delivered), the weight step (folded into About you — one number did not earn a
+// screen), and goals (see below).
+//
+// Goals were the biggest cut. They feel like personalization but they are a poor
+// onboarding question: the user does not yet know what a goal changes here, and
+// the answer is freely editable later. They now sit behind a Home setup card
+// instead. The one real cost is that `surfaceFields` derives the whole check-in
+// from goals ∪ compound tags, so a goal-less user falls back to MINIMAL_DEFAULT
+// (weight, wellness, body photo) — a thin but honest first Home, and the card is
+// framed to convert precisely that.
+const TOTAL_STEPS = 4;
 
 // ─── Progress bar ────────────────────────────────────────────────────────────
 
@@ -89,121 +91,19 @@ function Frame({ step, children }: { step: number; children: React.ReactNode }) 
     <ThemedView style={styles.container}>
       <DiagonalEtch />
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+        {/* No "04/07" readout: the count is the app's business, not the user's.
+            People do not care whether it is seven steps, only whether it is
+            nearly over — which the filled segments already say. */}
         <View style={styles.progressHead}>
           <View style={styles.progressFill}>
             <StepProgress current={step + 1} total={TOTAL_STEPS} />
           </View>
-          <ThemedText type="monoSm" themeColor="textMuted">
-            {`${String(step + 1).padStart(2, '0')}/${String(TOTAL_STEPS).padStart(2, '0')}`}
-          </ThemedText>
         </View>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           {children}
         </ScrollView>
       </SafeAreaView>
     </ThemedView>
-  );
-}
-
-// ─── Goal chip ───────────────────────────────────────────────────────────────
-
-function GoalChip({ goal, selected, onPress }: { goal: Goal; selected: boolean; onPress: () => void }) {
-  const { t } = useTranslation();
-  const theme = useTheme();
-  return (
-    <Pressable accessibilityRole="button" accessibilityState={{ selected }} onPress={onPress} style={styles.goalChipWrap}>
-      <ChamferBox
-        chamfer={Chamfer.chip}
-        fill={selected ? theme.accent : theme.surfaceSunken}
-        borderColor={selected ? undefined : theme.border}>
-        <View style={styles.goalChip}>
-          <ThemedText type="label" themeColor={selected ? 'onAccent' : 'textMuted'}>
-            {t(`goalCat.${goal}` as 'goalCat.weight_loss')}
-          </ThemedText>
-          <ThemedText type="smallBold" themeColor={selected ? 'onAccent' : 'text'}>
-            {t(`goals.${goal}` as 'goals.weight_loss')}
-          </ThemedText>
-        </View>
-      </ChamferBox>
-    </Pressable>
-  );
-}
-
-// ─── Weight baseline ─────────────────────────────────────────────────────────
-
-function WeightStep({ onNext, onBack }: { onNext: () => void; onBack: () => void }) {
-  const { t } = useTranslation();
-  const theme = useTheme();
-  const { profile, setProfile, metricReadings } = useStore();
-  // Latest Health weight reading (decision: weight from integration), computed at
-  // render so we can seed the input without a setState-in-effect.
-  const healthWeight = useMemo(() => {
-    const latest = metricReadings
-      .filter((r) => r.metric === 'body.weight')
-      .sort((a, b) => (a.ts < b.ts ? 1 : -1))[0];
-    return latest ? weightInUnits(latest.value, profile.units) : undefined;
-  }, [metricReadings, profile.units]);
-  const [raw, setRaw] = useState(
-    profile.weightBaseline != null
-      ? String(profile.weightBaseline)
-      : healthWeight != null
-        ? String(healthWeight)
-        : '',
-  );
-  const [fromHealth, setFromHealth] = useState(profile.weightBaseline == null && healthWeight != null);
-  const [error, setError] = useState<string | null>(null);
-  const unit = profile.units === 'imperial' ? t('units.lb') : t('units.kg');
-
-  const submit = () => {
-    if (!raw.trim()) { onNext(); return; }
-    const n = parseFloat(raw.replace(',', '.'));
-    if (!Number.isFinite(n) || n <= 0 || n > 999) {
-      setError(t('checkin.weightInvalid'));
-      return;
-    }
-    setProfile({ weightBaseline: n });
-    onNext();
-  };
-
-  return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
-      <View style={styles.section}>
-        <View style={styles.titleBlock}>
-          <ThemedText type="label" themeColor="textMuted">{t('onboarding.intakeProcedure')}</ThemedText>
-          <ThemedText type="display">{t('onboarding.weight.title')}</ThemedText>
-          <ThemedText themeColor="textSecondary">{t('onboarding.weight.subtitle')}</ThemedText>
-        </View>
-
-        <View style={[styles.weightInputRow, { borderColor: error ? theme.signalBad : theme.border }]}>
-          <TextInput
-            style={[styles.weightInput, { color: theme.text, fontFamily: Fonts.mono }]}
-            placeholder={t('onboarding.weight.placeholder')}
-            placeholderTextColor={theme.textMuted}
-            keyboardType="decimal-pad"
-            value={raw}
-            onChangeText={(v) => { setRaw(v); setError(null); setFromHealth(false); }}
-            returnKeyType="done"
-            onSubmitEditing={submit}
-          />
-          <ThemedText type="monoSm" themeColor="textMuted">{unit}</ThemedText>
-        </View>
-        {fromHealth && !error && (
-          <ThemedText type="monoSm" themeColor="signalGood">{t('onboarding.weight.fromHealth')}</ThemedText>
-        )}
-        {error && (
-          <ThemedText type="monoSm" style={{ color: theme.signalBad }}>{error}</ThemedText>
-        )}
-
-        <View style={styles.footer}>
-          <View style={styles.backButton}>
-            <PrimaryButton label={t('onboarding.back')} variant="secondary" onPress={onBack} />
-          </View>
-          <View style={styles.nextButton}>
-            <PrimaryButton label={raw.trim() ? t('onboarding.weight.save') : t('onboarding.skip')} onPress={submit} />
-          </View>
-        </View>
-      </View>
-    </KeyboardAvoidingView>
   );
 }
 
@@ -359,115 +259,13 @@ function AccountStep({ onNext }: { onNext: () => void }) {
   );
 }
 
-// ─── Step 7: Health connector (optional) ─────────────────────────────────────
-
-function HealthStep({ onDone }: { onDone: () => void }) {
-  const { t } = useTranslation();
-  const { integrations, setIntegration, addMetricReadings } = useStore();
-  const [busy, setBusy] = useState(false);
-  const [showImport, setShowImport] = useState(false);
-
-  const providers = availableProviders().filter((p) => p.id !== 'terra');
-  const provider = providers[0];
-
-  const connect = async () => {
-    if (!provider) { onDone(); return; }
-    setBusy(true);
-    try {
-      const { ok, patch } = await provider.authenticate();
-      if (ok) {
-        setIntegration(provider.id, { connectedAt: new Date().toISOString(), ...patch });
-        setShowImport(true);
-        return;
-      }
-    } finally {
-      setBusy(false);
-    }
-    onDone();
-  };
-
-  const handleImport = async (range: 'lastYear' | 'allTime' | 'skip') => {
-    setShowImport(false);
-    if (range !== 'skip' && provider) {
-      setBusy(true);
-      try {
-        const since =
-          range === 'lastYear'
-            ? new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString()
-            : undefined;
-        const readings = await provider.pull({ since, connection: integrations[provider.id] });
-        addMetricReadings(readings);
-        setIntegration(provider.id, { lastSyncAt: new Date().toISOString() });
-      } finally {
-        setBusy(false);
-      }
-    }
-    onDone();
-  };
-
-  const connected = provider && !!integrations[provider.id]?.connectedAt;
-
-  return (
-    <View style={styles.section}>
-      <View style={styles.titleBlock}>
-        <ThemedText type="label" themeColor="textMuted">{t('onboarding.intakeProcedure')}</ThemedText>
-        <ThemedText type="display">{t('onboarding.health.title')}</ThemedText>
-        <ThemedText themeColor="textSecondary">{t('onboarding.health.subtitle')}</ThemedText>
-      </View>
-
-      {providers.length === 0 ? (
-        <ThemedText type="monoSm" themeColor="textMuted">{t('integrations.empty')}</ThemedText>
-      ) : (
-        <View style={styles.healthCard}>
-          <ThemedText type="smallBold">{t(provider!.nameKey as never)}</ThemedText>
-          {!provider!.nativeReady ? (
-            <ThemedText type="monoSm" themeColor="textMuted">{t('integrations.comingSoon')}</ThemedText>
-          ) : connected ? (
-            <ThemedText type="monoSm" themeColor="signalGood">{t('onboarding.health.connected')}</ThemedText>
-          ) : busy ? (
-            <ActivityIndicator size="small" />
-          ) : (
-            <Pressable accessibilityRole="button" onPress={connect}>
-              <ThemedText type="monoSm" themeColor="accent" style={styles.link}>{t('integrations.connect')}</ThemedText>
-            </Pressable>
-          )}
-        </View>
-      )}
-
-      {showImport ? (
-        <View style={styles.importCard}>
-          <ThemedText type="smallBold">{t('integrations.importTitle')}</ThemedText>
-          <ThemedText type="small" themeColor="textSecondary">{t('integrations.importSubtitle')}</ThemedText>
-          <PrimaryButton
-            label={busy ? t('integrations.importing') : t('integrations.importLastYear')}
-            disabled={busy}
-            onPress={() => handleImport('lastYear')}
-          />
-          <TextButton label={t('integrations.importAllTime')} onPress={() => handleImport('allTime')} />
-          <TextButton label={t('integrations.importSkip')} onPress={() => handleImport('skip')} />
-        </View>
-      ) : (
-        <PrimaryButton
-          label={connected ? t('onboarding.finish') : t('onboarding.health.skip')}
-          onPress={onDone}
-        />
-      )}
-    </View>
-  );
-}
-
 // ─── Main onboarding ─────────────────────────────────────────────────────────
 
 export function Onboarding() {
-  const { t } = useTranslation();
-  const { profile, setProfile, completeOnboarding } = useStore();
+  const { setProfile, completeOnboarding } = useStore();
   const [step, setStep] = useState(0);
 
   const next = () => setStep((s) => s + 1);
-  const back = () => setStep((s) => s - 1);
-
-  const toggle = <T,>(list: T[], item: T): T[] =>
-    list.includes(item) ? list.filter((x) => x !== item) : [...list, item];
 
   // Step 0 — Account (optional, first)
   if (step === 0) {
@@ -492,26 +290,8 @@ export function Onboarding() {
     );
   }
 
-  // Step 2 — Health connector (optional; enables weight autofill next)
+  // Step 2 — Photo storage consent
   if (step === 2) {
-    return (
-      <Frame step={step}>
-        <HealthStep onDone={next} />
-      </Frame>
-    );
-  }
-
-  // Step 3 — Weight
-  if (step === 3) {
-    return (
-      <Frame step={step}>
-        <WeightStep onNext={next} onBack={back} />
-      </Frame>
-    );
-  }
-
-  // Step 4 — Photo storage consent
-  if (step === 4) {
     return (
       <Frame step={step}>
         <ConsentPhotoStorage
@@ -528,78 +308,25 @@ export function Onboarding() {
     );
   }
 
-  // Step 5 — Photo AI consent
-  if (step === 5) {
+  // Step 3 — Photo AI consent → completeOnboarding
+  if (step === 3) {
     return (
       <Frame step={step}>
         <ConsentPhotoAI
           onAccept={() => {
             setProfile({ consentPhotoAI: true, consentTimestamp: new Date().toISOString() });
-            next();
+            completeOnboarding();
           }}
           onDecline={() => {
             setProfile({ consentPhotoAI: false });
-            next();
+            completeOnboarding();
           }}
         />
       </Frame>
     );
   }
 
-  // Step 6 — Goals → completeOnboarding
-  // Transition tracking (beta-notes §1.9): the chip appears only when sex is
-  // mtf/ftm, and is never preselected — some trans users are here for
-  // peptides, not transition tracking, so we don't assume intent.
-  const visibleGoals = GOALS.filter(
-    (g) =>
-      g !== 'gender_transition' ||
-      profile.sex === 'mtf' ||
-      profile.sex === 'ftm' ||
-      profile.goals.includes('gender_transition'),
-  );
-  return (
-    <Frame step={step}>
-      <View style={styles.section}>
-        <ThemedText type="display">{t('onboarding.goals.title')}</ThemedText>
-        <ThemedText themeColor="textSecondary">{t('onboarding.goals.subtitle')}</ThemedText>
-
-        <BodySilhouette goals={profile.goals} />
-
-        <View style={styles.goalGrid}>
-          {visibleGoals.map((g) => (
-            <GoalChip
-              key={g}
-              goal={g}
-              selected={profile.goals.includes(g)}
-              onPress={() => setProfile({ goals: toggle<Goal>(profile.goals, g) })}
-            />
-          ))}
-        </View>
-        {profile.goals.length === 0 && (
-          <ThemedText type="monoSm" themeColor="textMuted">
-            {t('onboarding.goals.required')}
-          </ThemedText>
-        )}
-      </View>
-
-      <View style={styles.footer}>
-        <View style={styles.backButton}>
-          <PrimaryButton label={t('onboarding.back')} variant="secondary" onPress={back} />
-        </View>
-        <View style={styles.nextButton}>
-          <PrimaryButton
-            label={
-              profile.goals.length > 0
-                ? t('onboarding.beginSelected', { count: profile.goals.length })
-                : t('onboarding.goals.required')
-            }
-            disabled={profile.goals.length === 0}
-            onPress={completeOnboarding}
-          />
-        </View>
-      </View>
-    </Frame>
-  );
+  return null;
 }
 
 const styles = StyleSheet.create({

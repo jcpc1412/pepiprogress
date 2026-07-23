@@ -4,7 +4,7 @@ import { StyleSheet, Switch, View } from 'react-native';
 
 import { PrimaryButton } from '@/components/form';
 import { CameraIcon, SignalDotIcon, TargetIcon } from '@/components/icons';
-import { Card, Divider, EngravedLabel } from '@/components/surface';
+import { Card, Divider } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -19,7 +19,6 @@ export function ConsentPhotoStorage({
   onDecline: () => void;
 }) {
   const { t } = useTranslation();
-  const theme = useTheme();
 
   const bullets = [
     t('consent.storage.bullet1'),
@@ -27,17 +26,17 @@ export function ConsentPhotoStorage({
     t('consent.storage.bullet3'),
   ];
 
+  // Three bullets and a button (onboarding review 2026-07-23). The prior screen
+  // carried a body paragraph plus a long legal notice on top of these bullets;
+  // nobody read either, and the length itself read as something to be wary of.
+  // The full policy still lives in Settings, where someone looking for it looks.
   return (
     <View style={styles.wrap}>
       <View style={styles.glyphRow}>
         <CameraIcon size={60} color="textSecondary" />
       </View>
 
-      <EngravedLabel>{t('consent.storage.label')}</EngravedLabel>
       <ThemedText type="display">{t('consent.storage.title')}</ThemedText>
-      <ThemedText type="body" themeColor="textSecondary">
-        {t('consent.storage.body')}
-      </ThemedText>
 
       <Card style={styles.bulletCard}>
         {bullets.map((b, i) => (
@@ -52,10 +51,6 @@ export function ConsentPhotoStorage({
           </View>
         ))}
       </Card>
-
-      <ThemedText type="monoSm" style={{ color: theme.textMuted, lineHeight: 18 }}>
-        {t('consent.storage.notice')}
-      </ThemedText>
 
       <PrimaryButton label={t('consent.storage.understand')} onPress={onAccept} />
 
@@ -96,17 +91,35 @@ export function ConsentPhotoAI({
         <TargetIcon size={60} color="textSecondary" />
       </View>
 
-      <EngravedLabel>{t('consent.ai.label')}</EngravedLabel>
+      {/* Lead with capability, not caveat (onboarding review 2026-07-23). The
+          previous version opened by explaining what the AI does NOT do, which
+          sells doubt at the exact moment the app should be showing its one
+          genuinely novel thing. The disclaimer is still here — as a footnote,
+          which is the weight it should carry. */}
       <ThemedText type="display">{t('consent.ai.title')}</ThemedText>
-      <ThemedText type="body" themeColor="textSecondary">
-        {t('consent.ai.body')}
-      </ThemedText>
 
-      <Card style={styles.explanatoryCard}>
-        <ThemedText type="small" themeColor="textSecondary">
-          {t('consent.ai.notice')}
-        </ThemedText>
+      <Card style={styles.bulletCard}>
+        {[
+          t('consent.ai.cap1'),
+          t('consent.ai.cap2'),
+          t('consent.ai.cap3'),
+          t('consent.ai.cap4'),
+        ].map((c, i) => (
+          <View key={i}>
+            {i > 0 && <Divider />}
+            <View style={styles.bulletRow}>
+              <SignalDotIcon size={8} color="accent" />
+              <ThemedText type="small" style={styles.bulletText}>
+                {c}
+              </ThemedText>
+            </View>
+          </View>
+        ))}
       </Card>
+
+      <ThemedText type="monoSm" style={{ color: theme.textMuted }}>
+        {t('consent.ai.footer')}
+      </ThemedText>
 
       <Card style={styles.toggleCard}>
         <View style={styles.toggleRow}>

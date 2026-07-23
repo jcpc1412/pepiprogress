@@ -358,6 +358,9 @@ export type LocalProfile = {
   /** One-time Pepi setup bookkeeping (asked / declined / active), same pattern as
    *  `typicalPromptState`: a decline is remembered so it never asks twice. */
   cyclePromptState?: CyclePromptState;
+  /** Post-onboarding setup cards the user has dismissed (goals / health). Both
+   *  settings stay reachable from Settings; this only stops Home re-nagging. */
+  setupDismissed?: string[];
   // Body type calibration passed to vision AI for accurate composition assessment.
   bodyType?: string;
   /** User-defined custom "problem area" photo tracks within the body session

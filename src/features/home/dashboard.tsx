@@ -20,6 +20,7 @@ import { TodayRecordStrip } from '@/features/home/today-record-strip';
 import { formatHeroValue, resolveMsg, useVerdict, type TFn } from '@/features/home/use-verdict';
 import { daysBetween, formatDateKey } from '@/lib/dates';
 import { useOverlay } from '@/lib/nav-overlay';
+import { SetupCards } from '@/features/onboarding/setup-cards';
 import { useStore } from '@/lib/store';
 import { useToday } from '@/lib/today';
 
@@ -149,6 +150,10 @@ export function Dashboard() {
         </View>
 
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+          {/* Deferred onboarding steps (goals, health) — one at a time, above the
+              verdict because goals change what the verdict can even read. */}
+          <SetupCards />
+
           {/* ── The verdict (conclusion first, on the canvas — no card, mockup §4.1) ── */}
           <View style={styles.verdict}>
             <View style={styles.verdictHead}>
