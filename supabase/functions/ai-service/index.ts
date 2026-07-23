@@ -31,6 +31,7 @@ import {
   resolveMarketCategory,
 } from '../_shared/posture.ts';
 import { transitionPromptLines } from '../_shared/transition-context.ts';
+import { localeLine } from '../_shared/prompt-lines.ts';
 
 const PARSE_MODEL = Deno.env.get('AI_PARSE_MODEL') ?? 'claude-haiku-4-5';
 const VISION_MODEL = Deno.env.get('AI_VISION_MODEL') ?? 'claude-sonnet-4-6';
@@ -550,29 +551,40 @@ function parseSystemPrompt(catalog: CatalogEntry[], nowISO: string, locale: stri
   ].join('\n');
 }
 
-function visionSystemPrompt(
+type VisionCtx = {
+  measurementDelta?: { waist?: number; hips?: number; extra?: { key: string; delta: number } };
+  cycleContext?: 'luteal';
+  symptomContext?: string;
+  bodyTypeCalibration?: string;
+  cycleWeek?: number;
+  units?: 'metric' | 'imperial';
+  transitionContext?: 'mtf' | 'ftm';
+  priorAnalyses?: PriorAnalysis[];
+  dataContext?: AnalysisDataContext;
+  poseLabel?: string;
+};
+
+// ── visionSystemPrompt context modules (composer blocks) ──────────────────────
+// Each returns the lines for ONE optional context section, or [] when it does not
+// apply, so visionSystemPrompt spreads them unconditionally (mirrors
+// transitionPromptLines). The vision prompt is the accumulator that MASTER-PLAN
+// point 3 warns about: keeping every section a composed module means adding a new
+// one (e.g. a pose region-template) is one more helper + one more spread, never an
+// edit that grows the base monolith or dilutes its HARD RULES. These stay local
+// (not in _shared) because they are vision-specific; the connector never uses them.
+
+/** Base instruction + the two output-layer specs + hard rules (always present). */
+function visionBaseLines(
   session: string,
   hasBaseline: boolean,
   locale: string,
-  ctx?: {
-    measurementDelta?: { waist?: number; hips?: number; extra?: { key: string; delta: number } };
-    cycleContext?: 'luteal';
-    symptomContext?: string;
-    bodyTypeCalibration?: string;
-    cycleWeek?: number;
-    units?: 'metric' | 'imperial';
-    transitionContext?: 'mtf' | 'ftm';
-    priorAnalyses?: PriorAnalysis[];
-    dataContext?: AnalysisDataContext;
-    poseLabel?: string;
-  },
-): string {
-  const unitLabel = ctx?.units === 'imperial' ? 'in' : 'cm';
+  ctx: VisionCtx | undefined,
+): string[] {
   const regionGuide =
     session === 'face'
       ? 'jawline, cheek fullness, under-eye area, neck, overall puffiness vs definition'
       : 'waist, midsection definition, chest, shoulders/delts, arms, back and legs when visible, overall fullness vs dryness';
-  const lines = [
+  return [
     `You are the progress-reading engine of a body-tracking instrument. Session type: ${session}.${ctx?.poseLabel ? ` Track: ${ctx.poseLabel}.` : ''}`,
     hasBaseline
       ? 'You are given a BASELINE photo and a NEW photo. Compare them.'
@@ -604,94 +616,133 @@ function visionSystemPrompt(
     '- Hedge everything ("appears", "may", "slightly"). Never definitive.',
     "- Do NOT identify or describe the person's identity. Judge framing/lighting/visible change only.",
     '- Uncertainty beats overclaiming: one wrong confident read costs more trust than ten honest "unclear"s.',
-    `- Write every user-facing string (change, observation notes and region labels, hypothesis, watchNext) in this locale: ${locale}.`,
+    `- ${localeLine(locale, 'every user-facing string (change, observation notes and region labels, hypothesis, watchNext)')}`,
     `- The user's unit system is ${ctx?.units ?? 'metric'}. Report any measurement or weight in ${ctx?.units === 'imperial' ? 'imperial (in / lb)' : 'metric (cm / kg)'}. Do NOT default to imperial.`,
   ];
+}
 
-  if (ctx?.dataContext) {
-    const d = ctx.dataContext;
-    const wUnit = ctx?.units === 'imperial' ? 'lb' : 'kg';
-    const parts: string[] = [`window: ${d.windowDays} days between baseline and new photo`];
-    if (d.weight) {
-      parts.push(
-        `weight: ${d.weight.start}${wUnit} -> ${d.weight.end}${wUnit} (${d.weight.delta > 0 ? '+' : ''}${d.weight.delta}${wUnit})`,
-      );
-    }
-    if (d.nutrition) {
-      const n: string[] = [];
-      if (d.nutrition.avgProtein !== undefined) n.push(`avg protein ${d.nutrition.avgProtein}g`);
-      if (d.nutrition.avgCalories !== undefined) n.push(`avg calories ${d.nutrition.avgCalories}kcal`);
-      parts.push(`nutrition over last 14d: ${n.join(', ')} (${d.nutrition.daysLogged} days logged)`);
-    }
-    if (d.avgSleepQuality !== undefined) parts.push(`avg sleep quality last 14d: ${d.avgSleepQuality}/5`);
-    if (d.recentDoses?.length) {
-      parts.push(
-        `doses before this photo: ${d.recentDoses.map((x) => `${x.label} ${x.hoursBefore}h before`).join(', ')}`,
-      );
-    }
-    lines.push(
-      '',
-      'DATA CONTEXT (from the user\'s own logs — use for the hypothesis, cite specifics):',
-      ...parts.map((p) => `- ${p}`),
+/** Pre-digested numeric context from the user's own logs (F5 context fusion). */
+function visionDataContextLines(d: AnalysisDataContext | undefined, units?: 'metric' | 'imperial'): string[] {
+  if (!d) return [];
+  const wUnit = units === 'imperial' ? 'lb' : 'kg';
+  const parts: string[] = [`window: ${d.windowDays} days between baseline and new photo`];
+  if (d.weight) {
+    parts.push(
+      `weight: ${d.weight.start}${wUnit} -> ${d.weight.end}${wUnit} (${d.weight.delta > 0 ? '+' : ''}${d.weight.delta}${wUnit})`,
     );
   }
-
-  if (ctx?.priorAnalyses?.length) {
-    lines.push(
-      '',
-      'YOUR PRIOR FINDINGS on this track (newest first — your memory, not the user\'s words):',
-      ...ctx.priorAnalyses.map((p) => {
-        const obs = p.observations.map((o) => `${o.region} (${o.direction}): ${o.note}`).join('; ');
-        const extra = [p.hypothesis ? `hypothesis: ${p.hypothesis}` : '', p.watchNext ? `watching: ${p.watchNext}` : '']
-          .filter(Boolean)
-          .join(' | ');
-        return `- ${p.at.slice(0, 10)}: ${obs || 'no region findings'}${extra ? ` | ${extra}` : ''}`;
-      }),
-      'Confirm, extend, or quietly drop these — reference at most one or two, and only when the',
-      'new photo actually supports it. If a prior watch-item can now be checked, address it.',
-      'Never invent continuity the photos do not show.',
+  if (d.nutrition) {
+    const n: string[] = [];
+    if (d.nutrition.avgProtein !== undefined) n.push(`avg protein ${d.nutrition.avgProtein}g`);
+    if (d.nutrition.avgCalories !== undefined) n.push(`avg calories ${d.nutrition.avgCalories}kcal`);
+    parts.push(`nutrition over last 14d: ${n.join(', ')} (${d.nutrition.daysLogged} days logged)`);
+  }
+  if (d.avgSleepQuality !== undefined) parts.push(`avg sleep quality last 14d: ${d.avgSleepQuality}/5`);
+  if (d.recentDoses?.length) {
+    parts.push(
+      `doses before this photo: ${d.recentDoses.map((x) => `${x.label} ${x.hoursBefore}h before`).join(', ')}`,
     );
   }
+  return [
+    '',
+    'DATA CONTEXT (from the user\'s own logs — use for the hypothesis, cite specifics):',
+    ...parts.map((p) => `- ${p}`),
+  ];
+}
 
-  if (ctx?.bodyTypeCalibration) {
-    lines.push('', `Body type context: ${ctx.bodyTypeCalibration}. Factor this into your assessment.`);
-  }
-  if (ctx?.measurementDelta) {
-    const parts: string[] = [];
-    if (ctx.measurementDelta.waist !== undefined) {
-      parts.push(`waist: ${ctx.measurementDelta.waist > 0 ? '+' : ''}${ctx.measurementDelta.waist}${unitLabel}`);
-    }
-    if (ctx.measurementDelta.hips !== undefined) {
-      parts.push(`hips: ${ctx.measurementDelta.hips > 0 ? '+' : ''}${ctx.measurementDelta.hips}${unitLabel}`);
-    }
-    if (ctx.measurementDelta.extra) {
-      parts.push(`${ctx.measurementDelta.extra.key}: ${ctx.measurementDelta.extra.delta > 0 ? '+' : ''}${ctx.measurementDelta.extra.delta}${unitLabel}`);
-    }
-    if (parts.length) {
-      lines.push('', `Measurement changes since baseline: ${parts.join(', ')}. Reference these in your change note if relevant.`);
-    }
-  }
-  if (ctx?.cycleContext === 'luteal') {
-    // Cycle attribution register (beta-notes 1.7 step 1, owner-decided copy):
-    // attribute, never criticize; suppress bloating-as-regression entirely.
-    lines.push(
-      '',
-      'Cycle context: the user is likely in their luteal phase. Register rules for this case:',
-      '- If you observe bloating, fullness, or midsection softness, ATTRIBUTE it in this hedged register: "some water retention is consistent with this point in your cycle."',
-      '- Never describe such changes as regression, fat gain, or lost progress; do not count them against progress in your comparability or change assessment.',
-      '- Never use diagnostic phrasing (e.g. "hormonal inflammation detected"). Attribution, not diagnosis.',
-      '- Mention the cycle only when a visible change plausibly relates to it; otherwise leave it out.',
-    );
-  }
-  lines.push(...transitionPromptLines(ctx?.transitionContext));
-  if (ctx?.symptomContext) {
-    lines.push('', `User reported a symptom to document: "${ctx.symptomContext}". Focus on whether this is visually apparent.`);
-  }
-  if (ctx?.cycleWeek && ctx.cycleWeek > 0) {
-    lines.push('', `The user is about week ${ctx.cycleWeek} into their compound cycle (not a fresh start). Calibrate expectations to that point in a typical timeline rather than treating this as day 1.`);
-  }
+/** The observation ledger: your prior findings on this track (F5). */
+function visionPriorFindingsLines(priorAnalyses: PriorAnalysis[] | undefined): string[] {
+  if (!priorAnalyses?.length) return [];
+  return [
+    '',
+    'YOUR PRIOR FINDINGS on this track (newest first — your memory, not the user\'s words):',
+    ...priorAnalyses.map((p) => {
+      const obs = p.observations.map((o) => `${o.region} (${o.direction}): ${o.note}`).join('; ');
+      const extra = [p.hypothesis ? `hypothesis: ${p.hypothesis}` : '', p.watchNext ? `watching: ${p.watchNext}` : '']
+        .filter(Boolean)
+        .join(' | ');
+      return `- ${p.at.slice(0, 10)}: ${obs || 'no region findings'}${extra ? ` | ${extra}` : ''}`;
+    }),
+    'Confirm, extend, or quietly drop these — reference at most one or two, and only when the',
+    'new photo actually supports it. If a prior watch-item can now be checked, address it.',
+    'Never invent continuity the photos do not show.',
+  ];
+}
 
-  return lines.join('\n');
+/** App-inferred body-type calibration (owner §4A). */
+function visionBodyTypeLines(bodyTypeCalibration: string | undefined): string[] {
+  if (!bodyTypeCalibration) return [];
+  return ['', `Body type context: ${bodyTypeCalibration}. Factor this into your assessment.`];
+}
+
+/** Tape-measurement deltas since baseline. */
+function visionMeasurementLines(
+  measurementDelta: VisionCtx['measurementDelta'],
+  unitLabel: string,
+): string[] {
+  if (!measurementDelta) return [];
+  const parts: string[] = [];
+  if (measurementDelta.waist !== undefined) {
+    parts.push(`waist: ${measurementDelta.waist > 0 ? '+' : ''}${measurementDelta.waist}${unitLabel}`);
+  }
+  if (measurementDelta.hips !== undefined) {
+    parts.push(`hips: ${measurementDelta.hips > 0 ? '+' : ''}${measurementDelta.hips}${unitLabel}`);
+  }
+  if (measurementDelta.extra) {
+    parts.push(`${measurementDelta.extra.key}: ${measurementDelta.extra.delta > 0 ? '+' : ''}${measurementDelta.extra.delta}${unitLabel}`);
+  }
+  if (!parts.length) return [];
+  return ['', `Measurement changes since baseline: ${parts.join(', ')}. Reference these in your change note if relevant.`];
+}
+
+/** Luteal-phase attribution register (beta-notes 1.7 step 1, owner-decided copy):
+ *  attribute, never criticize; suppress bloating-as-regression entirely. */
+function visionCycleLutealLines(cycleContext: 'luteal' | undefined): string[] {
+  if (cycleContext !== 'luteal') return [];
+  return [
+    '',
+    'Cycle context: the user is likely in their luteal phase. Register rules for this case:',
+    '- If you observe bloating, fullness, or midsection softness, ATTRIBUTE it in this hedged register: "some water retention is consistent with this point in your cycle."',
+    '- Never describe such changes as regression, fat gain, or lost progress; do not count them against progress in your comparability or change assessment.',
+    '- Never use diagnostic phrasing (e.g. "hormonal inflammation detected"). Attribution, not diagnosis.',
+    '- Mention the cycle only when a visible change plausibly relates to it; otherwise leave it out.',
+  ];
+}
+
+/** A user-reported symptom to check for visual corroboration. */
+function visionSymptomLines(symptomContext: string | undefined): string[] {
+  if (!symptomContext) return [];
+  return ['', `User reported a symptom to document: "${symptomContext}". Focus on whether this is visually apparent.`];
+}
+
+/** Weeks-into-cycle calibration, so a mid-cycle first photo isn't read as day 1. */
+function visionCycleWeekLines(cycleWeek: number | undefined): string[] {
+  if (!cycleWeek || cycleWeek <= 0) return [];
+  return ['', `The user is about week ${cycleWeek} into their compound cycle (not a fresh start). Calibrate expectations to that point in a typical timeline rather than treating this as day 1.`];
+}
+
+/**
+ * Compose the vision system prompt from its base + whichever context modules
+ * apply to this call. Order is load-bearing (prompt order); keep it stable.
+ */
+function visionSystemPrompt(
+  session: string,
+  hasBaseline: boolean,
+  locale: string,
+  ctx?: VisionCtx,
+): string {
+  const unitLabel = ctx?.units === 'imperial' ? 'in' : 'cm';
+  return [
+    ...visionBaseLines(session, hasBaseline, locale, ctx),
+    ...visionDataContextLines(ctx?.dataContext, ctx?.units),
+    ...visionPriorFindingsLines(ctx?.priorAnalyses),
+    ...visionBodyTypeLines(ctx?.bodyTypeCalibration),
+    ...visionMeasurementLines(ctx?.measurementDelta, unitLabel),
+    ...visionCycleLutealLines(ctx?.cycleContext),
+    ...transitionPromptLines(ctx?.transitionContext),
+    ...visionSymptomLines(ctx?.symptomContext),
+    ...visionCycleWeekLines(ctx?.cycleWeek),
+  ].join('\n');
 }
 
 function labSystemPrompt(locale: string): string {
@@ -705,7 +756,7 @@ function labSystemPrompt(locale: string): string {
     'HARD RULES:',
     '- Extract values ONLY. Never interpret results or advise any action.',
     '- Never store or echo back names, DOB, provider names, or identifying information from the document.',
-    `- Write any descriptive text in locale: ${locale}.`,
+    `- ${localeLine(locale, 'any descriptive text')}`,
   ].join('\n');
 }
 
@@ -757,7 +808,7 @@ function insightsSystemPrompt(mode: string, locale: string, coachingLevel?: stri
     '- Hedge ("appears", "may", "trends toward"). Never definitive health claims.',
     '- If the data is too sparse to say anything useful, set insufficientData=true and say so plainly.',
     '- Voice: precise and analytical, like a trusted instrument. No exclamation marks, no emoji, no hype.',
-    `- Write the "answer" in this locale: ${locale}.`,
+    `- ${localeLine(locale, 'the "answer"')}`,
   ].join('\n');
 }
 
@@ -776,7 +827,7 @@ function simpleSystemPrompt(locale: string, units?: 'metric' | 'imperial'): stri
     '- Keep it to one paragraph, warm and direct.',
     '- Voice: calm and precise, like a trusted instrument. Supportive, never hype. No exclamation marks, no emoji.',
     `- Report weight in ${units === 'imperial' ? 'imperial (lb)' : 'metric (kg)'}, matching the units shown in the data. Do NOT convert or default to pounds.`,
-    `- Write in this locale: ${locale}.`,
+    `- ${localeLine(locale)}`,
   ].join('\n');
 }
 
@@ -800,7 +851,7 @@ function ledgerSystemPrompt(locale: string): string {
     '  imply it helped or hurt. You may note it was taken; nothing more.',
     '- Do not restate every event. Be concise; empty summary is fine when events are too sparse.',
     '- Voice: precise and analytical, like a trusted instrument. No exclamation marks, no emoji, no hype.',
-    `- Write all text in this locale: ${locale}.`,
+    `- ${localeLine(locale, 'all text')}`,
   ].join('\n');
 }
 
