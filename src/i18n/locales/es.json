@@ -239,7 +239,7 @@
     "importLibrary": "Importar una foto de tu galería",
     "runCheckin": "Check-in semanal",
     "runDeepComparison": "Comparación profunda ({{days}} días)",
-    "compareNow": "Comparar ahora",
+    "compareNow": "Ahora",
     "nextDeepComparison": "Próxima comparación profunda: {{date}}",
     "baselineSet": "Foto base guardada. Primer check-in programado para el {{date}}.",
     "analysisLabel": "ANÁLISIS",
@@ -325,7 +325,10 @@
     "smartScanning": "Buscando tu pose",
     "setPose": "Elegir pose",
     "poseAuto": "Auto",
-    "poseSet": "Pose: {{pose}}"
+    "poseSet": "Pose: {{pose}}",
+    "compareBefore": "Antes",
+    "compareTapHint": "Toca para comparar con tu última foto",
+    "analysisTimelineHint": "Tu comparación completa aparece en tu línea de tiempo."
   },
   "markers": {
     "hematocrit": "Hematocrito",

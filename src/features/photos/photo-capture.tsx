@@ -21,6 +21,7 @@ import {
   type CanonicalPose,
 } from '@/lib/photo-pose';
 import { computeQuality, type PhotoQuality } from '@/lib/photo-quality';
+import { quickReadout, type Comparability } from '@/lib/photo-readout';
 import { initialSampleState, recordSample, shouldSample } from '@/lib/pose-live';
 import { localDateKey, useStore, type PhotoSession } from '@/lib/store';
 import { isSupabaseConfigured } from '@/lib/supabase';
@@ -116,7 +117,10 @@ export function PhotoCapture({
   // a FIXED footer (the old single scroll put Retake/Save below the fold on body
   // sessions); step 2 = measurements (body only). The photo is saved when step 1
   // is confirmed, so the parent's instant read warms up while the user measures.
-  const [step, setStep] = useState<1 | 2>(1);
+  // Step 3 (2a.2) = the comparison payoff: the review now ENDS on the new photo
+  // vs its reference, not on the measurements or the bare quality score.
+  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [showBefore, setShowBefore] = useState(false); // step-3 hero: before ⇄ now
   const savedIdRef = useRef<string | null>(null);
 
   // Measurement inputs (body session only, all optional)
@@ -285,6 +289,7 @@ export function PhotoCapture({
     setQuality(null);
     setQualityAck(false);
     setStep(1);
+    setShowBefore(false);
     savedIdRef.current = null;
   };
 
@@ -398,15 +403,16 @@ export function PhotoCapture({
     }
   };
 
-  /** Step-1 primary action: face saves and closes; body saves then measures. */
+  /** Step-1 primary action: save, then measure (body) or go straight to the
+   *  comparison payoff (2a.2). */
   const onContinue = async () => {
     const ok = await saveShot();
     if (!ok) return;
     if (collectMeasurements) setStep(2);
-    else close();
+    else finishToPayoff();
   };
 
-  /** Step-2 done: write any measurements to today's check-in, then close. */
+  /** Step-2 done: write any measurements to today's check-in, then payoff. */
   const finishMeasurements = () => {
     const w = parseFloat(waist);
     const nk = parseFloat(neck);
@@ -423,7 +429,7 @@ export function PhotoCapture({
     if (Object.keys(patch).length > 0) {
       upsertCheckin(localDateKey(), patch as Parameters<typeof upsertCheckin>[1]);
     }
-    close();
+    finishToPayoff();
   };
 
   const sessionLabel = isCasual
@@ -439,6 +445,53 @@ export function PhotoCapture({
   // Manual override chips (2a.1): the demoted picker, now in-camera for the
   // wrong-guess / offline / AI-unconfigured cases.
   const cycleTimer = () => setTimerSec((s) => (s === 0 ? 3 : s === 3 ? 10 : 0));
+
+  // ── Step-3 comparison payoff (2a.2) ───────────────────────────────────────
+  // A clean, offline readout of the just-captured shot vs its pose-matched
+  // reference, built from data the camera already holds (the fit check + the
+  // entered measurements vs last). The deep, baseline-anchored analysis (with
+  // arrows, 2a.3/2a.4) still runs later in the tab; this is the immediate payoff.
+  const payoffComparability: Comparability = fitResult
+    ? fitResult.fit === 'good'
+      ? 'comparable'
+      : fitResult.fit === 'poor'
+        ? 'low'
+        : 'partial'
+    : 'partial';
+  const payoffMeasureDelta = (() => {
+    if (!isBody || !lastMeasurements) return undefined;
+    const d: { waist?: number; hips?: number; extra?: { key: string; delta: number } } = {};
+    const w = parseFloat(waist);
+    const h = parseFloat(hips);
+    const ev = parseFloat(extraVal);
+    if (Number.isFinite(w) && lastMeasurements.waist !== undefined) d.waist = w - lastMeasurements.waist;
+    if (Number.isFinite(h) && lastMeasurements.hips !== undefined) d.hips = h - lastMeasurements.hips;
+    if (
+      extraKey &&
+      Number.isFinite(ev) &&
+      lastMeasurements.extraKey === extraKey &&
+      lastMeasurements.extraVal !== undefined
+    ) {
+      d.extra = { key: extraKey, delta: ev - lastMeasurements.extraVal };
+    }
+    return Object.keys(d).length ? d : undefined;
+  })();
+  const payoffReadout = quickReadout({ measurementDelta: payoffMeasureDelta });
+  const payoffComparabilityFinal: Comparability =
+    payoffMeasureDelta || fitResult ? payoffComparability : payoffReadout.comparability;
+  // The "before" image for the payoff = the pose-matched reference (the ghost).
+  // Absent on the first-ever shot → the payoff shows the baseline-set message.
+  const payoffBeforeUri = liveGhostUri;
+
+  /** End the review on the payoff (2a.2): a guided shot lands on the comparison
+   *  card; a casual triage shot just closes. */
+  const finishToPayoff = () => {
+    if (isCasual) close();
+    else {
+      setShowBefore(false);
+      setStep(3);
+    }
+  };
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={close}>
@@ -546,7 +599,7 @@ export function PhotoCapture({
             </View>
           ) : null}
           </View>
-        ) : shot ? (
+        ) : shot && step === 2 ? (
           // ── Step 2: measurements (body only), prefillable, skippable (§1.5) ──
           <View style={styles.measureStep}>
             <ScrollView
@@ -640,15 +693,88 @@ export function PhotoCapture({
                 />
               )}
             </ScrollView>
-            {/* Fixed footer: the photo is already saved; measurements only. */}
+            {/* Fixed footer: the photo is already saved; measurements only.
+                Skip still lands on the comparison payoff (2a.2). */}
             <SafeAreaView style={styles.reviewBar} edges={['bottom']}>
-              <Pressable accessibilityRole="button" onPress={close}>
+              <Pressable accessibilityRole="button" onPress={finishToPayoff}>
                 <ThemedText type="label" style={styles.darkText}>
                   {t('photos.skipMeasurements')}
                 </ThemedText>
               </Pressable>
               <View style={styles.saveBtn}>
-                <PrimaryButton label={t('common.done')} onPress={finishMeasurements} />
+                <PrimaryButton label={t('common.continue')} onPress={finishMeasurements} />
+              </View>
+            </SafeAreaView>
+          </View>
+        ) : shot && step === 3 ? (
+          // ── Step 3: the comparison payoff (2a.2) ──
+          <View style={styles.fill}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t(payoffBeforeUri && showBefore ? 'photos.compareBefore' : 'photos.compareNow')}
+              accessibilityHint={payoffBeforeUri ? t('photos.compareTapHint') : undefined}
+              disabled={!payoffBeforeUri}
+              style={styles.fill}
+              onPress={() => payoffBeforeUri && setShowBefore((s) => !s)}>
+              <Image
+                source={{ uri: showBefore && payoffBeforeUri ? payoffBeforeUri : (shot as string) }}
+                style={styles.reviewPhoto}
+                contentFit="cover"
+              />
+              <View style={styles.payoffCap} pointerEvents="none">
+                <ThemedText type="monoSm" style={styles.payoffCapText}>
+                  {t(showBefore && payoffBeforeUri ? 'photos.compareBefore' : 'photos.compareNow')}
+                </ThemedText>
+              </View>
+            </Pressable>
+            <ScrollView
+              style={styles.payoffReadout}
+              contentContainerStyle={styles.payoffReadoutContent}
+              bounces={false}
+              showsVerticalScrollIndicator={false}>
+              {payoffBeforeUri ? (
+                <>
+                  <View style={styles.payoffPillRow}>
+                    <View
+                      style={[
+                        styles.payoffPill,
+                        payoffComparabilityFinal === 'comparable'
+                          ? styles.payoffPillGood
+                          : payoffComparabilityFinal === 'partial'
+                            ? styles.payoffPillWatch
+                            : styles.payoffPillBad,
+                      ]}>
+                      <ThemedText type="monoSm" style={styles.payoffPillText}>
+                        {t(`photos.comparability_${payoffComparabilityFinal}` as 'photos.comparability_comparable')}
+                      </ThemedText>
+                    </View>
+                    <ThemedText type="monoSm" style={styles.payoffTapHint}>
+                      {t('photos.compareTapHint')}
+                    </ThemedText>
+                  </View>
+                  {payoffReadout.changes.map((c) => (
+                    <ThemedText key={c.metricKey} type="mono" style={styles.payoffDelta}>
+                      {`${t(c.metricKey as 'measurements.waist')} ${c.delta > 0 ? '+' : ''}${Math.round(c.delta * 10) / 10}${unitLabel}`}
+                    </ThemedText>
+                  ))}
+                  {quality ? (
+                    <ThemedText type="monoSm" style={styles.payoffMeta}>
+                      {`${t('photos.qualityLabel')} ${quality.displayScore}`}
+                    </ThemedText>
+                  ) : null}
+                  <ThemedText type="monoSm" style={styles.payoffMeta}>
+                    {t('photos.analysisTimelineHint')}
+                  </ThemedText>
+                </>
+              ) : (
+                <ThemedText type="small" style={styles.payoffBaseline}>
+                  {t('photos.savedBaselineBody')}
+                </ThemedText>
+              )}
+            </ScrollView>
+            <SafeAreaView style={styles.reviewBar} edges={['bottom']}>
+              <View style={styles.payoffDoneBtn}>
+                <PrimaryButton label={t('common.done')} onPress={close} />
               </View>
             </SafeAreaView>
           </View>
@@ -875,6 +1001,23 @@ const styles = StyleSheet.create({
   scoreWatch: { color: '#C9A356' },
   scoreBad: { color: '#C96A5F' },
   scoreMeta: { color: 'rgba(240,239,236,0.55)' },
+  // Review step 3: the comparison payoff (2a.2). Photo hero + a readout block
+  // where the big score used to be, on the near-black review frame.
+  payoffCap: { position: 'absolute', top: Spacing.two, left: Spacing.two },
+  payoffCapText: { color: 'rgba(240,239,236,0.85)', letterSpacing: 1.3 },
+  payoffReadout: { flexGrow: 0, backgroundColor: '#111110' },
+  payoffReadoutContent: { padding: Spacing.four, gap: Spacing.two },
+  payoffPillRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two, flexWrap: 'wrap' },
+  payoffPill: { paddingHorizontal: Spacing.three, paddingVertical: Spacing.one, borderRadius: 2 },
+  payoffPillGood: { backgroundColor: 'rgba(95,169,122,0.22)' },
+  payoffPillWatch: { backgroundColor: 'rgba(201,163,86,0.22)' },
+  payoffPillBad: { backgroundColor: 'rgba(201,106,95,0.22)' },
+  payoffPillText: { color: '#F0EFEC' },
+  payoffTapHint: { color: 'rgba(240,239,236,0.5)' },
+  payoffDelta: { color: 'rgba(240,239,236,0.85)' },
+  payoffMeta: { color: 'rgba(240,239,236,0.55)' },
+  payoffBaseline: { color: 'rgba(240,239,236,0.85)' },
+  payoffDoneBtn: { flex: 1 },
   // Review step 2: measurements on the light panel, fixed footer.
   measureStep: { flex: 1, backgroundColor: '#F0EFEC' },
   measureStepContent: { padding: Spacing.four, gap: Spacing.three },

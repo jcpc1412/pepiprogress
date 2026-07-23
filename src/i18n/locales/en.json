@@ -239,7 +239,7 @@
     "importLibrary": "Import a photo from your library",
     "runCheckin": "Weekly check-in",
     "runDeepComparison": "Deep comparison ({{days}}-day)",
-    "compareNow": "Compare now",
+    "compareNow": "Now",
     "nextDeepComparison": "Next deep comparison: {{date}}",
     "baselineSet": "Baseline captured. First check-in scheduled for {{date}}.",
     "analysisLabel": "ANALYSIS",
@@ -325,7 +325,10 @@
     "smartScanning": "Finding your pose",
     "setPose": "Set pose",
     "poseAuto": "Auto",
-    "poseSet": "Pose: {{pose}}"
+    "poseSet": "Pose: {{pose}}",
+    "compareBefore": "Before",
+    "compareTapHint": "Tap to compare with your last shot",
+    "analysisTimelineHint": "Your full comparison lands in your timeline."
   },
   "markers": {
     "hematocrit": "Hematocrit",

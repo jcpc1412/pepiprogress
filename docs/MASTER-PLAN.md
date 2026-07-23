@@ -1040,11 +1040,24 @@ Stepped plan:
    `VisionCameraCapture` stays in the tree behind `useVisionCamera` (now only an
    explicit non-smart face open, none today) for re-integration as an opt-in "face
    precision" mode in a later step. Green: tsc / lint / i18n(6) / 441 tests / web.
-2. **Review ends on the payoff [M].** Reorder the review so the last screen is the
-   comparison, not measurements: capture → instant deterministic `quickReadout` →
-   measurements (body only, via the **guide-line overlay in step 7**, still feeding
-   `measurementDelta`) → **comparison card = clean new photo with arrows** where the
-   score used to be.
+2. **Review ends on the payoff [M]. ✅ DONE.** Reorder the review so the last
+   screen is the comparison, not measurements: capture → instant deterministic
+   `quickReadout` → measurements (body only, via the **guide-line overlay in step
+   7**, still feeding `measurementDelta`) → **comparison card = clean new photo with
+   arrows** where the score used to be. **Built:** `photo-capture.tsx` gains a
+   terminal **step 3** for guided shots (face: step1→3; body: step1→2→3; casual
+   shots still close). It renders the new photo as the hero with a tap-to-swap
+   "Now ⇄ Before" against its pose-matched reference, and a readout block **where
+   the big score was** — a comparability pill (from the fit check), the entered
+   measurement deltas (`quickReadout`), a demoted quality line, and a "full
+   comparison lands in your timeline" hint. First-ever shot shows the baseline-set
+   message instead. **V1 is arrow-free** (clean photo); the `regions[]` arrows
+   (2a.3/2a.4) draw into this same card, and the authoritative baseline-anchored
+   deep read still runs in the tab. Compare is vs the **reference** (labeled
+   honestly "Before", not "Day 1") since the camera holds that, not the oldest
+   baseline; strict baseline-anchoring rides the tab's `runScientificAnalysis`.
+   New i18n `photos.compareNow/compareBefore/compareTapHint/analysisTimelineHint`
+   (×6). Green: tsc / lint / i18n(6) / 441 tests / web.
 3. **Region arrows in the vision response [M].** Extend the `analyze_photo` edge
    function's structured output to return
    `regions: { region, x, y, direction: up|down|flat, favour: good|bad|none|watch, pct, confidence, note }[]`
@@ -1621,8 +1634,7 @@ skeleton. Annotations: **needs** = hard prerequisite; **unblocks** = what it ope
 **2. Region-arrow contract + arrow UI (2a), the contract every photo sub-point consumes**
 - **2a.1 One smart camera** (auto session+pose, picker demoted to fallback). ✅ DONE.
 - **2a.2 Review ends on the comparison card** (capture → readout → measurements →
-  card). ← next. Pure client, no dep on 2a.3: build the card as a **clean photo**
-  now (arrows backfill once 2a.4 lands). Continues 2a.1's files + phone-testable.
+  card). ✅ DONE. Clean-photo card now; arrows backfill once 2a.4 lands.
 - **2a.3 `regions[]` structured output** in `analyze_photo` — **separate `direction`
   (grew/shrank) + `favour` (good/bad) + free coords**. **Needs** 3.1. ← the contract.
 - **2a.4 Arrow overlay** — `TrendMarker` glyph, direction × color (green ▲ muscle /

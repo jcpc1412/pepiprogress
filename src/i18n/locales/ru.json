@@ -239,7 +239,7 @@
     "importLibrary": "Импортировать фото из галереи",
     "runCheckin": "Еженедельный отчёт",
     "runDeepComparison": "Глубокое сравнение ({{days}} дней)",
-    "compareNow": "Сравнить сейчас",
+    "compareNow": "Сейчас",
     "nextDeepComparison": "Следующее глубокое сравнение: {{date}}",
     "baselineSet": "Базовое фото сохранено. Первый отчёт запланирован на {{date}}.",
     "analysisLabel": "АНАЛИЗ",
@@ -325,7 +325,10 @@
     "smartScanning": "Определяем позу",
     "setPose": "Выбрать позу",
     "poseAuto": "Авто",
-    "poseSet": "Поза: {{pose}}"
+    "poseSet": "Поза: {{pose}}",
+    "compareBefore": "Раньше",
+    "compareTapHint": "Нажми, чтобы сравнить с прошлым снимком",
+    "analysisTimelineHint": "Полное сравнение появится в твоей ленте."
   },
   "markers": {
     "hematocrit": "Гематокрит",
