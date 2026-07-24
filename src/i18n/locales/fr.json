@@ -1456,6 +1456,7 @@
     "opener": "Surveiller une zone ?",
     "ask": "Dis-moi où regarder. Une peau qui réagit, une zone qui ne te plaît jamais, ce que tu vérifies sans cesse dans le miroir.",
     "confirm": "C'est noté. Décoche ce que j'ai mal compris, puis enregistre.",
+    "suggestAsk": "Zones fréquentes pour ça : {{areas}}. Une de ces zones correspond ?",
     "save": "Suivre {{count}}",
     "skip": "Aucune",
     "saved": "Je suis {{areas}}. Je surveillerai ça sur tes photos.",

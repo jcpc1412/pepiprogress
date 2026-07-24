@@ -174,7 +174,18 @@ export function PepiChat() {
    * (profile.focusAreas) is durable, so a half-finished card never resurrects.
    */
   const [areaSetup, setAreaSetup] = useState<
-    { step: 'ask' } | { step: 'pick'; candidates: string[]; ticked: string[] } | null
+    | { step: 'ask' }
+    | {
+        step: 'pick';
+        candidates: string[];
+        ticked: string[];
+        /** 'named': the user said these, so pre-ticked. 'suggested': a
+         *  descriptor-only answer (e.g. "oily") produced common candidates for
+         *  that descriptor — a question, not a fact, so nothing starts ticked
+         *  and nothing is created unless the user taps it. */
+        source: 'named' | 'suggested';
+      }
+    | null
   >(null);
   // Micro check-in flow (W3-9, beta-notes §4.1): chips-first 1-5 answers, zero AI.
   const [microFlow, setMicroFlow] = useState<{ slot: MicroSlot; fields: CheckinField[]; index: number } | null>(null);
@@ -805,17 +816,30 @@ export function PepiChat() {
       addPepiMessage({ role: 'user', text: input });
       setText('');
       setSelection(undefined);
-      const candidates = await parseAreas(input, i18n.language);
-      if (candidates.length === 0) {
-        // No area named (or the parse is unavailable). Don't guess — say so and
-        // leave the flow open so the next message is still treated as an answer.
-        addPepiMessage({ role: 'pepi', text: t('areas.retry'), variant: 'hint' });
+      const { areas, suggested } = await parseAreas(input, i18n.language);
+      if (areas.length > 0) {
+        // Pre-tick everything: the user named these, so the common case is
+        // "yes, all of them" and the ticks exist to remove a mis-parse, not to
+        // re-enter.
+        setAreaSetup({ step: 'pick', candidates: areas, ticked: areas, source: 'named' });
+        addPepiMessage({ role: 'pepi', text: t('areas.confirm'), variant: 'answer' });
         return;
       }
-      // Pre-tick everything: the user named these, so the common case is "yes,
-      // all of them" and the ticks exist to remove a mis-parse, not to re-enter.
-      setAreaSetup({ step: 'pick', candidates, ticked: candidates });
-      addPepiMessage({ role: 'pepi', text: t('areas.confirm'), variant: 'answer' });
+      if (suggested.length > 0) {
+        // A descriptor with no location ("oily", "itchy"). These are a
+        // question, not a fact — nothing starts ticked, and nothing is
+        // created unless the user taps one.
+        setAreaSetup({ step: 'pick', candidates: suggested, ticked: [], source: 'suggested' });
+        addPepiMessage({
+          role: 'pepi',
+          text: t('areas.suggestAsk', { areas: suggested.join(', ') }),
+          variant: 'answer',
+        });
+        return;
+      }
+      // No area named and no descriptor recognized. Don't guess — say so and
+      // leave the flow open so the next message is still treated as an answer.
+      addPepiMessage({ role: 'pepi', text: t('areas.retry'), variant: 'hint' });
       return;
     }
 

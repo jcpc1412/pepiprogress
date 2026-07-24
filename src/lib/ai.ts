@@ -553,26 +553,44 @@ export async function getSignalLedger(opts: {
  * bubble mid-conversation. The user still ticks what actually gets created,
  * so a sloppy parse costs a tap, never a wrong write.
  */
-export async function parseAreas(text: string, locale: string): Promise<string[]> {
-  if (!isSupabaseConfigured || !text.trim()) return [];
+export type ParsedAreas = {
+  /** Areas the user explicitly named. Pre-tick these on the card. */
+  areas: string[];
+  /** Common areas for a descriptor the user gave with no location (e.g. "oily",
+   *  "itchy"). Never pre-ticked and never written on their own — the client
+   *  turns these into a follow-up question, and only a tap creates anything. */
+  suggested: string[];
+};
+
+function dedupeAreas(raw: unknown, max: number): string[] {
+  if (!Array.isArray(raw)) return [];
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const item of raw) {
+    const a = typeof item === 'string' ? item.trim() : '';
+    if (!a) continue;
+    const key = a.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(a);
+  }
+  return out.slice(0, max);
+}
+
+export async function parseAreas(text: string, locale: string): Promise<ParsedAreas> {
+  const empty: ParsedAreas = { areas: [], suggested: [] };
+  if (!isSupabaseConfigured || !text.trim()) return empty;
   try {
-    const { data, error } = await supabase.functions.invoke<{ areas?: string[] }>('ai-service', {
-      body: { action: 'parse_areas', text, locale },
-    });
-    if (error || !data?.areas) return [];
-    // Trim, drop blanks, dedupe case-insensitively, cap at the schema's max.
-    const seen = new Set<string>();
-    const out: string[] = [];
-    for (const raw of data.areas) {
-      const a = typeof raw === 'string' ? raw.trim() : '';
-      if (!a) continue;
-      const key = a.toLowerCase();
-      if (seen.has(key)) continue;
-      seen.add(key);
-      out.push(a);
-    }
-    return out.slice(0, 6);
+    const { data, error } = await supabase.functions.invoke<{ areas?: string[]; suggested?: string[] }>(
+      'ai-service',
+      { body: { action: 'parse_areas', text, locale } },
+    );
+    if (error || !data) return empty;
+    return {
+      areas: dedupeAreas(data.areas, 6),
+      suggested: dedupeAreas(data.suggested, 3),
+    };
   } catch {
-    return [];
+    return empty;
   }
 }

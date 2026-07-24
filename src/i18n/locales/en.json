@@ -1456,6 +1456,7 @@
     "opener": "Watch a specific area?",
     "ask": "Tell me where you want me watching. Skin that flares, an area you never feel great about, anything you keep checking in the mirror.",
     "confirm": "Got these. Untick anything I misread, then save.",
+    "suggestAsk": "Common spots for that: {{areas}}. Any of these match?",
     "save": "Track {{count}}",
     "skip": "Not these",
     "saved": "Tracking {{areas}}. I'll watch those in your photos.",

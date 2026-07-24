@@ -1456,6 +1456,7 @@
     "opener": "Acompanhar alguma área?",
     "ask": "Diz-me onde queres que eu olhe. Pele que reage, uma zona que nunca te agrada, aquilo que verificas sempre ao espelho.",
     "confirm": "Registado. Desmarca o que percebi mal e guarda.",
+    "suggestAsk": "Zonas comuns para isso: {{areas}}. Alguma corresponde?",
     "save": "Acompanhar {{count}}",
     "skip": "Nenhuma",
     "saved": "A acompanhar {{areas}}. Vou vigiar isso nas tuas fotos.",

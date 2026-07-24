@@ -1456,6 +1456,7 @@
     "opener": "Bestimmten Bereich beobachten?",
     "ask": "Sag mir, worauf ich achten soll. Haut, die reagiert, eine Stelle, die dir nie gefällt, alles, was du ständig im Spiegel prüfst.",
     "confirm": "Notiert. Hake ab, was ich falsch verstanden habe, und speichere.",
+    "suggestAsk": "Übliche Stellen dafür: {{areas}}. Trifft eine davon zu?",
     "save": "{{count}} verfolgen",
     "skip": "Keine davon",
     "saved": "Ich verfolge {{areas}} und achte in deinen Fotos darauf.",

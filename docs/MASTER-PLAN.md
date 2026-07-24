@@ -1890,6 +1890,16 @@ read that stops someone seeing a doctor). New `parse_areas` action (Haiku,
 extraction-only, never invents a category) feeds the tickable card in Pepi;
 result persists to `profile.focusAreas` and flows back into the vision context.
 
+**Added 2026-07-24 (owner):** `parse_areas` also returns `suggested` — common
+areas for a bare descriptor with no location ("my skin is oily", "I get itchy"),
+a real dermatological pattern (oily → T-zone/scalp; dry/itchy → skin folds) worth
+surfacing. Kept separate from `areas` on purpose: `suggested` is never pre-ticked
+and never written on its own, only turned into a follow-up question with tappable
+options, so guessing a specific area from one adjective never reaches the profile
+without a tap. Verified live against the deployed function (English + Spanish)
+and end-to-end in the browser: descriptor → suggested chips, unticked → tap one →
+only the tapped area saves.
+
 **Deviation from the stated dependency:** built as composed server-side strings,
 NOT the block-3 DB template injection (2e), which is still unbuilt. 2e's value is
 user-editable versioned templates; four fixed intents do not need that, and the

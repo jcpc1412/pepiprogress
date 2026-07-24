@@ -1438,9 +1438,18 @@ Deno.serve(async (req: Request) => {
     // Free text -> candidate areas for the tickable card. Extraction only: the
     // user ticks what is actually created, so recall matters less than never
     // inventing a category they did not name.
+    //
+    // `suggested` handles the descriptor-only case ("my skin is oily", "I get
+    // itchy") — real dermatological patterns (oily concentrates T-zone/scalp/
+    // back; dry/itchy commonly flares in skin-fold areas) that are worth
+    // surfacing, but guessing a specific area from one adjective and writing it
+    // straight to the profile would break the "never invent" rule this whole
+    // card exists to enforce. So `suggested` is never auto-applied — the client
+    // turns it into a follow-up QUESTION with tappable, unticked options; only a
+    // tap writes anything. `areas` stays exactly as conservative as before.
     if (body.action === 'parse_areas') {
       const locale = body.locale ?? 'en';
-      if (!body.text?.trim()) return json({ areas: [] }, 200);
+      if (!body.text?.trim()) return json({ areas: [], suggested: [] }, 200);
       const message = await client.messages.create({
         model: PARSE_MODEL,
         max_tokens: 300,
@@ -1452,22 +1461,38 @@ Deno.serve(async (req: Request) => {
               type: 'array',
               maxItems: 6,
               items: { type: 'string', description: 'One short area label, 1-3 words.' },
-              description: 'Body or face areas the user named, as short labels.',
+              description: 'Body or face areas the user explicitly named, as short labels.',
+            },
+            suggested: {
+              type: 'array',
+              maxItems: 3,
+              items: { type: 'string', description: 'One short area label, 1-3 words.' },
+              description:
+                'ONLY when areas is empty AND the text names a skin descriptor with no location (oily, dry, itchy, cystic, flaky, etc): 1-3 common areas that descriptor typically shows up on, most likely first. Otherwise empty.',
             },
           },
-          required: ['areas'],
+          required: ['areas', 'suggested'],
         }),
         system: [
-          'You extract the body or face AREAS a user named in their own words, for a tracking app.',
-          'Return each as a short label of 1-3 words, deduplicated, in the order mentioned.',
-          'ONLY areas the user actually named. Never add related areas, never infer, never expand',
-          'a general answer into specifics. "My skin gets bad" names no area: return an empty list.',
+          'You extract body/face AREAS from free text for a tracking app, in two tiers.',
+          '',
+          '`areas`: ONLY areas the user actually named. Never add related areas, never infer, never expand',
+          'a general answer into specifics. "My skin gets bad" names no area: leave areas empty.',
           'Strip severity, frequency and symptom words - keep the place ("forehead", "jawline", "chin").',
-          `- ${localeLine(locale, 'every returned label')}`,
+          '',
+          '`suggested`: only fill this when areas is empty AND the text gives a skin DESCRIPTOR with no',
+          'location (oily, dry, itchy, cystic, flaky, red, sensitive, etc). Give 1-3 common, medically',
+          'ordinary areas that descriptor is typically associated with, most likely first — e.g. oily leans',
+          'T-zone/forehead/nose/scalp/upper back; dry or itchy commonly flares in skin folds (underarms,',
+          'groin/inner thighs, elbow and knee creases); cystic/painful leans jawline/chin/chest/back. Use',
+          'plain clinical phrasing, never a crude or presumptuous term. These are suggestions to ASK about,',
+          'not facts - keep areas empty and never assume the user meant a specific one.',
+          'If the text names no area AND gives no recognizable descriptor, leave both arrays empty.',
+          `- ${localeLine(locale, 'every returned label in both arrays')}`,
         ].join(' '),
         messages: [{ role: 'user', content: body.text }],
       });
-      return json(extractJson(message, { areas: [] as string[] }), 200);
+      return json(extractJson(message, { areas: [] as string[], suggested: [] as string[] }), 200);
     }
 
     // -- signal_ledger ---------------------------------------------------------

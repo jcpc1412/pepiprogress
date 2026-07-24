@@ -1456,6 +1456,7 @@
     "opener": "¿Vigilamos alguna zona?",
     "ask": "Dime dónde quieres que mire. Piel que se altera, una zona que nunca te convence, lo que sueles revisar en el espejo.",
     "confirm": "Anotado. Desmarca lo que haya entendido mal y guarda.",
+    "suggestAsk": "Zonas habituales para eso: {{areas}}. ¿Alguna coincide?",
     "save": "Seguir {{count}}",
     "skip": "Ninguna",
     "saved": "Sigo {{areas}}. Lo vigilaré en tus fotos.",
