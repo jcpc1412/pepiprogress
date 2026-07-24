@@ -67,7 +67,7 @@ import {
   type CanonicalPose,
   type PoseKey,
 } from '@/lib/photo-pose';
-import { copyPhotoToDocuments, useResolvedUris } from '@/lib/photos';
+import { copyPhotoToDocuments, deletePhotoEverywhere, useResolvedUris } from '@/lib/photos';
 import { localDateKey, useStore, type PhotoEntry, type PhotoSession } from '@/lib/store';
 
 /**
@@ -296,6 +296,7 @@ export function ProgressPhotos({
     profile,
     addPhoto,
     updatePhoto,
+    deletePhoto,
     setProfile,
   } = useStore();
 
@@ -346,6 +347,17 @@ export function ProgressPhotos({
   const [partDraft, setPartDraft] = useState('');
   // Reel (W6-25): id of the photo whose pose is being assigned via the chip sheet.
   const [taggingId, setTaggingId] = useState<string | null>(null);
+  // Two-tap delete: the first tap arms, the second commits. A photo is
+  // irreplaceable (you cannot re-take last month's baseline), so a single
+  // mis-tap must never destroy one, but a modal on top of a modal is worse.
+  const [deleteArmed, setDeleteArmed] = useState(false);
+  /** Transient confirmation line (delete outcome). Auto-clears. */
+  const [notice, setNotice] = useState<string | null>(null);
+  useEffect(() => {
+    if (!notice) return;
+    const id = setTimeout(() => setNotice(null), 4000);
+    return () => clearTimeout(id);
+  }, [notice]);
   // Share (W6-27): offered contextually after a highscore or a milestone read.
   const [shareCardOpen, setShareCardOpen] = useState(false);
   const [sharePhotoUri, setSharePhotoUri] = useState<string | null>(null);
@@ -883,6 +895,21 @@ export function ProgressPhotos({
   );
   const taggingPhoto = taggingId ? photos.find((p) => p.id === taggingId) ?? null : null;
 
+  const confirmDelete = async () => {
+    if (!taggingPhoto) return;
+    const photo = taggingPhoto;
+    // Close first: the store removal re-renders this list immediately, and a
+    // sheet pointing at a photo that no longer exists would flash empty.
+    setTaggingId(null);
+    setDeleteArmed(false);
+    // Leaving a focused track that just lost its last photo would strand the
+    // user on an empty detail view.
+    if (focused && sessionPhotos.length <= 1) setFocused(null);
+    deletePhoto(photo.id);
+    const res = await deletePhotoEverywhere(photo, user?.id);
+    setNotice(res.errors.length && !res.cloudRemoved ? t('photos.deleteCloudFailed') : t('photos.deleteDone'));
+  };
+
   // Focus a required-pose reel group's session track (unsorted/other are triage
   // only, so they never focus).
   const focusPose = useCallback((pose: PoseKey) => {
@@ -1019,6 +1046,12 @@ export function ProgressPhotos({
           {/* ── Reel: the spine. Every photo, grouped by pose; tapping a
               required-pose group drills into its progress track. Unsorted/other
               groups are triage (tap a photo to classify). ── */}
+          {notice ? (
+            <ThemedText type="monoSm" themeColor="accent" style={styles.notice}>
+              {notice}
+            </ThemedText>
+          ) : null}
+
           {!focused && (
           <View style={styles.reel}>
             <View style={styles.timelineHeader}>
@@ -1052,7 +1085,10 @@ export function ProgressPhotos({
                           key={p.id}
                           accessibilityRole="button"
                           accessibilityLabel={confirm ? t('photos.confirmPose') : t('photos.assignPose')}
-                          onPress={() => setTaggingId(p.id)}
+                          onPress={() => {
+                            setDeleteArmed(false);
+                            setTaggingId(p.id);
+                          }}
                           style={({ pressed }) => [
                             styles.thumb,
                             { width: thumbW, height: thumbH, borderColor: confirm ? theme.accent : 'transparent' },
@@ -1230,6 +1266,13 @@ export function ProgressPhotos({
                         <View key={p.id} style={styles.thumbCol}>
                           <Pressable
                             accessibilityRole="button"
+                            // Long-press opens the photo sheet (retag, share,
+                            // delete). Tap still selects for comparison, so the
+                            // common action stays a single tap.
+                            onLongPress={() => {
+                              setDeleteArmed(false);
+                              setTaggingId(p.id);
+                            }}
                             onPress={() => setSelectedId(p.id)}
                             style={({ pressed }) => [
                               styles.thumb,
@@ -1522,7 +1565,19 @@ export function ProgressPhotos({
                 }}
               />
             )}
-            <TextButton label={t('common.cancel')} onPress={() => setTaggingId(null)} />
+            {taggingPhoto && (
+              <TextButton
+                label={deleteArmed ? t('photos.deleteConfirm') : t('photos.deletePhoto')}
+                onPress={() => (deleteArmed ? void confirmDelete() : setDeleteArmed(true))}
+              />
+            )}
+            <TextButton
+              label={t('common.cancel')}
+              onPress={() => {
+                setTaggingId(null);
+                setDeleteArmed(false);
+              }}
+            />
           </View>
         </Pressable>
       </Modal>
@@ -1594,6 +1649,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     overflow: 'hidden',
   },
+  notice: { paddingHorizontal: Spacing.four, paddingBottom: Spacing.two },
   thumbPressed: { opacity: 0.7 },
   thumbImg: { flex: 1 },
   milestoneSection: { gap: Spacing.two },

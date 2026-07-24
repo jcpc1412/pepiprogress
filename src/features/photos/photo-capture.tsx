@@ -31,6 +31,17 @@ import { isSupabaseConfigured } from '@/lib/supabase';
 /** Tap-cycle levels for the ghost overlay opacity (R3-H). */
 const GHOST_LEVELS = [0.2, 0.4, 0.6] as const;
 
+/** The optional 4th measurement. Only one is carried per check-in. */
+const EXTRA_KEYS = ['chest', 'arms', 'thighs'] as const;
+type ExtraKey = (typeof EXTRA_KEYS)[number];
+
+/** The measurement picker below the photo. The three standing measurements come
+ *  first because they are the ones the guide lines draw and the Navy body-fat
+ *  estimate needs; the extras follow. Tapping a chip is the same action as
+ *  tapping that line on the photo, which is fiddly on a thin line over your own
+ *  torso. */
+const MEASURE_CHIPS: MeasureKey[] = ['neck', 'waist', 'hips', ...EXTRA_KEYS];
+
 /**
  * Capture-time guidance (spec 04, Layer 1). Front camera with the prior photo of
  * the same session ghosted on top so the user matches their position. Capture →
@@ -92,6 +103,49 @@ export function PhotoCapture({
   const [countdown, setCountdown] = useState<number | null>(null);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // ── Pinch to zoom ─────────────────────────────────────────────────────────
+  // expo-camera's CameraView takes a `zoom` prop (0..1) but implements no
+  // gesture itself — `isPinchToZoomEnabled` belongs to the barcode view and is
+  // iOS-only. The overlay used to promise "pinch to zoom" with nothing behind
+  // it. Built on PanResponder rather than react-native-gesture-handler because
+  // the latter needs a GestureHandlerRootView this app has never mounted, and a
+  // Modal is the worst place to introduce one untested.
+  const [zoom, setZoom] = useState(0);
+  // Mirrors `zoom` so the touch handlers never read a stale render's value.
+  const zoomRef = useRef(0);
+  const pinchStart = useRef(0);
+  const zoomStart = useRef(0);
+  const applyZoom = (v: number) => {
+    const clamped = Math.min(1, Math.max(0, v));
+    zoomRef.current = clamped;
+    setZoom(clamped);
+  };
+  const pinchDistance = (touches: { pageX: number; pageY: number }[]) =>
+    Math.hypot(touches[0].pageX - touches[1].pageX, touches[0].pageY - touches[1].pageY);
+  /** Two-finger pinch on the transparent surface over the preview. Raw touch
+   *  props rather than PanResponder or gesture-handler: no responder to claim
+   *  (so taps still reach the ghost toggle and the controls below), and no
+   *  GestureHandlerRootView, which this app has never mounted. */
+  const onTouchMoveZoom = (e: { nativeEvent: { touches: { pageX: number; pageY: number }[] } }) => {
+    const touches = e.nativeEvent.touches;
+    if (touches.length !== 2) {
+      pinchStart.current = 0;
+      return;
+    }
+    const d = pinchDistance(touches);
+    if (pinchStart.current <= 0) {
+      pinchStart.current = d;
+      zoomStart.current = zoomRef.current;
+      return;
+    }
+    // Sub-linear: the native zoom scale is aggressive at the top end, so a small
+    // pinch should not cross the whole range.
+    applyZoom(zoomStart.current + (d / pinchStart.current - 1) * 0.5);
+  };
+  const endPinch = () => {
+    pinchStart.current = 0;
+  };
+
   // ── Smart-camera in-camera controls (2a.1) ────────────────────────────────
   // Manual override wins over live detection (wrong-guess / offline / AI off);
   // `casualOverride` demotes a shot to a freeform reel entry; the self-timer is
@@ -129,7 +183,7 @@ export function PhotoCapture({
   const [waist, setWaist] = useState('');
   const [neck, setNeck] = useState('');
   const [hips, setHips] = useState('');
-  const [extraKey, setExtraKey] = useState<'chest' | 'arms' | 'thighs' | undefined>();
+  const [extraKey, setExtraKey] = useState<ExtraKey | undefined>();
   const [extraVal, setExtraVal] = useState('');
   // Guide-line spots (2a.7): seeded from the default anatomy map, overridden by
   // the user's own saved spots. Kept local while dragging and persisted once on
@@ -248,6 +302,11 @@ export function PhotoCapture({
   }, [live]);
 
   const level = Math.abs(roll) < 5 && Math.abs(pitch) < 5;
+  /** The app is portrait-locked, so a sideways phone still captures a portrait
+   *  frame with the body lying across it — never comparable with the baseline.
+   *  Roll passes 90° there, which the quality score already punishes; this just
+   *  says WHY, instead of leaving the user with an unexplained low number. */
+  const sideways = Math.abs(roll) > 60;
 
   // ── Live pose sampling (W6-26.5) ─────────────────────────────────────────
   // No on-device body-pose model exists for vision-camera v5 yet, so the body
@@ -712,14 +771,30 @@ export function PhotoCapture({
                   {t('photos.guideHint')}
                 </ThemedText>
               )}
+              {/* The chip row is the measurement PICKER, not just the optional
+                  extra. Tapping a spot on the photo works, but hitting a thin
+                  line on your own torso is fiddly, so the same three standing
+                  measurements are reachable as ordinary buttons and the input
+                  below follows whichever is selected. Selecting one of the
+                  optional extras also adds its spot to the photo. */}
               <SingleSelectChips
-                options={(['chest', 'arms', 'thighs'] as const).map((k) => ({
+                options={MEASURE_CHIPS.map((k) => ({
                   value: k,
-                  label: t(`measurements.${k}`),
+                  label: t(`measurements.${k}` as 'measurements.waist'),
                 }))}
-                value={extraKey}
-                onChange={setExtraKey}
+                value={editingKey}
+                onChange={(k) => {
+                  setEditingKey(k);
+                  if (EXTRA_KEYS.includes(k as (typeof EXTRA_KEYS)[number])) setExtraKey(k as ExtraKey);
+                }}
               />
+              {editingKey && EXTRA_KEYS.includes(editingKey as (typeof EXTRA_KEYS)[number]) ? (
+                <Pressable accessibilityRole="button" onPress={() => { setExtraKey(undefined); setEditingKey(undefined); }}>
+                  <ThemedText type="monoSm" style={styles.bfLabel}>
+                    {t('photos.clearExtra')}
+                  </ThemedText>
+                </Pressable>
+              ) : null}
               {/* Hedged Navy body-fat estimate (observational, not medical). */}
               {bodyFat ? (
                 <View style={styles.bfBox}>
@@ -833,8 +908,19 @@ export function PhotoCapture({
               ref={camRef}
               style={styles.fill}
               facing={facing}
+              zoom={zoom}
               mirror={facing === 'front'}
               animateShutter={false}
+            />
+            {/* Transparent pinch surface over the preview. It only claims
+                two-finger gestures, so taps fall through to the ghost toggle
+                and the controls keep working. */}
+            <View
+              style={StyleSheet.absoluteFill}
+              pointerEvents="box-none"
+              onTouchMove={onTouchMoveZoom}
+              onTouchEnd={endPinch}
+              onTouchCancel={endPinch}
             />
             {liveGhostUri ? (
               <Pressable
@@ -889,8 +975,13 @@ export function PhotoCapture({
                 </ThemedText>
               )}
               <ThemedText type="monoSm" style={styles.overlayDim}>
-                {t('photos.pinchZoomHint')}
+                {zoom > 0.01 ? t('photos.zoomLevel', { pct: Math.round(zoom * 100) }) : t('photos.pinchZoomHint')}
               </ThemedText>
+              {sideways ? (
+                <ThemedText type="monoSm" style={styles.overlayText}>
+                  {t('photos.sidewaysHint')}
+                </ThemedText>
+              ) : null}
             </SafeAreaView>
             {/* Self-timer countdown. */}
             {countdown !== null ? (

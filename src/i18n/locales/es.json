@@ -343,7 +343,14 @@
     "runDeepOnShot": "Analizar esta foto en profundidad",
     "runDeepOnShotHint": "Toca una foto para un análisis profundo",
     "guideHint": "Toca una línea para escribir su número. Arrastra el asa para mover el punto.",
-    "coachingLabel": "Qué hacer con esto"
+    "coachingLabel": "Qué hacer con esto",
+    "clearExtra": "Quitar medida extra",
+    "zoomLevel": "Zoom {{pct}}%",
+    "deletePhoto": "Eliminar foto",
+    "deleteConfirm": "Toca otra vez para eliminar",
+    "deleteDone": "Foto eliminada.",
+    "deleteCloudFailed": "Eliminada aquí, pero no se pudo borrar la copia en la nube. Se reintentará.",
+    "sidewaysHint": "Estás sujetando el teléfono de lado: las fotos de progreso deben ser verticales para poder compararse."
   },
   "markers": {
     "hematocrit": "Hematocrito",

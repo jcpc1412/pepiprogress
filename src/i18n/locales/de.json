@@ -343,7 +343,14 @@
     "runDeepOnShot": "Tiefenanalyse für dieses Foto starten",
     "runDeepOnShotHint": "Tippe ein Foto für eine Tiefenanalyse an",
     "guideHint": "Tippe auf eine Linie, um ihren Wert einzugeben. Ziehe den Griff, um die Stelle zu verschieben.",
-    "coachingLabel": "Was du damit machst"
+    "coachingLabel": "Was du damit machst",
+    "clearExtra": "Zusatzmaß entfernen",
+    "zoomLevel": "Zoom {{pct}} %",
+    "deletePhoto": "Foto löschen",
+    "deleteConfirm": "Zum Löschen erneut tippen",
+    "deleteDone": "Foto gelöscht.",
+    "deleteCloudFailed": "Hier gelöscht, aber die Cloud-Kopie konnte nicht entfernt werden. Wird erneut versucht.",
+    "sidewaysHint": "Das Handy liegt quer: Fortschrittsfotos müssen im Hochformat sein, damit sie vergleichbar bleiben."
   },
   "markers": {
     "hematocrit": "Hämatokrit",

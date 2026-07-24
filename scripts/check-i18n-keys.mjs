@@ -52,6 +52,8 @@ const IDENTICAL_OK = new Set([
   'photos.tagWeek', 'photos.timer3', 'photos.timer10', 'photos.timerOff',
   // "Auto" is universal; "Pose" is a cognate in es/pt/de (the pose name is interpolated).
   'photos.poseAuto', 'photos.poseSet',
+  // "Zoom" is the same loanword in es/pt; the only content is the percentage.
+  'photos.zoomLevel',
   // Pure interpolation templates: every content token is a placeholder (2a.4).
   'photos.arrowA11y', 'photos.arrowMagnitude',
   'protocol.dose', 'protocol.nominal',

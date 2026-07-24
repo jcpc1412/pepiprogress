@@ -3,7 +3,7 @@ import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import { useEffect, useRef, useState } from 'react';
 
 import { cloudPathFor, resolutionPlan } from '@/lib/photo-cloud';
-import { supabase } from '@/lib/supabase';
+import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 import type { PhotoEntry } from '@/lib/store';
 
 const BUCKET = 'progress-photos';
@@ -123,6 +123,56 @@ export async function syncPhotoRow(
     ai_consent: consents.ai,
   });
   if (error) throw error;
+}
+
+/**
+ * Remove a photo everywhere it exists: the local file, the Storage object, and
+ * the `photo` row.
+ *
+ * Best-effort and deliberately order-independent — a failure on any leg must not
+ * strand the others, because the user has already said delete. But a *silent*
+ * failure on the cloud legs would leave the image sitting in the bucket after
+ * the app says it is gone, which is the one outcome that breaks the promise
+ * photos are private (CLAUDE.md rule 2). So failures are returned, not swallowed,
+ * and the caller decides what to tell the user.
+ */
+export async function deletePhotoEverywhere(
+  photo: PhotoEntry,
+  userId?: string,
+): Promise<{ cloudRemoved: boolean; errors: string[] }> {
+  const errors: string[] = [];
+
+  // Local file first: it always exists and never needs the network.
+  try {
+    if (photo.uri.startsWith('file://')) {
+      const file = new File(photo.uri);
+      if (file.exists) file.delete();
+    }
+  } catch (e) {
+    errors.push(`local: ${String(e)}`);
+  }
+
+  const path = photo.cloudPath ?? (userId ? cloudPathFor(userId, photo.id) : undefined);
+  if (!path || !isSupabaseConfigured || !userId) {
+    return { cloudRemoved: false, errors };
+  }
+
+  let cloudRemoved = true;
+  try {
+    const { error } = await supabase.storage.from(BUCKET).remove([path]);
+    if (error) throw error;
+  } catch (e) {
+    cloudRemoved = false;
+    errors.push(`storage: ${String(e)}`);
+  }
+  try {
+    const { error } = await supabase.from('photo').delete().eq('user_id', userId).eq('storage_path', path);
+    if (error) throw error;
+  } catch (e) {
+    cloudRemoved = false;
+    errors.push(`row: ${String(e)}`);
+  }
+  return { cloudRemoved, errors };
 }
 
 /**

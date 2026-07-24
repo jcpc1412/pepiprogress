@@ -343,7 +343,14 @@
     "runDeepOnShot": "Run a deep analysis on this photo",
     "runDeepOnShotHint": "Tap a photo for a deep analysis",
     "guideHint": "Tap a line to enter its number. Drag the grip to move the spot.",
-    "coachingLabel": "What to do with this"
+    "coachingLabel": "What to do with this",
+    "clearExtra": "Clear extra measurement",
+    "zoomLevel": "Zoom {{pct}}%",
+    "deletePhoto": "Delete photo",
+    "deleteConfirm": "Tap again to delete",
+    "deleteDone": "Photo deleted.",
+    "deleteCloudFailed": "Deleted here, but the cloud copy could not be removed. It will retry.",
+    "sidewaysHint": "Holding the phone sideways: progress shots need portrait to stay comparable."
   },
   "markers": {
     "hematocrit": "Hematocrit",
