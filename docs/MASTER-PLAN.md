@@ -1995,3 +1995,34 @@ set. **Block 7 therefore did not need block 3, and block 3 is still open.**
 the region-arrow contract (2a.3), the detail drawer (2d), the post-sync reconciliation
 + invisible routine learning pattern (2b.5), the conversational entity-creation card
 (block 7), and the consent reconciliation (block 3) are each built once and reused.
+
+
+## Photo quality score — what actually feeds it (2026-07-24)
+
+Recorded because the score's real inputs drifted from its documented ones, and
+that gap produced a readout stuck at 30% that survived several rounds of
+"improving the score".
+
+- **level** ✅ — accelerometer. Roll and pitch are now banded separately (3/8°
+  vs 12/25°) and the shot takes the worse axis. They used to be combined into
+  one magnitude at the roll bar, so the 10-25° back-lean of any hand-held or
+  propped phone read 'bad' forever.
+- **framing** ✅ — the `check_fit` AI call, which judges position, distance and
+  angle against the track's reference. **Only from the second shot of a track
+  onward**: a baseline has nothing to compare against, so framing is `unknown`
+  and drops out of the weighting. This is correct, but it means a first shot has
+  fewer signals than the formula suggests.
+- **light** ✅ 2026-07-24 — was a fully-implemented criterion (weighted 0.3,
+  tested) that **nothing ever populated**, so it sat `unknown` permanently.
+  Neither `expo-image-manipulator` nor `expo-camera` exposes pixels or an
+  exposure value on native, so brightness needed real decoding: `png-luma.ts` is
+  a small RFC-1951 inflate plus an 8-bit PNG reader, run on a 32×32 thumbnail.
+  Pure JS, no native rebuild, identical on both platforms. Verified two ways —
+  inflate round-tripped against node's zlib (random, repetitive, stored,
+  fixed-Huffman, multi-block), and real macOS-encoded photo PNGs matched an
+  independent zlib-based decode to 6 dp (0.72 / 0.13 / 0.49 on bright / dark /
+  mid images).
+- **clothing** ❌ — never checked by anything. The retry copy says "retake with
+  looser clothing" but no signal detects it; `check_fit`'s prompt is explicitly
+  framing-only. Either build it or change the copy.
+- **blur / pose** ❌ — still native-detection follow-ups.

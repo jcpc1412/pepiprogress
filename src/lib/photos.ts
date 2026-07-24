@@ -3,6 +3,7 @@ import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import { useEffect, useRef, useState } from 'react';
 
 import { cloudPathFor, resolutionPlan } from '@/lib/photo-cloud';
+import { base64ToBytes, pngAverageLuma } from '@/lib/png-luma';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 import type { PhotoEntry } from '@/lib/store';
 
@@ -123,6 +124,35 @@ export async function syncPhotoRow(
     ai_consent: consents.ai,
   });
   if (error) throw error;
+}
+
+/** Thumbnail edge for the brightness read. 32x32 is ~1k pixels: enough for a
+ *  stable average, small enough that the decode is instant. */
+const LUMA_EDGE = 32;
+
+/**
+ * Average brightness of a captured photo, 0..1, or undefined if it cannot be
+ * read.
+ *
+ * PNG rather than JPEG because it is lossless and decodable in pure JS (see
+ * `png-luma.ts`); neither expo-image-manipulator nor expo-camera will hand back
+ * pixels or an exposure value on native. Returning undefined on failure is
+ * load-bearing: the quality score treats an absent signal as `unknown` and
+ * excludes it from the weighting, which is right — a photo whose brightness we
+ * could not read is not a badly lit photo.
+ */
+export async function averageLumaOf(uri: string): Promise<number | undefined> {
+  try {
+    const ctx = ImageManipulator.manipulate(uri);
+    ctx.resize({ width: LUMA_EDGE, height: LUMA_EDGE });
+    const rendered = await ctx.renderAsync();
+    const out = await rendered.saveAsync({ format: SaveFormat.PNG, base64: true });
+    if (!out.base64) return undefined;
+    const luma = pngAverageLuma(base64ToBytes(out.base64));
+    return Number.isFinite(luma) ? luma : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 /**

@@ -34,7 +34,7 @@ import { PrimaryButton, SecondaryButton } from '@/components/form';
 import { FlipCameraIcon } from '@/components/icons';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
-import { copyPhotoToDocuments } from '@/lib/photos';
+import { averageLumaOf, copyPhotoToDocuments } from '@/lib/photos';
 import type { CanonicalPose } from '@/lib/photo-pose';
 import { computeQuality } from '@/lib/photo-quality';
 import { nextFacePose, type FacePose } from '@/lib/pose-live';
@@ -101,6 +101,7 @@ export function VisionCameraCapture({
   const [shot, setShot] = useState<string | null>(null);
   const [shotTilt, setShotTilt] = useState<number | undefined>(undefined);
   const [shotAxes, setShotAxes] = useState<{ roll: number; pitch: number } | undefined>(undefined);
+  const [shotLuma, setShotLuma] = useState<number | undefined>(undefined);
   const [shotBoxRatio, setShotBoxRatio] = useState<number | undefined>(undefined);
   const [busy, setBusy] = useState(false);
 
@@ -186,6 +187,9 @@ export function VisionCameraCapture({
       shotPoseRef.current = facePoseRef.current;
       setShotTilt(Math.round(tiltRef.current));
       setShotAxes(axesRef.current);
+      // Brightness for the quality score; undefined stays 'unknown' rather than
+      // being read as a badly lit shot.
+      void averageLumaOf(`file://${path}`).then(setShotLuma);
       setShotBoxRatio(boxRatioOverride ?? (currentRatioRef.current || undefined));
       setShot(`file://${path}`);
     } catch {
@@ -205,11 +209,13 @@ export function VisionCameraCapture({
         uri: persistentUri,
         takenAt: new Date().toISOString(),
         tilt: shotTilt,
+        luma: shotLuma,
         boxRatio: shotBoxRatio,
         qualityScore: computeQuality({
           rollDeg: shotAxes?.roll,
           pitchDeg: shotAxes?.pitch,
           tiltDeg: shotTilt,
+          luma: shotLuma,
         }).score,
         // Guided captures are the locked comparability set; the pose comes from
         // the live yaw read at shutter time (front face vs side profile).

@@ -6,12 +6,14 @@
  * Pure and deterministic. Combines the signals actually available at capture:
  *  - level: device tilt (deg) from the accelerometer,
  *  - framing: fit vs the prior-photo ghost (checkFit result), a distance proxy,
- *  - light: average luma (0–1) when available.
- * Signals that are unavailable (no ghost yet, no luma) are treated as neutral and
- * excluded from the weighting so a first baseline shot is not unfairly penalized.
+ *  - light: average luma (0–1), decoded on device (see `png-luma.ts`).
+ * Signals that are unavailable are treated as neutral and excluded from the
+ * weighting so a first baseline shot is not unfairly penalized. In practice that
+ * means framing only counts from the second shot of a track onward, since there
+ * is no reference to compare the first one against.
  *
- * Brightness/blur/pose refinements are native-detection follow-ups; the score is
- * designed to fold them in later without changing this interface.
+ * Blur and pose remain native-detection follow-ups; the score folds them in the
+ * same way, without changing this interface.
  */
 
 export type CriterionState = 'good' | 'ok' | 'bad' | 'unknown';

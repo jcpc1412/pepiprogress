@@ -12,7 +12,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { checkFit, classifyPose, locateMeasureSpots, type FitCheck } from '@/lib/ai';
 import { bodyFatNavy, usesFemaleFormula } from '@/lib/body-composition';
-import { copyPhotoToDocuments } from '@/lib/photos';
+import { averageLumaOf, copyPhotoToDocuments } from '@/lib/photos';
 import {
   poseFromCapture,
   REQUIRED_POSES,
@@ -95,6 +95,7 @@ export function PhotoCapture({
   const camRef = useRef<CameraView>(null);
   const [shot, setShot] = useState<string | null>(null);
   const [shotTilt, setShotTilt] = useState<number | undefined>(undefined);
+  const [shotLuma, setShotLuma] = useState<number | undefined>(undefined);
   const [busy, setBusy] = useState(false);
   const [ghostLevelIdx, setGhostLevelIdx] = useState(0);
   const [fitResult, setFitResult] = useState<FitCheck | null>(null);
@@ -436,6 +437,7 @@ export function PhotoCapture({
   /** Reset the captured shot back to the live camera (retake). */
   const resetShot = () => {
     setShot(null);
+    setShotLuma(undefined);
     setFitResult(null);
     setFitChecking(false);
     setQuality(null);
@@ -476,30 +478,40 @@ export function PhotoCapture({
         setShotTilt(tiltNow);
         setShot(pic.uri);
         setQualityAck(false);
+        // Brightness is local and cheap, so it starts immediately and is not
+        // gated on the network fit check. It is the only score signal a first
+        // baseline shot has besides tilt.
+        const lumaPromise = averageLumaOf(pic.uri);
+        setQuality(null);
         if (liveGhostUri) {
           // Score once the fit check resolves (framing feeds the quality score).
           // Compared against the pose-matched reference, not just the chain's.
           setFitChecking(true);
           setFitResult(null);
-          setQuality(null);
-          checkFit(pic.uri, liveGhostUri).then((r) => {
+          void Promise.all([checkFit(pic.uri, liveGhostUri), lumaPromise]).then(([r, luma]) => {
             setFitResult(r);
             setFitChecking(false);
+            setShotLuma(luma);
             // Only let framing move the score when the check actually ran
             // (confidence 0 = couldn't compare, e.g. an unreadable ghost). An
             // unchecked frame is unknown, not perfect, so the score reflects
-            // tilt alone rather than a fake top framing mark.
+            // the signals we do have rather than a fake top framing mark.
             setQuality(
               computeQuality({
                 rollDeg: axesNow.roll,
                 pitchDeg: axesNow.pitch,
                 fit: r.confidence > 0 ? r.fit : undefined,
+                luma,
               }),
             );
           });
         } else {
-          // First baseline shot (no ghost): score on level alone.
-          setQuality(computeQuality({ rollDeg: axesNow.roll, pitchDeg: axesNow.pitch }));
+          // First baseline shot: no reference to compare framing against, so
+          // level + light are the whole score.
+          void lumaPromise.then((luma) => {
+            setShotLuma(luma);
+            setQuality(computeQuality({ rollDeg: axesNow.roll, pitchDeg: axesNow.pitch, luma }));
+          });
         }
       }
     } finally {
@@ -549,6 +561,7 @@ export function PhotoCapture({
         uri: persistentUri,
         takenAt: new Date().toISOString(),
         tilt: shotTilt,
+        luma: shotLuma,
         qualityScore: quality?.score,
         // Casual: leave the pose to background classification (undefined unless a
         // live sample / manual chip already resolved one) so the shot lands in the
