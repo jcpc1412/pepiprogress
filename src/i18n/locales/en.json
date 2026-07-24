@@ -704,7 +704,8 @@
     "orEmail": "or with email",
     "showPassword": "Show password",
     "hidePassword": "Hide password",
-    "continueWithout": "Continue without an account"
+    "continueWithout": "Continue without an account",
+    "completingSignIn": "Completing sign-in…"
   },
   "account": {
     "section": "ACCOUNT",

@@ -704,7 +704,8 @@
     "orEmail": "ou par e-mail",
     "showPassword": "Afficher le mot de passe",
     "hidePassword": "Masquer le mot de passe",
-    "continueWithout": "Continuer sans compte"
+    "continueWithout": "Continuer sans compte",
+    "completingSignIn": "Finalisation de la connexion…"
   },
   "account": {
     "section": "COMPTE",

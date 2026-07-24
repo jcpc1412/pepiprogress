@@ -77,6 +77,8 @@ function RootContent() {
               opaque ThemedView, so they cover it while presented. */}
           <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: 'transparent' } }}>
             <Stack.Screen name="(tabs)" options={{ animation: 'none' }} />
+            {/* OAuth deep-link target — see src/app/auth-callback.tsx. */}
+            <Stack.Screen name="auth-callback" />
             {/* Action overlays — modal presentation (slide up, swipe-down to dismiss). */}
             <Stack.Screen name="logging" options={{ presentation: 'modal' }} />
             <Stack.Screen name="add-compound" options={{ presentation: 'modal' }} />

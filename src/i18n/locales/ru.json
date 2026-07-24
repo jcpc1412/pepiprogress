@@ -704,7 +704,8 @@
     "orEmail": "или по эл. почте",
     "showPassword": "Показать пароль",
     "hidePassword": "Скрыть пароль",
-    "continueWithout": "Продолжить без аккаунта"
+    "continueWithout": "Продолжить без аккаунта",
+    "completingSignIn": "Завершение входа…"
   },
   "account": {
     "section": "АККАУНТ",
