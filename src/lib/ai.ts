@@ -226,6 +226,10 @@ export async function analyzePhoto(opts: {
   dataContext?: AnalysisDataContext;
   /** F5: display label of the track (custom part name), for prompt framing. */
   poseLabel?: string;
+  /** Block 7: the user's goals, which key the beauty face region template. */
+  goals?: string[];
+  /** Block 7: user-named areas to watch, from the Pepi focus-area card. */
+  focusAreas?: string[];
 }): Promise<PhotoAnalysis> {
   if (!isSupabaseConfigured) throw new AiNotConfiguredError();
 
@@ -251,6 +255,8 @@ export async function analyzePhoto(opts: {
       priorAnalyses: opts.priorAnalyses,
       dataContext: opts.dataContext,
       poseLabel: opts.poseLabel,
+      goals: opts.goals,
+      focusAreas: opts.focusAreas,
     },
   });
 
@@ -537,5 +543,36 @@ export async function getSignalLedger(opts: {
     return { summary: data.summary ?? '', notes };
   } catch {
     return null;
+  }
+}
+
+/**
+ * Free text -> candidate tracking areas for the tickable confirmation card
+ * (MASTER-PLAN block 7). Returns [] rather than throwing on any failure: the
+ * card is an optional convenience, and a dead end is better than an error
+ * bubble mid-conversation. The user still ticks what actually gets created,
+ * so a sloppy parse costs a tap, never a wrong write.
+ */
+export async function parseAreas(text: string, locale: string): Promise<string[]> {
+  if (!isSupabaseConfigured || !text.trim()) return [];
+  try {
+    const { data, error } = await supabase.functions.invoke<{ areas?: string[] }>('ai-service', {
+      body: { action: 'parse_areas', text, locale },
+    });
+    if (error || !data?.areas) return [];
+    // Trim, drop blanks, dedupe case-insensitively, cap at the schema's max.
+    const seen = new Set<string>();
+    const out: string[] = [];
+    for (const raw of data.areas) {
+      const a = typeof raw === 'string' ? raw.trim() : '';
+      if (!a) continue;
+      const key = a.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(a);
+    }
+    return out.slice(0, 6);
+  } catch {
+    return [];
   }
 }

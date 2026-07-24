@@ -219,6 +219,15 @@ type SignalLedgerEvent = {
   impact?: number; // deterministic heuristic impact, if any (never for doses)
 };
 
+/** Free-text -> candidate tracking areas, for the tickable confirmation card
+ *  (MASTER-PLAN block 7). Extraction only: the user ticks what actually gets
+ *  created, so this must stay conservative and never invent a category. */
+type ParseAreasRequest = {
+  action: 'parse_areas';
+  text: string;
+  locale?: string;
+};
+
 type SignalLedgerRequest = {
   action: 'signal_ledger';
   metric: string; // localized metric name
@@ -599,6 +608,12 @@ type VisionCtx = {
   priorAnalyses?: PriorAnalysis[];
   dataContext?: AnalysisDataContext;
   poseLabel?: string;
+  /** The user's tracked goals (slugs). Keys the beauty face template. */
+  goals?: string[];
+  /** User-named areas to watch, created conversationally (block 7 tickable card).
+   *  Free text in the user's own words, so it is echoed into the prompt as-is
+   *  rather than matched against a fixed vocabulary. */
+  focusAreas?: string[];
 };
 
 // ── visionSystemPrompt context modules (composer blocks) ──────────────────────
@@ -610,6 +625,50 @@ type VisionCtx = {
 // edit that grows the base monolith or dilutes its HARD RULES. These stay local
 // (not in _shared) because they are vision-specific; the connector never uses them.
 
+/**
+ * Intent-keyed region guide (MASTER-PLAN block 7 / 2f), replacing the single
+ * static face guide. Same machinery as before — this only changes WHICH regions
+ * the model is pointed at, keyed on what the user is actually doing, so a user
+ * cutting gets jaw/jowls and a user tracking skin gets the beauty regions.
+ *
+ * Deliberately built as composed strings rather than the DB-backed template
+ * injection (2e): 2e's value is user-editable/versioned templates, which these
+ * four fixed intents do not need. When 2e lands, this becomes its default set.
+ */
+function visionRegionGuide(session: string, ctx: VisionCtx | undefined): string {
+  if (session !== 'face') {
+    return 'waist, midsection definition, chest, shoulders/delts, arms, back and legs when visible, overall fullness vs dryness';
+  }
+  const parts = ['jawline, cheek fullness, under-eye area, neck, overall puffiness vs definition'];
+  const intent = ctx?.dataContext?.intent;
+  if (intent === 'cut' || intent === 'recomp') {
+    parts.push('cheeks, chin, jaw and jowls — where facial fat tends to leave first');
+  } else if (intent === 'gain') {
+    // The 2f "clean-gain expectation": a lean gain should barely move the face,
+    // so face change during a gain is a fat/water signal, not a muscle one.
+    parts.push(
+      'cheeks, chin and jowls, judging specifically whether added fullness is LOCALIZED to fat-prone regions or UNIFORM across the whole face',
+    );
+  }
+  if (ctx?.transitionContext === 'mtf') {
+    parts.push('cheek and lip fullness, brow ridge, jaw and chin width, overall contour softness');
+  } else if (ctx?.transitionContext === 'ftm') {
+    parts.push('jaw and chin squareness, brow prominence, cheek hollowing, neck and hairline');
+  }
+  if (ctx?.goals?.includes('skin')) {
+    parts.push("crow's feet, smile lines, forehead lines, under-eye bags, overall skin texture");
+  }
+  // Always on the face track: acne is hormone-driven in both sexes, so it is
+  // exactly the kind of change a compound user needs surfaced whether or not
+  // they thought to set a skin goal. The report-only-what-matters rule below
+  // keeps it silent when there is nothing there.
+  parts.push('skin surface: breakouts across forehead, cheeks, jawline and chin');
+  if (ctx?.focusAreas?.length) {
+    parts.push(`areas this user specifically asked you to watch: ${ctx.focusAreas.join(', ')}`);
+  }
+  return parts.join('; ');
+}
+
 /** Base instruction + the two output-layer specs + hard rules (always present). */
 function visionBaseLines(
   session: string,
@@ -617,10 +676,7 @@ function visionBaseLines(
   locale: string,
   ctx: VisionCtx | undefined,
 ): string[] {
-  const regionGuide =
-    session === 'face'
-      ? 'jawline, cheek fullness, under-eye area, neck, overall puffiness vs definition'
-      : 'waist, midsection definition, chest, shoulders/delts, arms, back and legs when visible, overall fullness vs dryness';
+  const regionGuide = visionRegionGuide(session, ctx);
   return [
     `You are the progress-reading engine of a body-tracking instrument. Session type: ${session}.${ctx?.poseLabel ? ` Track: ${ctx.poseLabel}.` : ''}`,
     hasBaseline
@@ -659,6 +715,62 @@ function visionBaseLines(
     `- ${localeLine(locale, 'every user-facing string (change, observation notes and region labels, hypothesis, watchNext, coaching)')}`,
     `- The user's unit system is ${ctx?.units ?? 'metric'}. Report any measurement or weight in ${ctx?.units === 'imperial' ? 'imperial (in / lb)' : 'metric (cm / kg)'}. Do NOT default to imperial.`,
   ];
+}
+
+/**
+ * Face-session caution rules (MASTER-PLAN 2f). The face is the highest-caution
+ * session: puffiness moves with sleep, sodium, alcohol, cortisol, GH peptides,
+ * the cycle and simply the time of day, and a "you look puffier" arrow is both
+ * usually noise and maximally dysmorphia-triggering. So negative face reads are
+ * gated harder than anything on the body, while progress and no-change reads
+ * stay normal — the asymmetry is the point.
+ */
+function visionFaceCautionLines(session: string, ctx: VisionCtx | undefined): string[] {
+  if (session !== 'face') return [];
+  const lines = [
+    '',
+    'FACE CAUTION (this session only — stricter than body):',
+    '- A NEGATIVE face read (puffier, rounder, softer when not wanted, more tired) needs a HIGHER bar than any other observation: only report it when comparability is genuinely good AND the same thing showed up before. Otherwise stay silent or state it as unclear.',
+    '- When you do report one, lead with the ordinary explanation, not the alarming one: sleep, salt, alcohol, hydration, time of day and cycle phase move the face far more than fat does over a short window.',
+    '- Positive and no-change reads keep the normal bar. This gate is deliberately one-sided.',
+    '- Facial water vs facial fat: change concentrated in fat-prone regions (cheeks, chin, jowls) leans fat; uniform whole-face puffiness leans water. Say which pattern you see, and keep confidence LOW either way — never a confident "face fat" claim.',
+    '- Time of day and lighting hit the face harder than the body (morning vs evening puffiness is dramatic). Weight them heavily in driftScore and name them when they limit the read.',
+    '- Never comment on attractiveness, age, or how "good" the face looks. Describe the region and the change, nothing about the person.',
+    '- If make-up, a filter, or heavy editing appears to be present, say so and recommend a bare-face retake: it confounds skin and contour reads entirely.',
+  ];
+  if (ctx?.goals?.includes('skin')) {
+    lines.push(
+      '- Aesthetic/anti-aging reads stay observational ("the skin around the eyes appears smoother"), never a verdict on looking younger or better, and never a treatment recommendation.',
+    );
+  }
+  return lines;
+}
+
+/**
+ * Skin + moles + hairline (MASTER-PLAN block 7). All three are dermatology-
+ * adjacent, so all three are observational-with-a-referral, never a diagnosis,
+ * never a treatment, and — importantly — never reassurance either: telling
+ * someone a mole looks fine is exactly as much a clinical claim as telling them
+ * it does not, and it is the one that stops them seeing a doctor.
+ */
+function visionSkinLines(session: string, ctx: VisionCtx | undefined): string[] {
+  if (session !== 'face' && session !== 'body') return [];
+  const lines = [
+    '',
+    'SKIN LAYER (observational + refer; never diagnose, never treat, never reassure):',
+    '- BREAKOUTS/ACNE: report visible changes in breakout density or distribution as a plain observation ("more breakouts along the jawline than at baseline"). Androgens drive this in men and women alike, so it is a legitimate signal worth surfacing next to the rest of the data.',
+    '- You may note that skin changes commonly track hormonal shifts, stress, sleep and skincare changes IN GENERAL terms. Never attribute a breakout to a specific compound, and never suggest, adjust or stop any treatment, prescription or over-the-counter.',
+    '- For anything that looks persistent, painful, cystic, or is clearly distressing the user: point them to a dermatologist. That pointer is the recommendation — nothing else is.',
+    '- MOLES AND SKIN LESIONS: you are NOT a screening tool. Do not assess, grade, score, or characterize any mole. The ONLY thing you may do is notice that a mole or marked spot looks CHANGED versus the baseline photo (size, border, colour, or newly present) and say that a dermatologist should look at it.',
+    '- Never say a mole looks normal, benign, fine, or nothing to worry about — false reassurance is the most harmful thing this feature could produce. Silence is correct unless something changed.',
+    '- Do not raise moles at all when nothing changed. No baseline, no mole comment.',
+  ];
+  if (ctx?.transitionContext || ctx?.dataContext?.intent) {
+    lines.push(
+      '- HAIRLINE: you may note visible hairline or density change versus baseline as an observation, and point to a dermatologist for anything progressive. Never name a cause, a compound, or a treatment.',
+    );
+  }
+  return lines;
 }
 
 /** Pre-digested numeric context from the user's own logs (F5 context fusion). */
@@ -851,6 +963,10 @@ function visionSystemPrompt(
     ...visionBodyTypeLines(ctx?.bodyTypeCalibration),
     ...visionMeasurementLines(ctx?.measurementDelta, unitLabel),
     ...visionCycleLutealLines(ctx?.cycleContext),
+    // Face caution + skin sit above the transition block so the transition
+    // valence rules get the last word on how a face change is framed.
+    ...visionFaceCautionLines(session, ctx),
+    ...visionSkinLines(session, ctx),
     ...transitionPromptLines(ctx?.transitionContext),
     ...visionSymptomLines(ctx?.symptomContext),
     ...visionCycleWeekLines(ctx?.cycleWeek),
@@ -986,6 +1102,7 @@ Deno.serve(async (req: Request) => {
       | InsightsRequest
       | CompoundInfoRequest
       | SignalLedgerRequest
+      | ParseAreasRequest
       | TerraRequest;
 
     // -- terra --------------------------------------------------------------
@@ -1315,6 +1432,42 @@ Deno.serve(async (req: Request) => {
         }],
       });
       return json(extractJson(message, { pose: 'other', confidence: 0 }), 200);
+    }
+
+    // -- parse_areas -----------------------------------------------------------
+    // Free text -> candidate areas for the tickable card. Extraction only: the
+    // user ticks what is actually created, so recall matters less than never
+    // inventing a category they did not name.
+    if (body.action === 'parse_areas') {
+      const locale = body.locale ?? 'en';
+      if (!body.text?.trim()) return json({ areas: [] }, 200);
+      const message = await client.messages.create({
+        model: PARSE_MODEL,
+        max_tokens: 300,
+        ...structured({
+          type: 'object',
+          additionalProperties: false,
+          properties: {
+            areas: {
+              type: 'array',
+              maxItems: 6,
+              items: { type: 'string', description: 'One short area label, 1-3 words.' },
+              description: 'Body or face areas the user named, as short labels.',
+            },
+          },
+          required: ['areas'],
+        }),
+        system: [
+          'You extract the body or face AREAS a user named in their own words, for a tracking app.',
+          'Return each as a short label of 1-3 words, deduplicated, in the order mentioned.',
+          'ONLY areas the user actually named. Never add related areas, never infer, never expand',
+          'a general answer into specifics. "My skin gets bad" names no area: return an empty list.',
+          'Strip severity, frequency and symptom words - keep the place ("forehead", "jawline", "chin").',
+          `- ${localeLine(locale, 'every returned label')}`,
+        ].join(' '),
+        messages: [{ role: 'user', content: body.text }],
+      });
+      return json(extractJson(message, { areas: [] as string[] }), 200);
     }
 
     // -- signal_ledger ---------------------------------------------------------

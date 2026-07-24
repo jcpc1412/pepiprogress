@@ -396,6 +396,12 @@ export type LocalProfile = {
   typicalBaselines?: TypicalBaseline[];
   /** Per-group prompt lifecycle so the one-time nudge is asked at most once. */
   typicalPromptState?: Partial<Record<TypicalGroup, TypicalPromptStatus>>;
+  // Areas the user asked Pepi to watch in photos, in their own words (block 7).
+  // Free text by design: skin and problem areas are user-specific, so there is
+  // no fixed vocabulary to pick from. Fed straight into the vision context.
+  focusAreas?: string[];
+  /** Lifecycle for the one-time "where should I watch?" ask, so it fires once. */
+  focusAreaPromptState?: 'asked' | 'declined' | 'set';
 };
 
 /** A structured user explanation of an off day (beta-notes §3.4 context memory,

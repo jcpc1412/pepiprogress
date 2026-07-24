@@ -616,6 +616,10 @@ export function ProgressPhotos({
         priorAnalyses: toPriorPayload(recentForTrack(analysisLedger, trackSession, trackPart)),
         dataContext,
         poseLabel: trackPart,
+        // Block 7: goals key the beauty face template; focusAreas are the areas
+        // the user named to Pepi, so the model watches what they asked for.
+        goals: profile.goals,
+        focusAreas: profile.focusAreas,
       });
       updatePhoto(target.id, {
         driftScore: res.driftScore,
