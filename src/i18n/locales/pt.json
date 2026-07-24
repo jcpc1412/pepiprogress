@@ -1451,5 +1451,15 @@
       "title": "Liga a tua app de saúde",
       "body": "Peso, sono e treinos preenchem-se sozinhos, registas menos."
     }
+  },
+  "areas": {
+    "opener": "Acompanhar alguma área?",
+    "ask": "Diz-me onde queres que eu olhe. Pele que reage, uma zona que nunca te agrada, aquilo que verificas sempre ao espelho.",
+    "confirm": "Registado. Desmarca o que percebi mal e guarda.",
+    "save": "Acompanhar {{count}}",
+    "skip": "Nenhuma",
+    "saved": "A acompanhar {{areas}}. Vou vigiar isso nas tuas fotos.",
+    "none": "Sem problema. Diz-me quando quiseres e configuramos.",
+    "retry": "Não captei uma zona específica. Tenta indicá-la, como o maxilar ou a zona dos olhos."
   }
 }

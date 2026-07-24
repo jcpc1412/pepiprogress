@@ -1451,5 +1451,15 @@
       "title": "Connectez votre app santé",
       "body": "Poids, sommeil et séances se remplissent seuls, vous saisissez moins."
     }
+  },
+  "areas": {
+    "opener": "Surveiller une zone ?",
+    "ask": "Dis-moi où regarder. Une peau qui réagit, une zone qui ne te plaît jamais, ce que tu vérifies sans cesse dans le miroir.",
+    "confirm": "C'est noté. Décoche ce que j'ai mal compris, puis enregistre.",
+    "save": "Suivre {{count}}",
+    "skip": "Aucune",
+    "saved": "Je suis {{areas}}. Je surveillerai ça sur tes photos.",
+    "none": "Pas de souci. Dis-le-moi quand tu veux et on s'en occupe.",
+    "retry": "Je n'ai pas saisi de zone précise. Essaie de la nommer, comme la mâchoire ou le dessous des yeux."
   }
 }

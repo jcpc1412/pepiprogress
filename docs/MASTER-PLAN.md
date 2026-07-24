@@ -1840,12 +1840,38 @@ skeleton. Annotations: **needs** = hard prerequisite; **unblocks** = what it ope
 - **2b.6 Proactive "how'd your lifting feel?" opener.** **Needs** 1.1-1.2.
 
 **7. Face / beauty / trans / moles, consume templates + intent-keying (block 3)**
+✅ **DONE 2026-07-24** (commits e06a522 + the tickable card). Owner added **acne**
+to scope: hormone-driven in both sexes, visible in the face shots already captured,
+and one of the few things a user genuinely cannot self-assess week over week.
 - **2f Face templates** (fat_loss / weight_gain) + **regression arrows gated harder
-  than body** + localized-vs-global fat-vs-water. Identity guard ironclad.
+  than body** + localized-vs-global fat-vs-water. Identity guard ironclad. ✅
 - **Beauty** face template (crow's feet / smile lines) + the **conversational
-  entity-creation card** (Pepi ask → parse → tickable card → create; reusable primitive).
-- **Trans** mtf/ftm templates (`transitionContext` already exists) + hair-loss referral.
-- **Moles** change-detection + referral-only (never screening/diagnosis/reassurance).
+  entity-creation card** (Pepi ask → parse → tickable card → create; reusable primitive). ✅
+- **Trans** mtf/ftm templates (`transitionContext` already exists) + hair-loss referral. ✅
+- **Moles** change-detection + referral-only (never screening/diagnosis/reassurance). ✅
+
+**Built:** `visionRegionGuide` replaces the single static face guide with an
+intent-keyed one (cut/recomp → cheeks/chin/jaw/jowls; gain → the same regions
+judged localized-vs-uniform, since a clean gain should barely move the face;
+mtf/ftm contours; beauty regions behind the `skin` goal; user-named areas last).
+Two new composer modules: `visionFaceCautionLines` (negative face reads need
+higher comparability **and** persistence, ordinary explanation first, make-up
+retake, no attractiveness/age judgments — deliberately one-sided, positive reads
+keep the normal bar) and `visionSkinLines` (breakouts as a first-class
+observation; moles as change-detection + dermatologist referral only, **never**
+a characterization and never reassurance, since "that mole looks fine" is the
+read that stops someone seeing a doctor). New `parse_areas` action (Haiku,
+extraction-only, never invents a category) feeds the tickable card in Pepi;
+result persists to `profile.focusAreas` and flows back into the vision context.
+
+**Deviation from the stated dependency:** built as composed server-side strings,
+NOT the block-3 DB template injection (2e), which is still unbuilt. 2e's value is
+user-editable versioned templates; four fixed intents do not need that, and the
+vision prompt is already a composer whose own comment anticipates exactly this
+("one more helper + one more spread"). When 2e lands, these become its default
+set. **Block 7 therefore did not need block 3, and block 3 is still open.**
+
+**⚠️ Edge function needs redeploy** (`ai-service`) — client side is pure JS.
 
 **8. Connectors (Wave 8), backend-only, parallelizable from the start; reuses posture.ts**
 - **47 B0 Server + auth + inbox** (`connector_event` table; Supabase Auth OAuth; RLS scoping).
@@ -1858,6 +1884,19 @@ skeleton. Annotations: **needs** = hard prerequisite; **unblocks** = what it ope
 - **G Remote push infra** → **unblocks 1.5** + the step-goal proximity ping + connector push.
 - **A Web workbench [L].**
 - **F Full per-entity sync engine [L]** (pairs with A; the `connector_event` inbox folds in).
+  **Concrete motivation (2026-07-24 incident):** the current snapshot-blob sync has
+  no way to express "this device's local state is empty" separately from "the user
+  deleted everything" — it's one JSON blob, last-write-wins, wholesale. A sign-in
+  race (store not yet hydrated) merged an empty local state over real cloud data,
+  and both the snapshot and the F6 normalized mirror faithfully replicated the
+  emptiness, permanently losing a user's protocol/doses/symptoms (no paid backup
+  tier on this project, so unrecoverable server-side). Patched with defensive
+  guards (`isEffectivelyEmpty` refuses to overwrite/delete cloud data with nothing
+  — see `src/lib/merge-states.ts`, `src/lib/sync.ts`) rather than fixed at the root,
+  because the root fix is this track. Per-entity rows with field-level conflict
+  resolution make the failure mode structurally impossible: an empty local state
+  has nothing to say about individual check-in/dose/symptom rows, so there's
+  nothing to overwrite them with.
 - **D HealthKit cycle read + Pepi cycle setup.** ✅ **DONE** (commit db0cb7b).
 - **C Monetization** (trial/billing).
 - **E Branding round** (custom domain, auth email templates, website, one coordinated pass).

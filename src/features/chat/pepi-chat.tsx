@@ -25,7 +25,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Radii, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { aiErrorKind, parseQuickLog, runInsights, type ParsedItem } from '@/lib/ai';
+import { aiErrorKind, parseAreas, parseQuickLog, runInsights, type ParsedItem } from '@/lib/ai';
 import { buildInsightHistory, selectChartSeries, selectPhotoDigest } from '@/lib/data-facade';
 import { resolveMsg, useVerdict, type TFn } from '@/features/home/use-verdict';
 import { CHART_METRICS, type MetricSeries } from '@/lib/chart-series';
@@ -164,6 +164,18 @@ export function PepiChat() {
   // Cycle setup (piece D): 'confirm' when Health already has the data (one tap,
   // nothing to type), 'date' when it must be entered by hand.
   const [cycleSetup, setCycleSetup] = useState<{ step: 'confirm' | 'date' } | null>(null);
+  /**
+   * Focus-area flow (MASTER-PLAN block 7). `ask` waits for free text; `pick`
+   * holds parsed candidates plus which are ticked. The tickable card is the
+   * human-in-the-loop step: the parse proposes, the user disposes, so a sloppy
+   * parse costs a tap rather than writing categories nobody asked for.
+   *
+   * Deliberately session state, not a persisted message: only the outcome
+   * (profile.focusAreas) is durable, so a half-finished card never resurrects.
+   */
+  const [areaSetup, setAreaSetup] = useState<
+    { step: 'ask' } | { step: 'pick'; candidates: string[]; ticked: string[] } | null
+  >(null);
   // Micro check-in flow (W3-9, beta-notes §4.1): chips-first 1-5 answers, zero AI.
   const [microFlow, setMicroFlow] = useState<{ slot: MicroSlot; fields: CheckinField[]; index: number } | null>(null);
   // Snoozed/dismissed this session: hides the opener chip until the next visit.
@@ -234,7 +246,18 @@ export function PepiChat() {
   // Chips that answer a question Pepi just asked are the interaction itself, so
   // they ignore the pill rules entirely.
   const activeChipFlow =
-    !!anomalyCapture || !!microFlow || typicalSetup?.step === 'confirm' || cycleSetup?.step === 'confirm';
+    !!anomalyCapture ||
+    !!microFlow ||
+    typicalSetup?.step === 'confirm' ||
+    cycleSetup?.step === 'confirm' ||
+    // The tickable card IS the interaction, so it ignores the pill timing rules.
+    areaSetup?.step === 'pick';
+
+  /** Offer the focus-area ask once, and only to someone whose photos it would
+   *  change: the skin goal is the clearest signal, but anyone already taking
+   *  face photos benefits, so both qualify. Never re-asks once answered. */
+  const areaPromptEligible =
+    !profile.focusAreaPromptState && (profile.goals.includes('skin') || photos.some((p) => p.session === 'face'));
 
   useEffect(() => {
     const evaluate = (): number | null => {
@@ -653,6 +676,57 @@ export function PepiChat() {
     setCycleSetup(null);
   };
 
+  /** Opener: Pepi asks where to watch. One-shot — the prompt state records the
+   *  ask so it never nags, whatever the user does next. */
+  const startAreaSetup = () => {
+    addPepiMessage({ role: 'pepi', text: t('areas.ask'), variant: 'answer' });
+    setAreaSetup({ step: 'ask' });
+    store.setProfile({ focusAreaPromptState: 'asked' });
+  };
+
+  /** Toggle one candidate on the card. */
+  const toggleArea = (area: string) => {
+    setAreaSetup((s) =>
+      s?.step === 'pick'
+        ? {
+            ...s,
+            ticked: s.ticked.includes(area)
+              ? s.ticked.filter((a) => a !== area)
+              : [...s.ticked, area],
+          }
+        : s,
+    );
+  };
+
+  /** Commit the ticked candidates, merging with anything already tracked. */
+  const saveAreas = () => {
+    if (areaSetup?.step !== 'pick') return;
+    const ticked = areaSetup.ticked;
+    if (ticked.length === 0) {
+      setAreaSetup(null);
+      store.setProfile({ focusAreaPromptState: 'declined' });
+      addPepiMessage({ role: 'pepi', text: t('areas.none'), variant: 'hint' });
+      return;
+    }
+    // Merge case-insensitively so re-running the flow tops up rather than
+    // duplicating an area the user already tracks.
+    const existing = profile.focusAreas ?? [];
+    const seen = new Set(existing.map((a) => a.toLowerCase()));
+    const merged = [...existing];
+    for (const a of ticked) {
+      if (seen.has(a.toLowerCase())) continue;
+      seen.add(a.toLowerCase());
+      merged.push(a);
+    }
+    store.setProfile({ focusAreas: merged, focusAreaPromptState: 'set' });
+    setAreaSetup(null);
+    addPepiMessage({
+      role: 'pepi',
+      text: t('areas.saved', { areas: ticked.join(', ') }),
+      variant: 'log',
+    });
+  };
+
   const startTypicalSetup = (group: TypicalGroup) => {
     addPepiMessage({ role: 'pepi', text: t(`typical.ask.${group}` as 'typical.ask.nutrition'), variant: 'answer' });
     setTypicalSetup({ group, step: 'confirm' });
@@ -722,6 +796,26 @@ export function PepiChat() {
       } else {
         addPepiMessage({ role: 'pepi', text: t('cycle.dateRetry'), variant: 'hint' });
       }
+      return;
+    }
+
+    // Focus areas: the reply names places to watch, not something to log, so it
+    // goes to the extraction parse and comes back as a tickable card.
+    if (areaSetup?.step === 'ask') {
+      addPepiMessage({ role: 'user', text: input });
+      setText('');
+      setSelection(undefined);
+      const candidates = await parseAreas(input, i18n.language);
+      if (candidates.length === 0) {
+        // No area named (or the parse is unavailable). Don't guess — say so and
+        // leave the flow open so the next message is still treated as an answer.
+        addPepiMessage({ role: 'pepi', text: t('areas.retry'), variant: 'hint' });
+        return;
+      }
+      // Pre-tick everything: the user named these, so the common case is "yes,
+      // all of them" and the ticks exist to remove a mis-parse, not to re-enter.
+      setAreaSetup({ step: 'pick', candidates, ticked: candidates });
+      addPepiMessage({ role: 'pepi', text: t('areas.confirm'), variant: 'answer' });
       return;
     }
 
@@ -1008,6 +1102,28 @@ export function PepiChat() {
               <OptionChip label={t('typical.yes')} selected={false} onPress={() => confirmTypical(true)} />
               <OptionChip label={t('typical.no')} selected={false} onPress={() => confirmTypical(false)} />
             </>
+          ) : areaSetup?.step === 'pick' ? (
+            // The tickable confirmation card: every candidate is a toggle, and
+            // the primary action names the count so it's clear what gets created.
+            <>
+              {areaSetup.candidates.map((a) => (
+                <OptionChip
+                  key={a}
+                  label={a}
+                  selected={areaSetup.ticked.includes(a)}
+                  onPress={() => toggleArea(a)}
+                />
+              ))}
+              <OptionChip
+                label={
+                  areaSetup.ticked.length > 0
+                    ? t('areas.save', { count: areaSetup.ticked.length })
+                    : t('areas.skip')
+                }
+                selected={false}
+                onPress={saveAreas}
+              />
+            </>
           ) : cycleSetup?.step === 'confirm' ? (
             <>
               <OptionChip label={t('cycle.yes')} selected={false} onPress={() => confirmCycle(true)} />
@@ -1046,6 +1162,9 @@ export function PepiChat() {
                   selected={false}
                   onPress={() => startCycleSetup(cyclePrompt)}
                 />
+              ) : null}
+              {areaPromptEligible && !areaSetup ? (
+                <OptionChip label={t('areas.opener')} selected={false} onPress={startAreaSetup} />
               ) : null}
               {eligibleGroup && !typicalSetup ? (
                 <OptionChip

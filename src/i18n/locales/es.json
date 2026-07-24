@@ -1451,5 +1451,15 @@
       "title": "Conecta tu app de salud",
       "body": "El peso, el sueño y los entrenamientos se rellenan solos, así registras menos."
     }
+  },
+  "areas": {
+    "opener": "¿Vigilamos alguna zona?",
+    "ask": "Dime dónde quieres que mire. Piel que se altera, una zona que nunca te convence, lo que sueles revisar en el espejo.",
+    "confirm": "Anotado. Desmarca lo que haya entendido mal y guarda.",
+    "save": "Seguir {{count}}",
+    "skip": "Ninguna",
+    "saved": "Sigo {{areas}}. Lo vigilaré en tus fotos.",
+    "none": "Sin problema. Dímelo cuando quieras y lo configuramos.",
+    "retry": "No he captado una zona concreta. Prueba a nombrarla, como la mandíbula o el contorno de ojos."
   }
 }

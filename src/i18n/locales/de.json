@@ -1451,5 +1451,15 @@
       "title": "Verbinde deine Gesundheits-App",
       "body": "Gewicht, Schlaf und Workouts tragen sich selbst ein, du protokollierst weniger."
     }
+  },
+  "areas": {
+    "opener": "Bestimmten Bereich beobachten?",
+    "ask": "Sag mir, worauf ich achten soll. Haut, die reagiert, eine Stelle, die dir nie gefällt, alles, was du ständig im Spiegel prüfst.",
+    "confirm": "Notiert. Hake ab, was ich falsch verstanden habe, und speichere.",
+    "save": "{{count}} verfolgen",
+    "skip": "Keine davon",
+    "saved": "Ich verfolge {{areas}} und achte in deinen Fotos darauf.",
+    "none": "Kein Problem. Sag jederzeit Bescheid, dann richten wir es ein.",
+    "retry": "Ich habe keine konkrete Stelle erkannt. Nenne sie ruhig, etwa Kieferlinie oder Augenpartie."
   }
 }
