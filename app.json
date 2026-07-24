@@ -57,7 +57,8 @@
           "android": {
             "minSdkVersion": 26,
             "enableMinifyInReleaseBuilds": true,
-            "enableShrinkResourcesInReleaseBuilds": true
+            "enableShrinkResourcesInReleaseBuilds": true,
+            "extraProguardRules": "-keep public class com.horcrux.svg.** {*;}\n-keepclassmembers public class com.horcrux.svg.** {*;}\n-dontwarn com.horcrux.svg.**\n"
           }
         }
       ],

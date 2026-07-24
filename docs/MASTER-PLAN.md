@@ -2075,3 +2075,40 @@ Two design points worth not re-deriving later:
 
 UI: Privacy settings → "Photo quality scores". States the AI-call count before
 spending anything, and offers the free half on its own.
+
+
+## SVG/ChamferBox invisible on the live release build, R8 hypothesis (2026-07-24)
+
+Owner report: the Journal week-pager and day-strip (and by the same mechanism,
+likely every `ChamferBox` card/chip/pill app-wide) render correctly on a local
+build but are invisible on the shipped 0.0.39 phone build. The one thing that
+DID survive — the small "logged" activity dot — is a plain `View` with a
+hardcoded color; everything missing goes through `react-native-svg`
+(`ChamferBox`'s chamfered fill, and every custom icon in `icons.tsx`).
+
+This matches a previously-flagged, never-verified risk: R8 **full mode** +
+resource shrinking were both turned on (item 45, 2026-07-22) with "device-
+blocked verification still pending" — nobody had yet confirmed a real release
+build renders correctly. `react-native-svg` ships its own `consumerProguardFiles`
+(`-keep public class com.horcrux.svg.** {*;}`), which should be enough under
+ordinary R8, but full mode is known in the wider RN ecosystem to be more
+aggressive than consumer AAR rules alone reliably survive.
+
+**Owner constraint: one EAS build left, will not spend it on a diagnostic.**
+So this was not tested by toggling minify off first — that would need its own
+build and isn't worth spending the last one to *confirm* a guess. Instead,
+`extraProguardRules` (via `expo-build-properties`, which the project already
+uses for `minSdkVersion`) now re-asserts the SVG keep rules directly in the
+app's own `proguard-rules.pro`, redundant with the library's consumer rules but
+the standard community fix when consumer rules alone don't reliably survive R8
+full mode. Verified the string actually lands in the generated
+`android/app/proguard-rules.pro` via `expo prebuild --clean` (the directory is
+gitignored/regenerated, so this can't be hand-edited directly — it must go
+through the plugin). Zero cost: rides along in whatever build is run next, no
+separate build needed to apply it.
+
+**Still unverified pending a real device.** If the stepper/cards come back:
+confirmed, close out the item-45 verification debt too. If they don't: rules
+out R8 as the cause for free, and the next place to look is font loading
+(custom `@expo-google-fonts/*` weights) or a `ChamferBox` `onLayout` race —
+neither diagnosed yet.
