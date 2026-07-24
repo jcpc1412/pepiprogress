@@ -329,6 +329,16 @@ need the native build.
     path + web Services ID/secret) since it shares the same plumbing. Custom-domain
     branding explicitly deferred to the Branding track (E), owner accepts the
     `supabase.co` leak during closed beta.
+    **Partial 2026-07-23:** browser-fallback deep-link return fixed — Expo Router had no
+    route matching `pepi://auth-callback` at all, so the redirect (whenever the browser
+    path ran) hit "Unmatched Route" instead of completing; `src/app/auth-callback.tsx`
+    now exists and self-exchanges the code. **Still open, console-side, not code:**
+    purge `localhost:3000` from the Supabase redirect allow-list; register the Android
+    build's SHA-1 signing fingerprint against the Google Cloud OAuth client (native
+    `GoogleSignin.signIn()` needs this to show the picker at all — its absence is the
+    likely reason the browser fallback engaged for the Flo tester instead of the native
+    flow, since the button-selection code already prefers native whenever
+    `EXPO_PUBLIC_GOOGLE_CLIENT_ID` is set); verify the Apple Services ID / web config.
 32. **Cross-device photo restore [M].** Storage hardening pulled forward from backlog
     (owner: option A). On restore/sign-in, `cloudPath` → signed URL becomes the source
     of truth for any photo whose local URI does not resolve; download-on-demand with
