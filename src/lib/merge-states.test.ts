@@ -111,4 +111,28 @@ describe('mergeStates — cloud-save restore/merge', () => {
     expect(merged.displayName).toBe('Alex'); // cloud authoritative for identity
     expect([...merged.compoundSlugs].sort()).toEqual(['bpc-157', 'tb-500']); // from merged items
   });
+
+  it('does not reset a fully onboarded device to a blank cloud profile', () => {
+    // Reproduces the 2026-07-24 report: signing in on a device with real local
+    // data, but the account's cloud snapshot is still the pre-onboarding
+    // default (first sync ever, or a stale early snapshot). Taking cloud's
+    // profile wholesale wiped goals/sex/units/onboarding status even though
+    // entries/doses/symptoms survived the merge, which read as "my data is gone".
+    const local = state({
+      profile: profile({ onboardingComplete: true, goals: ['weight_loss'], sex: 'female' }),
+      entries: { '2026-07-01': { date: '2026-07-01', weight: 80, updatedAt: '2026-07-01T10:00:00Z' } },
+    });
+    const cloud = state({ profile: profile({ onboardingComplete: false, goals: [] }) });
+    const merged = mergeStates(local, cloud);
+    expect(merged.profile.onboardingComplete).toBe(true);
+    expect(merged.profile.goals).toEqual(['weight_loss']);
+    expect(merged.profile.sex).toBe('female');
+    expect(merged.entries['2026-07-01'].weight).toBe(80);
+  });
+
+  it('still takes cloud profile when both sides are onboarded (returning-user cross-device edit)', () => {
+    const local = state({ profile: profile({ onboardingComplete: true, goals: ['weight_loss'] }) });
+    const cloud = state({ profile: profile({ onboardingComplete: true, goals: ['body_comp'] }) });
+    expect(mergeStates(local, cloud).profile.goals).toEqual(['body_comp']);
+  });
 });

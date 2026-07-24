@@ -92,10 +92,17 @@ export function mergeStates(local: PersistedState, cloud: PersistedState): Persi
     }
   }
 
-  // Profile: cloud is authoritative for auth-linked fields; local wins for
-  // device-only prefs (notification times, field customizations when cloud is empty).
+  // Profile: cloud is authoritative for auth-linked fields — EXCEPT when cloud's
+  // profile is the pre-onboarding default (first sync for this account, or a
+  // snapshot written before onboarding ever completed on any device) while this
+  // device has already onboarded. Taking cloud wholesale in that case reset a
+  // fully set-up local device (goals, sex, units, onboarding status) back to
+  // blank on sign-in, which reads as "all my data is gone" even though the
+  // entries/doses/symptoms below survive the merge untouched. Local wins as the
+  // base whenever it's the side that's actually further along.
+  const cloudIsBlank = !cloud.profile.onboardingComplete && local.profile.onboardingComplete;
   const profile: LocalProfile = {
-    ...cloud.profile,
+    ...(cloudIsBlank ? local.profile : cloud.profile),
     // Notification prefs are device-local — always keep local values
     notifyCheckinEnabled: local.profile.notifyCheckinEnabled,
     notifyCheckinTime: local.profile.notifyCheckinTime,
