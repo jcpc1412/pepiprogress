@@ -1481,5 +1481,17 @@
     },
     "skip": "Passer",
     "done": "Enregistré."
+  },
+  "rescore": {
+    "section": "Scores de qualité des photos",
+    "body": "Les scores sont enregistrés à la prise de vue. Quand le calcul s'améliore, les anciennes photos gardent leur ancien score jusqu'à ce que tu le relances ici. Cela influence aussi quelle photo sert de référence de comparaison.",
+    "upToDate": "Les {{count}} photos utilisent la version actuelle.",
+    "pending": "{{count}} photos ne sont pas encore entièrement notées.",
+    "freeOnly": "Recalculer sans IA ({{count}} gratuites)",
+    "withFit": "Tout recalculer ({{count}} analyses IA)",
+    "running": "Recalcul... {{done}} sur {{total}}",
+    "doneMsg": "{{count}} photos recalculées.",
+    "skipped": "{{count}} ignorées : fichier illisible. Nouvel essai la prochaine fois.",
+    "cost": "{{count}} nécessitent une analyse de cadrage par IA, qui consomme ton quota."
   }
 }

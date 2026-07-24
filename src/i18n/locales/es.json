@@ -1481,5 +1481,17 @@
     },
     "skip": "Omitir",
     "done": "Registrado."
+  },
+  "rescore": {
+    "section": "Puntuaciones de calidad de fotos",
+    "body": "Las puntuaciones se guardan al tomar cada foto. Cuando mejora el sistema, las fotos antiguas conservan su número anterior hasta que lo vuelvas a calcular aquí. Esto también afecta a qué foto se usa como referencia de comparación.",
+    "upToDate": "Las {{count}} fotos están puntuadas con la versión actual.",
+    "pending": "{{count}} fotos aún no están puntuadas del todo.",
+    "freeOnly": "Recalcular sin IA ({{count}} gratis)",
+    "withFit": "Recalcular todo ({{count}} análisis de IA)",
+    "running": "Recalculando... {{done}} de {{total}}",
+    "doneMsg": "{{count}} fotos recalculadas.",
+    "skipped": "{{count}} omitidas: no se pudo leer el archivo. Se reintentarán la próxima vez.",
+    "cost": "{{count}} de estas necesitan un análisis de encuadre con IA, que consume tu cuota."
   }
 }

@@ -193,12 +193,27 @@ export type PhotoEntry = {
   cloudPath?: string; // Supabase Storage path after upload (progress-photos bucket)
   takenAt: string; // ISO
   // Layer-1 capture metadata (spec 04) — optional until sensors/detection land.
-  tilt?: number; // device pitch/roll delta from baseline (deg)
+  tilt?: number; // combined tilt magnitude (deg), kept as the human-readable figure
+  /** The tilt axes kept separately, because they are judged at different
+   *  tolerances and the combined magnitude cannot be split back apart. Without
+   *  these a later scoring change can only re-derive `level` approximately. */
+  rollDeg?: number;
+  pitchDeg?: number;
   luma?: number; // average brightness proxy (0–1)
+  /** The framing verdict from `check_fit`, persisted with the reference it was
+   *  measured against. It used to be computed at capture, folded into the score
+   *  and thrown away, which made framing the one signal a later rescore could
+   *  not reproduce without paying for a fresh vision call per photo. */
+  fit?: 'good' | 'acceptable' | 'poor';
+  fitConfidence?: number;
+  fitReferenceId?: string;
   boxRatio?: number; // subject bbox vs frame (distance proxy)
   /** Composite capture-quality score (0–100) from photo-quality.ts, persisted at
    *  save time. Drives the quality-highscore reference promotion (PH-1). */
   qualityScore?: number;
+  /** `QUALITY_VERSION` in force when `qualityScore` was written. Absent = scored
+   *  before versioning existed (treat as version 1). */
+  scoreVersion?: number;
   /** Clothing coverage from the vision service (PH-1): skin priority. `minimal`
    *  outranks `clothed` for the working reference, and once a minimal-coverage
    *  reference exists clothed captures never displace it (the soft lock). */

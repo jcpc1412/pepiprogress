@@ -2026,3 +2026,42 @@ that gap produced a readout stuck at 30% that survived several rounds of
   looser clothing" but no signal detects it; `check_fit`'s prompt is explicitly
   framing-only. Either build it or change the copy.
 - **blur / pose** ❌ — still native-detection follow-ups.
+
+
+## Retroactive photo re-scoring (2026-07-24)
+
+Scores are written at capture and frozen, so a formula change leaves the
+existing library on the old numbers. That is not cosmetic: `qualityScore` drives
+working-reference promotion, so a stale score can keep the wrong photo as the
+anchor every future shot is matched against.
+
+`QUALITY_VERSION` (in `photo-quality.ts`) is stamped onto each photo as
+`scoreVersion`. Bump it whenever the formula would give an existing photo a
+different number; everything below keys off it. Version 2 = roll/pitch banded
+separately + light actually measured.
+
+Cost model, which is why the UI offers two buttons rather than one:
+- **level** — free, and now exact: `rollDeg`/`pitchDeg` are persisted per photo
+  (the combined `tilt` cannot be split back apart). Photos captured before this
+  fall back to the combined figure, judged approximately.
+- **light** — free, needs only a local thumbnail decode. Works retroactively on
+  photos of any age as long as the file (or its cloud copy) resolves.
+- **framing** — the expensive one, a vision call per photo. `fit`,
+  `fitConfidence` and **`fitReferenceId`** are now persisted, so a later formula
+  change replays the verdict for free. Only a photo whose reference has since
+  changed needs a fresh call, because a verdict against a superseded reference
+  describes a comparison that no longer holds.
+
+Two design points worth not re-deriving later:
+- **The free pass must not be a trap.** It stamps the current version, so
+  staleness alone cannot decide what to offer next: a photo that took the free
+  path would read as up to date and never be offered the AI upgrade. `PhotoWork`
+  therefore tracks `freeGain` separately from `needsFit`, and a photo is
+  included in the plan when it is stale **or** missing a usable fit.
+- **A skipped photo stays stale.** If the image cannot be read the version is
+  not stamped, so the next run retries it rather than freezing a score that is
+  missing a signal it should have. Patches apply per photo, so an interrupted
+  run keeps everything it already paid for.
+
+UI: Privacy settings → "Photo quality scores". States the AI-call count before
+spending anything, and offers the free half on its own.

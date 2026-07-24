@@ -16,6 +16,18 @@
  * same way, without changing this interface.
  */
 
+/**
+ * Bumped whenever the scoring formula changes in a way that would give an
+ * already-captured photo a different number.
+ *
+ * Photos store the version they were scored under, so a later formula change
+ * can find exactly which ones are stale instead of blindly re-running the
+ * expensive parts over the whole library. History so far:
+ *   1 — original (combined tilt at a 3/8 degree bar; light never populated).
+ *   2 — roll/pitch banded separately; light actually measured (2026-07-24).
+ */
+export const QUALITY_VERSION = 2;
+
 export type CriterionState = 'good' | 'ok' | 'bad' | 'unknown';
 /** Matches the checkFit result (`FitCheck.fit`). */
 export type FitLevel = 'good' | 'acceptable' | 'poor';

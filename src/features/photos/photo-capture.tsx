@@ -22,7 +22,7 @@ import {
 } from '@/lib/photo-pose';
 import { MeasurementGuides, type Guide } from '@/features/photos/measurement-guides';
 import { MEASURE_POS, type MeasureKey } from '@/lib/photo-arrows';
-import { computeQuality, type PhotoQuality } from '@/lib/photo-quality';
+import { computeQuality, QUALITY_VERSION, type PhotoQuality } from '@/lib/photo-quality';
 import { quickReadout, type Comparability } from '@/lib/photo-readout';
 import { initialSampleState, recordSample, shouldSample } from '@/lib/pose-live';
 import { localDateKey, useStore, type PhotoSession } from '@/lib/store';
@@ -55,6 +55,8 @@ export function PhotoCapture({
   part,
   ghostUri,
   ghostByPose,
+  ghostId,
+  ghostIdByPose,
   visible,
   onClose,
   onSaved,
@@ -69,6 +71,10 @@ export function PhotoCapture({
   /** Per-pose references (W6-26.5): the sampled live classification swaps the
    *  ghost to the reference matching the pose the user is actually holding. */
   ghostByPose?: Partial<Record<CanonicalPose, string>>;
+  /** Ids matching `ghostUri` / `ghostByPose`. Stored with the fit verdict so a
+   *  later rescore knows whether that verdict still applies. */
+  ghostId?: string;
+  ghostIdByPose?: Partial<Record<CanonicalPose, string>>;
   visible: boolean;
   onClose: () => void;
   /** Fired after a shot is saved to the store (PH-2): the parent runs the instant
@@ -96,6 +102,10 @@ export function PhotoCapture({
   const [shot, setShot] = useState<string | null>(null);
   const [shotTilt, setShotTilt] = useState<number | undefined>(undefined);
   const [shotLuma, setShotLuma] = useState<number | undefined>(undefined);
+  /** Axes + the reference the fit was measured against, kept so a later scoring
+   *  change can rescore this photo without a fresh vision call. */
+  const [shotAxes, setShotAxes] = useState<{ roll: number; pitch: number } | undefined>(undefined);
+  const [shotFitRefId, setShotFitRefId] = useState<string | undefined>(undefined);
   const [busy, setBusy] = useState(false);
   const [ghostLevelIdx, setGhostLevelIdx] = useState(0);
   const [fitResult, setFitResult] = useState<FitCheck | null>(null);
@@ -438,6 +448,8 @@ export function PhotoCapture({
   const resetShot = () => {
     setShot(null);
     setShotLuma(undefined);
+    setShotAxes(undefined);
+    setShotFitRefId(undefined);
     setFitResult(null);
     setFitChecking(false);
     setQuality(null);
@@ -476,6 +488,7 @@ export function PhotoCapture({
         const tiltNow = Math.round(tiltRef.current);
         const axesNow = axesRef.current;
         setShotTilt(tiltNow);
+        setShotAxes({ roll: axesNow.roll, pitch: axesNow.pitch });
         setShot(pic.uri);
         setQualityAck(false);
         // Brightness is local and cheap, so it starts immediately and is not
@@ -492,6 +505,10 @@ export function PhotoCapture({
             setFitResult(r);
             setFitChecking(false);
             setShotLuma(luma);
+            // Recorded even when confidence is 0: "we compared against this and
+            // could not tell" is itself reusable, and stops a later run paying
+            // for the same unanswerable comparison twice.
+            setShotFitRefId(liveGhostId);
             // Only let framing move the score when the check actually ran
             // (confidence 0 = couldn't compare, e.g. an unreadable ghost). An
             // unchecked frame is unknown, not perfect, so the score reflects
@@ -561,7 +578,13 @@ export function PhotoCapture({
         uri: persistentUri,
         takenAt: new Date().toISOString(),
         tilt: shotTilt,
+        rollDeg: shotAxes?.roll,
+        pitchDeg: shotAxes?.pitch,
         luma: shotLuma,
+        fit: fitResult?.fit,
+        fitConfidence: fitResult?.confidence,
+        fitReferenceId: shotFitRefId,
+        scoreVersion: QUALITY_VERSION,
         qualityScore: quality?.score,
         // Casual: leave the pose to background classification (undefined unless a
         // live sample / manual chip already resolved one) so the shot lands in the
@@ -622,6 +645,7 @@ export function PhotoCapture({
   // Ghost for the live view: prefer the reference of the pose being held
   // (manual override → detected live); fall back to the chain ghost.
   const liveGhostUri = ghostByPose?.[effPose] ?? ghostUri;
+  const liveGhostId = ghostIdByPose?.[effPose] ?? ghostId;
 
   // Manual override chips (2a.1): the demoted picker, now in-camera for the
   // wrong-guess / offline / AI-unconfigured cases.

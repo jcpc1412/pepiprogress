@@ -1,15 +1,18 @@
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, StyleSheet, Switch, View } from 'react-native';
 
-import { PrimaryButton } from '@/components/form';
+import { PrimaryButton, SecondaryButton } from '@/components/form';
 import { Card, Divider, EngravedLabel } from '@/components/surface';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { DriveSettings } from '@/features/settings/drive-settings';
+import { useAuth } from '@/lib/auth';
+import { planFor } from '@/lib/photo-rescore';
+import { runRescore, type RescoreProgress } from '@/lib/photo-rescore-runner';
 import { exportCoachReport } from '@/lib/report';
 import { useStore } from '@/lib/store';
 
@@ -87,9 +90,44 @@ function ConsentRow({
  */
 export function PrivacySettings() {
   const { t, i18n } = useTranslation();
-  const { profile, photos, entries, symptomEvents, doseEvents, protocolItems, inventory, setProfile, resetStore, exportState } = useStore();
+  const { profile, photos, entries, symptomEvents, doseEvents, protocolItems, inventory, setProfile, resetStore, exportState, updatePhoto } = useStore();
+  const { user } = useAuth();
   const [exporting, setExporting] = useState(false);
   const [reporting, setReporting] = useState(false);
+
+  // ── Retroactive photo re-scoring ─────────────────────────────────────────
+  // A stored score is frozen at capture, so a scoring improvement leaves older
+  // photos on the old number. That is not only cosmetic: the score decides the
+  // working reference every future shot is matched against.
+  const [rescoring, setRescoring] = useState<RescoreProgress | null>(null);
+  const [rescoreNote, setRescoreNote] = useState<string | null>(null);
+  const plan = useMemo(() => planFor(photos), [photos]);
+
+  const startRescore = async (skipFit: boolean) => {
+    if (rescoring) return;
+    setRescoreNote(null);
+    setRescoring({ done: 0, total: plan.work.length });
+    try {
+      const summary = await runRescore({
+        photos,
+        skipFit,
+        userId: user?.id,
+        // Applied per photo, so an interrupted run keeps what it already paid for.
+        onPatch: (id, patch) => updatePhoto(id, patch),
+        onProgress: setRescoring,
+      });
+      setRescoreNote(
+        [
+          t('rescore.doneMsg', { count: summary.rescored }),
+          summary.skipped > 0 ? t('rescore.skipped', { count: summary.skipped }) : null,
+        ]
+          .filter(Boolean)
+          .join(' '),
+      );
+    } finally {
+      setRescoring(null);
+    }
+  };
 
   // ── Consent toggles ──────────────────────────────────────────────────────
 
@@ -224,6 +262,56 @@ export function PrivacySettings() {
           onPress={exportReport}
           disabled={reporting}
         />
+      </Card>
+
+      {/* Retroactive photo re-scoring */}
+      <Card style={styles.section}>
+        <EngravedLabel>{t('rescore.section')}</EngravedLabel>
+        <ThemedText type="monoSm" themeColor="textSecondary">
+          {t('rescore.body')}
+        </ThemedText>
+        {rescoring ? (
+          <ThemedText type="monoSm" themeColor="accent">
+            {t('rescore.running', { done: rescoring.done, total: rescoring.total })}
+          </ThemedText>
+        ) : plan.work.length === 0 ? (
+          <ThemedText type="monoSm" themeColor="textMuted">
+            {t('rescore.upToDate', { count: photos.length })}
+          </ThemedText>
+        ) : (
+          <>
+            <ThemedText type="monoSm" themeColor="textSecondary">
+              {t('rescore.pending', { count: plan.work.length })}
+            </ThemedText>
+            {/* The AI cost is stated before it is spent, and the free half is
+                offered on its own so it is never bundled into the paid one. */}
+            {plan.fitCount > 0 && (
+              <ThemedText type="monoSm" themeColor="textMuted">
+                {t('rescore.cost', { count: plan.fitCount })}
+              </ThemedText>
+            )}
+            {/* Only offered when it would change something: after a free pass
+                the remaining photos need the AI check, and re-running the free
+                one on them would rewrite identical numbers. */}
+            {plan.freeCount > 0 && (
+              <PrimaryButton
+                label={t('rescore.freeOnly', { count: plan.freeCount })}
+                onPress={() => void startRescore(true)}
+              />
+            )}
+            {plan.fitCount > 0 && (
+              <SecondaryButton
+                label={t('rescore.withFit', { count: plan.fitCount })}
+                onPress={() => void startRescore(false)}
+              />
+            )}
+          </>
+        )}
+        {rescoreNote && (
+          <ThemedText type="monoSm" themeColor="accent">
+            {rescoreNote}
+          </ThemedText>
+        )}
       </Card>
 
       {/* Share-card branding (W6-27) */}

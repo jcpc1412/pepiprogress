@@ -444,6 +444,18 @@ export function ProgressPhotos({
     }
     return map;
   }, [photos, resolvedUris]);
+  // The ghost is passed as a URI, but a persisted fit is only reusable if we
+  // know WHICH photo it was measured against — a verdict against a reference
+  // that has since been superseded describes a comparison that no longer holds.
+  // So the ids travel alongside the URIs.
+  const ghostIdByPose = useMemo(() => {
+    const map: Partial<Record<CanonicalPose, string>> = {};
+    for (const p of CANONICAL_POSES) {
+      const ref = pickReference(photos.filter((ph) => ph.pose === p));
+      if (ref) map[p] = ref.id;
+    }
+    return map;
+  }, [photos]);
 
   // ── Compound group + cadence ─────────────────────────────────────────────
   const group = useMemo(() => getGroupForSlugs(profile.compoundSlugs), [profile.compoundSlugs]);
@@ -1478,6 +1490,8 @@ export function ProgressPhotos({
           smart={captureCfg?.smart ?? false}
           ghostUri={ghostUri}
           ghostByPose={ghostByPose}
+          ghostId={reference?.id}
+          ghostIdByPose={ghostIdByPose}
           visible={captureCfg !== null}
           onClose={() => setCaptureCfg(null)}
           onSaved={onPhotoSaved}

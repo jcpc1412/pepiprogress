@@ -1481,5 +1481,17 @@
     },
     "skip": "Skip",
     "done": "Logged."
+  },
+  "rescore": {
+    "section": "Photo quality scores",
+    "body": "Photo scores are saved when each shot is taken. When the scoring improves, older photos keep their old number until you re-run it here. This also affects which photo is used as your comparison reference.",
+    "upToDate": "All {{count}} photos are scored with the current version.",
+    "pending": "{{count}} photos are not fully scored yet.",
+    "freeOnly": "Re-score without AI ({{count}} free)",
+    "withFit": "Re-score everything ({{count}} AI checks)",
+    "running": "Re-scoring... {{done}} of {{total}}",
+    "doneMsg": "Re-scored {{count}} photos.",
+    "skipped": "{{count}} skipped: photo file could not be read. They will retry next time.",
+    "cost": "{{count}} of these need an AI framing check, which uses your allowance."
   }
 }

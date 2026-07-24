@@ -36,7 +36,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { averageLumaOf, copyPhotoToDocuments } from '@/lib/photos';
 import type { CanonicalPose } from '@/lib/photo-pose';
-import { computeQuality } from '@/lib/photo-quality';
+import { computeQuality, QUALITY_VERSION } from '@/lib/photo-quality';
 import { nextFacePose, type FacePose } from '@/lib/pose-live';
 import { useStore, type PhotoEntry, type PhotoSession } from '@/lib/store';
 
@@ -209,7 +209,10 @@ export function VisionCameraCapture({
         uri: persistentUri,
         takenAt: new Date().toISOString(),
         tilt: shotTilt,
+        rollDeg: shotAxes?.roll,
+        pitchDeg: shotAxes?.pitch,
         luma: shotLuma,
+        scoreVersion: QUALITY_VERSION,
         boxRatio: shotBoxRatio,
         qualityScore: computeQuality({
           rollDeg: shotAxes?.roll,

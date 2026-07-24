@@ -1481,5 +1481,17 @@
     },
     "skip": "Überspringen",
     "done": "Erfasst."
+  },
+  "rescore": {
+    "section": "Qualitätswerte der Fotos",
+    "body": "Die Werte werden bei der Aufnahme gespeichert. Wenn die Bewertung besser wird, behalten ältere Fotos ihren alten Wert, bis du sie hier neu berechnest. Das beeinflusst auch, welches Foto als Vergleichsreferenz dient.",
+    "upToDate": "Alle {{count}} Fotos nutzen die aktuelle Version.",
+    "pending": "{{count}} Fotos sind noch nicht vollständig bewertet.",
+    "freeOnly": "Ohne KI neu berechnen ({{count}} kostenlos)",
+    "withFit": "Alles neu berechnen ({{count}} KI-Prüfungen)",
+    "running": "Neuberechnung... {{done}} von {{total}}",
+    "doneMsg": "{{count}} Fotos neu berechnet.",
+    "skipped": "{{count}} übersprungen: Datei nicht lesbar. Wird beim nächsten Mal erneut versucht.",
+    "cost": "{{count}} davon brauchen eine KI-Bildausschnittsprüfung, die dein Kontingent nutzt."
   }
 }
