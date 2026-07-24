@@ -73,10 +73,13 @@ function ProviderRow({ provider }: { provider: IntegrationProvider }) {
     if (range === 'skip') return;
     setBusy(true);
     try {
+      // Both providers treat a missing `since` as "first background sync" and fall
+      // back to 30 days, so passing undefined for 'allTime' silently imported one
+      // month. Pass an explicit far-back date instead: "all time" has to mean it.
       const since =
         range === 'lastYear'
           ? new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString()
-          : undefined;
+          : new Date(Date.now() - 20 * 365 * 24 * 60 * 60 * 1000).toISOString();
       const readings = await provider.pull({ since, connection: conn });
       addMetricReadings(readings);
       setSyncResult(t('integrations.imported', { count: readings.length }));

@@ -1810,6 +1810,16 @@ skeleton. Annotations: **needs** = hard prerequisite; **unblocks** = what it ope
 - **Health Connect:** add exercise-session pull (type + HR; no RPE on Android).
 - *Unblocks:* 2b.4 passive strength fill; also improves TRIMP/load context generally.
 
+> **⚠️ Play Console gate before any PUBLIC Android release (not internal testing).**
+> Health Connect read permissions were added to the manifest 2026-07-24 (fixing a
+> hard crash on connect: the `react-native-health-connect` config plugin declares
+> none of them). **Internal testing tracks do not require review, so the closed beta
+> is unblocked.** But Google Play requires a **Health Connect declaration form** plus
+> a hosted **privacy-policy URL** before a production/open-testing release, and
+> `READ_MENSTRUATION` sits in the sensitive tier that gets the most scrutiny. Fill
+> this in during the Branding round (track E), which is already the pass that stands
+> up the domain the privacy policy will live on.
+
 **5. Proactive coaching notifications (Point 1), opener infra feeds 2b.6**
 - **1.1 `weight_plateau` detection** (extend `anomaly.ts`).
 - **1.2 Anomaly → one coach-gated reactive notification** (foreground, 1/day cap).
