@@ -2,7 +2,13 @@ import { Platform } from 'react-native';
 
 import { localDateKey } from '@/lib/dates';
 import { classifyHealthConnectExercise } from '@/lib/integrations/workout-kind';
-import { CanonicalMetric, type IntegrationProvider, type ProviderReading } from '@/lib/integrations/types';
+import {
+  CanonicalMetric,
+  type HealthWriteResult,
+  type HealthWriteSample,
+  type IntegrationProvider,
+  type ProviderReading,
+} from '@/lib/integrations/types';
 
 const PROVIDER_ID = 'health_connect';
 
@@ -48,6 +54,11 @@ const READ_PERMISSIONS = [
   // wrong is the cycle feature silently not working for exactly the person it's
   // being validated against.
   { accessType: 'read', recordType: 'MenstruationPeriod' },
+  // Write-back (opt-in, mirrors what Apple Health already does). Health Connect
+  // models no circumference record of any kind, so waist cannot be mirrored on
+  // Android the way it is on iOS — weight and body fat are the whole surface.
+  { accessType: 'write', recordType: 'Weight' },
+  { accessType: 'write', recordType: 'BodyFat' },
 ] as const;
 
 async function readHealthConnect(since?: string): Promise<ProviderReading[]> {
@@ -277,6 +288,56 @@ async function readHealthConnect(since?: string): Promise<ProviderReading[]> {
   return readings;
 }
 
+/**
+ * Mirror Pepi's body metrics into Health Connect.
+ *
+ * `insertRecords` rejects a mixed batch ("All records must have the same type"),
+ * so records are grouped by type and inserted per group. A failure in one group
+ * must not sink the others, which is why each insert carries its own try/catch:
+ * a user whose body-fat write fails should still get their weight across.
+ *
+ * Waist is silently skipped rather than reported as an error — Health Connect
+ * has no record type for it, so there is nothing the user could do about it and
+ * nothing broken to report.
+ */
+async function writeHealthConnect(samples: HealthWriteSample[]): Promise<HealthWriteResult> {
+  const { getSdkStatus, initialize, insertRecords } = hc();
+  if (typeof insertRecords !== 'function') {
+    return { ok: false, written: 0, error: 'Health Connect native module not linked in this build' };
+  }
+  const status = await getSdkStatus();
+  if (status !== SDK_AVAILABLE) return { ok: false, written: 0, error: 'Health Connect unavailable' };
+  await initialize();
+
+  const weights: Record<string, unknown>[] = [];
+  const bodyFats: Record<string, unknown>[] = [];
+  for (const s of samples) {
+    if (!Number.isFinite(s.value)) continue;
+    const time = new Date(s.ts);
+    if (Number.isNaN(time.getTime())) continue;
+    const at = time.toISOString();
+    if (s.metric === 'body.weight') {
+      weights.push({ recordType: 'Weight', time: at, weight: { value: s.value, unit: 'kilograms' } });
+    } else if (s.metric === 'body.fat_pct') {
+      bodyFats.push({ recordType: 'BodyFat', time: at, percentage: s.value });
+    }
+    // 'body.waist' intentionally unhandled: no Health Connect record type.
+  }
+
+  let written = 0;
+  let lastError: string | undefined;
+  for (const group of [weights, bodyFats]) {
+    if (group.length === 0) continue;
+    try {
+      await insertRecords(group as never);
+      written += group.length;
+    } catch (e) {
+      lastError = e instanceof Error ? e.message : String(e);
+    }
+  }
+  return { ok: written > 0 || samples.length === 0, written, error: lastError };
+}
+
 export const healthConnectProvider: IntegrationProvider = {
   id: PROVIDER_ID,
   nameKey: 'integrations.healthConnect',
@@ -315,4 +376,9 @@ export const healthConnectProvider: IntegrationProvider = {
     }
   },
   pull: ({ since } = {}) => readHealthConnect(since),
+  writeMetrics: ['body.weight', 'body.fat_pct'],
+  push: (samples) =>
+    Platform.OS === 'android'
+      ? writeHealthConnect(samples)
+      : Promise.resolve({ ok: false, written: 0, error: 'Health Connect is Android-only.' }),
 };

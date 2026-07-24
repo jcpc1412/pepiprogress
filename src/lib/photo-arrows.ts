@@ -48,6 +48,9 @@ export const MEASURE_POS: Record<MeasureKey, { x: number; y: number }> = {
   thighs: { x: 0.44, y: 0.78 },
 };
 
+/** Stable iteration order over the measurement keys. */
+export const MEASURE_KEYS = Object.keys(MEASURE_POS) as MeasureKey[];
+
 const MEASURE_EPS = 0.1; // ignore sub-0.1 measurement noise (either unit)
 
 export type MeasureMarker = { key: MeasureKey; delta: number; x: number; y: number };

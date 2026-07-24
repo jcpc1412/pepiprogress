@@ -468,6 +468,7 @@ export const appleHealthProvider: IntegrationProvider = {
   },
   pull: ({ since } = {}) => readHealthKit(since),
   diagnose: () => (Platform.OS === 'ios' ? diagnose() : Promise.resolve('Apple Health is iOS-only.')),
+  writeMetrics: ['body.weight', 'body.fat_pct', 'body.waist'],
   push: (samples) =>
     Platform.OS === 'ios'
       ? writeHealthKit(samples)

@@ -350,7 +350,8 @@
     "deleteConfirm": "Zum Löschen erneut tippen",
     "deleteDone": "Foto gelöscht.",
     "deleteCloudFailed": "Hier gelöscht, aber die Cloud-Kopie konnte nicht entfernt werden. Wird erneut versucht.",
-    "sidewaysHint": "Das Handy liegt quer: Fortschrittsfotos müssen im Hochformat sein, damit sie vergleichbar bleiben."
+    "sidewaysHint": "Das Handy liegt quer: Fortschrittsfotos müssen im Hochformat sein, damit sie vergleichbar bleiben.",
+    "locatingSpots": "Deine Messpunkte werden gesucht..."
   },
   "markers": {
     "hematocrit": "Hämatokrit",
@@ -601,7 +602,8 @@
     "importLastYear": "Letzte 12 Monate",
     "importAllTime": "Gesamte Zeit",
     "importSkip": "Überspringen",
-    "importing": "Importiere…"
+    "importing": "Importiere…",
+    "writeBackHintNoWaist": "Spiegelt dein Gewicht und deine Körperfett-Schätzung nach Health, sobald du sie erfasst. Früher erfasste Tage werden nicht gesendet."
   },
   "notify": {
     "section": "ERINNERUNGEN",

@@ -46,7 +46,11 @@ export function HealthWriteBack() {
           const nextHashes: Record<string, string> = { ...written };
           const toWrite = [];
           for (const checkin of Object.values(state.entries)) {
-            const samples = buildBodySamples(checkin, state.profile);
+            // Drop metrics this store cannot hold BEFORE hashing, or the day
+            // hashes as written and a later provider change would never resend.
+            const samples = buildBodySamples(checkin, state.profile).filter(
+              (s) => provider.writeMetrics?.includes(s.metric) ?? true,
+            );
             if (samples.length === 0) continue;
             const h = hashSamples(samples);
             if (written[checkin.date] === h) continue;

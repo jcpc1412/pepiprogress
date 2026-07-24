@@ -350,7 +350,8 @@
     "deleteConfirm": "Toca otra vez para eliminar",
     "deleteDone": "Foto eliminada.",
     "deleteCloudFailed": "Eliminada aquí, pero no se pudo borrar la copia en la nube. Se reintentará.",
-    "sidewaysHint": "Estás sujetando el teléfono de lado: las fotos de progreso deben ser verticales para poder compararse."
+    "sidewaysHint": "Estás sujetando el teléfono de lado: las fotos de progreso deben ser verticales para poder compararse.",
+    "locatingSpots": "Buscando tus puntos de medición..."
   },
   "markers": {
     "hematocrit": "Hematocrito",
@@ -601,7 +602,8 @@
     "importLastYear": "Últimos 12 meses",
     "importAllTime": "Todo el tiempo",
     "importSkip": "Omitir",
-    "importing": "Importando…"
+    "importing": "Importando…",
+    "writeBackHintNoWaist": "Refleja tu peso y tu estimación de grasa corporal en Salud según los registres. Los días anteriores a ahora no se envían."
   },
   "notify": {
     "section": "RECORDATORIOS",

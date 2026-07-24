@@ -350,7 +350,8 @@
     "deleteConfirm": "Toque de novo para excluir",
     "deleteDone": "Foto excluída.",
     "deleteCloudFailed": "Excluída aqui, mas não foi possível remover a cópia na nuvem. Será tentado de novo.",
-    "sidewaysHint": "Você está segurando o celular deitado: fotos de progresso precisam ser na vertical para serem comparáveis."
+    "sidewaysHint": "Você está segurando o celular deitado: fotos de progresso precisam ser na vertical para serem comparáveis.",
+    "locatingSpots": "Procurando seus pontos de medição..."
   },
   "markers": {
     "hematocrit": "Hematócrito",
@@ -601,7 +602,8 @@
     "importLastYear": "Últimos 12 meses",
     "importAllTime": "Sempre",
     "importSkip": "Pular",
-    "importing": "Importando…"
+    "importing": "Importando…",
+    "writeBackHintNoWaist": "Espelha seu peso e sua estimativa de gordura corporal no Health conforme você registra. Dias anteriores a agora não são enviados."
   },
   "notify": {
     "section": "LEMBRETES",

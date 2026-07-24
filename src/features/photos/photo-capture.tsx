@@ -10,7 +10,7 @@ import { LabeledInput, PrimaryButton, SecondaryButton, SingleSelectChips } from 
 import { FlipCameraIcon } from '@/components/icons';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
-import { checkFit, classifyPose, type FitCheck } from '@/lib/ai';
+import { checkFit, classifyPose, locateMeasureSpots, type FitCheck } from '@/lib/ai';
 import { bodyFatNavy, usesFemaleFormula } from '@/lib/body-composition';
 import { copyPhotoToDocuments } from '@/lib/photos';
 import {
@@ -194,6 +194,10 @@ export function PhotoCapture({
     return { ...seed, ...(profile?.measureGuides ?? {}) };
   });
   const [editingKey, setEditingKey] = useState<MeasureKey | undefined>();
+  /** Guide lines the user has dragged for THIS shot. A hand-placed line is
+   *  ground truth and must survive the landmark result arriving late. */
+  const draggedRef = useRef<Set<string>>(new Set());
+  const [locatingSpots, setLocatingSpots] = useState(false);
   const isBody = effSession === 'body';
   // Casual quick-shots skip the measurement step entirely (save + close), even in
   // the body track — measurements belong to the guided comparability flow.
@@ -261,8 +265,56 @@ export function PhotoCapture({
     y: guideY[k] ?? MEASURE_POS[k].y,
     value: valueFor(k) || undefined,
   }));
-  /** Persist the user's spots so the next session measures at the same place. */
-  const persistGuides = () => setProfile({ measureGuides: guideY });
+  /**
+   * Persist ONLY the spots the user dragged by hand.
+   *
+   * Saved spots are fractions of the frame, and framing changes every session
+   * (step back, shoot in a mirror, hold the phone higher). Persisting an
+   * auto-located position would carry one photo's geometry onto the next photo
+   * where it is simply wrong — the failure the landmark call exists to end.
+   * A hand-drag stays saved because it is the user overriding us, and it is
+   * still the best fallback for a landmark the model cannot find.
+   */
+  const persistGuides = () => {
+    if (draggedRef.current.size === 0) return;
+    const kept: Record<string, number> = { ...(profile?.measureGuides ?? {}) };
+    for (const k of draggedRef.current) kept[k] = guideY[k];
+    setProfile({ measureGuides: kept });
+  };
+
+  /**
+   * Put the guide lines on the body (2a.7 follow-up). Runs once per shot when
+   * the measurement step opens. A landmark the model cannot place is left at
+   * its existing position rather than moved somewhere invented, and anything
+   * the user has already dragged wins outright.
+   */
+  useEffect(() => {
+    if (step !== 2 || !collectMeasurements || !shot) return;
+    let cancelled = false;
+    // Flag set inside the async chain, not synchronously in the effect body,
+    // so the effect never triggers a cascading render on mount.
+    void Promise.resolve().then(() => {
+      if (!cancelled) setLocatingSpots(true);
+    });
+    locateMeasureSpots(shot)
+      .then((spots) => {
+        if (cancelled) return;
+        setGuideY((prev) => {
+          const next = { ...prev };
+          for (const [k, spot] of Object.entries(spots)) {
+            if (draggedRef.current.has(k)) continue;
+            if (spot?.found) next[k] = spot.y;
+          }
+          return next;
+        });
+      })
+      .finally(() => {
+        if (!cancelled) setLocatingSpots(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [step, collectMeasurements, shot]);
 
   const applyLastMeasurements = () => {
     if (!lastMeasurements) return;
@@ -403,6 +455,7 @@ export function PhotoCapture({
     setExtraKey(undefined);
     setExtraVal('');
     setEditingKey(undefined);
+    draggedRef.current = new Set();
     setDetectedPose(null);
     setLiveFit(null);
     setManualPose(null);
@@ -746,7 +799,12 @@ export function PhotoCapture({
                 guides={guides}
                 unitLabel={unitLabel}
                 editingKey={editingKey}
-                onMove={(k, y) => setGuideY((prev) => ({ ...prev, [k]: y }))}
+                onMove={(k, y) => {
+                  // A hand-placed line is ground truth: it survives a late
+                  // landmark result and is the one thing worth persisting.
+                  draggedRef.current.add(k);
+                  setGuideY((prev) => ({ ...prev, [k]: y }));
+                }}
                 onEditSpot={(k) => setEditingKey((cur) => (cur === k ? undefined : k))}
               />
               {editingKey ? (
@@ -768,7 +826,7 @@ export function PhotoCapture({
                 />
               ) : (
                 <ThemedText type="monoSm" style={styles.bfLabel}>
-                  {t('photos.guideHint')}
+                  {locatingSpots ? t('photos.locatingSpots') : t('photos.guideHint')}
                 </ThemedText>
               )}
               {/* The chip row is the measurement PICKER, not just the optional

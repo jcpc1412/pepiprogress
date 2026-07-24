@@ -6,6 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { COMPOUND_CATALOG, compoundBySlug, marketCategoryOf, type MarketCategory } from '@/data/compound-catalog';
 import type { AnalysisDataContext } from '@/lib/analysis-context';
 import type { PriorAnalysisPayload } from '@/lib/photo-observations';
+import { MEASURE_KEYS, type MeasureKey } from '@/lib/photo-arrows';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 import type { PhotoSession } from '@/lib/store';
 import type { CanonicalPose } from '@/lib/photo-pose';
@@ -318,6 +319,41 @@ export async function classifyPose(uri: string): Promise<PoseClassification | nu
     return data ?? null;
   } catch {
     return null;
+  }
+}
+
+export type MeasureSpot = { found: boolean; y: number };
+export type MeasureSpots = Partial<Record<MeasureKey, MeasureSpot>>;
+
+/**
+ * Locate the measurement landmarks in a captured photo so the guide lines are
+ * drawn ON the body instead of at fixed fractions of the frame (2a.7 follow-up).
+ *
+ * Returns only landmarks the model could actually place; anything out of frame
+ * or occluded comes back absent, and the caller keeps its existing position
+ * rather than moving a line somewhere wrong. Best-effort: an offline or
+ * unconfigured app just keeps the defaults.
+ */
+export async function locateMeasureSpots(uri: string): Promise<MeasureSpots> {
+  if (!isSupabaseConfigured) return {};
+  try {
+    const image = await toBase64Small(uri);
+    const { data } = await supabase.functions.invoke<Record<string, MeasureSpot>>('ai-service', {
+      body: { action: 'locate_measure_spots', image },
+    });
+    if (!data) return {};
+    const out: MeasureSpots = {};
+    for (const key of MEASURE_KEYS) {
+      const spot = data[key];
+      // Guard the range as well as the flag: a landmark reported at 0 or 1 is
+      // the model failing to place it, not a neck at the very top pixel.
+      if (spot?.found && typeof spot.y === 'number' && spot.y > 0.02 && spot.y < 0.98) {
+        out[key] = { found: true, y: spot.y };
+      }
+    }
+    return out;
+  } catch {
+    return {};
   }
 }
 

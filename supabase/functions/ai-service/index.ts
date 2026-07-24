@@ -7,6 +7,7 @@
 //                     hypothesis and watch-next over the observation ledger (F5).
 //   check_fit       - Haiku vision; pre-capture fit check (position / angle / distance).
 //   classify_pose   - Haiku vision; sorts a reel photo into the canonical pose set (framing only).
+//   locate_measure_spots - Haiku vision; vertical position of measurement landmarks (geometry only).
 //   simple_analysis - Haiku text-only; encouraging weekly check-in message.
 //   parse_lab       - Sonnet vision; extracts lab marker values from a photo.
 //   scan_vial       - Sonnet vision; extracts compound name + concentration from a vial label.
@@ -222,6 +223,11 @@ type SignalLedgerEvent = {
 /** Free-text -> candidate tracking areas, for the tickable confirmation card
  *  (MASTER-PLAN block 7). Extraction only: the user ticks what actually gets
  *  created, so this must stay conservative and never invent a category. */
+type LocateMeasureSpotsRequest = {
+  action: 'locate_measure_spots';
+  image: string; // base64 JPEG, downscaled (only vertical position is needed)
+};
+
 type ParseAreasRequest = {
   action: 'parse_areas';
   text: string;
@@ -1103,6 +1109,7 @@ Deno.serve(async (req: Request) => {
       | CompoundInfoRequest
       | SignalLedgerRequest
       | ParseAreasRequest
+      | LocateMeasureSpotsRequest
       | TerraRequest;
 
     // -- terra --------------------------------------------------------------
@@ -1432,6 +1439,72 @@ Deno.serve(async (req: Request) => {
         }],
       });
       return json(extractJson(message, { pose: 'other', confidence: 0 }), 200);
+    }
+
+    // -- locate_measure_spots --------------------------------------------------
+    // Put the measurement guide lines ON the body (2a.7 follow-up).
+    //
+    // The lines used to sit at fixed fractions of the FRAME, which silently
+    // assumed the subject fills it head to toe. Stand further back, or shoot in
+    // a mirror, and the "neck" line lands above the user's head. Dragging them
+    // did not rescue it either: the user re-aims every line every session, which
+    // is exactly the manual work the guides exist to remove, and hand-placed
+    // spots drift between sessions, destroying the consistency that makes a tape
+    // measurement worth trending at all.
+    //
+    // So the model reports where the landmarks actually ARE, as fractions of
+    // image height. This is pure geometry: no assessment of the body, no
+    // identification, no composition read. `found: false` when the landmark is
+    // out of frame or occluded, which is honest and lets the client keep its
+    // existing default rather than invent a position.
+    if (body.action === 'locate_measure_spots') {
+      const spot = (label: string) => ({
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          found: { type: 'boolean', description: `True only if ${label} is visible in the image.` },
+          y: {
+            type: 'number',
+            description:
+              `Vertical position of ${label} as a fraction of TOTAL IMAGE HEIGHT: 0 = very top edge of the image, 1 = very bottom edge. Not a fraction of the body.`,
+          },
+        },
+        required: ['found', 'y'],
+      });
+      const message = await client.messages.create({
+        model: PARSE_MODEL,
+        max_tokens: 400,
+        ...structured({
+          type: 'object',
+          additionalProperties: false,
+          properties: {
+            neck: spot('the narrowest part of the neck, just below the jaw'),
+            chest: spot('the widest part of the chest, across the nipple line'),
+            arms: spot('the mid-point of the upper arm, halfway between shoulder and elbow'),
+            waist: spot('the natural waist, at the navel'),
+            hips: spot('the widest part of the hips and glutes'),
+            thighs: spot('the mid-point of the thigh, halfway between hip and knee'),
+          },
+          required: ['neck', 'chest', 'arms', 'waist', 'hips', 'thighs'],
+        }),
+        system: [
+          'You locate anatomical landmarks in a photo so a measuring-tape guide line can be drawn at each one.',
+          'Report ONLY vertical positions, as a fraction of the total image height, top edge = 0, bottom edge = 1.',
+          'Anchor to the image, not the body: if the person occupies the middle half of a tall frame, their waist is near 0.5 even though it is mid-body.',
+          'A photo taken in a mirror, from far away, or cropped to the torso is normal. Judge what you actually see.',
+          'Set found=false for any landmark that is out of frame, hidden by clothing you cannot see through, or that you cannot place confidently. A wrong line is worse than a missing one, because the user will measure at the wrong spot and trend noise.',
+          'When found=false, y is ignored; return 0.',
+          'This is geometry only. Do NOT describe, assess, judge, or identify the body or the person, and do NOT comment on size, shape, weight or composition.',
+        ].join(' '),
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: body.image } },
+            { type: 'text', text: 'Return the JSON landmark positions for this photo.' },
+          ],
+        }],
+      });
+      return json(extractJson(message, {}), 200);
     }
 
     // -- parse_areas -----------------------------------------------------------

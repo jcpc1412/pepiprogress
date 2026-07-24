@@ -350,7 +350,8 @@
     "deleteConfirm": "Touche à nouveau pour supprimer",
     "deleteDone": "Photo supprimée.",
     "deleteCloudFailed": "Supprimée ici, mais la copie dans le cloud n'a pas pu être retirée. Nouvelle tentative à venir.",
-    "sidewaysHint": "Le téléphone est à l'horizontale : les photos de progression doivent être en portrait pour rester comparables."
+    "sidewaysHint": "Le téléphone est à l'horizontale : les photos de progression doivent être en portrait pour rester comparables.",
+    "locatingSpots": "Recherche de tes points de mesure..."
   },
   "markers": {
     "hematocrit": "Hématocrite",
@@ -601,7 +602,8 @@
     "importLastYear": "12 derniers mois",
     "importAllTime": "Tout le temps",
     "importSkip": "Ignorer",
-    "importing": "Importation…"
+    "importing": "Importation…",
+    "writeBackHintNoWaist": "Reporte ton poids et ton estimation de masse grasse vers Santé au fur et à mesure. Les jours antérieurs ne sont pas envoyés."
   },
   "notify": {
     "section": "RAPPELS",

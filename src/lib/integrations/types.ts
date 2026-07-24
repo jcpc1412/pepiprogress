@@ -101,6 +101,11 @@ export type IntegrationProvider = {
    * (Apple Health). Absent = read-only provider.
    */
   push?: (samples: HealthWriteSample[]) => Promise<HealthWriteResult>;
+  /** Which body metrics `push` can actually store. Not every store models every
+   *  one — Health Connect has no circumference record of any kind, so waist is
+   *  writable on iOS and simply does not exist on Android. The settings copy
+   *  reads this instead of promising all three everywhere. */
+  writeMetrics?: HealthWriteMetric[];
 };
 
 export type AuthResult = { ok: boolean; patch?: Partial<IntegrationState>; error?: string };

@@ -222,7 +222,12 @@ function ProviderRow({ provider }: { provider: IntegrationProvider }) {
                 />
               </View>
               <ThemedText type="monoSm" themeColor="textMuted">
-                {t('integrations.writeBackHint')}
+                {/* Only promise what this store can actually hold. */}
+                {t(
+                  provider.writeMetrics?.includes('body.waist')
+                    ? 'integrations.writeBackHint'
+                    : 'integrations.writeBackHintNoWaist',
+                )}
               </ThemedText>
             </View>
           )}

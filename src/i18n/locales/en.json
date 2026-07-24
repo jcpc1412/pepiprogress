@@ -350,7 +350,8 @@
     "deleteConfirm": "Tap again to delete",
     "deleteDone": "Photo deleted.",
     "deleteCloudFailed": "Deleted here, but the cloud copy could not be removed. It will retry.",
-    "sidewaysHint": "Holding the phone sideways: progress shots need portrait to stay comparable."
+    "sidewaysHint": "Holding the phone sideways: progress shots need portrait to stay comparable.",
+    "locatingSpots": "Finding your measuring spots..."
   },
   "markers": {
     "hematocrit": "Hematocrit",
@@ -601,7 +602,8 @@
     "importLastYear": "Last 12 months",
     "importAllTime": "All time",
     "importSkip": "Skip",
-    "importing": "Importing…"
+    "importing": "Importing…",
+    "writeBackHintNoWaist": "Mirror your weight and body-fat estimate to Health as you log them. Days recorded before now aren't sent."
   },
   "notify": {
     "section": "REMINDERS",
