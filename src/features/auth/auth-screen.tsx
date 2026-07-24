@@ -1,6 +1,6 @@
 import { GoogleSigninButton } from '@react-native-google-signin/google-signin';
 import * as AppleAuthentication from 'expo-apple-authentication';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, View } from 'react-native';
 
@@ -43,7 +43,23 @@ export function AuthScreen({
     signInWithGoogle,
     googleAuthAvailable,
   } = useAuth();
-  const { exportState, replaceState } = useStore();
+  const { exportState, replaceState, ready } = useStore();
+  // exportState() reads whatever is currently in React state, which is still
+  // EMPTY_STATE until the AsyncStorage hydration effect resolves. Sign-in
+  // merges that snapshot with the cloud copy and writes the result back — read
+  // too early on a device with real local data (a slower hydrate, since a
+  // bigger blob takes longer to parse) and the merge legitimately has nothing
+  // local to preserve, which reads as the account's data having vanished. The
+  // ref lets async handlers poll the latest value without a stale closure.
+  const readyRef = useRef(ready);
+  useEffect(() => {
+    readyRef.current = ready;
+  }, [ready]);
+  const waitForStoreReady = () =>
+    new Promise<void>((resolve) => {
+      const check = () => (readyRef.current ? resolve() : setTimeout(check, 30));
+      check();
+    });
 
   const [mode, setMode] = useState<Mode>('signUp');
   const [email, setEmail] = useState('');
@@ -75,6 +91,7 @@ export function AuthScreen({
     setPhase('syncing');
 
     try {
+      await waitForStoreReady();
       if (mode === 'signUp') {
         await signUp(email.trim(), password);
         // signUp sets session in AuthProvider; user is now available
@@ -120,6 +137,7 @@ export function AuthScreen({
       const ok = await start();
       if (!ok) return; // user cancelled the provider sheet
       setPhase('syncing');
+      await waitForStoreReady();
       const { supabase } = await import('@/lib/supabase');
       const { data } = await supabase.auth.getUser();
       if (data.user) {
