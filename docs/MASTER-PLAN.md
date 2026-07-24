@@ -1867,6 +1867,25 @@ classifiers are separate and a test pins that they must never be swapped.
 prebuild. Same footgun as the 2026-07-24 Health Connect crash: an undeclared
 permission crashes below the JS try/catch.
 
+**⚠️ Second Health Connect crash, fixed 2026-07-24 (0.0.40).** The manifest
+permissions (451550c) were necessary but not sufficient: connecting still hard-
+crashed. `react-native-health-connect` requires the host app to call
+`HealthConnectPermissionDelegate.setPermissionDelegate(this)` from
+`MainActivity.onCreate` — that call registers the `ActivityResultLauncher` the
+permission dialog is launched through, and it must run in `onCreate` because
+`registerForActivityResult` throws once the activity is STARTED. **The library's
+own Expo config plugin does not do this**; it only pushes the
+`ACTION_SHOW_PERMISSIONS_RATIONALE` intent-filter, so on a managed Expo app the
+delegate is silently never set and the launcher stays an uninitialized Kotlin
+`lateinit var`. `requestPermission` then does `coroutineScope.launch { … }` with
+no handler, so the `UninitializedPropertyAccessException` surfaces uncaught on a
+background dispatcher and kills the process — which is why the JS try/catch in
+`healthConnectProvider.authenticate()` could never intercept it. Fixed with a
+local config plugin (`plugins/with-health-connect-delegate.js`, idempotent, and
+it **throws** rather than no-op if the Expo MainActivity template moves the
+anchor, because a silent no-op here is a crash). Verified in the generated
+`MainActivity.kt` via prebuild. **Native rebuild required.**
+
 > **⚠️ Play Console gate before any PUBLIC Android release (not internal testing).**
 > Health Connect read permissions were added to the manifest 2026-07-24 (fixing a
 > hard crash on connect: the `react-native-health-connect` config plugin declares

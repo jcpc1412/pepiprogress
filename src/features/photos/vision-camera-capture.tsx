@@ -100,6 +100,7 @@ export function VisionCameraCapture({
   const [viewDims, setViewDims] = useState({ width: 0, height: 0 });
   const [shot, setShot] = useState<string | null>(null);
   const [shotTilt, setShotTilt] = useState<number | undefined>(undefined);
+  const [shotAxes, setShotAxes] = useState<{ roll: number; pitch: number } | undefined>(undefined);
   const [shotBoxRatio, setShotBoxRatio] = useState<number | undefined>(undefined);
   const [busy, setBusy] = useState(false);
 
@@ -107,6 +108,8 @@ export function VisionCameraCapture({
   const [roll, setRoll] = useState(0);
   const [pitch, setPitch] = useState(0);
   const tiltRef = useRef(0);
+  // Separate axes for scoring (different tolerances); `tilt` stays combined.
+  const axesRef = useRef({ roll: 0, pitch: 0 });
   const live = visible && hasPermission && !shot;
 
   useEffect(() => {
@@ -118,6 +121,7 @@ export function VisionCameraCapture({
       setRoll(r);
       setPitch(p);
       tiltRef.current = Math.hypot(r, p);
+      axesRef.current = { roll: r, pitch: p };
     });
     return () => sub.remove();
   }, [live]);
@@ -181,6 +185,7 @@ export function VisionCameraCapture({
       photo.dispose();
       shotPoseRef.current = facePoseRef.current;
       setShotTilt(Math.round(tiltRef.current));
+      setShotAxes(axesRef.current);
       setShotBoxRatio(boxRatioOverride ?? (currentRatioRef.current || undefined));
       setShot(`file://${path}`);
     } catch {
@@ -201,7 +206,11 @@ export function VisionCameraCapture({
         takenAt: new Date().toISOString(),
         tilt: shotTilt,
         boxRatio: shotBoxRatio,
-        qualityScore: computeQuality({ tiltDeg: shotTilt }).score,
+        qualityScore: computeQuality({
+          rollDeg: shotAxes?.roll,
+          pitchDeg: shotAxes?.pitch,
+          tiltDeg: shotTilt,
+        }).score,
         // Guided captures are the locked comparability set; the pose comes from
         // the live yaw read at shutter time (front face vs side profile).
         pose: shotPoseRef.current,

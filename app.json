@@ -2,7 +2,7 @@
   "expo": {
     "name": "PepiProgress",
     "slug": "pepiprogress",
-    "version": "0.0.39",
+    "version": "0.0.40",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "pepi",
@@ -94,6 +94,7 @@
         }
       ],
       "react-native-health-connect",
+      "./plugins/with-health-connect-delegate",
       [
         "@react-native-google-signin/google-signin",
         {

@@ -227,6 +227,10 @@ export function PhotoCapture({
   const [roll, setRoll] = useState(0);
   const [pitch, setPitch] = useState(0);
   const tiltRef = useRef(0);
+  // The axes are kept separately as well as combined: the quality score judges
+  // them at different tolerances (a crooked horizon ruins a shot, a leaning
+  // phone does not), while `tilt` stays the single stored metadata number.
+  const axesRef = useRef({ roll: 0, pitch: 0 });
   const live = visible && !!permission?.granted && !shot;
 
   useEffect(() => {
@@ -238,6 +242,7 @@ export function PhotoCapture({
       setRoll(r);
       setPitch(p);
       tiltRef.current = Math.hypot(r, p);
+      axesRef.current = { roll: r, pitch: p };
     });
     return () => sub.remove();
   }, [live]);
@@ -355,6 +360,7 @@ export function PhotoCapture({
       const pic = await camRef.current.takePictureAsync({ quality: 0.8 });
       if (pic?.uri) {
         const tiltNow = Math.round(tiltRef.current);
+        const axesNow = axesRef.current;
         setShotTilt(tiltNow);
         setShot(pic.uri);
         setQualityAck(false);
@@ -371,11 +377,17 @@ export function PhotoCapture({
             // (confidence 0 = couldn't compare, e.g. an unreadable ghost). An
             // unchecked frame is unknown, not perfect, so the score reflects
             // tilt alone rather than a fake top framing mark.
-            setQuality(computeQuality({ tiltDeg: tiltNow, fit: r.confidence > 0 ? r.fit : undefined }));
+            setQuality(
+              computeQuality({
+                rollDeg: axesNow.roll,
+                pitchDeg: axesNow.pitch,
+                fit: r.confidence > 0 ? r.fit : undefined,
+              }),
+            );
           });
         } else {
           // First baseline shot (no ghost): score on level alone.
-          setQuality(computeQuality({ tiltDeg: tiltNow }));
+          setQuality(computeQuality({ rollDeg: axesNow.roll, pitchDeg: axesNow.pitch }));
         }
       }
     } finally {

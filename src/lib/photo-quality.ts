@@ -45,11 +45,54 @@ export const DISPLAY_OFFSET = 5;
 const STATE_VALUE: Record<CriterionState, number> = { good: 100, ok: 70, bad: 35, unknown: 70 };
 const WEIGHT: Record<keyof QualityCriteria, number> = { level: 0.3, framing: 0.4, light: 0.3 };
 
-function levelState(tiltDeg?: number): CriterionState {
-  if (tiltDeg == null) return 'unknown';
-  if (tiltDeg <= 3) return 'good';
-  if (tiltDeg <= 8) return 'ok';
+/**
+ * Roll (camera rotated in its own plane) and pitch (leaning back or forward)
+ * are NOT the same defect and must not share a tolerance.
+ *
+ * Roll is the one that ruins a progress photo: it rotates the horizon, so the
+ * body sits at a different angle than in the baseline and nothing lines up.
+ * A few degrees is all that's tolerable.
+ *
+ * Pitch is normal. Holding a phone at arm's length for a selfie, or propping it
+ * against something to fit a full body in frame, leans it back 10-25° every
+ * single time; the resulting photo is perfectly usable. Judging it at the roll
+ * bar meant real captures scored 'bad' on the one signal a baseline shot has,
+ * so the readout sat at 30% permanently and stopped carrying any information.
+ * Only a genuinely off-axis phone (aimed at the floor or the ceiling) is bad.
+ */
+const ROLL_GOOD_DEG = 3;
+const ROLL_OK_DEG = 8;
+const PITCH_GOOD_DEG = 12;
+const PITCH_OK_DEG = 25;
+
+function band(deg: number, good: number, ok: number): CriterionState {
+  if (deg <= good) return 'good';
+  if (deg <= ok) return 'ok';
   return 'bad';
+}
+
+const WORST: CriterionState[] = ['good', 'ok', 'bad'];
+function worse(a: CriterionState, b: CriterionState): CriterionState {
+  return WORST.indexOf(a) >= WORST.indexOf(b) ? a : b;
+}
+
+function levelState(input: { tiltDeg?: number; rollDeg?: number; pitchDeg?: number }): CriterionState {
+  const { rollDeg, pitchDeg } = input;
+  if (rollDeg != null || pitchDeg != null) {
+    // The shot is only as level as its worse axis: a clean roll doesn't excuse
+    // a phone pointed at the floor, and vice versa.
+    const r = rollDeg != null ? band(Math.abs(rollDeg), ROLL_GOOD_DEG, ROLL_OK_DEG) : 'unknown';
+    const p = pitchDeg != null ? band(Math.abs(pitchDeg), PITCH_GOOD_DEG, PITCH_OK_DEG) : 'unknown';
+    if (r === 'unknown') return p;
+    if (p === 'unknown') return r;
+    return worse(r, p);
+  }
+  // Fallback for callers with only the combined magnitude (and for photos
+  // captured before the axes were recorded separately). Judged at the pitch
+  // bar: the combined figure is dominated by lean in practice, so the tight
+  // roll bar would condemn ordinary shots.
+  if (input.tiltDeg == null) return 'unknown';
+  return band(Math.abs(input.tiltDeg), PITCH_GOOD_DEG, PITCH_OK_DEG);
 }
 
 function framingState(fit?: FitLevel): CriterionState {
@@ -64,9 +107,19 @@ function lightState(luma?: number): CriterionState {
   return 'bad';
 }
 
-export function computeQuality(input: { tiltDeg?: number; fit?: FitLevel; luma?: number }): PhotoQuality {
+export function computeQuality(input: {
+  /** Combined tilt magnitude. Kept for stored metadata and older callers; when
+   *  `rollDeg`/`pitchDeg` are supplied they take precedence. */
+  tiltDeg?: number;
+  /** Camera rotation in its own plane (deg). Tight tolerance. */
+  rollDeg?: number;
+  /** Lean back/forward (deg). Wide tolerance: normal and unavoidable. */
+  pitchDeg?: number;
+  fit?: FitLevel;
+  luma?: number;
+}): PhotoQuality {
   const criteria: QualityCriteria = {
-    level: levelState(input.tiltDeg),
+    level: levelState(input),
     framing: framingState(input.fit),
     light: lightState(input.luma),
   };
