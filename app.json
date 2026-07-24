@@ -2,7 +2,7 @@
   "expo": {
     "name": "PepiProgress",
     "slug": "pepiprogress",
-    "version": "0.0.38",
+    "version": "0.0.39",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "pepi",
@@ -28,7 +28,17 @@
       "predictiveBackGestureEnabled": false,
       "permissions": [
         "android.permission.CAMERA",
-        "android.permission.RECORD_AUDIO"
+        "android.permission.RECORD_AUDIO",
+        "android.permission.health.READ_WEIGHT",
+        "android.permission.health.READ_BODY_FAT",
+        "android.permission.health.READ_LEAN_BODY_MASS",
+        "android.permission.health.READ_STEPS",
+        "android.permission.health.READ_ACTIVE_CALORIES_BURNED",
+        "android.permission.health.READ_RESTING_HEART_RATE",
+        "android.permission.health.READ_HEART_RATE_VARIABILITY",
+        "android.permission.health.READ_SLEEP",
+        "android.permission.health.READ_NUTRITION",
+        "android.permission.health.READ_MENSTRUATION"
       ],
       "softwareKeyboardLayoutMode": "pan"
     },

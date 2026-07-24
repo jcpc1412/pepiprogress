@@ -12,7 +12,17 @@ const hc = () => require('react-native-health-connect') as typeof import('react-
 /** Health Connect SDK_AVAILABLE status code. */
 const SDK_AVAILABLE = 3;
 
-/** All permissions we request (read-only). */
+/** All permissions we request (read-only).
+ *
+ * ⚠️ Every recordType here MUST have its matching `android.permission.health.*`
+ * entry in `app.json` → `android.permissions`, and a native rebuild after.
+ * Health Connect's permission request launches an Android ActivityResultContract;
+ * handing it a permission the manifest never declared crashes the app in native
+ * code, which the JS try/catch in `authenticate()` cannot intercept. The record
+ * type → permission mapping is not 1:1 (SleepSession → READ_SLEEP,
+ * HeartRateVariabilityRmssd → READ_HEART_RATE_VARIABILITY, and both
+ * Menstruation* types share READ_MENSTRUATION), so check the mapping rather than
+ * inferring the string from the record name. */
 const READ_PERMISSIONS = [
   { accessType: 'read', recordType: 'Weight' },
   { accessType: 'read', recordType: 'BodyFat' },
