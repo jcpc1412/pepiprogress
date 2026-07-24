@@ -643,7 +643,18 @@ type VisionCtx = {
  */
 function visionRegionGuide(session: string, ctx: VisionCtx | undefined): string {
   if (session !== 'face') {
-    return 'waist, midsection definition, chest, shoulders/delts, arms, back and legs when visible, overall fullness vs dryness';
+    const parts = ['waist, midsection definition, chest, shoulders/delts, arms, back and legs when visible, overall fullness vs dryness'];
+    // A user-named area (typed as a custom track, or tapped from the
+    // descriptor-suggestion card, e.g. "dry" -> "inner thighs") must reach body
+    // reads too, not just face ones — the track's poseLabel says WHAT is being
+    // photographed ("Track: FUPA."), this says WHAT TO LOOK FOR in it. Without
+    // both, a custom body/skin track gets no more guidance than a plain
+    // whole-body shot, and the area the user specifically asked about is the one
+    // thing most likely to go unmentioned.
+    if (ctx?.focusAreas?.length) {
+      parts.push(`areas this user specifically asked you to watch: ${ctx.focusAreas.join(', ')}`);
+    }
+    return parts.join('; ');
   }
   const parts = ['jawline, cheek fullness, under-eye area, neck, overall puffiness vs definition'];
   const intent = ctx?.dataContext?.intent;

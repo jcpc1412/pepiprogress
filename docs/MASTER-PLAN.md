@@ -1949,6 +1949,16 @@ without a tap. Verified live against the deployed function (English + Spanish)
 and end-to-end in the browser: descriptor → suggested chips, unticked → tap one →
 only the tapped area saves.
 
+**Fixed 2026-07-24 (owner-flagged gap):** `focusAreas` was only read inside the
+FACE branch of `visionRegionGuide` — a body or custom-part track (e.g. a
+user-created "FUPA" or "inner thigh" track, or an area tapped from the
+descriptor-suggestion card) silently never saw it. The track's `poseLabel`
+says WHAT is being photographed ("Track: FUPA."); `focusAreas` says WHAT TO
+LOOK FOR in it — without both, a custom body track got no more region
+guidance than a plain whole-body shot, and the one area the user specifically
+asked about was the thing most likely to go unmentioned. Now appended to the
+body region guide too. Edge function redeployed.
+
 **Deviation from the stated dependency:** built as composed server-side strings,
 NOT the block-3 DB template injection (2e), which is still unbuilt. 2e's value is
 user-editable versioned templates; four fixed intents do not need that, and the
