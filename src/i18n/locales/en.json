@@ -1462,5 +1462,15 @@
     "saved": "Tracking {{areas}}. I'll watch those in your photos.",
     "none": "No problem. Ask me any time and we'll set it up.",
     "retry": "I didn't catch a specific spot there. Try naming it, like your jawline or under your eyes."
+  },
+  "reconcile": {
+    "ask": {
+      "weight": "No weight came through from your health app today. What did the scale say?",
+      "calories": "Your calories did not sync today. Roughly how much did you eat?",
+      "protein": "No protein total synced today. How many grams did you get?",
+      "workout_effort": "Nothing came through for today's training. How hard did it feel, 1 to 5?"
+    },
+    "skip": "Skip",
+    "done": "Logged."
   }
 }

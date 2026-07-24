@@ -1462,5 +1462,15 @@
     "saved": "Ich verfolge {{areas}} und achte in deinen Fotos darauf.",
     "none": "Kein Problem. Sag jederzeit Bescheid, dann richten wir es ein.",
     "retry": "Ich habe keine konkrete Stelle erkannt. Nenne sie ruhig, etwa Kieferlinie oder Augenpartie."
+  },
+  "reconcile": {
+    "ask": {
+      "weight": "Heute kam kein Gewicht aus deiner Gesundheits-App. Was stand auf der Waage?",
+      "calories": "Deine Kalorien wurden heute nicht synchronisiert. Wie viel hast du ungefähr gegessen?",
+      "protein": "Dein Proteinwert wurde heute nicht synchronisiert. Wie viel Gramm waren es?",
+      "workout_effort": "Zum heutigen Training kam nichts an. Wie schwer war es, 1 bis 5?"
+    },
+    "skip": "Überspringen",
+    "done": "Erfasst."
   }
 }

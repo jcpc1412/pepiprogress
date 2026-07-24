@@ -1462,5 +1462,15 @@
     "saved": "A acompanhar {{areas}}. Vou vigiar isso nas tuas fotos.",
     "none": "Sem problema. Diz-me quando quiseres e configuramos.",
     "retry": "Não captei uma zona específica. Tenta indicá-la, como o maxilar ou a zona dos olhos."
+  },
+  "reconcile": {
+    "ask": {
+      "weight": "Hoje não chegou nenhum peso do seu app de saúde. O que a balança marcou?",
+      "calories": "Suas calorias não sincronizaram hoje. Quanto você comeu, mais ou menos?",
+      "protein": "Seu total de proteína não sincronizou hoje. Quantos gramas foram?",
+      "workout_effort": "Não chegou nada do treino de hoje. Quão puxado foi, de 1 a 5?"
+    },
+    "skip": "Pular",
+    "done": "Registrado."
   }
 }

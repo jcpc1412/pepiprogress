@@ -402,6 +402,11 @@ export type LocalProfile = {
   focusAreas?: string[];
   /** Lifecycle for the one-time "where should I watch?" ask, so it fires once. */
   focusAreaPromptState?: 'asked' | 'declined' | 'set';
+  /** Post-sync reconciliation queue (2b.5): fields a connected health source was
+   *  expected to cover today and didn't, so Pepi can follow up instead of the
+   *  user discovering the gap. Scoped to one day and rebuilt on each sync, so a
+   *  stale queue can never outlive the day it was about. */
+  pendingAsks?: { date: string; fields: CheckinField[]; asked?: CheckinField[] };
 };
 
 /** A structured user explanation of an off day (beta-notes §3.4 context memory,

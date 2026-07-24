@@ -45,6 +45,7 @@ import {
   type MicroSlot,
 } from '@/lib/micro-checkin';
 import { detectAnomalies, type Anomaly } from '@/lib/anomaly';
+import { answerModeFor } from '@/lib/post-sync-reconcile';
 import { scheduleMicroSnooze } from '@/lib/notifications';
 import { localDateKey, useStore, type CheckinEntry, type PepiMessage } from '@/lib/store';
 import { isSupabaseConfigured } from '@/lib/supabase';
@@ -92,6 +93,11 @@ const PHOTO_RE = /\b(photo|photos|picture|pictures|pic|pics|selfie|how do i look
  *  thread resets on return. 15 min keeps an active session intact, clears on real
  *  disengagement. */
 const AUTO_CLEAR_MS = 15 * 60 * 1000;
+
+/** How long the post-sync follow-up waits before speaking (2b.5). Long enough
+ *  that it reads as a follow-up rather than an opener, and that a user who
+ *  arrived with something to say gets to say it first. */
+const RECONCILE_ASK_DELAY_MS = 2_500;
 
 /** Charted metric ids (P-2): a metric answer for one of these gets a sparkline. */
 const CHARTED_IDS = new Set(CHART_METRICS.map((m) => m.id));
@@ -187,6 +193,17 @@ export function PepiChat() {
       }
     | null
   >(null);
+  /**
+   * Post-sync follow-up (2b.5). A field a connected health source was expected
+   * to cover today and didn't, surfaced as a message rather than an opener
+   * chip: it is a consequence of the sync that just ran, not a standing offer,
+   * and it has already earned the right to interrupt by proving the data isn't
+   * anywhere else.
+   */
+  const [reconcileAsk, setReconcileAsk] = useState<{
+    field: CheckinField;
+    mode: 'scale' | 'number';
+  } | null>(null);
   // Micro check-in flow (W3-9, beta-notes §4.1): chips-first 1-5 answers, zero AI.
   const [microFlow, setMicroFlow] = useState<{ slot: MicroSlot; fields: CheckinField[]; index: number } | null>(null);
   // Snoozed/dismissed this session: hides the opener chip until the next visit.
@@ -262,7 +279,8 @@ export function PepiChat() {
     typicalSetup?.step === 'confirm' ||
     cycleSetup?.step === 'confirm' ||
     // The tickable card IS the interaction, so it ignores the pill timing rules.
-    areaSetup?.step === 'pick';
+    areaSetup?.step === 'pick' ||
+    reconcileAsk?.mode === 'scale';
 
   /** Offer the focus-area ask once, and only to someone whose photos it would
    *  change: the skin goal is the clearest signal, but anyone already taking
@@ -518,6 +536,66 @@ export function PepiChat() {
       });
       setMicroFlow({ ...microFlow, index: next });
     }
+  };
+
+  // ── Post-sync follow-up (2b.5) ──────────────────────────────────────────────
+  // The queue is built by the sync runner, which has already filled everything
+  // it could; whatever is left is genuinely unavailable any other way. One
+  // field per visit, asked once, then dropped from the queue whether or not it
+  // gets an answer.
+  const pendingAsks = profile.pendingAsks;
+  const reconcileFired = useRef(false);
+  useEffect(() => {
+    if (reconcileFired.current) return;
+    if (!pendingAsks || pendingAsks.date !== today || !pendingAsks.fields.length) return;
+    // Never on top of another flow: a half-answered question is worse than a
+    // late one, and the other flows were started by the user.
+    if (microFlow || anomalyCapture || typicalSetup || cycleSetup || areaSetup) return;
+    const id = setTimeout(() => {
+      if (reconcileFired.current) return;
+      const field = pendingAsks.fields[0];
+      const mode = answerModeFor(field);
+      if (!mode) return;
+      reconcileFired.current = true;
+      addPepiMessage({
+        role: 'pepi',
+        text: t(`reconcile.ask.${field}` as 'reconcile.ask.calories'),
+        variant: 'answer',
+      });
+      setReconcileAsk({ field, mode });
+      store.setProfile({
+        pendingAsks: {
+          date: today,
+          fields: pendingAsks.fields.slice(1),
+          asked: [...(pendingAsks.asked ?? []), field],
+        },
+      });
+    }, RECONCILE_ASK_DELAY_MS);
+    return () => clearTimeout(id);
+  }, [
+    pendingAsks,
+    today,
+    microFlow,
+    anomalyCapture,
+    typicalSetup,
+    cycleSetup,
+    areaSetup,
+    addPepiMessage,
+    store,
+    t,
+  ]);
+
+  const answerReconcile = (value: number) => {
+    if (!reconcileAsk) return;
+    addPepiMessage({ role: 'user', text: String(value) });
+    upsertCheckin(today, { [reconcileAsk.field]: value });
+    addPepiMessage({ role: 'pepi', text: t('reconcile.done'), variant: 'log' });
+    setReconcileAsk(null);
+  };
+
+  const skipReconcile = () => {
+    addPepiMessage({ role: 'user', text: t('reconcile.skip') });
+    setReconcileAsk(null);
   };
 
   const snoozeMicro = (slot: MicroSlot) => {
@@ -859,6 +937,9 @@ export function PepiChat() {
     addPepiMessage({ role: 'user', text: input });
     setText('');
     setSelection(undefined);
+    // A typed reply answers the post-sync follow-up through the ordinary
+    // quick-log path ("2400 calories"), so the question is done either way.
+    setReconcileAsk(null);
 
     // Chat controls (W3-9 §4.2/4.3): snooze / tone-down / per-check-in intents,
     // deterministic pattern match, always confirmed back, never silent.
@@ -1120,6 +1201,15 @@ export function PepiChat() {
               ))}
               <OptionChip label={t('micro.skip')} selected={false} onPress={skipMicroField} />
               <OptionChip label={t('micro.later')} selected={false} onPress={() => snoozeMicro(microFlow.slot)} />
+            </>
+          ) : reconcileAsk?.mode === 'scale' ? (
+            // Post-sync follow-up on a 1-5 field: the same chips as the micro
+            // check-in, so answering it feels like the same interaction.
+            <>
+              {[1, 2, 3, 4, 5].map((v) => (
+                <OptionChip key={v} label={String(v)} selected={false} onPress={() => answerReconcile(v)} />
+              ))}
+              <OptionChip label={t('reconcile.skip')} selected={false} onPress={skipReconcile} />
             </>
           ) : typicalSetup?.step === 'confirm' ? (
             <>

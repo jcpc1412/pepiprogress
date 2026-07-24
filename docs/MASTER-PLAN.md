@@ -1296,7 +1296,38 @@ Stepped plan:
    no RPE); derive the chip suggestion; user override; subjective fallback. `[M]`
 5. **Routine-learning gate + post-sync reconciliation**, invisible modal-window
    model; auto-fill if present, defer-ask only when absent + window passed,
-   fallback fire. **Reusable infra**, not photo-specific. `[M]`
+   fallback fire. **Reusable infra**, not photo-specific. `[M]` ✅ **DONE**
+   Built: two pure cores plus one driver. `src/lib/routine-window.ts` (+6 tests)
+   learns the window from workout-reading timestamps, one sample per day taken
+   at the day's *latest* session (a morning walk plus an evening lift is one
+   training day that ends in the evening, not a morning trainer), trimmed to the
+   20th-80th percentile so a single 6am outlier can't widen it backwards. Below
+   4 days it returns null and the gate falls back to a fixed 20:00, which is the
+   conservative direction: asking late costs one field, asking early teaches the
+   user the question is noise. The model is never surfaced in copy.
+   `src/lib/post-sync-reconcile.ts` (+13 tests) is the reusable table: a field
+   joins by adding one row, so strength/nutrition/sleep/steps share one path.
+   Three rules keep it from becoming a nag. (a) **Ask only where a source was
+   expected and came back empty** — fields with no integration source at all
+   (wellness, libido, appetite) stay the scheduled micro check-in's job, so the
+   two surfaces never double up on the same user in the same hour. (b) **Nothing
+   connected means nothing expected**, so an offline user is never asked. (c)
+   **Asked once and let go** — an ignored follow-up is an answer, and the `asked`
+   list stops the next foreground re-queueing it. `IntegrationSync` runs the
+   reconcile after the pull settles, behind an 8s fallback timer so a hung
+   provider costs the user nothing. In Pepi it arrives as a **message on a 2.5s
+   delay, not an opener chip**: it's a consequence of the sync that just ran, and
+   it has earned the interruption by proving the data isn't anywhere else. 1-5
+   fields reuse the micro check-in's chips; numeric ones are answered by typing
+   through the existing quick-log path, so no new answer machinery.
+   **Bug found and fixed on the way:** `metricForDate` compared a reading's UTC
+   date prefix against a LOCAL date key, so evening readings west of UTC (and
+   early-morning ones east of it) were invisible on the day the user logged
+   them. Latent and near-harmless while it only meant a field went unfilled;
+   actively wrong the moment reconciliation started asking the user for
+   anything a source "didn't cover". Caught in browser verification, where a
+   just-synced weight produced a question instead of a fill. Fixes nutrition
+   autofill and energy-balance for the same users (+5 tests, TZ-independent).
 6. **Proactive "how'd your lifting feel?" Pepi opener** (opener only, no
    notification), gated on the routine window, fired only when the analysis needs
    it and passive fill came up empty. `[S]`
@@ -1309,8 +1340,8 @@ Stepped plan:
    first. Plus a recomp branch: weight is expected flat, so the arrows and the tape
    carry the story, said explicitly when a flat scale is being misread as no progress.
 
-**Status: 2b.1 / 2b.2 / 2b.3 / 2b.7 shipped. 2b.4 / 2b.5 / 2b.6 remain blocked**
-(2b.4 on the integration-provider block, 2b.5 + 2b.6 on the Point-1 opener infra).
+**Status: 2b.1 / 2b.2 / 2b.3 / 2b.5 / 2b.7 shipped. 2b.4 is unblocked (block 4
+landed 2026-07-24); 2b.6 still needs the Point-1 opener infra (1.1 + 1.2).**
 The chip already carries the signal end to end, so the blocked steps are additive
 suggestion/timing layers, not prerequisites.
 
@@ -1860,8 +1891,7 @@ permission crashes below the JS try/catch.
 - **2b.1 Coaching-framing layer** (2×2 fat-loss logic + weight-gain mirror). **Needs**
   2a.3 + the coaching-register module (3.2).
 - **2b.4 Passive strength fill.** **Needs** block 4.
-- **2b.5 Routine learning + post-sync reconciliation** (reusable across log fields;
-  uses `integration-sync`, exists).
+- **2b.5 Routine learning + post-sync reconciliation ✅ DONE 2026-07-24.**
 - **2b.7 Weight-gain mirror.**
 - **2b.6 Proactive "how'd your lifting feel?" opener.** **Needs** 1.1-1.2.
 
