@@ -30,6 +30,12 @@ export const CanonicalMetric = {
   // compute Banister TRIMP load; kept as flat readings to fit the MetricReading model.
   activityWorkoutMin: 'activity.workout_min',
   activityWorkoutHr: 'activity.workout_hr',
+  /** Workout kind for the same session, paired by ts with the two above.
+   *  Value is the `WorkoutKind` enum (see `workout-kind.ts`), not a free label:
+   *  `MetricReading` carries only a number. Feeds the 2b.4 strength-held signal,
+   *  which needs "was this resistance work?" to read a photo change as muscle
+   *  rather than water. */
+  activityWorkoutKind: 'activity.workout_kind',
   /** One logged menstrual-flow day. Value = flow level (1 light .. 4 heavy, 0 =
    *  recorded but unspecified). `src/lib/cycle.ts` collapses runs of these into
    *  period starts, an observed cycle length, and today's phase.

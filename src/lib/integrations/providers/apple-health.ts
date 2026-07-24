@@ -1,6 +1,7 @@
 import { Platform } from 'react-native';
 
 import { localDateKey } from '@/lib/dates';
+import { classifyAppleWorkout } from '@/lib/integrations/workout-kind';
 import {
   CanonicalMetric,
   type HealthWriteResult,
@@ -314,6 +315,36 @@ async function readHealthKit(since?: string): Promise<ProviderReading[]> {
         ts: start.toISOString(),
         sourceProvider: PROVIDER_ID,
       });
+      // Workout kind (block 4): what makes "trained today" readable as strength.
+      readings.push({
+        metric: CanonicalMetric.activityWorkoutKind,
+        value: classifyAppleWorkout(w.workoutActivityType as number | undefined),
+        ts: start.toISOString(),
+        sourceProvider: PROVIDER_ID,
+      });
+      // Effort score (iOS 18+): Apple's own 1-10 RPE-like rating. Prefer the
+      // user-entered score over Apple's estimate — a stated effort beats an
+      // inferred one — and emit neither on older iOS, where the type does not
+      // exist and the statistic query simply throws.
+      try {
+        const stated = await w.getStatistic('HKQuantityTypeIdentifierWorkoutEffortScore' as never);
+        const estimated = stated?.averageQuantity?.quantity
+          ? undefined
+          : await w.getStatistic('HKQuantityTypeIdentifierEstimatedWorkoutEffortScore' as never);
+        const effort = stated?.averageQuantity?.quantity ?? estimated?.averageQuantity?.quantity;
+        if (typeof effort === 'number' && effort > 0) {
+          readings.push({
+            metric: CanonicalMetric.activityEffort,
+            value: effort,
+            ts: start.toISOString(),
+            sourceProvider: PROVIDER_ID,
+            // Apple's estimate is inferred, so it is explicitly the weaker signal.
+            confidence: stated?.averageQuantity?.quantity ? 1 : 0.5,
+          });
+        }
+      } catch {
+        // Pre-iOS-18, or no effort recorded for this workout.
+      }
       // Average HR is a per-workout statistic — best-effort; skip if unavailable.
       try {
         const stat = await w.getStatistic('HKQuantityTypeIdentifierHeartRate' as never);
@@ -416,6 +447,8 @@ export const appleHealthProvider: IntegrationProvider = {
     CanonicalMetric.activityEnergy,
     CanonicalMetric.activityWorkoutMin,
     CanonicalMetric.activityWorkoutHr,
+    CanonicalMetric.activityWorkoutKind,
+    CanonicalMetric.activityEffort,
     CanonicalMetric.vitalsHrRest,
     CanonicalMetric.vitalsHrv,
     CanonicalMetric.vitalsRespRate,

@@ -1806,9 +1806,35 @@ skeleton. Annotations: **needs** = hard prerequisite; **unblocks** = what it ope
 - *Unblocks:* face/beauty/trans templates are just more of this machinery.
 
 **4. Integration provider extensions (prereq for 2b passive fill), reusable data plumbing**
-- **Apple Health:** add workout **type** + iOS-18 **effort score** to the pull.
-- **Health Connect:** add exercise-session pull (type + HR; no RPE on Android).
+✅ **DONE 2026-07-24.**
+- **Apple Health:** add workout **type** + iOS-18 **effort score** to the pull. ✅
+- **Health Connect:** add exercise-session pull (type + HR; no RPE on Android). ✅
 - *Unblocks:* 2b.4 passive strength fill; also improves TRIMP/load context generally.
+
+**Built:** new canonical metric `activity.workout_kind`, paired by timestamp with
+the existing `workout_min` / `workout_hr`. `MetricReading` carries only a number,
+so the kind rides as a small enum (`src/lib/integrations/workout-kind.ts`, pure +
+8 tests) with named constants, never a bare literal at a call site. Buckets are
+deliberately coarse — other / strength / cardio / mixed — because the one consumer
+(2b.4) asks one question, "was this resistance work?", and `mixed` counts as
+strength so HIIT/CrossFit users aren't read as never training. Unmapped types fall
+through to `other` rather than being guessed at. The two providers' numeric enums
+**collide** (6 = BENCH_PRESS on Health Connect, basketball on HealthKit), so the
+classifiers are separate and a test pins that they must never be swapped.
+- **Apple:** `workoutActivityType` → kind; effort score prefers the user-entered
+  `WorkoutEffortScore` over Apple's `EstimatedWorkoutEffortScore` (a stated effort
+  beats an inferred one) and tags the estimate `confidence: 0.5`. Pre-iOS-18 the
+  type doesn't exist and the statistic query simply throws, so it no-ops.
+- **Health Connect:** `ExerciseSession` → minutes + kind. HC has no per-session HR
+  statistic (unlike HealthKit), so avg HR is computed from `HeartRate` samples
+  falling inside each session window; samples are pulled once and reused rather
+  than re-queried per session. Still **no RPE on Android** — the subjective chip
+  remains the only effort signal there, as scoped.
+
+**⚠️ Native rebuild required:** two new manifest permissions (`READ_EXERCISE`,
+`READ_HEART_RATE`) — verified present in the generated AndroidManifest via
+prebuild. Same footgun as the 2026-07-24 Health Connect crash: an undeclared
+permission crashes below the JS try/catch.
 
 > **⚠️ Play Console gate before any PUBLIC Android release (not internal testing).**
 > Health Connect read permissions were added to the manifest 2026-07-24 (fixing a

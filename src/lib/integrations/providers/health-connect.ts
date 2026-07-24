@@ -1,6 +1,7 @@
 import { Platform } from 'react-native';
 
 import { localDateKey } from '@/lib/dates';
+import { classifyHealthConnectExercise } from '@/lib/integrations/workout-kind';
 import { CanonicalMetric, type IntegrationProvider, type ProviderReading } from '@/lib/integrations/types';
 
 const PROVIDER_ID = 'health_connect';
@@ -33,6 +34,11 @@ const READ_PERMISSIONS = [
   { accessType: 'read', recordType: 'HeartRateVariabilityRmssd' },
   { accessType: 'read', recordType: 'SleepSession' },
   { accessType: 'read', recordType: 'Nutrition' },
+  // Exercise sessions + the HR inside them (block 4): presence, duration and
+  // type. No RPE equivalent exists on Android, so the subjective chip stays the
+  // only effort signal there.
+  { accessType: 'read', recordType: 'ExerciseSession' },
+  { accessType: 'read', recordType: 'HeartRate' },
   { accessType: 'read', recordType: 'MenstruationFlow' },
   // Requested alongside MenstruationFlow, not instead of it: period-tracker apps
   // split across both record types in practice (some log a daily flow level,
@@ -178,6 +184,51 @@ async function readHealthConnect(since?: string): Promise<ProviderReading[]> {
     }
   } catch { /* unavailable */ }
 
+  // --- Exercise sessions: duration + kind + avg HR (block 4, feeds 2b.4) ---
+  // Mirrors the Apple workout pull, with one structural difference: Health
+  // Connect has no per-session HR statistic, so the average is computed from the
+  // HeartRate samples whose timestamps fall inside each session's window.
+  try {
+    const { records: sessions } = await readRecords('ExerciseSession', { timeRangeFilter });
+    // Pulled once and reused across sessions rather than re-queried per session.
+    let hrSamples: { ts: number; bpm: number }[] = [];
+    try {
+      const { records: hr } = await readRecords('HeartRate', { timeRangeFilter });
+      for (const rec of hr) {
+        for (const s of rec.samples ?? []) {
+          const t = new Date(s.time).getTime();
+          if (!Number.isNaN(t) && typeof s.beatsPerMinute === 'number') {
+            hrSamples.push({ ts: t, bpm: s.beatsPerMinute });
+          }
+        }
+      }
+      hrSamples.sort((a, b) => a.ts - b.ts);
+    } catch {
+      hrSamples = []; // HR unavailable — duration + kind still land.
+    }
+
+    for (const s of sessions) {
+      const start = new Date(s.startTime);
+      const end = new Date(s.endTime);
+      if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) continue;
+      const minutes = (end.getTime() - start.getTime()) / 60000;
+      if (minutes < 1) continue; // same sub-minute noise floor as Apple
+      const ts = start.toISOString();
+      readings.push({ metric: CanonicalMetric.activityWorkoutMin, value: minutes, ts, sourceProvider: PROVIDER_ID });
+      readings.push({
+        metric: CanonicalMetric.activityWorkoutKind,
+        value: classifyHealthConnectExercise(s.exerciseType),
+        ts,
+        sourceProvider: PROVIDER_ID,
+      });
+      const inWindow = hrSamples.filter((h) => h.ts >= start.getTime() && h.ts <= end.getTime());
+      if (inWindow.length) {
+        const avg = inWindow.reduce((acc, h) => acc + h.bpm, 0) / inWindow.length;
+        readings.push({ metric: CanonicalMetric.activityWorkoutHr, value: avg, ts, sourceProvider: PROVIDER_ID });
+      }
+    }
+  } catch { /* unavailable */ }
+
   // --- Menstrual flow: one reading per logged flow day ---
   // The menstruation permission was already being requested here and never read —
   // asking for the most sensitive data class in the app and doing nothing with it.
@@ -242,6 +293,9 @@ export const healthConnectProvider: IntegrationProvider = {
     CanonicalMetric.nutritionProtein,
     CanonicalMetric.nutritionCarbs,
     CanonicalMetric.nutritionFat,
+    CanonicalMetric.activityWorkoutMin,
+    CanonicalMetric.activityWorkoutHr,
+    CanonicalMetric.activityWorkoutKind,
     CanonicalMetric.cycleFlow,
   ],
   isAvailable: () => Platform.OS === 'android',
