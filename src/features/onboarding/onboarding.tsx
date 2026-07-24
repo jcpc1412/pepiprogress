@@ -1,3 +1,5 @@
+import { GoogleSigninButton } from '@react-native-google-signin/google-signin';
+import * as AppleAuthentication from 'expo-apple-authentication';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -9,7 +11,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Radii, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { useAuth, type OAuthProvider } from '@/lib/auth';
+import { useAuth } from '@/lib/auth';
 import { useStore } from '@/lib/store';
 import { mergeStates, migrateToCloud, pullFromCloud, pullSnapshot, pushSnapshot } from '@/lib/sync';
 import { isSupabaseConfigured } from '@/lib/supabase';
@@ -112,7 +114,15 @@ function Frame({ step, children }: { step: number; children: React.ReactNode }) 
 function AccountStep({ onNext }: { onNext: () => void }) {
   const { t } = useTranslation();
   const theme = useTheme();
-  const { signUp, signInWithPassword, signInWithProvider } = useAuth();
+  const {
+    signUp,
+    signInWithPassword,
+    signInWithProvider,
+    signInWithApple,
+    appleAuthAvailable,
+    signInWithGoogle,
+    googleAuthAvailable,
+  } = useAuth();
   const { exportState, replaceState } = useStore();
   const [mode, setMode] = useState<'signUp' | 'signIn'>('signUp');
   const [email, setEmail] = useState('');
@@ -163,11 +173,13 @@ function AccountStep({ onNext }: { onNext: () => void }) {
     }
   };
 
-  const submitOAuth = async (provider: OAuthProvider) => {
+  /** Takes the sign-in starter itself rather than a provider id, so the native
+   *  (no-browser) paths and the browser-OAuth fallback share one post-auth flow. */
+  const submitOAuth = async (start: () => Promise<boolean>) => {
     setError(null);
     setBusy(true);
     try {
-      const ok = await signInWithProvider(provider);
+      const ok = await start();
       if (!ok) return; // cancelled
       const uid = await currentUserId();
       if (uid) await afterAuth(uid);
@@ -196,16 +208,42 @@ function AccountStep({ onNext }: { onNext: () => void }) {
           <ActivityIndicator color={theme.accent} />
         ) : (
           <>
-            {/* OAuth — providers configured in Supabase Auth (owner rigs up). */}
+            {/* Vendor-branded native sign-in where it's available, mirroring the
+                Settings auth screen (item 36). This step previously always called
+                signInWithProvider(), i.e. the browser-OAuth fallback, so the
+                native no-redirect path never ran during onboarding no matter how
+                the build was configured — which is the flow most users take. */}
             <View style={styles.oauthCol}>
-              {Platform.OS === 'ios' && (
-                <PrimaryButton label={t('auth.continueApple')} onPress={() => submitOAuth('apple')} />
+              {Platform.OS === 'ios' && appleAuthAvailable ? (
+                <AppleAuthentication.AppleAuthenticationButton
+                  buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
+                  buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.WHITE}
+                  cornerRadius={Radii.chamfer}
+                  style={styles.vendorButton}
+                  onPress={() => submitOAuth(signInWithApple)}
+                />
+              ) : (
+                Platform.OS === 'ios' && (
+                  <PrimaryButton
+                    label={t('auth.continueApple')}
+                    onPress={() => submitOAuth(() => signInWithProvider('apple'))}
+                  />
+                )
               )}
-              <PrimaryButton
-                label={t('auth.continueGoogle')}
-                variant="secondary"
-                onPress={() => submitOAuth('google')}
-              />
+              {googleAuthAvailable ? (
+                <GoogleSigninButton
+                  size={GoogleSigninButton.Size.Wide}
+                  color={GoogleSigninButton.Color.Light}
+                  onPress={() => submitOAuth(signInWithGoogle)}
+                  style={styles.vendorButton}
+                />
+              ) : (
+                <PrimaryButton
+                  label={t('auth.continueGoogle')}
+                  variant="secondary"
+                  onPress={() => submitOAuth(() => signInWithProvider('google'))}
+                />
+              )}
             </View>
 
             <View style={styles.dividerRow}>
@@ -356,6 +394,9 @@ const styles = StyleSheet.create({
   etchWrap: { position: 'absolute', top: 0, right: 0 },
   // Account step — OAuth
   oauthCol: { gap: Spacing.two },
+  // Vendor buttons render their own chrome; match PrimaryButton's height so the
+  // column stays even whichever variant is active.
+  vendorButton: { height: 48, width: '100%' },
   dividerRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
   dividerLine: { flex: 1, height: StyleSheet.hairlineWidth },
   // Weight step
