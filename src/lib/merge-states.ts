@@ -14,6 +14,32 @@ import type {
 } from '@/lib/store';
 
 /**
+ * True when a state has no logged content worth protecting — no check-ins,
+ * doses, symptoms, protocol items, photos, metric readings, or inventory.
+ * Profile/settings fields don't count: a brand new signed-up account can
+ * legitimately have a filled-in profile and zero logged data, and that's the
+ * one case a cloud write of "nothing" is actually correct.
+ *
+ * Used as a guard before any write that could replace or delete cloud data:
+ * a state this empty arriving for an account that already has real cloud
+ * data is far more likely a client-side race (store not yet hydrated, a
+ * merge gone wrong) than an intentional wipe (see 2026-07-24 incident —
+ * signing in before the store hydrated merged/pushed an empty snapshot over
+ * real data on both the blob and the normalized mirror).
+ */
+export function isEffectivelyEmpty(state: PersistedState): boolean {
+  return (
+    Object.keys(state.entries).length === 0 &&
+    state.symptomEvents.length === 0 &&
+    state.doseEvents.length === 0 &&
+    state.protocolItems.length === 0 &&
+    state.photos.length === 0 &&
+    state.metricReadings.length === 0 &&
+    state.inventory.length === 0
+  );
+}
+
+/**
  * Per-entity last-write-wins merge of local + cloud state. Pure (types-only
  * imports) so it is unit-testable without pulling in the Supabase/RN client.
  *

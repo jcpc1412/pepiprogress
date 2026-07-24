@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { mergeStates } from '@/lib/merge-states';
+import { isEffectivelyEmpty, mergeStates } from '@/lib/merge-states';
 import type { LocalProfile, PersistedState } from '@/lib/store';
 
 /**
@@ -134,5 +134,27 @@ describe('mergeStates — cloud-save restore/merge', () => {
     const local = state({ profile: profile({ onboardingComplete: true, goals: ['weight_loss'] }) });
     const cloud = state({ profile: profile({ onboardingComplete: true, goals: ['body_comp'] }) });
     expect(mergeStates(local, cloud).profile.goals).toEqual(['body_comp']);
+  });
+});
+
+describe('isEffectivelyEmpty — the write-guard predicate', () => {
+  it('is true for a fresh signed-up profile with no logged content', () => {
+    expect(isEffectivelyEmpty(state({ profile: profile({ onboardingComplete: true, goals: ['weight_loss'] }) }))).toBe(true);
+  });
+
+  it('is false when any tracked entity is present', () => {
+    expect(isEffectivelyEmpty(state({ entries: { '2026-07-01': { date: '2026-07-01', weight: 80, updatedAt: '2026-07-01T10:00:00Z' } } }))).toBe(false);
+    expect(isEffectivelyEmpty(state({ protocolItems: [{ id: 'p1', compoundSlug: 'bpc-157' }] }))).toBe(false);
+    expect(isEffectivelyEmpty(state({ symptomEvents: [{ id: 's1', type: 'nausea', onsetAt: '2026-07-01T00:00:00Z' }] }))).toBe(false);
+    expect(isEffectivelyEmpty(state({ doseEvents: [{ id: 'd1', takenAt: '2026-07-01T00:00:00Z' }] }))).toBe(false);
+    expect(isEffectivelyEmpty(state({ photos: [{ id: 'ph1', session: 'body', uri: 'f://x', takenAt: '2026-07-01T00:00:00Z' }] }))).toBe(false);
+    expect(isEffectivelyEmpty(state({ inventory: [{ id: 'i1', kind: 'vial' }] }))).toBe(false);
+    expect(
+      isEffectivelyEmpty(
+        state({
+          metricReadings: [{ id: 'm1', metric: 'body.weight', value: 80, ts: '2026-07-01T00:00:00Z', sourceProvider: 'apple_health' }],
+        }),
+      ),
+    ).toBe(false);
   });
 });

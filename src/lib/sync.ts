@@ -1,5 +1,6 @@
 import i18next from 'i18next';
 
+import { isEffectivelyEmpty } from '@/lib/merge-states';
 import {
   buildMirrorRows,
   carryEntity,
@@ -59,6 +60,19 @@ export async function mirrorEntities(
   userId: string,
   prevHashes: MirrorHashes,
 ): Promise<MirrorRunResult> {
+  // Guard (2026-07-24 incident): a state this empty arriving while this
+  // session was already tracking real mirrored rows (prevHashes non-empty)
+  // would otherwise diff away every one of those rows as "deleted". Skip the
+  // whole run and carry the prior hashes forward untouched instead — this is
+  // almost certainly a client-side race, not an intentional mass-delete, and
+  // the next real edit re-triggers a normal mirror pass.
+  if (isEffectivelyEmpty(state) && Object.keys(prevHashes).length > 0) {
+    return {
+      errors: ['mirror skipped: local state is empty but cloud has tracked data — refusing to delete'],
+      nextHashes: prevHashes,
+    };
+  }
+
   const errors: string[] = [];
   const slugMap = await fetchSlugMap();
   const build = buildMirrorRows(state, slugMap, i18next.language ?? 'en');
@@ -217,6 +231,20 @@ export async function migrateToCloud(
  * populated on sign-up via {@link migrateToCloud} for community aggregates.
  */
 export async function pushSnapshot(state: PersistedState, userId: string): Promise<SyncResult> {
+  // Guard (2026-07-24 incident): refuse to replace an existing non-empty
+  // snapshot with an empty one. A brand new account correctly has nothing to
+  // protect (no existing row, or an existing-but-already-empty one), so this
+  // never blocks first sign-up — it only stops a race (store not yet
+  // hydrated, a bad merge) from silently erasing real cloud backup.
+  if (isEffectivelyEmpty(state)) {
+    const existing = await pullSnapshot(userId);
+    if (existing && !isEffectivelyEmpty(existing)) {
+      return {
+        ok: false,
+        errors: ['snapshot skipped: local state is empty but cloud snapshot has data — refusing to overwrite'],
+      };
+    }
+  }
   const { error } = await supabase.from('user_state').upsert(
     { user_id: userId, state: state as unknown as Json, updated_at: new Date().toISOString() },
     { onConflict: 'user_id' },
